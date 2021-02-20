@@ -2,8 +2,8 @@ import argparse
 
 import numpy as np
 
-from src.configs import Config
-from src.environment import Portfolio
+from yacht.configs import Config
+from yacht.environment import Portfolio
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config-file", required=True, help='Path to your *.yaml configuration file.')
