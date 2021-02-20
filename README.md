@@ -14,3 +14,8 @@ To activate the environment:
 pipenv shell
 ```
 
+## Train
+```shell
+python train.py --config-file configs/crypto.yaml
+```
+
