@@ -6,21 +6,21 @@ import pandas as pd
 
 
 class BasePortfolio(metaclass=ABCMeta):
-    def __init__(self, asset_names: List[str], time_span: int):
+    def __init__(self, tickers: List[str], time_span: int):
         """
         Args:
-            asset_names: List of the asset names that are relevant to the algorithm.
+            tickers: List of the tickers that are relevant to the algorithm.
             time_span: Time period over which the weights will be persisted.
         """
-        self.asset_names = asset_names
+        self.tickers = tickers
         self.time_span = time_span
 
         self.portfolio_vector_memory = pd.DataFrame(
             index=pd.RangeIndex(time_span),
-            columns=asset_names,
+            columns=tickers,
             dtype=np.float64
         )
-        self.portfolio_vector_memory.fillna(1.0 / len(asset_names), inplace=True)
+        self.portfolio_vector_memory.fillna(1.0 / len(tickers), inplace=True)
 
     def get_last_weights(self):
         return self.get_weights_at(-1)
@@ -32,12 +32,7 @@ class BasePortfolio(metaclass=ABCMeta):
         self.set_weights_at(-1, weights)
 
     def set_weights_at(self, index: int, weights: np.array):
-        if weights.shape[0] != len(self.asset_names):
+        if weights.shape[0] != len(self.tickers):
             raise RuntimeError('Wrong number of weights distribution.')
 
         self.portfolio_vector_memory.iloc[index] = weights
-
-
-class Portfolio(BasePortfolio):
-    pass
-
