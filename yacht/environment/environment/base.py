@@ -1,3 +1,4 @@
+from data.loaders import BaseDataLoader
 from environment.portfolios import BasePortfolio
 
 
@@ -7,7 +8,7 @@ class BaseEnvironment:
             portfolio: BasePortfolio,
             reward_scheme,
             action_scheme,
-            data_loader
+            data_loader: BaseDataLoader
     ):
         self.portfolio = portfolio
         self.reward_scheme = reward_scheme

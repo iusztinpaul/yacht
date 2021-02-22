@@ -2,6 +2,7 @@ import argparse
 
 import numpy as np
 
+from data.market.polonex import PoloniexMarket
 from yacht.configs import Config
 from yacht.environment import Portfolio
 
@@ -14,4 +15,10 @@ if __name__ == '__main__':
 
     config = Config(args.config_file)
     portfolio = Portfolio(tickers=['AAPL', 'MSFT'], time_span=config.input_config.data_span_seconds)
-    a = 2
+
+    market = PoloniexMarket()
+    market_data = market.request_coins(
+        config.input_config.start_date,
+        config.input_config.end_date,
+    )
+    print(market_data)
