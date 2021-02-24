@@ -2,4 +2,4 @@ input:
   window_size: 31
   start_date: "2017/07/01"
   end_date: "2017/08/01"
-  data_frequency: "1D"
+  data_frequency: "30M"

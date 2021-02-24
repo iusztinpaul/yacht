@@ -16,9 +16,10 @@ if __name__ == '__main__':
     config = Config(args.config_file)
     portfolio = Portfolio(tickers=['AAPL', 'MSFT'], time_span=config.input_config.data_span_seconds)
 
-    market = PoloniexMarket()
-    market_data = market.request_coins(
+    market = PoloniexMarket(config.input_config)
+    market_data = market.get(
         config.input_config.start_date,
         config.input_config.end_date,
+        'ETH'
     )
     print(market_data)

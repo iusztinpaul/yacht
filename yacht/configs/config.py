@@ -4,6 +4,8 @@ from datetime import datetime
 
 import yaml
 
+import utils
+
 
 class Frequency:
     supported_types = {
@@ -49,8 +51,8 @@ class Config:
 
         self.input_config = InputConfig(
             window_size=self.configuration['input']['window_size'],
-            start_date=datetime.strptime(self.configuration['input']['start_date'], "%Y/%m/%d"),
-            end_date=datetime.strptime(self.configuration['input']['end_date'], "%Y/%m/%d"),
+            start_date=utils.str_to_datetime(self.configuration['input']['start_date']),
+            end_date=utils.str_to_datetime(self.configuration['input']['end_date']),
             data_frequency=Frequency(self.configuration['input']['data_frequency']),
         )
 
@@ -63,12 +65,12 @@ class InputConfig:
     data_frequency: Frequency
 
     @property
-    def start_date_seconds(self) -> float:
-        return time.mktime(self.start_date.timetuple())
+    def start_date_seconds(self) -> int:
+        return utils.datetime_to_seconds(self.start_date)
 
     @property
-    def end_date_seconds(self) -> float:
-        return time.mktime(self.end_date.timetuple())
+    def end_date_seconds(self) -> int:
+        return utils.datetime_to_seconds(self.end_date)
 
     @property
     def data_span_seconds(self) -> int:
