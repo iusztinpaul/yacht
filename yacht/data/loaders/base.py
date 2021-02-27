@@ -35,7 +35,7 @@ class BaseDataLoader:
 
     def next_batch(self) -> Union[np.array, Tuple[np.array]]:
         """
-            On every call it moves in time with a difference of 'data_frequency'
+            On every call it moves regarding to the rules of `self.memory_replay`
         Returns:
             A [batch_size, features, assets, (window_size + window_size_offset)] array
         """

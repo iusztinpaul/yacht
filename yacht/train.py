@@ -8,6 +8,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--config-file", required=True, help='Path to your *.yaml configuration file.')
 
 
+# TODO: Refactor base classes only to interfaces
+# TODO: Finish agent.
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
