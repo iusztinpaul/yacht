@@ -1,11 +1,13 @@
-from abc import ABCMeta
 from typing import List
 
 import numpy as np
 import pandas as pd
 
+from config import Config
+from data.market import BaseMarket
 
-class BasePortfolio(metaclass=ABCMeta):
+
+class Portfolio:
     def __init__(self, tickers: List[str], time_span: int):
         """
         Args:
@@ -36,3 +38,12 @@ class BasePortfolio(metaclass=ABCMeta):
             raise RuntimeError('Wrong number of weights distribution.')
 
         self.portfolio_vector_memory.iloc[index] = weights
+
+
+def build_portfolio(market: BaseMarket, config: Config) -> Portfolio:
+    portfolio = Portfolio(
+        tickers=market.tickers,
+        time_span=config.input_config.data_span
+    )
+
+    return portfolio

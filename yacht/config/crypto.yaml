@@ -1,0 +1,13 @@
+input:
+  market: "polonex"
+  start_datetime: "2017/07/01"
+  end_datetime: "2017/07/02"
+  data_frequency: "30M"
+  window_size: 5
+training:
+  steps: 80000
+  learning_rate: 0.00028
+  batch_size: 5
+  buffer_biased: 0.00005
+  optimizer: "Adam"
+  loss_function: "loss_function6"

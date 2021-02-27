@@ -1,7 +1,8 @@
 import json
 import logging
 import sqlite3
-import time
+from typing import List
+
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -28,17 +29,25 @@ class PoloniexMarket(BaseMarket):
     ]
 
     COINS = ['ETH', 'LTC', 'XRP', 'ETC', 'DASH', 'XMR', 'XEM', 'ZEC', 'DCR', 'STR']
-    REQUESTED_FEATURES = ('close', 'high', 'low')
+    REQUESTED_FEATURES = ['close', 'high', 'low']
 
-    def get(self, start: datetime, end: datetime, ticker: str):
+    @property
+    def tickers(self) -> List[str]:
+        return self.COINS
+
+    @property
+    def features(self) -> List[str]:
+        return self.REQUESTED_FEATURES
+
+    def get_all(self, start: datetime, end: datetime):
         data_frequency = self.input_config.data_frequency.seconds
         start = utils.datetime_to_seconds(start)
         end = utils.datetime_to_seconds(end)
 
         time_index = pd.to_datetime(
             list(range(
-                self.input_config.start_date_seconds,
-                self.input_config.end_date_seconds + 1,
+                start,
+                end,
                 data_frequency
             )),
             unit='s'
@@ -59,7 +68,7 @@ class PoloniexMarket(BaseMarket):
                     if feature == "close":
                         sql = (
                             "SELECT date+300 AS date_norm, close FROM History WHERE"
-                            " date_norm>={start} and date_norm<={end}"
+                            " date_norm>={start} and date_norm<{end}"
                             " and date_norm%{period}=0 and coin=\"{coin}\"".format(
                                 start=start, end=end, period=data_frequency, coin=coin
                             )
@@ -67,7 +76,7 @@ class PoloniexMarket(BaseMarket):
                     elif feature == "open":
                         sql = (
                             "SELECT date+{period} AS date_norm, open FROM History WHERE"
-                            " date_norm>={start} and date_norm<={end}"
+                            " date_norm>={start} and date_norm<{end}"
                             " and date_norm%{period}=0 and coin=\"{coin}\"".format(
                                 start=start, end=end, period=data_frequency, coin=coin
                             )
@@ -77,7 +86,7 @@ class PoloniexMarket(BaseMarket):
                                 "SELECT date_norm, SUM(volume)" +
                                 " FROM (SELECT date+{period}-(date%{period}) "
                                 "AS date_norm, volume, coin FROM History)"
-                                " WHERE date_norm>={start} and date_norm<={end} and coin=\"{coin}\""
+                                " WHERE date_norm>={start} and date_norm<{end} and coin=\"{coin}\""
                                 " GROUP BY date_norm".format(
                                     period=data_frequency, start=start, end=end, coin=coin
                                 )
@@ -87,7 +96,7 @@ class PoloniexMarket(BaseMarket):
                                 "SELECT date_norm, MAX(high)" +
                                 " FROM (SELECT date+{period}-(date%{period})"
                                 " AS date_norm, high, coin FROM History)"
-                                " WHERE date_norm>={start} and date_norm<={end} and coin=\"{coin}\""
+                                " WHERE date_norm>={start} and date_norm<{end} and coin=\"{coin}\""
                                 " GROUP BY date_norm".format(
                                     period=data_frequency, start=start, end=end, coin=coin
                                 )
@@ -97,7 +106,7 @@ class PoloniexMarket(BaseMarket):
                                 "SELECT date_norm, MIN(low)" +
                                 " FROM (SELECT date+{period}-(date%{period})"
                                 " AS date_norm, low, coin FROM History)"
-                                " WHERE date_norm>={start} and date_norm<={end} and coin=\"{coin}\""
+                                " WHERE date_norm>={start} and date_norm<{end} and coin=\"{coin}\""
                                 " GROUP BY date_norm".format(
                                     period=data_frequency, start=start, end=end, coin=coin
                                 )
@@ -117,14 +126,30 @@ class PoloniexMarket(BaseMarket):
             connection.commit()
             connection.close()
 
-        coins_history = coins_history.fillna(method='bfill').fillna(method='ffill')
+        coins_history = coins_history.fillna(method='bfill', axis=1).fillna(method='ffill', axis=1)
 
-        # TODO: Map this to a numpy array
+        # data_matrix = features x coins x (window_size + 1)
+        # M = batch_size x features x coins x (window_size + 1)
+        # X = batch_size x features x coins x window_size
+        # y = batch_size x features x coins
+
+        coin_num = len(coins_history.index.get_level_values('coin').unique())
+        datetime_num = len(coins_history.index.get_level_values('datetime').unique())
+        features_num = coins_history.shape[1]
+
+        coins_history = coins_history.values
+        coins_history = np.transpose(coins_history, (1, 0))
+        coins_history = coins_history.reshape((features_num, coin_num, datetime_num))
+
+        # TODO: It would be nice to visualize 'coins_history' at this point. This point is very crucial & error prone.
 
         return coins_history
 
-    def download(self, start: datetime, end: datetime):
+    def get(self, start: datetime, end: datetime, ticker: str) -> np.array:
+        # TODO: Implement this ?
+        raise NotImplementedError()
 
+    def download(self, start: datetime, end: datetime):
         coin_requested_data = self.request_coins(start, end)
 
         connection = sqlite3.connect(self.DATABASE_NAME)

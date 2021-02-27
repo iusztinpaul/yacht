@@ -1,8 +1,25 @@
-from abc import ABCMeta
+from .networks import Network
+from environment import BaseEnvironment
 
-from environment.environment.base import BaseEnvironment
 
-
-class BaseAgent(metaclass=ABCMeta):
-    def __init__(self, environment: BaseEnvironment):
+class BaseAgent:
+    def __init__(
+            self,
+            environment: BaseEnvironment,
+            window_size: int,
+            layers_config,
+            steps: int,
+            device: str,
+    ):
         self.environment = environment
+        self.steps = steps
+        self.network = Network(
+            feature_num=environment.features_num,
+            assets_num=environment.assets_num,
+            window_size=window_size,
+            layers_config=layers_config,
+            device=device
+        )
+
+    def train(self):
+        raise NotImplementedError()
