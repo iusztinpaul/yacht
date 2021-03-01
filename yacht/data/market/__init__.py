@@ -1,6 +1,7 @@
-from config import Config
 from .base import *
 from .polonex import PoloniexMarket
+
+from config import Config
 
 
 def build_market(config: Config) -> BaseMarket:

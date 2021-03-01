@@ -1,15 +1,12 @@
 from .base import *
-from agents.networks import Network
+from .cnn import CNNAgent
+
 from config import Config
-from environment import BaseEnvironment
+from environment.environment import Environment
 
 
-class Agent(BaseAgent):
-    pass
-
-
-def build_agent(environment: BaseEnvironment, config: Config) -> BaseAgent:
-    agent = Agent(
+def build_agent(environment: Environment, config: Config) -> BaseAgent:
+    agent = CNNAgent(
         environment=environment,
         window_size=config.input_config.window_size,
         layers_config=dict(),

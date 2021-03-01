@@ -1,9 +1,9 @@
 from .base import *
-from .xy import XYDataLoader
+from .memory_replay import MemoryReplayDataLoader
 
 
 def build_data_loader(market: BaseMarket, config: Config):
-    data_loader = XYDataLoader(
+    data_loader = MemoryReplayDataLoader(
         market=market,
         config=config
     )

@@ -1,10 +1,9 @@
-from .base import BaseNetwork
-from .cnn import CNNNetwork
+from typing import List
 
-from agents.networks.modules.cnn import EIIECNN
+from agents.networks.modules.base import BaseModule
 
 
-class Network:
+class BaseNetwork:
     def __init__(
             self,
             feature_num: int,
@@ -19,4 +18,7 @@ class Network:
         self.layers_config = layers_config
         self.device = device
 
+        self.modules = self.build_modules()
 
+    def build_modules(self) -> List[BaseModule]:
+        raise NotImplementedError()

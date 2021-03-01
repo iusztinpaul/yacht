@@ -1,10 +1,4 @@
-from .base import BaseNetwork
-from .cnn import CNNNetwork
-
-from agents.networks.modules.cnn import EIIECNN
-
-
-class Network:
+class BaseModule:
     def __init__(
             self,
             feature_num: int,
@@ -18,5 +12,3 @@ class Network:
         self.window_size = window_size
         self.layers_config = layers_config
         self.device = device
-
-

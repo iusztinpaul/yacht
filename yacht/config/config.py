@@ -4,7 +4,7 @@ from datetime import datetime
 import yaml
 
 import utils
-from config import Frequency
+from entities import Frequency
 
 
 class Config:
