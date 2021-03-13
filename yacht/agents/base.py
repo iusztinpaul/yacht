@@ -1,6 +1,4 @@
-from .networks import Network
 from environment.environment import Environment
-from .networks.base import BaseNetwork
 
 
 class BaseAgent:
@@ -23,5 +21,5 @@ class BaseAgent:
     def train(self):
         raise NotImplementedError()
 
-    def build_network(self) -> BaseNetwork:
+    def build_network(self):
         raise NotImplementedError()
