@@ -1,1 +1,1 @@
-from .cnn_torch import *
+from .cnn import *

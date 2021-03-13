@@ -1,72 +1,63 @@
-import tensorflow as tf
+import torch
 
-from tensorflow.keras import layers
-from tensorflow import Module
-
-
-def EIIEDense(filters, activation, kernel_regularizer, weight_decay):
-    class _EIIEDense(layers.Layer):
-        def __int__(self, name='EIIEDense'):
-            super().__init__()
-
-        def build(self, input_shape):
-            kernel_width = input_shape[2]
-
-            # TODO: See how to add weight decay
-            self.conv_2d = layers.Conv2D(
-                filters,
-                kernel_size=(1, kernel_width),
-                strides=(1, 1),
-                padding='valid',
-                activation=activation,
-                kernel_regularizer=kernel_regularizer,
-                # weight_decay=self.kwargs.get('weight_decay')
-            )
-
-        def call(self, input_tensor):
-            return self.conv_2d(input_tensor)
-
-    return _EIIEDense()
+from torch import nn
+import torch.nn.functional as F
 
 
-def EIIEOutputWithW(kernel_regularizer=None):
-    class _EIIEOutputWithW(layers.Layer):
-        def __int__(self, name='EIIEOutputWithW'):
-            super().__init__()
+class EIIEDense(nn.Module):
+    def __init__(
+            self,
+            input_channels: int,
+            output_channels: int,
+            kernel_width: int,
+            name='EIIEDense'
+    ):
+        super(EIIEDense, self).__init__()
+        self.name = name
 
-        def build(self, input_shape):
-            self.batch = input_shape[0]
-            height = input_shape[1]
-            width = input_shape[2]
-            features = input_shape[3]
+        self.conv_2d = nn.Conv2d(
+            input_channels,
+            output_channels,
+            stride=(1, 1),
+            kernel_size=(1, kernel_width),
+            padding=(0, 0),
+        )
 
-            self.reshape_input_tensor = layers.Reshape((height, 1, width * features))
-            self.reshape_previous_w = layers.Reshape((height, 1, 1))
+    def forward(self, input_tensor):
+        return F.relu(self.conv_2d(input_tensor))
 
-            self.conv_2d = layers.Conv2D(
-                1,
-                kernel_size=(1, 1),
-                padding='valid',
-                kernel_regularizer=kernel_regularizer,
-                # TODO: See how to add weight decay
-                # weight_decay=self.kwargs.get('weight_decay')
-            )
-            self.softmax = layers.Softmax()
 
-        def call(self, input_tensor, previous_w):
-            input_tensor = self.reshape_input_tensor(input_tensor)
-            previous_w = self.reshape_previous_w(previous_w)
+class EIIEOutputWithW(nn.Module):
+    def __init__(
+            self,
+            input_channels,
+            name='EIIEOutputWithW'
+    ):
+        super().__init__()
+        self.name = name
 
-            tensor = tf.concat([input_tensor, previous_w], axis=3)
-            # tensor = self.conv_2d(tensor)
-            tensor = tensor[:, :, 0, 0]
+        self.conv_2d = nn.Conv2d(
+            input_channels,
+            1,
+            kernel_size=(1, 1),
+            stride=(1, 1),
+            padding=(0, 0)
+        )
 
-            # FIXME: Is this really ok ?
-            btc_bias = tf.zeros(shape=(self.batch, 1))
-            tensor = tf.concat([btc_bias, tensor], axis=1)
+    def forward(self, input_tensor, previous_w):
+        batch, features, num_assets, width = input_tensor.shape
 
-            tensor = self.softmax(tensor)
+        input_tensor = input_tensor.reshape(batch, num_assets, 1, width * features)
+        previous_w = previous_w.reshape(batch, num_assets, 1, 1)
 
-            return tensor
+        tensor = torch.cat([input_tensor, previous_w], dim=3)
+        tensor = self.conv_2d(tensor)
+        tensor = tensor.reshape(batch, num_assets)
 
-    return _EIIEOutputWithW()
+        # FIXME: Is this really ok ?
+        btc_bias = torch.zeros(size=(batch, 1)).to(tensor.device)
+        tensor = torch.cat([btc_bias, tensor], dim=1)
+
+        tensor = F.softmax(tensor)
+
+        return tensor

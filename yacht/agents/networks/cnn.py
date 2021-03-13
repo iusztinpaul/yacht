@@ -19,46 +19,6 @@ from torch import nn
 from agents.networks import layers
 
 
-# class _EIIECNN(Model):
-#     def __init__(self):
-#         super().__init__(name='EIIE_CNN')
-#
-#         # self.conv_2d = tf_layers.Conv2D(
-#         #     3,
-#         #     kernel_size=(1, 2),
-#         #     strides=(1, 1),
-#         #     padding='valid',
-#         #     activation='relu',
-#         #     kernel_regularizer=None,
-#         #     # TODO: See how to add weight decay
-#         #     # weight_decay=0.0
-#         # )
-#         # self.eiie_dense = layers.EIIEDense(
-#         #     10,
-#         #     'relu',
-#         #     'l2',
-#         #     5e-09
-#         # )
-#         #
-#         # self.eiie_output_with_w = layers.EIIEOutputWithW(
-#         #     # kernel_regularizer='l2',
-#         #     # TODO: See how to add weight decay
-#         #     # weight_decay=5e-08
-#         # )
-#
-#     # Tensor("Placeholder_1:0", shape=(?, 3, 11, 31), dtype=float32)
-#     def call(self, input_tensor, previous_w, training=False):
-#         # tensor = tf.transpose(input_tensor, (0, 2, 3, 1))
-#         # tensor = tensor / tensor[:, :, -1, 0, None, None]
-#         #
-#         # tensor = self.conv_2d(tensor)
-#         # tensor = self.eiie_dense(tensor)
-#         # tensor = self.eiie_output_with_w(tensor, previous_w)
-#         #
-#         # return tensor
-#         return input_tensor
-
-
 class EIIECNN(nn.Module):
     def __init__(self, name='EIIE_CNN'):
         super().__init__()
