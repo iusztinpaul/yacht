@@ -66,7 +66,7 @@ class EIIEOutputWithW(nn.Module):
 class EIIECNN(nn.Module):
     def __init__(
             self,
-            input_num_features: int,
+            num_features: int,
             num_assets: int,
             window_size: int,
             kernel_size=(1, 2),
@@ -76,14 +76,14 @@ class EIIECNN(nn.Module):
         self.name = name
 
         self.conv_2d = nn.Conv2d(
-            in_channels=input_num_features,
-            out_channels=input_num_features,
+            in_channels=num_features,
+            out_channels=num_features,
             kernel_size=kernel_size,
             stride=(1, 1),
             padding=(0, 0)
         )
         self.eiie_dense = EIIEDense(
-            input_channels=input_num_features,
+            input_channels=num_features,
             output_channels=num_assets - 1,
             kernel_width=window_size - kernel_size[1] + 1
         )
@@ -112,13 +112,13 @@ if __name__ == '__main__':
     NUM_ASSETS = 11
     WINDOW_SIZE = 31
 
-    eiie_network = EIIECNN(
-        input_num_features=NUM_FEATURES,
+    eiie_module = EIIECNN(
+        num_features=NUM_FEATURES,
         num_assets=NUM_ASSETS,
         window_size=WINDOW_SIZE,
     ).to('cuda')
 
-    result = eiie_network(
+    result = eiie_module(
         torch.ones((BATCH_SIZE, NUM_FEATURES, NUM_ASSETS, WINDOW_SIZE)).to('cuda'),
         torch.ones((BATCH_SIZE, NUM_ASSETS)).to('cuda')
     )
