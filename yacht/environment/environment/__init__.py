@@ -34,7 +34,10 @@ class Environment:
         return len(self.data_loader.features)
 
     def next_batch(self) -> Union[np.array, Tuple[np.array]]:
-        return self.data_loader.next_batch()
+        X, y = self.data_loader.next_batch()
+        last_w = self.portfolio.get_last_weights()
+
+        return X, y, last_w
 
     def get_last_portfolio_weights(self):
         return self.portfolio.get_last_weights()

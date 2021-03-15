@@ -26,8 +26,8 @@ class EIIENetwork(nn.Module):
             window_size=window_size
         )
 
-    def forward(self, X, y, previous_w):
-        new_w = self.eiie_layer(X, previous_w)
+    def forward(self, X, y, last_w):
+        new_w = self.eiie_layer(X, last_w)
 
         if self.training:
             return self.compute_loss(new_w, y)
@@ -59,6 +59,7 @@ class EIIENetwork(nn.Module):
             portfolio_value_vector=portfolio_value_vector
         )
 
+        # TODO: Add layer specific regularization losses
         loss_function = self.build_loss_function()
 
         return loss_function(portfolio_value_vector)

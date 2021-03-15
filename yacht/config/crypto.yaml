@@ -10,6 +10,9 @@ training:
   agent: "EIIEAgent"
   steps: 80000
   learning_rate: 0.00028
+  weight_decay: 5e-08
+  learning_rate_decay: 1.0
+  learning_rate_decay_steps: 50000
   batch_size: 5
   buffer_biased: 0.00005
   optimizer: "Adam"

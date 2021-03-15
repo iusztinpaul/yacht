@@ -26,6 +26,9 @@ class Config:
             agent=configuration['training']['agent'],
             steps=configuration['training']['steps'],
             learning_rate=configuration['training']['learning_rate'],
+            weight_decay=configuration['training']['weight_decay'],
+            learning_rate_decay=configuration['training']['learning_rate_decay'],
+            learning_rate_decay_steps=configuration['training']['learning_rate_decay_steps'],
             batch_size=configuration['training']['batch_size'],
             buffer_biased=configuration['training']['buffer_biased'],
             optimizer=configuration['training']['optimizer'],
@@ -64,6 +67,9 @@ class TrainingConfig:
     agent: str
     steps: int
     learning_rate: float
+    weight_decay: float
+    learning_rate_decay: float
+    learning_rate_decay_steps: int
     batch_size: int
     buffer_biased: float
     optimizer: str
