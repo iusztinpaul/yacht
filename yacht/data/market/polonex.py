@@ -32,6 +32,10 @@ class PoloniexMarket(BaseMarket):
     REQUESTED_FEATURES = ['close', 'high', 'low']
 
     @property
+    def commission(self) -> float:
+        return 0.0025
+
+    @property
     def tickers(self) -> List[str]:
         return self.COINS
 

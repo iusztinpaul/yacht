@@ -26,6 +26,10 @@ class BaseMarket:
         """
         raise NotImplementedError()
 
+    @property
+    def commission(self) -> float:
+        return 0
+
     def get(self, start: datetime, end: datetime, ticker: str) -> np.array:
         """
             Makes a query for the interval [start, end) & ticker 'ticker',

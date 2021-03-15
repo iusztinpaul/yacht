@@ -12,6 +12,9 @@ class Config:
         with open(file_path, 'r') as file:
             configuration = yaml.full_load(file)
 
+        self.hardware_config = HardwareConfig(
+            device=configuration['hardware']['device']
+        )
         self.input_config = InputConfig(
             market=configuration['input']['market'],
             start_datetime=utils.str_to_datetime(configuration['input']['start_datetime']),
@@ -20,6 +23,7 @@ class Config:
             window_size=configuration['input']['window_size']
         )
         self.training_config = TrainingConfig(
+            agent=configuration['training']['agent'],
             steps=configuration['training']['steps'],
             learning_rate=configuration['training']['learning_rate'],
             batch_size=configuration['training']['batch_size'],
@@ -27,9 +31,11 @@ class Config:
             optimizer=configuration['training']['optimizer'],
             loss_function=configuration['training']['loss_function']
         )
-        self.market_config = MarketConfig(
-            commission=configuration['market']['commission']
-        )
+
+
+@dataclass
+class HardwareConfig:
+    device: str
 
 
 @dataclass
@@ -55,14 +61,10 @@ class InputConfig:
 
 @dataclass
 class TrainingConfig:
+    agent: str
     steps: int
     learning_rate: float
     batch_size: int
     buffer_biased: float
     optimizer: str
     loss_function: str
-
-
-@dataclass
-class MarketConfig:
-    commission: float

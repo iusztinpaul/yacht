@@ -1,3 +1,5 @@
+hardware:
+  device: "cuda"
 input:
   market: "polonex"
   start_datetime: "2017/07/01"
@@ -5,6 +7,7 @@ input:
   data_frequency: "30M"
   window_size: 5
 training:
+  agent: "EIIEAgent"
   steps: 80000
   learning_rate: 0.00028
   batch_size: 5

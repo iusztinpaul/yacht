@@ -4,7 +4,7 @@ import numpy as np
 
 from config import Config
 from data.loaders import build_data_loader, BaseDataLoader
-from data.market import build_market
+from data.market import build_market, BaseMarket
 from environment.portfolios import build_portfolio, Portfolio
 
 
@@ -20,6 +20,10 @@ class Environment:
         self.reward_scheme = reward_scheme
         self.action_scheme = action_scheme
         self.data_loader = data_loader
+
+    @property
+    def market(self) -> BaseMarket:
+        return self.data_loader.market
 
     @property
     def assets_num(self) -> int:
