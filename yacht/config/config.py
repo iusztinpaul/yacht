@@ -27,6 +27,9 @@ class Config:
             optimizer=configuration['training']['optimizer'],
             loss_function=configuration['training']['loss_function']
         )
+        self.market_config = MarketConfig(
+            commission=configuration['market']['commission']
+        )
 
 
 @dataclass
@@ -58,3 +61,8 @@ class TrainingConfig:
     buffer_biased: float
     optimizer: str
     loss_function: str
+
+
+@dataclass
+class MarketConfig:
+    commission: float

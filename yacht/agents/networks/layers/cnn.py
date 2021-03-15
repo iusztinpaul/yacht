@@ -58,7 +58,7 @@ class EIIEOutputWithW(nn.Module):
         btc_bias = torch.zeros(size=(batch, 1)).to(tensor.device)
         tensor = torch.cat([btc_bias, tensor], dim=1)
 
-        tensor = F.softmax(tensor)
+        tensor = F.softmax(tensor, dim=1)
 
         return tensor
 
@@ -107,7 +107,7 @@ class EIIECNN(nn.Module):
 
 
 if __name__ == '__main__':
-    BATCH_SIZE = 1
+    BATCH_SIZE = 100
     NUM_FEATURES = 3
     NUM_ASSETS = 11
     WINDOW_SIZE = 31
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     ).to('cuda')
 
     result = eiie_module(
-        torch.ones((BATCH_SIZE, NUM_FEATURES, NUM_ASSETS, WINDOW_SIZE)).to('cuda'),
-        torch.ones((BATCH_SIZE, NUM_ASSETS)).to('cuda')
+        torch.rand((BATCH_SIZE, NUM_FEATURES, NUM_ASSETS, WINDOW_SIZE)).to('cuda'),
+        torch.rand((BATCH_SIZE, NUM_ASSETS)).to('cuda')
     )
     print(result)

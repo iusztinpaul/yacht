@@ -11,3 +11,5 @@ training:
   buffer_biased: 0.00005
   optimizer: "Adam"
   loss_function: "loss_function6"
+market:
+  commission: 0.0025
