@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List
 
 import yaml
 
@@ -20,17 +21,19 @@ class Config:
             start_datetime=utils.str_to_datetime(configuration['input']['start_datetime']),
             end_datetime=utils.str_to_datetime(configuration['input']['end_datetime']),
             data_frequency=Frequency(configuration['input']['data_frequency']),
-            window_size=configuration['input']['window_size']
+            window_size=configuration['input']['window_size'],
+            validation_split=float(configuration['input']['validation_split'])
         )
         self.training_config = TrainingConfig(
             agent=configuration['training']['agent'],
             steps=configuration['training']['steps'],
-            learning_rate=configuration['training']['learning_rate'],
-            weight_decay=configuration['training']['weight_decay'],
-            learning_rate_decay=configuration['training']['learning_rate_decay'],
+            log_steps=configuration['training']['log_steps'],
+            learning_rate=float(configuration['training']['learning_rate']),
+            weight_decay=float(configuration['training']['weight_decay']),
+            learning_rate_decay=float(configuration['training']['learning_rate_decay']),
             learning_rate_decay_steps=configuration['training']['learning_rate_decay_steps'],
             batch_size=configuration['training']['batch_size'],
-            buffer_biased=configuration['training']['buffer_biased'],
+            buffer_biased=float(configuration['training']['buffer_biased']),
             optimizer=configuration['training']['optimizer'],
             loss_function=configuration['training']['loss_function']
         )
@@ -48,6 +51,7 @@ class InputConfig:
     end_datetime: datetime
     data_frequency: Frequency
     window_size: int
+    validation_split: float
 
     @property
     def start_datetime_seconds(self) -> int:
@@ -58,14 +62,15 @@ class InputConfig:
         return utils.datetime_to_seconds(self.end_datetime)
 
     @property
-    def data_span(self) -> int:
-        return int((self.end_datetime_seconds - self.start_datetime_seconds) / self.data_frequency.seconds) + 1
+    def data_span(self) -> List[int]:
+        return list(range(self.start_datetime_seconds, self.end_datetime_seconds + 1, self.data_frequency.seconds))
 
 
 @dataclass
 class TrainingConfig:
     agent: str
     steps: int
+    log_steps: int
     learning_rate: float
     weight_decay: float
     learning_rate_decay: float

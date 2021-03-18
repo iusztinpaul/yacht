@@ -5,7 +5,7 @@ from config import Config
 
 
 markets = {
-    'Polonex': PoloniexMarket
+    'polonex': PoloniexMarket
 }
 
 

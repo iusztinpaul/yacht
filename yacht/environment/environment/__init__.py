@@ -1,9 +1,10 @@
-from typing import Union, Tuple
+from datetime import datetime
+from typing import Union, Tuple, List
 
 import numpy as np
 
 from config import Config
-from data.loaders import build_data_loader, BaseDataLoader
+from data.loaders import build_data_loaders, BaseDataLoader
 from data.market import build_market, BaseMarket
 from environment.portfolios import build_portfolio, Portfolio
 
@@ -14,48 +15,58 @@ class Environment:
             portfolio: Portfolio,
             reward_scheme,
             action_scheme,
-            data_loader: BaseDataLoader
+            train_data_loader: BaseDataLoader,
+            validation_data_loader: BaseDataLoader
     ):
+        assert train_data_loader.market == validation_data_loader.market, \
+            'Loaders should take data from the same market.'
+
         self.portfolio = portfolio
         self.reward_scheme = reward_scheme
         self.action_scheme = action_scheme
-        self.data_loader = data_loader
+        self.train_data_loader = train_data_loader
+        self.validation_data_loader = validation_data_loader
 
     @property
     def market(self) -> BaseMarket:
-        return self.data_loader.market
+        return self.train_data_loader.market
 
-    @property
-    def assets_num(self) -> int:
-        return len(self.data_loader.tickers)
+    def next_batch_train(self):
+        return self._next_batch(self.train_data_loader)
 
-    @property
-    def features_num(self) -> int:
-        return len(self.data_loader.features)
+    def next_batch_val(self):
+        return self._next_batch(self.validation_data_loader)
 
-    def next_batch(self) -> Union[np.array, Tuple[np.array]]:
-        X, y = self.data_loader.next_batch()
-        last_w = self.portfolio.get_last_weights()
+    def _next_batch(self, data_loader: BaseDataLoader):
+        X, y, batch_start_datetime = data_loader.next_batch()
+        # TODO: Is it ok to sample data in this manner ?
+        batch_last_start_datetime = [
+            last_start_datetime - data_loader.data_frequency_timedelta
+            for last_start_datetime in batch_start_datetime
+        ]
+        batch_last_w = self.portfolio.get_weights_at(batch_last_start_datetime)
 
-        return X, y, last_w
+        return X, y, batch_last_w, batch_start_datetime
 
-    def get_last_portfolio_weights(self):
-        return self.portfolio.get_last_weights()
-
-    def set_last_portfolio_weights(self, weights: np.array):
-        return self.portfolio.set_last_weights(weights)
+    def set_portfolio_weights(
+            self,
+            index: Union[datetime, List[datetime]],
+            weights: Union[np.array, List[np.array]]
+    ):
+        self.portfolio.set_weights_at(index, weights)
 
 
 def build_environment(config: Config) -> Environment:
     market = build_market(config=config)
-    data_loader = build_data_loader(market=market, config=config)
+    training_data_loader, validation_data_loader = build_data_loaders(market=market, config=config)
     portfolio = build_portfolio(market=market, config=config)
 
     environment = Environment(
         portfolio=portfolio,
         reward_scheme=None,
         action_scheme=None,
-        data_loader=data_loader
+        train_data_loader=training_data_loader,
+        validation_data_loader=validation_data_loader
     )
 
     return environment

@@ -1,4 +1,5 @@
-from typing import List
+from datetime import datetime
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -8,36 +9,29 @@ from data.market import BaseMarket
 
 
 class Portfolio:
-    def __init__(self, tickers: List[str], time_span: int):
+    def __init__(self, tickers: List[str], time_span: List[int]):
         """
         Args:
             tickers: List of the tickers that are relevant to the algorithm.
-            time_span: Time period over which the weights will be persisted.
+            time_span: Time interval over which the weights will be persisted.
         """
-        self.tickers = tickers
-        self.time_span = time_span
+        self.tickers = ['Cash'] + tickers
 
         self.portfolio_vector_memory = pd.DataFrame(
-            index=pd.RangeIndex(time_span),
-            columns=tickers,
+            index=pd.to_datetime(time_span, unit='s'),
+            columns=self.tickers,
             dtype=np.float64
         )
         self.portfolio_vector_memory.fillna(1.0 / len(tickers), inplace=True)
 
-    def get_last_weights(self):
-        return self.get_weights_at(-1)
+    def get_weights_at(self, index: Union[datetime, List[datetime]]) -> np.array:
+        return np.array(self.portfolio_vector_memory.loc[index], dtype=np.float32)
 
-    def get_weights_at(self, index: int):
-        return self.portfolio_vector_memory.iloc[index]
-
-    def set_last_weights(self, weights: np.array):
-        self.set_weights_at(-1, weights)
-
-    def set_weights_at(self, index: int, weights: np.array):
-        if weights.shape[0] != len(self.tickers):
+    def set_weights_at(self, index: Union[datetime, List[datetime]], weights: np.array):
+        if weights.shape[-1] != len(self.tickers):
             raise RuntimeError('Wrong number of weights distribution.')
 
-        self.portfolio_vector_memory.iloc[index] = weights
+        self.portfolio_vector_memory.loc[index] = weights
 
 
 def build_portfolio(market: BaseMarket, config: Config) -> Portfolio:

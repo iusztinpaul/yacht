@@ -131,6 +131,8 @@ class PoloniexMarket(BaseMarket):
             connection.close()
 
         coins_history = coins_history.fillna(method='bfill', axis=1).fillna(method='ffill', axis=1)
+        # TODO: This is a trick because there is no data at all for bfill or ffill. Is it ok ?
+        coins_history = coins_history.fillna(1e10-27)
 
         # data_matrix = features x coins x (window_size + 1)
         # M = batch_size x features x coins x (window_size + 1)

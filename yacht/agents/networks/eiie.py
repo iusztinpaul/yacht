@@ -1,9 +1,15 @@
+import logging
+from typing import List
+
 import torch
 
 from torch import nn, Tensor
 
 from agents.networks import layers
 from agents.networks.losses import mean_log_of_pv_vector
+
+
+logger = logging.getLogger(__file__)
 
 
 class EIIENetwork(nn.Module):
@@ -26,13 +32,18 @@ class EIIENetwork(nn.Module):
             window_size=window_size
         )
 
-    def forward(self, X, y, last_w):
+    @property
+    def params(self) -> List[dict]:
+        return [
+            {'params': self.eiie_layer.conv_2d.parameters(), 'weight_decay': 0},
+            {'params': self.eiie_layer.eiie_dense.parameters(), 'weight_decay': 5e-9},
+            {'params': self.eiie_layer.eiie_output_with_w.parameters(), 'weight_decay': 5e-8}
+        ]
+
+    def forward(self, X, last_w):
         new_w = self.eiie_layer(X, last_w)
 
-        if self.training:
-            return self.compute_loss(new_w, y)
-        else:
-            return new_w
+        return new_w
 
     def compute_loss(self, predicted_new_w, y):
         batch_num = y.shape[0]
@@ -49,26 +60,40 @@ class EIIENetwork(nn.Module):
         weights_movement_sum = torch.sum(weights_movement, dim=1)
         market_new_w = weights_movement / weights_movement_sum.reshape(batch_num, 1)
 
-        pure_pc = self._compute_pute_pc(predicted_new_w, market_new_w)
+        pure_pc = self._compute_pure_pc(predicted_new_w, market_new_w)
         portfolio_value_vector = \
             weights_movement_sum * \
             torch.cat([torch.ones(size=(1, )).to(y.device), pure_pc], dim=0)
 
-        self.compute_metrics(
-            weights_movement_sum=weights_movement_sum,
-            portfolio_value_vector=portfolio_value_vector
-        )
-
-        # TODO: Add layer specific regularization losses
         loss_function = self.build_loss_function()
+        loss = loss_function(portfolio_value_vector)
 
-        return loss_function(portfolio_value_vector)
+        return loss
 
     def compute_metrics(
             self,
-            weights_movement_sum,
-            portfolio_value_vector
+            predicted_new_w,
+            y
     ):
+        batch_num = y.shape[0]
+
+        relative_price = torch.cat(
+            [
+                torch.ones(size=(batch_num, 1)).to(y.device),
+                y[:, 0, :]
+            ],
+            dim=1
+        )
+
+        weights_movement = relative_price * predicted_new_w
+        weights_movement_sum = torch.sum(weights_movement, dim=1)
+        market_new_w = weights_movement / weights_movement_sum.reshape(batch_num, 1)
+
+        pure_pc = self._compute_pure_pc(predicted_new_w, market_new_w)
+        portfolio_value_vector = \
+            weights_movement_sum * \
+            torch.cat([torch.ones(size=(1,)).to(y.device), pure_pc], dim=0)
+
         log_mean_free = torch.mean(torch.log(weights_movement_sum))
         portfolio_value = torch.prod(portfolio_value_vector)
         mean = torch.mean(portfolio_value)
@@ -89,7 +114,7 @@ class EIIENetwork(nn.Module):
             'sharp_ratio': sharp_ratio
         }
 
-    def _compute_pute_pc(self, predicted_new_w: Tensor, market_new_w: Tensor):
+    def _compute_pure_pc(self, predicted_new_w: Tensor, market_new_w: Tensor):
         # TODO: Why we slice the batch dim here ?
         market_new_w = market_new_w[:-1, ...]
         predicted_new_w = predicted_new_w[1:, ...]

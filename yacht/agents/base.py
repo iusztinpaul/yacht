@@ -1,4 +1,4 @@
-from config import Config
+from config import Config, TrainingConfig
 from environment.environment import Environment
 
 
@@ -9,6 +9,8 @@ class BaseAgent:
 
         self.network = self.build_network(environment, config)
 
-
     def build_network(self, environment: Environment, config: Config):
+        raise NotImplementedError()
+
+    def train(self):
         raise NotImplementedError()

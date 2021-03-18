@@ -46,16 +46,19 @@ class EIIEOutputWithW(nn.Module):
 
     def forward(self, input_tensor, previous_w):
         batch, features, num_assets, width = input_tensor.shape
+        cash_bias = previous_w[:, 0].reshape(batch, 1)
+        previous_w_without_cash = previous_w[:, 1:]
 
         input_tensor = input_tensor.reshape(batch, width * features, num_assets, 1)
-        previous_w = previous_w.reshape(batch, 1, num_assets, 1)
+        previous_w_without_cash = previous_w_without_cash.reshape(batch, 1, num_assets, 1)
 
-        tensor = torch.cat([input_tensor, previous_w], dim=1)
+        tensor = torch.cat([input_tensor, previous_w_without_cash], dim=1)
         tensor = self.conv_2d(tensor)
         tensor = tensor.reshape(batch, num_assets)
 
         # FIXME: Is this really ok ?
-        btc_bias = torch.zeros(size=(batch, 1)).to(tensor.device)
+        # btc_bias = torch.zeros(size=(batch, 1)).to(tensor.device)
+        btc_bias = cash_bias
         tensor = torch.cat([btc_bias, tensor], dim=1)
 
         tensor = F.softmax(tensor, dim=1)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
 import numpy as np
@@ -29,6 +29,13 @@ class BaseMarket:
     @property
     def commission(self) -> float:
         return 0
+
+    @property
+    def max_download_timedelta(self) -> timedelta:
+        return timedelta(weeks=5)
+
+    def download(self, start: datetime, end: datetime):
+        raise NotImplementedError()
 
     def get(self, start: datetime, end: datetime, ticker: str) -> np.array:
         """

@@ -4,7 +4,7 @@ from copy import copy
 from datetime import datetime
 from typing import List
 
-from config import Frequency, Config
+from config import Frequency, Config, InputConfig, TrainingConfig
 
 
 class MemoryReplayBuffer:
@@ -29,14 +29,14 @@ class MemoryReplayBuffer:
         self._data_span = self._create_datetime_span()
 
     @staticmethod
-    def from_config(config: Config):
+    def from_config(input_config: InputConfig, training_config: TrainingConfig):
         return MemoryReplayBuffer(
-            start=config.input_config.start_datetime,
-            end=config.input_config.end_datetime,
-            batch_size=config.training_config.batch_size,
-            windows_size=config.input_config.window_size,
-            sample_bias=config.training_config.buffer_biased,
-            data_frequency=config.input_config.data_frequency
+            start=input_config.start_datetime,
+            end=input_config.end_datetime,
+            batch_size=training_config.batch_size,
+            windows_size=input_config.window_size,
+            sample_bias=training_config.buffer_biased,
+            data_frequency=input_config.data_frequency
         )
 
     def _create_datetime_span(self) -> List[datetime]:
