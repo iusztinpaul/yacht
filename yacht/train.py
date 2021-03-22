@@ -9,8 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--config-file", required=True, help='Path to your *.yaml configuration file.')
 parser.add_argument("--logger-level", default='info', choices=('info', 'debug', 'warn'))
 
-# TODO: Optimize data loader
-# TODO: Cache eval data
+# TODO: Cache data into a df
 # TODO: Add save model logic.
 # TODO: See why btc cash is 0.
 

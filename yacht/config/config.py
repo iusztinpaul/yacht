@@ -27,7 +27,7 @@ class Config:
         self.training_config = TrainingConfig(
             agent=configuration['training']['agent'],
             steps=configuration['training']['steps'],
-            log_steps=configuration['training']['log_steps'],
+            validation_every_step=configuration['training']['validation_every_step'],
             learning_rate=float(configuration['training']['learning_rate']),
             weight_decay=float(configuration['training']['weight_decay']),
             learning_rate_decay=float(configuration['training']['learning_rate_decay']),
@@ -70,7 +70,7 @@ class InputConfig:
 class TrainingConfig:
     agent: str
     steps: int
-    log_steps: int
+    validation_every_step: int
     learning_rate: float
     weight_decay: float
     learning_rate_decay: float

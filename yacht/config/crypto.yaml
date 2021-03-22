@@ -6,11 +6,11 @@ input:
   end_datetime: "2017/07/01"
   data_frequency: "30M"
   window_size: 31
-  validation_split: 0.02
+  validation_split: 0.08
 training:
   agent: "EIIEAgent"
   steps: 80000
-  log_steps: 100
+  validation_every_step: 1000
   learning_rate: 0.00028
   weight_decay: 5e-08
   learning_rate_decay: 1.0

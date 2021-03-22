@@ -2,6 +2,7 @@ import logging
 
 import torch
 from torch import optim
+from tqdm import tqdm
 
 from agents import BaseAgent
 from agents.networks import EIIENetwork
@@ -41,7 +42,8 @@ class EIIEAgent(BaseAgent):
             gamma=training_config.learning_rate_decay,
         )
 
-        for step in range(training_config.steps):
+        logger.info('Training...')
+        for step in tqdm(range(training_config.steps)):
             self.network.train(mode=True)
             optimizer.zero_grad()
 
@@ -63,7 +65,7 @@ class EIIEAgent(BaseAgent):
             new_w = new_w.detach().cpu().numpy()
             self.environment.set_portfolio_weights(batch_new_w_datetime, new_w)
 
-            if step % training_config.log_steps == 0:
+            if step % training_config.validation_every_step == 0:
                 self.network.train(mode=False)
                 with torch.no_grad():
                     X_val, y_val, last_w_val, batch_new_w_datetime_val = self.environment.next_batch_val()
@@ -76,8 +78,6 @@ class EIIEAgent(BaseAgent):
                     metrics = self.network.compute_metrics(new_w_val, y_val)
                     self.log_metrics(step, metrics)
 
-                    self.network.compute_metrics(step)
-
     def log_metrics(self, step: int, metrics: dict):
-        logging.info(f' Step [{step}] - Portfolio value: {metrics["portfolio_value"].detach().cpu().numpy()}')
+        logging.info(f'\n Step [{step}] - Portfolio value: {metrics["portfolio_value"].detach().cpu().numpy()}')
         logging.info(f' Step [{step}] - Sharp ratio: {metrics["sharp_ratio"].detach().cpu().numpy()}\n')

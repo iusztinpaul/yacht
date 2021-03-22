@@ -61,24 +61,31 @@ class BaseDataLoader:
             # TODO: Throw a custom Error.
             raise RuntimeError("Data stream finished.")
 
-        batch_intervals = []
-        for _ in range(batch_size):
-            # Add 'self.data_frequency_timedelta' because get_all() input is [start, end)
-            batch_intervals.append(
-                (start_datetime, end_datetime + self.data_frequency_timedelta)
-            )
-            start_datetime += self.data_frequency_timedelta
-            end_datetime += self.data_frequency_timedelta
+        # batch_intervals = []
+        # for _ in range(batch_size):
+        #     # Add 'self.data_frequency_timedelta' because get_all() input is [start, end)
+        #     batch_intervals.append(
+        #         (start_datetime, end_datetime + self.data_frequency_timedelta)
+        #     )
+        #     start_datetime += self.data_frequency_timedelta
+        #     end_datetime += self.data_frequency_timedelta
+        #
+        # logger.info(f'Loading a batch of {batch_size} from {batch_intervals[0][0]} to {batch_intervals[-1][1]}')
+        # num_workers = batch_size if batch_size <= self.max_workers else self.max_workers
+        # process_kwargs = {
+        #     'max_workers': num_workers,
+        #     'chunksize': utils.calc_chunksize(num_workers, batch_size)
+        # }
+        # batch_data = process_map(self._get_all_wrapper, batch_intervals, **process_kwargs)
 
-        logger.info(f'Loading a batch of {batch_size} from {batch_intervals[0][0]} to {batch_intervals[-1][1]}')
-        num_workers = batch_size if batch_size <= self.max_workers else self.max_workers
-        process_kwargs = {
-            'max_workers': num_workers,
-            'chunksize': utils.calc_chunksize(num_workers, batch_size)
-        }
-        batch_data = process_map(self._get_all_wrapper, batch_intervals, **process_kwargs)
+        end_batch_datetime = start_datetime + (batch_size + self.input_config.window_size + self.window_size_offset - 1) * self.data_frequency_timedelta
 
-        batch_start_datetimes = [start for start, _ in batch_intervals]
+        all_data = self.market.get_all(start_datetime, end_batch_datetime + self.data_frequency_timedelta)
+        batch_data = []
+        for i in range(batch_size):
+            batch_data.append(all_data[..., i:i+self.input_config.window_size + 1])
+
+        batch_start_datetimes = [start_datetime + self.data_frequency_timedelta * i for i in range(batch_size)]
         batch_data = np.stack(batch_data).astype(np.float32)
 
         X = batch_data[:, :, :, :-1]
