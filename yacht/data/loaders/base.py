@@ -1,10 +1,18 @@
+import logging
+import os
 from datetime import datetime
-from typing import Union, Tuple
+from multiprocessing import Pool
+from typing import Tuple
 
 import numpy as np
+from tqdm.contrib.concurrent import process_map
 
-from config import TrainingConfig, InputConfig
+import utils
+from config import InputConfig
 from data.market import BaseMarket
+
+
+logger = logging.getLogger(__file__)
 
 
 class BaseDataLoader:
@@ -12,11 +20,13 @@ class BaseDataLoader:
             self,
             market: BaseMarket,
             input_config: InputConfig,
-            window_size_offset: int = 1
+            window_size_offset: int = 1,
+            max_workers: int = 4
     ):
         self.market = market
         self.input_config = input_config
         self.window_size_offset = window_size_offset
+        self.max_workers = max_workers
 
     @property
     def data_frequency_timedelta(self):
@@ -36,7 +46,7 @@ class BaseDataLoader:
     def get_first_window_interval(self) -> Tuple[datetime, datetime]:
         raise NotImplementedError()
 
-    def next_batch(self) -> Union[np.array, Tuple[np.array]]:
+    def next_batch(self) -> Tuple[np.array, np.array, list]:
         """
             On every call it moves regarding to the rules of `self.memory_replay`
         Returns:
@@ -51,23 +61,37 @@ class BaseDataLoader:
             # TODO: Throw a custom Error.
             raise RuntimeError("Data stream finished.")
 
-        batch_data = []
-        batch_start_datetime = []
+        batch_intervals = []
         for _ in range(batch_size):
-            data_slice = self.market.get_all(start_datetime, end_datetime + self.data_frequency_timedelta)
-            batch_data.append(data_slice)
-            batch_start_datetime.append(start_datetime)
-
+            # Add 'self.data_frequency_timedelta' because get_all() input is [start, end)
+            batch_intervals.append(
+                (start_datetime, end_datetime + self.data_frequency_timedelta)
+            )
             start_datetime += self.data_frequency_timedelta
             end_datetime += self.data_frequency_timedelta
+
+        logger.info(f'Loading a batch of {batch_size} from {batch_intervals[0][0]} to {batch_intervals[-1][1]}')
+        num_workers = batch_size if batch_size <= self.max_workers else self.max_workers
+        process_kwargs = {
+            'max_workers': num_workers,
+            'chunksize': utils.calc_chunksize(num_workers, batch_size)
+        }
+        batch_data = process_map(self._get_all_wrapper, batch_intervals, **process_kwargs)
+
+        batch_start_datetimes = [start for start, _ in batch_intervals]
         batch_data = np.stack(batch_data).astype(np.float32)
 
         X = batch_data[:, :, :, :-1]
         y = batch_data[:, :, :, -1] / batch_data[:, 0, None, :, -2]
 
-        return X, y, batch_start_datetime
+        return X, y, batch_start_datetimes
 
     def compute_window_end_datetime(self, start_datetime: datetime) -> datetime:
         window_size = self.input_config.window_size
 
         return start_datetime + (window_size + self.window_size_offset - 1) * self.data_frequency_timedelta
+
+    def _get_all_wrapper(self, params) -> np.array:
+        start, end = params
+
+        return self.market.get_all(start, end)

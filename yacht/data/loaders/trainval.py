@@ -1,5 +1,7 @@
+import numpy as np
+
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, Union
 
 from config import InputConfig, TrainingConfig
 from data.loaders import BaseDataLoader
@@ -45,6 +47,10 @@ class ValidationDataLoader(BaseDataLoader):
             window_size_offset=1
         )
 
+        self.X = None
+        self.y = None
+        self.batch_start_datetimes = None
+
     def get_batch_size(self) -> int:
         return len(self.input_config.data_span)
 
@@ -53,3 +59,18 @@ class ValidationDataLoader(BaseDataLoader):
         end_datetime = self.compute_window_end_datetime(start_datetime)
 
         return start_datetime, end_datetime
+
+    def next_batch(self) -> Tuple[np.array, np.array, list]:
+        if self.has_cached_data:
+            return self.X, self.y, self.batch_start_datetimes
+
+        X, y, batch_start_datetimes = super().next_batch()
+        self.X = X
+        self.y = y
+        self.batch_start_datetimes = batch_start_datetimes
+
+        return X, y, batch_start_datetimes
+
+    @property
+    def has_cached_data(self) -> bool:
+        return self.X is not None and self.y is not None and self.batch_start_datetimes is not None

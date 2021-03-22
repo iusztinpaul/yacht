@@ -1,6 +1,8 @@
 import argparse
 import logging
 
+from tqdm import tqdm
+
 import utils
 from data.market import build_market
 from yacht.config import Config
@@ -35,9 +37,12 @@ if __name__ == '__main__':
         config.input_config.end_datetime,
         market.max_download_timedelta
     )
-    for start, end in zip(download_span[:-1], download_span[1:]):
-        market.download(
-            start=start,
-            end=end
-        )
+
+    with tqdm(total=len(download_span)) as prog_bar:
+        for start, end in zip(download_span[:-1], download_span[1:]):
+            market.download(
+                start=start,
+                end=end
+            )
+            prog_bar.update()
     logging.info('Finished downloading')
