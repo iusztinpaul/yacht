@@ -8,6 +8,7 @@ import numpy as np
 
 from config import InputConfig
 from data.market import BaseMarket
+from data.renderers import BaseRenderer
 
 logger = logging.getLogger(__file__)
 
@@ -16,26 +17,29 @@ class BaseDataLoader:
     def __init__(
             self,
             market: BaseMarket,
+            renderer: BaseRenderer,
             input_config: InputConfig,
             window_size_offset: int = 1,
-            cache_all_from_start: bool = True
+            render: bool = True
     ):
         self.market = market
+        self.renderer = renderer
         self.input_config = input_config
         self.window_size_offset = window_size_offset
-        self.cache_all_from_start = cache_all_from_start
 
-        if self.cache_all_from_start:
-            logger.info('Starting caching all data')
+        logger.info(f'Starting loading all the data for: {self.__class__.__name__}')
+        start_time = time.time()
+        self.market.load_all()
+        finish_time = time.time()
+        logger.info(f'Cached all data in: {round(finish_time - start_time, 2)} seconds')
 
-            start_time = time.time()
-            self.market.get_all(
-                start_dt=self.input_config.start_datetime,
-                end_dt=self.input_config.end_datetime
+        if render:
+            self.renderer.time_series(
+                self.market.assets,
+                self.market.features,
+                self.market.assets.index.names[0]
             )
-            finish_time = time.time()
-
-            logger.info(f'Cached all data in: {round(finish_time - start_time, 2)} seconds')
+            self.renderer.show()
 
     @property
     def data_frequency_timedelta(self):

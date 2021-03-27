@@ -8,5 +8,6 @@ numpy = "==1.19.5"
 pandas = "==1.2.2"
 pyyaml = "==5.4.1"
 tqdm = "*"
+matplotlib = "*"
 
 [dev-packages]

@@ -6,6 +6,7 @@ import numpy as np
 from config import Config
 from data.loaders import build_data_loaders, BaseDataLoader
 from data.market import build_market, BaseMarket
+from data.renderers import build_renderer
 from environment.portfolios import build_portfolio, Portfolio
 
 
@@ -34,7 +35,7 @@ class Environment:
     def next_batch_train(self):
         return self._next_batch(self.train_data_loader)
 
-    def next_batch_val(self):
+    def batch_val(self):
         return self._next_batch(self.validation_data_loader)
 
     def _next_batch(self, data_loader: BaseDataLoader):
@@ -58,7 +59,12 @@ class Environment:
 
 def build_environment(config: Config) -> Environment:
     market = build_market(config=config)
-    training_data_loader, validation_data_loader = build_data_loaders(market=market, config=config)
+    renderer = build_renderer()
+    training_data_loader, validation_data_loader = build_data_loaders(
+        market=market,
+        renderer=renderer,
+        config=config
+    )
     portfolio = build_portfolio(market=market, config=config)
 
     environment = Environment(

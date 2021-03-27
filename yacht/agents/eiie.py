@@ -67,7 +67,7 @@ class EIIEAgent(BaseAgent):
             if step % training_config.validation_every_step == 0 and step != 0:
                 self.network.train(mode=False)
                 with torch.no_grad():
-                    X_val, y_val, last_w_val, batch_new_w_datetime_val = self.environment.next_batch_val()
+                    X_val, y_val, last_w_val, batch_new_w_datetime_val = self.environment.batch_val()
 
                     X_val = torch.from_numpy(X_val).to(hardware_config.device)
                     y_val = torch.from_numpy(y_val).to(hardware_config.device)

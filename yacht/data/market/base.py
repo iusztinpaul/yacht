@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 import numpy as np
+import pandas as pd
 
 from config.config import InputConfig
 
@@ -9,6 +10,14 @@ from config.config import InputConfig
 class BaseMarket:
     def __init__(self, input_config: InputConfig):
         self.input_config = input_config
+
+    @property
+    def assets(self) -> pd.DataFrame:
+        """
+        Returns:
+            DataFrame with all the assets loaded in memory
+        """
+        raise NotImplementedError()
 
     @property
     def tickers(self) -> List[str]:
@@ -50,6 +59,13 @@ class BaseMarket:
             A numpy array in the shape of features x time_span
         """
         raise NotImplementedError()
+
+    def load_all(self):
+        """
+            Load all data in memory.
+        Returns:
+            None
+        """
 
     def get_all(self, start_dt: datetime, end_dt: datetime) -> np.array:
         """

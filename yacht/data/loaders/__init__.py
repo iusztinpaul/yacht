@@ -6,7 +6,7 @@ from .base import *
 from .trainval import TrainDataLoader, ValidationDataLoader
 
 
-def build_data_loaders(market: BaseMarket, config: Config):
+def build_data_loaders(market: BaseMarket, renderer: BaseRenderer, config: Config):
     train_input_config = copy(config.input_config)
     val_input_config = copy(config.input_config)
 
@@ -30,11 +30,13 @@ def build_data_loaders(market: BaseMarket, config: Config):
 
     train_data_loader = TrainDataLoader(
         market=market,
+        renderer=renderer,
         input_config=train_input_config,
         training_config=config.training_config
     )
     val_data_loader = ValidationDataLoader(
         market=market,
+        renderer=renderer,
         input_config=val_input_config
     )
 
