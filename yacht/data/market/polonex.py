@@ -11,12 +11,32 @@ from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 
 import utils
+from config import InputConfig
 from data.market import BaseMarket
 
 logger = logging.getLogger(__file__)
 
 
 class PoloniexMarket(BaseMarket):
+    def __init__(self, input_config: InputConfig):
+        super().__init__(input_config)
+
+        time_index = pd.to_datetime(
+            list(range(
+                self.input_config.start_datetime_seconds,
+                self.input_config.end_datetime_seconds + 1,
+                self.input_config.data_frequency.seconds
+            )),
+            unit='s'
+        )
+        self.memory_coins_history = pd.DataFrame(
+            columns=self.REQUESTED_FEATURES,
+            index=pd.MultiIndex.from_product(
+                (self.COINS, time_index),
+                names=('coin', 'datetime')
+            )
+        )
+
     DATABASE_NAME = 'polonex.db'
     PUBLIC_COMMANDS = [
         'returnTicker',
@@ -28,7 +48,7 @@ class PoloniexMarket(BaseMarket):
         'returnLoanOrders'
     ]
 
-    COINS = ['ETH', 'LTC', 'XRP', 'ETC', 'DASH', 'XMR', 'XEM', 'ZEC', 'DCR', 'STR']
+    COINS = sorted(['ETH', 'LTC', 'XRP', 'ETC', 'DASH', 'XMR', 'XEM', 'ZEC', 'DCR', 'STR'])
     REQUESTED_FEATURES = ['close', 'high', 'low']
 
     @property
@@ -43,94 +63,102 @@ class PoloniexMarket(BaseMarket):
     def features(self) -> List[str]:
         return self.REQUESTED_FEATURES
 
-    def get_all(self, start: datetime, end: datetime):
+    def get_all(self, start_dt: datetime, end_dt: datetime):
         data_frequency = self.input_config.data_frequency.seconds
-        start = utils.datetime_to_seconds(start)
-        end = utils.datetime_to_seconds(end)
+        start = utils.datetime_to_seconds(start_dt)
+        end = utils.datetime_to_seconds(end_dt)
 
-        time_index = pd.to_datetime(
+        datetime_range = pd.to_datetime(
             list(range(
                 start,
-                end,
+                end + 1,
                 data_frequency
             )),
             unit='s'
         )
-        coins_history = pd.DataFrame(
-            columns=self.REQUESTED_FEATURES,
-            index=pd.MultiIndex.from_product(
-                (self.COINS, time_index),
-                names=('coin', 'datetime')
+        if self.has_cached_data(start_dt, end_dt):
+            coins_history = self.load_cached_data(datetime_range)
+        else:
+            coins_history = pd.DataFrame(
+                columns=self.REQUESTED_FEATURES,
+                index=pd.MultiIndex.from_product(
+                    (self.COINS, datetime_range),
+                    names=('coin', 'datetime')
+                )
             )
-        )
 
-        connection = sqlite3.connect(self.DATABASE_NAME)
-        try:
-            for row_number, coin in enumerate(self.COINS):
-                for feature in self.REQUESTED_FEATURES:
-                    # NOTE: transform the start date to end date
-                    if feature == "close":
-                        sql = (
-                            "SELECT date+300 AS date_norm, close FROM History WHERE"
-                            " date_norm>={start} and date_norm<{end}"
-                            " and date_norm%{period}=0 and coin=\"{coin}\"".format(
-                                start=start, end=end, period=data_frequency, coin=coin
+            connection = sqlite3.connect(self.DATABASE_NAME)
+            try:
+                for row_number, coin in enumerate(self.COINS):
+                    for feature in self.REQUESTED_FEATURES:
+                        if feature == "close":
+                            sql = (
+                                "SELECT coin, date+300 AS date_norm, close FROM History WHERE"
+                                " date_norm>={start} and date_norm<={end}"
+                                " and date_norm%{period}=0 and coin=\"{coin}\"".format(
+                                    start=start, end=end, period=data_frequency, coin=coin
+                                )
                             )
-                        )
-                    elif feature == "open":
-                        sql = (
-                            "SELECT date+{period} AS date_norm, open FROM History WHERE"
-                            " date_norm>={start} and date_norm<{end}"
-                            " and date_norm%{period}=0 and coin=\"{coin}\"".format(
-                                start=start, end=end, period=data_frequency, coin=coin
+                        elif feature == "open":
+                            sql = (
+                                "SELECT coin, date+{period} AS date_norm, open FROM History WHERE"
+                                " date_norm>={start} and date_norm<={end}"
+                                " and date_norm%{period}=0 and coin=\"{coin}\"".format(
+                                    start=start, end=end, period=data_frequency, coin=coin
+                                )
                             )
-                        )
-                    elif feature == "volume":
-                        sql = (
-                                "SELECT date_norm, SUM(volume)" +
-                                " FROM (SELECT date+{period}-(date%{period}) "
-                                "AS date_norm, volume, coin FROM History)"
-                                " WHERE date_norm>={start} and date_norm<{end} and coin=\"{coin}\""
-                                " GROUP BY date_norm".format(
-                                    period=data_frequency, start=start, end=end, coin=coin
-                                )
-                        )
-                    elif feature == "high":
-                        sql = (
-                                "SELECT date_norm, MAX(high)" +
-                                " FROM (SELECT date+{period}-(date%{period})"
-                                " AS date_norm, high, coin FROM History)"
-                                " WHERE date_norm>={start} and date_norm<{end} and coin=\"{coin}\""
-                                " GROUP BY date_norm".format(
-                                    period=data_frequency, start=start, end=end, coin=coin
-                                )
-                        )
-                    elif feature == "low":
-                        sql = (
-                                "SELECT date_norm, MIN(low)" +
-                                " FROM (SELECT date+{period}-(date%{period})"
-                                " AS date_norm, low, coin FROM History)"
-                                " WHERE date_norm>={start} and date_norm<{end} and coin=\"{coin}\""
-                                " GROUP BY date_norm".format(
-                                    period=data_frequency, start=start, end=end, coin=coin
-                                )
-                        )
-                    else:
-                        raise ValueError(f"The feature {feature} is not supported")
+                        elif feature == "volume":
+                            sql = (
+                                    "SELECT coin, date_norm, SUM(volume)" +
+                                    " FROM (SELECT date+{period}-(date%{period}) "
+                                    "AS date_norm, volume, coin FROM History)"
+                                    " WHERE date_norm>={start} and date_norm<={end} and coin=\"{coin}\""
+                                    " GROUP BY date_norm".format(
+                                        period=data_frequency, start=start, end=end, coin=coin
+                                    )
+                            )
+                        elif feature == "high":
+                            sql = (
+                                    "SELECT coin, date_norm, MAX(high)" +
+                                    " FROM (SELECT date+{period}-(date%{period})"
+                                    " AS date_norm, high, coin FROM History)"
+                                    " WHERE date_norm>={start} and date_norm<={end} and coin=\"{coin}\""
+                                    " GROUP BY date_norm".format(
+                                        period=data_frequency, start=start, end=end, coin=coin
+                                    )
+                            )
+                        elif feature == "low":
+                            sql = (
+                                    "SELECT coin, date_norm, MIN(low)" +
+                                    " FROM (SELECT date+{period}-(date%{period})"
+                                    " AS date_norm, low, coin FROM History)"
+                                    " WHERE date_norm>={start} and date_norm<={end} and coin=\"{coin}\""
+                                    " GROUP BY date_norm".format(
+                                        period=data_frequency, start=start, end=end, coin=coin
+                                    )
+                            )
+                        else:
+                            raise ValueError(f"The feature {feature} is not supported")
 
-                    serial_data = pd.read_sql_query(
-                        sql,
-                        con=connection,
-                        parse_dates=["date_norm"],
-                        index_col="date_norm"
-                    )
-                    coin_feature_data = serial_data.squeeze().astype(np.float32).values
-                    coins_history.loc[(coin, serial_data.index), feature] = coin_feature_data
-        finally:
-            connection.commit()
-            connection.close()
+                        serial_data = pd.read_sql_query(
+                            sql,
+                            con=connection,
+                            parse_dates=['date_norm'],
+                            index_col=['coin', 'date_norm']
+                        )
+                        coins_history.update(
+                            serial_data
+                        )
+                        # coin_feature_data = serial_data.squeeze().astype(np.float32).values
+                        # coins_history.loc[(coin, serial_data.index), feature] = coin_feature_data
+            finally:
+                connection.commit()
+                connection.close()
 
-        coins_history = coins_history.fillna(method='bfill', axis=1).fillna(method='ffill', axis=1)
+            self.cache_data(coins_history)
+
+            coins_history = coins_history.fillna(method='bfill', axis=1).fillna(method='ffill', axis=1)
+
         # TODO: This is a trick because there is no data at all for bfill or ffill. Is it ok ?
         coins_history = coins_history.fillna(1e10-27)
 
@@ -151,7 +179,40 @@ class PoloniexMarket(BaseMarket):
 
         return coins_history
 
-    def get(self, start: datetime, end: datetime, ticker: str) -> np.array:
+    def has_cached_data(self, start: datetime, end: datetime) -> bool:
+        start_data = self.memory_coins_history.loc[(slice(None), start), ]
+        end_data = self.memory_coins_history.loc[(slice(None), end), ]
+
+        start_has_data = start_data[start_data.columns[0]].notna().all()
+        end_has_data = end_data[end_data.columns[0]].notna().all()
+
+        return start_has_data and end_has_data
+
+    def load_cached_data(self, datetime_range: pd.DatetimeIndex) -> pd.DataFrame:
+        return self.memory_coins_history.loc[
+            (
+                slice(None),
+                datetime_range
+             ),
+        ].sort_index()
+
+    def cache_data(self, new_data: pd.DataFrame):
+        # self.memory_coins_history.loc[
+        #     (
+        #         new_data.index.get_level_values('coin').unique(),
+        #         new_data.index.get_level_values('datetime').unique()
+        #     ),
+        #     new_data.columns
+        # ] = new_data
+        self.memory_coins_history.update(
+            new_data
+        )
+
+        self.memory_coins_history = self.memory_coins_history.\
+            fillna(method='bfill', axis=1).\
+            fillna(method='ffill', axis=1)
+
+    def get(self, start_dt: datetime, end_dt: datetime, ticker: str) -> np.array:
         # TODO: Implement this ?
         raise NotImplementedError()
 

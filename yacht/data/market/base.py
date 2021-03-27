@@ -37,13 +37,13 @@ class BaseMarket:
     def download(self, start: datetime, end: datetime):
         raise NotImplementedError()
 
-    def get(self, start: datetime, end: datetime, ticker: str) -> np.array:
+    def get(self, start_dt: datetime, end_dt: datetime, ticker: str) -> np.array:
         """
-            Makes a query for the interval [start, end) & ticker 'ticker',
+            Makes a query for the interval [start, end] & ticker 'ticker',
             where the data frequency is the one from 'self.input_config.'
         Args:
-            start: The start of the interval.
-            end: The end of the interval.
+            start_dt: The start of the interval.
+            end_dt: The end of the interval.
             ticker: The ticker of the asset that you want to query
 
         Returns:
@@ -51,13 +51,13 @@ class BaseMarket:
         """
         raise NotImplementedError()
 
-    def get_all(self, start: datetime, end: datetime) -> np.array:
+    def get_all(self, start_dt: datetime, end_dt: datetime) -> np.array:
         """
-            Makes a query for the interval [start, end),
+            Makes a query for the interval [start, end],
             where the data frequency is the one from 'self.input_config.'
         Args:
-            start: The start of the interval.
-            end: The end of the interval.
+            start_dt: The start of the interval.
+            end_dt: The end of the interval.
 
         Returns:
             A numpy array in the shape of features x assets x time_span

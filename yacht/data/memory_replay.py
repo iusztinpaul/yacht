@@ -15,7 +15,8 @@ class MemoryReplayBuffer:
             batch_size: int,
             windows_size: int,
             sample_bias: float,
-            data_frequency: Frequency
+            data_frequency: Frequency,
+            window_size_offset: int
     ):
         assert 0 < sample_bias <= 1
 
@@ -25,18 +26,20 @@ class MemoryReplayBuffer:
         self._window_size = windows_size
         self._sample_bias = sample_bias
         self._data_frequency = data_frequency
+        self._window_size_offset = window_size_offset
 
         self._data_span = self._create_datetime_span()
 
     @staticmethod
-    def from_config(input_config: InputConfig, training_config: TrainingConfig):
+    def from_config(input_config: InputConfig, training_config: TrainingConfig, window_size_offset: int):
         return MemoryReplayBuffer(
             start=input_config.start_datetime,
             end=input_config.end_datetime,
             batch_size=training_config.batch_size,
             windows_size=input_config.window_size,
             sample_bias=training_config.buffer_biased,
-            data_frequency=input_config.data_frequency
+            data_frequency=input_config.data_frequency,
+            window_size_offset=window_size_offset
         )
 
     def _create_datetime_span(self) -> List[datetime]:
@@ -52,7 +55,7 @@ class MemoryReplayBuffer:
     def get_experience(self) -> datetime:
         random_index = self._sample_random_index(
             0,
-            len(self._data_span) - max(self._batch_size, self._window_size)
+            len(self._data_span) - self._batch_size - self._window_size + 1 - self._window_size_offset
         )
 
         return self._data_span[random_index]

@@ -40,13 +40,13 @@ class Environment:
     def _next_batch(self, data_loader: BaseDataLoader):
         X, y, batch_start_datetime = data_loader.next_batch()
         # TODO: Is it ok to sample data in this manner ?
-        batch_last_start_datetime = [
+        batch_previous_start_datetime = [
             last_start_datetime - data_loader.data_frequency_timedelta
             for last_start_datetime in batch_start_datetime
         ]
-        batch_last_w = self.portfolio.get_weights_at(batch_last_start_datetime)
+        batch_previous_w = self.portfolio.get_weights_at(batch_previous_start_datetime)
 
-        return X, y, batch_last_w, batch_start_datetime
+        return X, y, batch_previous_w, batch_start_datetime
 
     def set_portfolio_weights(
             self,

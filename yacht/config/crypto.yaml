@@ -3,6 +3,7 @@ hardware:
 input:
   market: "polonex"
   start_datetime: "2015/07/01"
+#  start_datetime: "2017/06/01"
   end_datetime: "2017/07/01"
   data_frequency: "30M"
   window_size: 31

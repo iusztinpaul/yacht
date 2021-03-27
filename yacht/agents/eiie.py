@@ -44,7 +44,6 @@ class EIIEAgent(BaseAgent):
 
         logger.info('Training...')
         for step in tqdm(range(training_config.steps)):
-            self.network.train(mode=True)
             optimizer.zero_grad()
 
             X, y, last_w, batch_new_w_datetime = self.environment.next_batch_train()
@@ -65,7 +64,7 @@ class EIIEAgent(BaseAgent):
             new_w = new_w.detach().cpu().numpy()
             self.environment.set_portfolio_weights(batch_new_w_datetime, new_w)
 
-            if step % training_config.validation_every_step == 0:
+            if step % training_config.validation_every_step == 0 and step != 0:
                 self.network.train(mode=False)
                 with torch.no_grad():
                     X_val, y_val, last_w_val, batch_new_w_datetime_val = self.environment.next_batch_val()
@@ -77,6 +76,8 @@ class EIIEAgent(BaseAgent):
                     new_w_val = self.network(X_val, last_w_val)
                     metrics = self.network.compute_metrics(new_w_val, y_val)
                     self.log_metrics(step, metrics)
+
+                self.network.train(mode=True)
 
     def log_metrics(self, step: int, metrics: dict):
         logging.info(f'\n Step [{step}] - Portfolio value: {metrics["portfolio_value"].detach().cpu().numpy()}')
