@@ -45,7 +45,7 @@ class EIIEAgent(BaseAgent):
         )
 
         logger.info('Training...')
-        for step in tqdm(range(training_config.steps)):
+        for step in range(training_config.steps):
             optimizer.zero_grad()
 
             X, y, last_w, batch_new_w_datetime = self.environment.next_batch_train()
@@ -82,5 +82,7 @@ class EIIEAgent(BaseAgent):
                 self.network.train(mode=True)
 
     def log_metrics(self, step: int, metrics: dict):
-        logging.info(f'\n Step [{step}] - Portfolio value: {metrics["portfolio_value"].detach().cpu().numpy()}')
-        logging.info(f' Step [{step}] - Sharp ratio: {metrics["sharp_ratio"].detach().cpu().numpy()}\n')
+        total_steps = self.config.training_config.steps
+
+        logging.info(f'\n Step [{step} - {total_steps}] - Portfolio value: {metrics["portfolio_value"].detach().cpu().numpy()}')
+        logging.info(f' Step [{step} - {total_steps}] - Sharp ratio: {metrics["sharp_ratio"].detach().cpu().numpy()}\n')
