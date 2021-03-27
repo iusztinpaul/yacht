@@ -28,6 +28,8 @@ class EIIEAgent(BaseAgent):
         return network
 
     def train(self):
+        # TODO: Make this function more generic between train & eval
+
         training_config = self.config.training_config
         hardware_config = self.config.hardware_config
 
