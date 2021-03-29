@@ -134,3 +134,4 @@ dmypy.json
 
 # Storage
 *.db
+*storage*
