@@ -51,6 +51,7 @@ class PoloniexMarket(BaseMarket):
                 names=('coin', 'datetime')
             )
         )
+        self._is_data_cached = False
 
     @property
     def assets(self) -> pd.DataFrame:
@@ -67,6 +68,9 @@ class PoloniexMarket(BaseMarket):
     @property
     def features(self) -> List[str]:
         return self.REQUESTED_FEATURES
+
+    def is_data_cached(self) -> bool:
+        return self._is_data_cached
 
     def load_all(self):
         data_frequency = self.input_config.data_frequency.seconds
@@ -147,6 +151,8 @@ class PoloniexMarket(BaseMarket):
         finally:
             connection.commit()
             connection.close()
+
+            self._is_data_cached = True
 
     def get_all(self, start_dt: datetime, end_dt: datetime):
         data_frequency = self.input_config.data_frequency.seconds

@@ -66,6 +66,15 @@ class BaseMarket:
         Returns:
             None
         """
+        raise NotImplementedError()
+
+    def is_data_cached(self) -> bool:
+        """
+        Returns:
+            Flag that shows if all the potential data is in memory or not.
+        """
+
+        raise NotImplementedError()
 
     def get_all(self, start_dt: datetime, end_dt: datetime) -> np.array:
         """

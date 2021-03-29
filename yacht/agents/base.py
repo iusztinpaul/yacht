@@ -108,7 +108,7 @@ class BaseAgent:
 
             return checkpoint['step']
         else:
-            raise RuntimeError(f"No checkpoint to load from {self.model_path}")
+            raise RuntimeError(f'No checkpoint to load from {self.model_path}. Maybe set "resume_training" to "false"')
 
     def log(self, step, message: str):
         total_steps = self.config.training_config.steps

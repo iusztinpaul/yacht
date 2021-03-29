@@ -27,11 +27,12 @@ class BaseDataLoader:
         self.input_config = input_config
         self.window_size_offset = window_size_offset
 
-        logger.info(f'Starting loading all the data for: {self.__class__.__name__}')
-        start_time = time.time()
-        self.market.load_all()
-        finish_time = time.time()
-        logger.info(f'Cached all data in: {round(finish_time - start_time, 2)} seconds')
+        if not self.market.is_data_cached():
+            logger.info(f'Starting loading all the data for: {self.market.__class__.__name__}')
+            start_time = time.time()
+            self.market.load_all()
+            finish_time = time.time()
+            logger.info(f'Cached all data in: {round(finish_time - start_time, 2)} seconds')
 
         if render_prices:
             self.renderer.time_series(

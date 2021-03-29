@@ -14,7 +14,6 @@ parser.add_argument("--logger_level", default='info', choices=('info', 'debug', 
 
 
 # TODO: Make a mechanism so data is not loaded 2x times for train & validation
-# TODO: Add save model logic.
 # TODO: See why btc cash is 0.
 
 
