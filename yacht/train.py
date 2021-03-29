@@ -13,7 +13,7 @@ parser.add_argument("--storage_path", required=True, help='Path to the directory
 parser.add_argument("--logger_level", default='info', choices=('info', 'debug', 'warn'))
 
 
-# TODO: Make a mechanism so data is not loaded 2x times for train & validation
+# TODO: Implement back testing.
 # TODO: See why btc cash is 0.
 
 
