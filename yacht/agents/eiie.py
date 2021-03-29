@@ -1,8 +1,6 @@
 import logging
 
 import torch
-from torch import optim
-from tqdm import tqdm
 
 from agents import BaseAgent
 from agents.networks import EIIENetwork
@@ -28,40 +26,22 @@ class EIIEAgent(BaseAgent):
         return network
 
     def train(self):
-        # TODO: Make this function more generic between train & eval
-
         training_config = self.config.training_config
-        hardware_config = self.config.hardware_config
-
-        optimizer = optim.Adam(
-            params=self.network.params,
-            lr=training_config.learning_rate,
-            weight_decay=training_config.weight_decay
-        )
-
-        scheduler = optim.lr_scheduler.ExponentialLR(
-            optimizer,
-            gamma=training_config.learning_rate_decay,
-        )
 
         logger.info('Training...')
-        for step in range(training_config.steps):
-            optimizer.zero_grad()
+        for step in range(self.start_training_step, training_config.steps):
+            self.optimizer.zero_grad()
 
-            X, y, last_w, batch_new_w_datetime = self.environment.next_batch_train()
-
-            X = torch.from_numpy(X).to(hardware_config.device)
-            y = torch.from_numpy(y).to(hardware_config.device)
-            last_w = torch.from_numpy(last_w).to(hardware_config.device)
+            X, y, last_w, batch_new_w_datetime = self.get_train_data()
 
             new_w = self.network(X, last_w)
             loss = self.network.compute_loss(new_w, y)
 
             loss.backward()
-            optimizer.step()
+            self.optimizer.step()
 
             if step % training_config.learning_rate_decay_steps:
-                scheduler.step()
+                self.scheduler.step()
 
             new_w = new_w.detach().cpu().numpy()
             self.environment.set_portfolio_weights(batch_new_w_datetime, new_w)
@@ -69,11 +49,7 @@ class EIIEAgent(BaseAgent):
             if step % training_config.validation_every_step == 0 and step != 0:
                 self.network.train(mode=False)
                 with torch.no_grad():
-                    X_val, y_val, last_w_val, batch_new_w_datetime_val = self.environment.batch_val()
-
-                    X_val = torch.from_numpy(X_val).to(hardware_config.device)
-                    y_val = torch.from_numpy(y_val).to(hardware_config.device)
-                    last_w_val = torch.from_numpy(last_w_val).to(hardware_config.device)
+                    X_val, y_val, last_w_val, batch_new_w_datetime_val = self.get_validation_data()
 
                     new_w_val = self.network(X_val, last_w_val)
                     metrics = self.network.compute_metrics(new_w_val, y_val)
@@ -81,8 +57,9 @@ class EIIEAgent(BaseAgent):
 
                 self.network.train(mode=True)
 
-    def log_metrics(self, step: int, metrics: dict):
-        total_steps = self.config.training_config.steps
+            if step % training_config.save_every_step == 0 and step != 0:
+                self.save_network(step, loss)
 
-        logging.info(f'\n Step [{step} - {total_steps}] - Portfolio value: {metrics["portfolio_value"].detach().cpu().numpy()}')
-        logging.info(f' Step [{step} - {total_steps}] - Sharp ratio: {metrics["sharp_ratio"].detach().cpu().numpy()}\n')
+    def log_metrics(self, step: int, metrics: dict):
+        self.log(step, f'Portfolio value: {metrics["portfolio_value"].detach().cpu().numpy()}')
+        self.log(step, f'Sharp ratio: {metrics["sharp_ratio"].detach().cpu().numpy()}\n')

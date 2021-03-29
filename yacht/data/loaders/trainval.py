@@ -14,13 +14,15 @@ class TrainDataLoader(BaseDataLoader):
             renderer: BaseRenderer,
             input_config: InputConfig,
             training_config: TrainingConfig,
-            window_size_offset: int = 1
+            window_size_offset: int = 1,
+            render_prices: bool = True
     ):
         super().__init__(
             market=market,
             renderer=renderer,
             input_config=input_config,
-            window_size_offset=window_size_offset
+            window_size_offset=window_size_offset,
+            render_prices=render_prices
         )
 
         self.training_config = training_config
@@ -39,13 +41,15 @@ class ValidationDataLoader(BaseDataLoader):
             market: BaseMarket,
             renderer: BaseRenderer,
             input_config: InputConfig,
-            window_size_offset: int = 1
+            window_size_offset: int = 1,
+            render_prices: bool = True
     ):
         super().__init__(
             market=market,
             renderer=renderer,
             input_config=input_config,
-            window_size_offset=window_size_offset
+            window_size_offset=window_size_offset,
+            render_prices=render_prices
         )
 
     def get_batch_size(self) -> int:

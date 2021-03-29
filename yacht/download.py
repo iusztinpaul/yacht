@@ -1,5 +1,6 @@
 import argparse
 import logging
+from pathlib import Path
 
 from tqdm import tqdm
 
@@ -11,8 +12,8 @@ logger = logging.getLogger(__file__)
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--config-file", required=True, help='Path to your *.yaml configuration file.')
-parser.add_argument("--logger-level", default='info', choices=('info', 'debug', 'warn'))
+parser.add_argument("--config_file", required=True, help='Path to your *.yaml configuration file.')
+parser.add_argument("--logger_level", default='info', choices=('info', 'debug', 'warn'))
 
 
 logger_levels = {
@@ -24,7 +25,8 @@ logger_levels = {
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    logging.basicConfig(level=logger_levels[args.logger_level])
+    Path(args.storage_path).mkdir(parents=True, exist_ok=True)
+    utils.setup_logger(level=args.logger_level)
 
     config = Config(args.config_file)
 

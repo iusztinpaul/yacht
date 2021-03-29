@@ -32,12 +32,14 @@ def build_data_loaders(market: BaseMarket, renderer: BaseRenderer, config: Confi
         market=market,
         renderer=renderer,
         input_config=train_input_config,
-        training_config=config.training_config
+        training_config=config.training_config,
+        render_prices=train_input_config.render_prices
     )
     val_data_loader = ValidationDataLoader(
         market=market,
         renderer=renderer,
-        input_config=val_input_config
+        input_config=val_input_config,
+        render_prices=val_input_config.render_prices
     )
 
     return train_data_loader, val_data_loader

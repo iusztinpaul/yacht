@@ -22,12 +22,14 @@ class Config:
             end_datetime=utils.str_to_datetime(configuration['input']['end_datetime']),
             data_frequency=Frequency(configuration['input']['data_frequency']),
             window_size=configuration['input']['window_size'],
-            validation_split=float(configuration['input']['validation_split'])
+            validation_split=float(configuration['input']['validation_split']),
+            render_prices=bool(configuration['input']['render_prices'])
         )
         self.training_config = TrainingConfig(
             agent=configuration['training']['agent'],
             steps=configuration['training']['steps'],
             validation_every_step=configuration['training']['validation_every_step'],
+            save_every_step=configuration['training']['save_every_step'],
             learning_rate=float(configuration['training']['learning_rate']),
             weight_decay=float(configuration['training']['weight_decay']),
             learning_rate_decay=float(configuration['training']['learning_rate_decay']),
@@ -52,6 +54,7 @@ class InputConfig:
     data_frequency: Frequency
     window_size: int
     validation_split: float
+    render_prices: bool
 
     @property
     def start_datetime_seconds(self) -> int:
@@ -71,6 +74,7 @@ class TrainingConfig:
     agent: str
     steps: int
     validation_every_step: int
+    save_every_step: int
     learning_rate: float
     weight_decay: float
     learning_rate_decay: float

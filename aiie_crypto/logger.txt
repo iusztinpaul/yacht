@@ -1,0 +1,66 @@
+INFO:D:\Projects\yacht\yacht\data\loaders\base.py:Starting loading all the data for: TrainDataLoader
+INFO:D:\Projects\yacht\yacht\data\loaders\base.py:Cached all data in: 23.66 seconds
+INFO:D:\Projects\yacht\yacht\data\loaders\base.py:Starting loading all the data for: ValidationDataLoader
+INFO:D:\Projects\yacht\yacht\data\loaders\base.py:Cached all data in: 22.24 seconds
+INFO:D:\Projects\yacht\yacht\agents\eiie.py:Training...
+INFO:D:\Projects\yacht\yacht\data\loaders\base.py:Starting loading all the data for: TrainDataLoader
+INFO:D:\Projects\yacht\yacht\data\loaders\base.py:Cached all data in: 23.45 seconds
+INFO:D:\Projects\yacht\yacht\data\loaders\base.py:Starting loading all the data for: ValidationDataLoader
+INFO:D:\Projects\yacht\yacht\data\loaders\base.py:Cached all data in: 22.15 seconds
+INFO:D:\Projects\yacht\yacht\agents\eiie.py:Training...
+INFO:root:
+ Step [1000 - 1.25%] - Portfolio value: 2.2403008937835693
+INFO:root: Step [1000 - 1.25] - Sharp ratio: 1.0002405643463135
+
+INFO:root:
+ Step [2000 - 2.5%] - Portfolio value: 2.5306196212768555
+INFO:root: Step [2000 - 2.5] - Sharp ratio: 1.0002285242080688
+
+INFO:root:
+ Step [3000 - 3.75%] - Portfolio value: 3.0627899169921875
+INFO:root: Step [3000 - 3.75] - Sharp ratio: 1.0002082586288452
+
+INFO:root:
+ Step [4000 - 5.0%] - Portfolio value: 3.063300609588623
+INFO:root: Step [4000 - 5.0] - Sharp ratio: 1.0002081394195557
+
+INFO:root:
+ Step [5000 - 6.25%] - Portfolio value: 3.492363452911377
+INFO:root: Step [5000 - 6.25] - Sharp ratio: 1.0001943111419678
+
+INFO:root:
+ Step [6000 - 7.5%] - Portfolio value: 3.689059257507324
+INFO:root: Step [6000 - 7.5] - Sharp ratio: 1.0001885890960693
+
+INFO:root:
+ Step [7000 - 8.75%] - Portfolio value: 3.8698670864105225
+INFO:root: Step [7000 - 8.75] - Sharp ratio: 1.0001837015151978
+
+INFO:root:
+ Step [8000 - 10.0%] - Portfolio value: 3.9376158714294434
+INFO:root: Step [8000 - 10.0] - Sharp ratio: 1.0001819133758545
+
+INFO:root:
+ Step [9000 - 11.25%] - Portfolio value: 4.710320472717285
+INFO:root: Step [9000 - 11.25] - Sharp ratio: 1.0001643896102905
+
+INFO:root:
+ Step [10000 - 12.5%] - Portfolio value: 5.198890686035156
+INFO:root: Step [10000 - 12.5] - Sharp ratio: 1.0001550912857056
+
+INFO:root:
+ Step [11000 - 13.750000000000002%] - Portfolio value: 6.258948802947998
+INFO:root: Step [11000 - 13.750000000000002] - Sharp ratio: 1.0001388788223267
+
+INFO:root:
+ Step [12000 - 15.0%] - Portfolio value: 7.861478805541992
+INFO:root: Step [12000 - 15.0] - Sharp ratio: 1.0001202821731567
+
+INFO:root:
+ Step [13000 - 16.25%] - Portfolio value: 9.81198501586914
+INFO:root: Step [13000 - 16.25] - Sharp ratio: 1.000104308128357
+
+INFO:root:
+ Step [14000 - 17.5%] - Portfolio value: 11.324344635009766
+INFO:root: Step [14000 - 17.5] - Sharp ratio: 1.0000948905944824
+
