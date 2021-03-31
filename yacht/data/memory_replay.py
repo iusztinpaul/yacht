@@ -53,12 +53,12 @@ class MemoryReplayBuffer:
         return data_span
 
     def get_experience(self) -> datetime:
-        # We start from 1, because we need to be able to get 'previous_weights' in any state possible.
+        # We start from 0, because the portfolio should be able to give us 'previous_weights' at T=0 where Cash=1.
         # We go until 'end', because we need data to sample the required batches with their window_sizes & offsets.
 
         end = len(self._data_span) - (self._batch_size - 1) - self._window_size - self._window_size_offset
         random_index = self._sample_random_index(
-            1,
+            0,
             end
         )
 

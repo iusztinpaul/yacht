@@ -66,7 +66,11 @@ class InputConfig:
 
     @property
     def data_span(self) -> List[int]:
-        return list(range(self.start_datetime_seconds, self.end_datetime_seconds + 1, self.data_frequency.seconds))
+        return list(range(
+            self.start_datetime_seconds,
+            self.end_datetime_seconds + 1,
+            self.data_frequency.seconds
+        ))
 
 
 @dataclass

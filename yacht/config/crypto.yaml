@@ -7,7 +7,7 @@ input:
   data_frequency: "30M"
   window_size: 31
   validation_split: 0.08
-  render_prices: True
+  render_prices: False
 training:
   agent: "EIIEAgent"
   steps: 80000

@@ -1,6 +1,7 @@
 import glob
 import os
 import logging
+from pathlib import Path
 
 import torch
 
@@ -77,6 +78,8 @@ class BaseAgent:
         return optimizer, scheduler
 
     def save_network(self, step: int, loss: torch.Tensor):
+        if not os.path.exists(self.model_path):
+            os.mkdir(self.model_path)
         checkpoint_path = os.path.join(self.model_path, f'step_{step}.checkpoint')
 
         torch.save(
