@@ -1,4 +1,6 @@
 import argparse
+import os
+import shutil
 from pathlib import Path
 
 import utils
@@ -26,6 +28,7 @@ if __name__ == '__main__':
     )
 
     config = Config(args.config_file)
+    shutil.copy(args.config_file, args.storage_path)
 
     environment = build_environment(config=config)
     agent = build_agent(environment, config, args.storage_path, args.resume_training)

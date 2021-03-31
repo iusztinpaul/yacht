@@ -5,8 +5,8 @@ import torch
 
 from torch import nn, Tensor
 
-from agents.networks import layers
-from agents.networks.losses import mean_log_of_pv_vector
+from agents.strategies import layers
+from agents.strategies.losses import mean_log_of_pv_vector
 
 
 logger = logging.getLogger(__file__)

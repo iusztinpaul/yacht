@@ -30,7 +30,7 @@ class BaseAgent:
         self.storage_path = storage_path
         self.model_path = os.path.join(self.storage_path, 'model')
 
-        self.network = self.build_network(environment, config)
+        self.strategy = self.build_strategy(environment, config)
         self.optimizer, self.scheduler = self.build_scheduler()
 
         self.start_training_step = 0
@@ -38,7 +38,7 @@ class BaseAgent:
         if resume_training:
             self.start_training_step = self.load_network()
 
-    def build_network(self, environment: Environment, config: Config):
+    def build_strategy(self, environment: Environment, config: Config):
         raise NotImplementedError()
 
     def train(self):
@@ -65,7 +65,7 @@ class BaseAgent:
         training_config = self.config.training_config
 
         optimizer = optim.Adam(
-            params=self.network.params,
+            params=self.strategy.params,
             lr=training_config.learning_rate,
             weight_decay=training_config.weight_decay
         )
@@ -85,7 +85,7 @@ class BaseAgent:
         torch.save(
             {
                 'step': step,
-                'model_state_dict': self.network.state_dict(),
+                'model_state_dict': self.strategy.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
                 'loss': loss
             },
@@ -106,7 +106,7 @@ class BaseAgent:
             checkpoint = torch.load(last_checkpoint_path)
 
             logger.info(f'Resuming training from step {checkpoint["step"]} out of {self.config.training_config.steps}')
-            self.network.load_state_dict(checkpoint['model_state_dict'])
+            self.strategy.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
             return checkpoint['step']

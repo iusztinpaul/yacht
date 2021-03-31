@@ -3,7 +3,7 @@ import logging
 import torch
 
 from agents import BaseAgent
-from agents.networks import EIIENetwork
+from agents.strategies import EIIENetwork
 from config import Config
 from environment.environment import Environment
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(__file__)
 
 
 class EIIEAgent(BaseAgent):
-    def build_network(self, environment: Environment, config: Config):
+    def build_strategy(self, environment: Environment, config: Config):
         market = environment.market
 
         network = EIIENetwork(
@@ -34,8 +34,8 @@ class EIIEAgent(BaseAgent):
 
             X, y, last_w, batch_new_w_datetime = self.get_train_data()
 
-            new_w = self.network(X, last_w)
-            loss = self.network.compute_loss(new_w, y)
+            new_w = self.strategy(X, last_w)
+            loss = self.strategy.compute_loss(new_w, y)
 
             loss.backward()
             self.optimizer.step()
@@ -47,15 +47,15 @@ class EIIEAgent(BaseAgent):
             self.environment.set_portfolio_weights(batch_new_w_datetime, new_w)
 
             if step % training_config.validation_every_step == 0 and step != 0:
-                self.network.train(mode=False)
+                self.strategy.train(mode=False)
                 with torch.no_grad():
                     X_val, y_val, last_w_val, batch_new_w_datetime_val = self.get_validation_data()
 
-                    new_w_val = self.network(X_val, last_w_val)
-                    metrics = self.network.compute_metrics(new_w_val, y_val)
+                    new_w_val = self.strategy(X_val, last_w_val)
+                    metrics = self.strategy.compute_metrics(new_w_val, y_val)
                     self.log_metrics(step, metrics)
 
-                self.network.train(mode=True)
+                self.strategy.train(mode=True)
 
             if step % training_config.save_every_step == 0 and step != 0:
                 self.save_network(step, loss)
