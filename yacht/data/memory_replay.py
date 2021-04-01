@@ -31,13 +31,13 @@ class MemoryReplayBuffer:
         self._data_span = self._create_datetime_span()
 
     @staticmethod
-    def from_config(input_config: InputConfig, training_config: TrainingConfig, window_size_offset: int):
+    def from_config(input_config: InputConfig, window_size_offset: int):
         return MemoryReplayBuffer(
             start=input_config.start_datetime,
             end=input_config.end_datetime,
-            batch_size=training_config.batch_size,
+            batch_size=input_config.batch_size,
             windows_size=input_config.window_size,
-            sample_bias=training_config.buffer_biased,
+            sample_bias=input_config.buffer_biased,
             data_frequency=input_config.data_frequency,
             window_size_offset=window_size_offset
         )

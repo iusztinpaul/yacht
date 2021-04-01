@@ -2,7 +2,7 @@ import logging
 
 import torch
 
-from agents import BaseAgent
+from .base import TrainBaseAgent, BackTestBaseAgent
 from agents.strategies import EIIENetwork
 from config import Config
 from environment.environment import Environment
@@ -11,7 +11,7 @@ from environment.environment import Environment
 logger = logging.getLogger(__file__)
 
 
-class EIIEAgent(BaseAgent):
+class TrainEIIEAgent(TrainBaseAgent):
     def build_strategy(self, environment: Environment, config: Config):
         market = environment.market
 
@@ -29,15 +29,16 @@ class EIIEAgent(BaseAgent):
         training_config = self.config.training_config
 
         logger.info('Training...')
-        for step in range(self.start_training_step, training_config.steps):
+        for step in range(self.start_training_step, training_config.steps + 1):
+            self.current_step = step
             self.optimizer.zero_grad()
 
             X, y, last_w, batch_new_w_datetime = self.get_train_data()
 
             new_w = self.strategy(X, last_w)
-            loss = self.strategy.compute_loss(new_w, y)
+            self.loss = self.strategy.compute_loss(new_w, y)
 
-            loss.backward()
+            self.loss.backward()
             self.optimizer.step()
 
             if step % training_config.learning_rate_decay_steps:
@@ -58,8 +59,29 @@ class EIIEAgent(BaseAgent):
                 self.strategy.train(mode=True)
 
             if step % training_config.save_every_step == 0 and step != 0:
-                self.save_network(step, loss)
+                self.save_network(step, self.loss)
+
+        if self.current_step % training_config.save_every_step != 0:
+            self.save_network(self.current_step, self.loss)
 
     def log_metrics(self, step: int, metrics: dict):
         self.log(step, f'Portfolio value: {metrics["portfolio_value"].detach().cpu().numpy()}')
         self.log(step, f'Sharp ratio: {metrics["sharp_ratio"].detach().cpu().numpy()}\n')
+
+
+class BackTestEIIEAgent(BackTestBaseAgent):
+    def build_strategy(self, environment: Environment, config: Config):
+        market = environment.market
+
+        network = EIIENetwork(
+            num_features=len(market.features),
+            num_assets=len(market.tickers),
+            window_size=config.input_config.window_size,
+            commission=market.commission
+        )
+        network = network.to(config.hardware_config.device)
+
+        return network
+
+    def trade(self):
+        pass

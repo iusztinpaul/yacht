@@ -1,6 +1,7 @@
 import glob
 import os
 import logging
+from functools import partial
 from pathlib import Path
 
 import torch
@@ -22,7 +23,6 @@ class BaseAgent:
             environment: Environment,
             config: Config,
             storage_path: str,
-            resume_training: bool = False
     ):
         self.environment = environment
         self.config = config
@@ -31,26 +31,13 @@ class BaseAgent:
         self.model_path = os.path.join(self.storage_path, 'model')
 
         self.strategy = self.build_strategy(environment, config)
-        self.optimizer, self.scheduler = self.build_scheduler()
 
-        self.start_training_step = 0
-        self.resume_training = resume_training
-        if resume_training:
-            self.start_training_step = self.load_network()
+        self.current_step = 0
 
     def build_strategy(self, environment: Environment, config: Config):
         raise NotImplementedError()
 
-    def train(self):
-        raise NotImplementedError()
-
-    def get_train_data(self):
-        return self._get_data(self.environment.next_batch_train)
-
-    def get_validation_data(self):
-        return self._get_data(self.environment.batch_val)
-
-    def _get_data(self, loader_function):
+    def _call_loader(self, loader_function):
         hardware_config = self.config.hardware_config
 
         X, y, last_w, batch_new_w_datetime = loader_function()
@@ -60,6 +47,60 @@ class BaseAgent:
         last_w = torch.from_numpy(last_w).to(hardware_config.device)
 
         return X, y, last_w, batch_new_w_datetime
+
+    def load_network(self):
+        def _extract_step_from(checkpoint_path: str) -> int:
+            return int(os.path.split(checkpoint_path)[1].split('.')[0].split('_')[1])
+
+        checkpoints = sorted(
+            glob.glob(os.path.join(self.model_path, '*.checkpoint')),
+            key=lambda checkpoint_path: _extract_step_from(checkpoint_path)
+        )
+        if len(checkpoints) > 0:
+            last_checkpoint_path = checkpoints[-1]
+
+            checkpoint = torch.load(last_checkpoint_path)
+
+            logger.info(f'Resuming training from step {checkpoint["step"]} out of {self.config.training_config.steps}')
+            self.strategy.load_state_dict(checkpoint['model_state_dict'])
+            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+            return checkpoint['step']
+        else:
+            raise RuntimeError(f'No checkpoint to load from {self.model_path}. Maybe set "resume_training" to "false"')
+
+    def log(self, step, message: str):
+        total_steps = self.config.training_config.steps
+
+        logger.info(f'Step [{step} - {round(step / total_steps, 4) * 100}%] - {message}')
+
+
+class TrainBaseAgent(BaseAgent):
+    def __init__(
+            self,
+            environment: Environment,
+            config: Config,
+            storage_path: str,
+            resume_training: bool = False
+    ):
+        super(TrainBaseAgent, self).__init__(environment, config, storage_path)
+
+        self.optimizer, self.scheduler = self.build_scheduler()
+        self.loss = None
+
+        self.start_training_step = 0
+        self.resume_training = resume_training
+        if resume_training:
+            self.start_training_step = self.load_network()
+
+    def train(self):
+        raise NotImplementedError()
+
+    def get_train_data(self):
+        return self._call_loader(partial(self.environment.next, reason='train'))
+
+    def get_validation_data(self):
+        return self._call_loader(partial(self.environment.next, reason='validation'))
 
     def build_scheduler(self) -> Tuple[optim.Optimizer, optim.lr_scheduler._LRScheduler]:
         training_config = self.config.training_config
@@ -92,28 +133,10 @@ class BaseAgent:
             checkpoint_path
         )
 
-    def load_network(self):
-        def _extract_step_from(checkpoint_path: str) -> int:
-            return int(os.path.split(checkpoint_path)[1].split('.')[0].split('_')[1])
 
-        checkpoints = sorted(
-            glob.glob(os.path.join(self.model_path, '*.checkpoint')),
-            key=lambda checkpoint_path: _extract_step_from(checkpoint_path)
-        )
-        if len(checkpoints) > 0:
-            last_checkpoint_path = checkpoints[-1]
+class BackTestBaseAgent(BaseAgent):
+    def trade(self):
+        raise NotImplementedError()
 
-            checkpoint = torch.load(last_checkpoint_path)
-
-            logger.info(f'Resuming training from step {checkpoint["step"]} out of {self.config.training_config.steps}')
-            self.strategy.load_state_dict(checkpoint['model_state_dict'])
-            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-
-            return checkpoint['step']
-        else:
-            raise RuntimeError(f'No checkpoint to load from {self.model_path}. Maybe set "resume_training" to "false"')
-
-    def log(self, step, message: str):
-        total_steps = self.config.training_config.steps
-
-        logger.info(f'Step [{step} - {round(step / total_steps, 4) * 100}%] - {message}')
+    def get_back_test_data(self):
+        return self._call_loader(partial(self.environment.next, reason='back_test'))

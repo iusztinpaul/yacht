@@ -20,7 +20,6 @@ class BaseDataLoader:
             renderer: BaseRenderer,
             input_config: InputConfig,
             window_size_offset: int = 1,
-            render_prices: bool = True
     ):
         self.market = market
         self.renderer = renderer
@@ -34,7 +33,7 @@ class BaseDataLoader:
             finish_time = time.time()
             logger.info(f'Cached all data in: {round(finish_time - start_time, 2)} seconds')
 
-        if render_prices:
+        if input_config.render_prices:
             self.renderer.time_series(
                 self.market.assets,
                 self.market.features,

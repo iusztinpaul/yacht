@@ -1,45 +1,47 @@
-from copy import copy
+from typing import Dict
 
-import utils
 from config import Config
+from .backtest import BackTestDataLoader
 from .base import *
 from .trainval import TrainDataLoader, ValidationDataLoader
 
 
-def build_data_loaders(market: BaseMarket, renderer: BaseRenderer, config: Config):
-    train_input_config = copy(config.input_config)
-    val_input_config = copy(config.input_config)
+def get_data_loader_builder(reason: str):
+    return {
+        'train': build_train_data_loaders,
+        'back_test': build_back_test_data_loader
+    }[reason]
 
-    (start_split_train, end_split_train), (start_split_val, end_split_val) = utils.split_datetime_span(
-        start_datetime=config.input_config.start_datetime,
-        end_datetime=config.input_config.end_datetime,
-        split=config.input_config.validation_split,
-        frequency=config.input_config.data_frequency
-    )
 
-    end_split_train = end_split_train - (
-            config.input_config.data_frequency.timedelta * (config.input_config.window_size + 1)
-    )
-    train_input_config.start_datetime = start_split_train
-    train_input_config.end_datetime = end_split_train
-    train_input_config.validation_split = 0
-
-    val_input_config.start_datetime = start_split_val
-    val_input_config.end_datetime = end_split_val
-    val_input_config.validation_split = 1
+def build_train_data_loaders(market: BaseMarket, renderer: BaseRenderer, config: Config) -> Dict[str, BaseDataLoader]:
+    train_input_config, val_input_config = config.input_config.split_span()
 
     train_data_loader = TrainDataLoader(
         market=market,
         renderer=renderer,
         input_config=train_input_config,
-        training_config=config.training_config,
-        render_prices=train_input_config.render_prices
     )
     val_data_loader = ValidationDataLoader(
         market=market,
         renderer=renderer,
         input_config=val_input_config,
-        render_prices=val_input_config.render_prices
     )
 
-    return train_data_loader, val_data_loader
+    return {
+        'train': train_data_loader,
+        'validation': val_data_loader
+    }
+
+
+def build_back_test_data_loader(market: BaseMarket, renderer: BaseRenderer, config: Config) -> Dict[str, BaseDataLoader]:
+    _, back_test_input_config = config.input_config.split_span()
+
+    back_test_loader = BackTestDataLoader(
+        market=market,
+        renderer=renderer,
+        input_config=back_test_input_config,
+    )
+
+    return {
+        'back_test': back_test_loader
+    }

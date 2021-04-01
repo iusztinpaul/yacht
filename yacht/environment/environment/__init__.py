@@ -1,42 +1,58 @@
 from datetime import datetime
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 
 import numpy as np
 
 from config import Config
-from data.loaders import build_data_loaders, BaseDataLoader
+from data.loaders import BaseDataLoader, get_data_loader_builder
 from data.market import build_market, BaseMarket
 from data.renderers import build_renderer
 from environment.portfolios import build_portfolio, Portfolio
 
 
 class Environment:
+    SUPPORTED_LOADER_KEYS = ['train', 'validation', 'back_test']
+
     def __init__(
             self,
             portfolio: Portfolio,
             reward_scheme,
             action_scheme,
-            train_data_loader: BaseDataLoader,
-            validation_data_loader: BaseDataLoader
+            loaders: Dict[str, BaseDataLoader]
     ):
-        assert train_data_loader.market == validation_data_loader.market, \
-            'Loaders should take data from the same market.'
+        self.loaders, self.loaders_market = self._assert_loaders(loaders)
 
         self.portfolio = portfolio
         self.reward_scheme = reward_scheme
         self.action_scheme = action_scheme
-        self.train_data_loader = train_data_loader
-        self.validation_data_loader = validation_data_loader
+
+    def _assert_loaders(self, loaders: Dict[str, BaseDataLoader]) -> Tuple[Dict[str, BaseDataLoader], BaseMarket]:
+        loader_items = list(loaders.items())
+
+        def _assert(idx: int):
+            previous_loader_key = loader_items[idx - 1][0]
+            assert previous_loader_key in self.SUPPORTED_LOADER_KEYS, \
+                f'Loader key: {previous_loader_key} not in {self.SUPPORTED_LOADER_KEYS}'
+
+            assert isinstance(loader_items[idx - 1][1], BaseDataLoader)
+
+        for idx in range(1, len(loaders.values())):
+            _assert(idx - 1)
+            _assert(idx)
+
+            assert loader_items[idx - 1][1].market == loader_items[idx][1].market, \
+                'Loaders should take data from the same market.'
+
+        market = loader_items[0][1].market
+
+        return loaders, market
 
     @property
     def market(self) -> BaseMarket:
-        return self.train_data_loader.market
+        return self.loaders_market
 
-    def next_batch_train(self):
-        return self._next_batch(self.train_data_loader)
-
-    def batch_val(self):
-        return self._next_batch(self.validation_data_loader)
+    def next(self, reason: str):
+        return self._next_batch(self.loaders[reason])
 
     def _next_batch(self, data_loader: BaseDataLoader):
         X, y, batch_start_datetime = data_loader.next_batch()
@@ -57,10 +73,11 @@ class Environment:
         self.portfolio.set_weights_at(index, weights)
 
 
-def build_environment(config: Config) -> Environment:
+def build_environment(config: Config, reason: str) -> Environment:
     market = build_market(config=config)
     renderer = build_renderer()
-    training_data_loader, validation_data_loader = build_data_loaders(
+    data_loader_builder = get_data_loader_builder(reason)
+    loaders = data_loader_builder(
         market=market,
         renderer=renderer,
         config=config
@@ -71,8 +88,7 @@ def build_environment(config: Config) -> Environment:
         portfolio=portfolio,
         reward_scheme=None,
         action_scheme=None,
-        train_data_loader=training_data_loader,
-        validation_data_loader=validation_data_loader
+        loaders=loaders
     )
 
     return environment
