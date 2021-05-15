@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package yacht.config.proto;
+
+import "yacht/config/proto/input.proto";
+import "yacht/config/proto/agent.proto";
+import "yacht/config/proto/train.proto";
+
+message Config {
+   InputConfig input = 1;
+   AgentConfig agent = 2;
+   TrainConfig train = 3;
+}

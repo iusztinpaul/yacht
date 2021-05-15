@@ -1,0 +1,29 @@
+input: {
+    market: 'Binance'
+    dataset: 'DayForecastDataset'
+    env: 'DayForecastEnv'
+    tickers: ['BTC']
+    intervals: ['1d', '1h', '30m']
+    start: '18/8/2017'
+    end: '1/1/2021'
+    window_size: 10
+}
+agent: {
+    name: 'PPO'
+    verbose: 1
+    feature_extractor: {
+        name: 'MultipleTimeFramesFeatureExtractor'
+        features_dim: 64
+    }
+    backbone: {
+        name: 'DayForecastNetwork'
+        features_dim: 64
+    }
+}
+train: {
+    timestamps: 1000000
+    learning_rate: 0.0003
+    n_steps: 2048
+    batch_size: 64
+    n_epochs: 10
+}

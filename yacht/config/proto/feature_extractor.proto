@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package yacht.config.proto;
+
+
+message FeatureExtractorConfig {
+    string name = 1;
+    int32 features_dim = 2;
+}

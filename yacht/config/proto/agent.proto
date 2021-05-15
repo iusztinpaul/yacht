@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package yacht.config.proto;
+
+import "yacht/config/proto/feature_extractor.proto";
+import "yacht/config/proto/backbone.proto";
+
+message AgentConfig {
+  string name = 1;
+  int32 verbose = 2;
+  FeatureExtractorConfig feature_extractor = 3;
+  BackboneConfig backbone = 4;
+}
