@@ -10,7 +10,8 @@ message InputConfig {
   string normalizer = 4;
   repeated string tickers = 5;
   repeated string intervals = 6;
-  string start = 7;
-  string end = 8;
-  int32 window_size = 9;
+  repeated string features = 7;
+  string start = 8;
+  string end = 9;
+  int32 window_size = 10;
 }

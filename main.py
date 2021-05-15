@@ -45,6 +45,7 @@ if __name__ == '__main__':
         # TODO: See what the other parameters are doing.
         agent.learn(config.train.episodes)
 
-    eval.run_agent(env, agent)
+    if config.meta.back_test:
+        eval.run_agent(env, agent)
 
     env.close()

@@ -22,6 +22,7 @@ def build_dataset(input_config, storage_path) -> TradingDataset:
         market=market,
         ticker=ticker,
         intervals=input_config.intervals,
+        features=input_config.features,
         start=start,
         end=end
     )

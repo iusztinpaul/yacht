@@ -8,8 +8,10 @@ class Normalizer:
 
 class LastClosingPriceNormalizer:
     def __call__(self, prices: np.array):
-        # The first element in the second dimension is the closing price for the `1d` interval.
-        last_closing_price = prices[-1][0]
+        # window_size x concatenated_day_units x features
+        # concatenated_day_units[0] = 1d unit
+        # features[0] = closing price
+        last_closing_price = prices[-1][0][0]
         prices = prices / last_closing_price
 
         return prices

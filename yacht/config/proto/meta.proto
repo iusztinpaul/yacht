@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package yacht.config.proto;
+
+message MetaConfig {
+  bool back_test = 1;
+}

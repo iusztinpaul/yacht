@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -14,13 +14,11 @@ logger = logging.getLogger(__file__)
 class DayForecastDataset(TradingDataset):
     INTERVAL_TO_DAY_BAR_UNITS = {
         '1d': 1,
+        '12h': 2,
+        '6h': 4,
         '1h': 24,
-        '30m': 48
-    }
-    NANOSECONDS_TO_BAR_UNIT_PER_DAY = {
-        86400000000000: 1,  # 1 day.config.txt bar
-        3600000000000: 24,  # 1 hour bar
-        1800000000000: 2 * 24  # 30 min bar
+        '30m': 48,
+        '15m': 96
     }
 
     def __init__(
@@ -28,13 +26,13 @@ class DayForecastDataset(TradingDataset):
             market: Market,
             ticker: str,
             intervals: List[str],
+            features: List[str],
             start: datetime,
             end: datetime,
     ):
-        assert '1d' == intervals[0], 'One day bar interval is mandatory to exist & to be at the first position.'
         assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
 
-        super().__init__(market, ticker, intervals, start, end)
+        super().__init__(market, ticker, intervals, features, start, end)
 
         logger.info(
             f'Downloading & loading data in memory for ticker - {ticker} - '
@@ -51,12 +49,14 @@ class DayForecastDataset(TradingDataset):
     def get_prices(self) -> np.array:
         return self.data['1d'].loc[:, 'Close']
 
-    def get_features_observation_space_shape(self) -> int:
-        shape = 0
+    def get_features_observation_space_shape(self) -> List[int]:
+        interval_shape = 0
         for interval in self.current_intervals:
-            shape += self.INTERVAL_TO_DAY_BAR_UNITS[interval]
+            interval_shape += self.INTERVAL_TO_DAY_BAR_UNITS[interval]
 
-        return shape
+        price_features_shape = len(self.features)
+
+        return [interval_shape, price_features_shape]
 
     @classmethod
     def get_day_bar_units_for(cls, interval: str) -> int:
@@ -71,17 +71,17 @@ class DayForecastDataset(TradingDataset):
         return list(self.INTERVAL_TO_DAY_BAR_UNITS.keys())
 
     def __getitem__(self, day_index):
-        features = np.empty(shape=(0, ))
+        item = np.empty(shape=(0, len(self.features)))
         for interval in self.current_intervals:
             bars_per_day = self.INTERVAL_TO_DAY_BAR_UNITS[interval]
             start_index = day_index * bars_per_day
             end_index = (day_index + 1) * bars_per_day
 
-            close_prices = self.data[interval].loc[:, 'Close'].values[start_index: end_index]
+            features = self.data[interval][self.features].iloc[start_index: end_index].values
 
-            features = np.concatenate([
-                features,
-                close_prices
+            item = np.concatenate([
+                item,
+                features
             ])
 
-        return features
+        return item

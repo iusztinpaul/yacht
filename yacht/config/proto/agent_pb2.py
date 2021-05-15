@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1eyacht/config/proto/agent.proto\x12\x12yacht.config.proto\x1a*yacht/config/proto/feature_extractor.proto\x1a!yacht/config/proto/backbone.proto\"\xa9\x01\n\x0b\x41gentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x05\x12\x45\n\x11\x66\x65\x61ture_extractor\x18\x03 \x01(\x0b\x32*.yacht.config.proto.FeatureExtractorConfig\x12\x34\n\x08\x62\x61\x63kbone\x18\x04 \x01(\x0b\x32\".yacht.config.proto.BackboneConfigb\x06proto3'
+  serialized_pb=b'\n\x1eyacht/config/proto/agent.proto\x12\x12yacht.config.proto\x1a*yacht/config/proto/feature_extractor.proto\x1a!yacht/config/proto/backbone.proto\"\xa9\x01\n\x0b\x41gentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\x12\x45\n\x11\x66\x65\x61ture_extractor\x18\x03 \x01(\x0b\x32*.yacht.config.proto.FeatureExtractorConfig\x12\x34\n\x08\x62\x61\x63kbone\x18\x04 \x01(\x0b\x32\".yacht.config.proto.BackboneConfigb\x06proto3'
   ,
   dependencies=[yacht_dot_config_dot_proto_dot_feature__extractor__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_backbone__pb2.DESCRIPTOR,])
 
@@ -45,8 +45,8 @@ _AGENTCONFIG = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
       name='verbose', full_name='yacht.config.proto.AgentConfig.verbose', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
+      number=2, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),

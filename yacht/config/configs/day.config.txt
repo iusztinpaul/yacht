@@ -4,27 +4,31 @@ input: {
     env: 'DayForecastEnv'
     normalizer: 'LastClosingPriceNormalizer'
     tickers: ['BTC']
-    intervals: ['1d', '1h', '30m']
+    intervals: ['1d', '6h', '1h', '30m']
+    features: ['Close', 'High', 'Low']
     start: '18/8/2017'
     end: '1/1/2021'
     window_size: 10
 }
 agent: {
     name: 'PPO'
-    verbose: 1
+    verbose: true
     feature_extractor: {
         name: 'MultipleTimeFramesFeatureExtractor'
-        features_dim: 64
+        output_features_dim: 64
     }
     backbone: {
         name: 'DayForecastNetwork'
-        features_dim: 64
+        input_features_dim: 64
     }
 }
 train: {
-    episodes: 100
+    episodes: 10000
     learning_rate: 0.0003
     n_steps: 2048
     batch_size: 64
     n_epochs: 10
+}
+meta: {
+    back_test: true
 }

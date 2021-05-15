@@ -14,6 +14,7 @@ _sym_db = _symbol_database.Default()
 from yacht.config.proto import input_pb2 as yacht_dot_config_dot_proto_dot_input__pb2
 from yacht.config.proto import agent_pb2 as yacht_dot_config_dot_proto_dot_agent__pb2
 from yacht.config.proto import train_pb2 as yacht_dot_config_dot_proto_dot_train__pb2
+from yacht.config.proto import meta_pb2 as yacht_dot_config_dot_proto_dot_meta__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -22,9 +23,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1fyacht/config/proto/config.proto\x12\x12yacht.config.proto\x1a\x1eyacht/config/proto/input.proto\x1a\x1eyacht/config/proto/agent.proto\x1a\x1eyacht/config/proto/train.proto\"\x98\x01\n\x06\x43onfig\x12.\n\x05input\x18\x01 \x01(\x0b\x32\x1f.yacht.config.proto.InputConfig\x12.\n\x05\x61gent\x18\x02 \x01(\x0b\x32\x1f.yacht.config.proto.AgentConfig\x12.\n\x05train\x18\x03 \x01(\x0b\x32\x1f.yacht.config.proto.TrainConfigb\x06proto3'
+  serialized_pb=b'\n\x1fyacht/config/proto/config.proto\x12\x12yacht.config.proto\x1a\x1eyacht/config/proto/input.proto\x1a\x1eyacht/config/proto/agent.proto\x1a\x1eyacht/config/proto/train.proto\x1a\x1dyacht/config/proto/meta.proto\"\xc6\x01\n\x06\x43onfig\x12.\n\x05input\x18\x01 \x01(\x0b\x32\x1f.yacht.config.proto.InputConfig\x12.\n\x05\x61gent\x18\x02 \x01(\x0b\x32\x1f.yacht.config.proto.AgentConfig\x12.\n\x05train\x18\x03 \x01(\x0b\x32\x1f.yacht.config.proto.TrainConfig\x12,\n\x04meta\x18\x04 \x01(\x0b\x32\x1e.yacht.config.proto.MetaConfigb\x06proto3'
   ,
-  dependencies=[yacht_dot_config_dot_proto_dot_input__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_agent__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_train__pb2.DESCRIPTOR,])
+  dependencies=[yacht_dot_config_dot_proto_dot_input__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_agent__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_train__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_meta__pb2.DESCRIPTOR,])
 
 
 
@@ -58,6 +59,13 @@ _CONFIG = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='meta', full_name='yacht.config.proto.Config.meta', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -70,13 +78,14 @@ _CONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=152,
-  serialized_end=304,
+  serialized_start=183,
+  serialized_end=381,
 )
 
 _CONFIG.fields_by_name['input'].message_type = yacht_dot_config_dot_proto_dot_input__pb2._INPUTCONFIG
 _CONFIG.fields_by_name['agent'].message_type = yacht_dot_config_dot_proto_dot_agent__pb2._AGENTCONFIG
 _CONFIG.fields_by_name['train'].message_type = yacht_dot_config_dot_proto_dot_train__pb2._TRAINCONFIG
+_CONFIG.fields_by_name['meta'].message_type = yacht_dot_config_dot_proto_dot_meta__pb2._METACONFIG
 DESCRIPTOR.message_types_by_name['Config'] = _CONFIG
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 

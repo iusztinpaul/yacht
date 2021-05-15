@@ -7,7 +7,7 @@ import "yacht/config/proto/backbone.proto";
 
 message AgentConfig {
   string name = 1;
-  int32 verbose = 2;
+  bool verbose = 2;
   FeatureExtractorConfig feature_extractor = 3;
   BackboneConfig backbone = 4;
 }

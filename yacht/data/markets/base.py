@@ -5,13 +5,13 @@ from datetime import datetime
 from typing import Union, List, Any
 
 import pandas as pd
-from tqdm import tqdm
 
 
 logger = logging.getLogger(__file__)
 
 
 class Market(ABC):
+    # TODO: Hook those column to the features from the config
     COLUMNS = (
         'Open',
         'High',
@@ -63,13 +63,14 @@ class Market(ABC):
         if isinstance(tickers, str):
             tickers = [tickers]
 
-        logger.info('Downloading...')
-        for ticker in tqdm(tickers):
+        for ticker in tickers:
             self._download(ticker, interval, start, end)
 
     def _download(self, ticker: str, interval: str, start: datetime, end: datetime = None):
         if self.is_cached(interval, start, end):
             return
+
+        logger.info(f'[{interval}] - {ticker} - Downloading from "{start}" to "{end}"')
 
         data = self.request(ticker, interval, start, end)
         data = self.process_request(data)

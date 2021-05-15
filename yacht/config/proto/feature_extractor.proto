@@ -5,5 +5,5 @@ package yacht.config.proto;
 
 message FeatureExtractorConfig {
     string name = 1;
-    int32 features_dim = 2;
+    int32 output_features_dim = 2;
 }

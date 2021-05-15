@@ -1,7 +1,6 @@
 import gym
 import pandas as pd
 from gym import spaces
-from gym.utils import seeding
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -22,7 +21,7 @@ class TradingEnv(gym.Env):
 
         # spaces
         self.action_space = spaces.Discrete(len(Actions))
-        self.observation_space_shape = (self.window_size, self.dataset.get_features_observation_space_shape())
+        self.observation_space_shape = (self.window_size, *self.dataset.get_features_observation_space_shape())
         self.observation_space = spaces.Box(
             low=-np.inf,
             high=np.inf,

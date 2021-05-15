@@ -40,13 +40,15 @@ def build_agent(config, env: TradingEnv) -> BaseAlgorithm:
         'activation_fn': nn.ReLU,
         'backbone_class': backbone_class,
         'backbone_kwargs': {
-            'features_dim': backbone_config.features_dim,
+            'features_dim': backbone_config.input_features_dim,
             'window_size': input_config.window_size,
+            'intervals': input_config.intervals
         },
         'features_extractor_class': feature_extractor_class,
         'features_extractor_kwargs': {
-            'features_dim': feature_extractor_config.features_dim,
-            'intervals': input_config.intervals
+            'features_dim': feature_extractor_config.output_features_dim,
+            'intervals': input_config.intervals,
+            'features': input_config.features
         }
     }
 
