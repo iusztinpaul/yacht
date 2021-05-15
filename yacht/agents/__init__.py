@@ -1,6 +1,8 @@
 from stable_baselines3 import PPO
+from stable_baselines3.common.base_class import BaseAlgorithm
 from torch import nn
 
+from yacht import utils
 from yacht.agents.modules.day import MultipleTimeFramesFeatureExtractor, DayForecastNetwork
 from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.environments import TradingEnv
@@ -20,7 +22,7 @@ backbone_registry = {
 }
 
 
-def build_agent(config, env: TradingEnv):
+def build_agent(config, env: TradingEnv) -> BaseAlgorithm:
     agent_config = config.agent
     backbone_config = agent_config.backbone
     feature_extractor_config = agent_config.feature_extractor

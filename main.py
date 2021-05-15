@@ -2,11 +2,10 @@ import argparse
 import logging
 import os
 
-import matplotlib.pyplot as plt
 
 from yacht.config import load_config
 from yacht.environments import build_env
-from yacht import utils
+from yacht import utils, eval
 from yacht import environments
 from yacht.agents import build_agent
 
@@ -43,16 +42,9 @@ if __name__ == '__main__':
     agent = build_agent(config, env)
 
     if args.mode == 'train':
-        agent.learn(config.train.timestamps)
+        # TODO: See what the other parameters are doing.
+        agent.learn(config.train.episodes)
 
-    observation = env.reset()
-    while True:
-        action, _states = agent.predict(observation, deterministic=True)
-        observation, reward, done, info = env.step(action)
-        if done:
-            print("info:", info)
-            break
+    eval.run_agent(env, agent)
 
-    plt.cla()
-    env.render_all()
-    plt.show()
+    env.close()

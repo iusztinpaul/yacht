@@ -6,14 +6,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from yacht.data.datasets import TradingDataset
+from yacht.data.normalizers import Normalizer
 from yacht.environments.enums import Positions, Actions
 
 
 class TradingEnv(gym.Env):
-    def __init__(self, dataset: TradingDataset, window_size: int):
+    def __init__(self, dataset: TradingDataset, normalizer: Normalizer, window_size: int):
+        assert window_size >= 1
+
         self.seed()
-        self.window_size = window_size
         self.dataset = dataset
+        self.normalizer = normalizer
+        self.window_size = window_size
         self.prices = self.dataset.get_prices()
 
         # spaces
@@ -39,17 +43,12 @@ class TradingEnv(gym.Env):
         self._first_rendering = None
         self.history = None
 
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-
-        return [seed]
-
     def reset(self):
         self._done = False
         self._current_tick = self._start_tick
         self._last_trade_tick = self._current_tick - 1
         self._position = Positions.Short
-        self._position_history = (self.window_size * [None]) + [self._position]
+        self._position_history = ((self.window_size - 1) * [None]) + [self._position]
         self._total_reward = 0.
         self._total_profit = 1.  # unit
         self._first_rendering = True
@@ -94,11 +93,12 @@ class TradingEnv(gym.Env):
 
     def _get_observation(self) -> dict:
         observation = []
-        for idx in range(self.window_size - 1, -1, -1):
+        for n in range(self.window_size, 0, -1):
             observation.append(
-                self.dataset[self._current_tick - idx]
+                self.dataset[self._current_tick - n + 1]
             )
         observation = np.stack(observation, axis=0)
+        observation = self.normalizer(observation)
 
         return observation
 
@@ -165,6 +165,7 @@ class TradingEnv(gym.Env):
         )
 
     def close(self):
+        self.dataset.close()
         plt.close()
 
     def save_rendering(self, filepath):

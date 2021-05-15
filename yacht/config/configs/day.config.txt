@@ -2,6 +2,7 @@ input: {
     market: 'Binance'
     dataset: 'DayForecastDataset'
     env: 'DayForecastEnv'
+    normalizer: 'LastClosingPriceNormalizer'
     tickers: ['BTC']
     intervals: ['1d', '1h', '30m']
     start: '18/8/2017'
@@ -21,7 +22,7 @@ agent: {
     }
 }
 train: {
-    timestamps: 1000000
+    episodes: 100
     learning_rate: 0.0003
     n_steps: 2048
     batch_size: 64

@@ -9,7 +9,7 @@ dataset_registry = {
 }
 
 
-def build_dataset(input_config, storage_path):
+def build_dataset(input_config, storage_path) -> TradingDataset:
     market = build_market(input_config, storage_path)
     dataset_cls = dataset_registry[input_config.dataset]
 

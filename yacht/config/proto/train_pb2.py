@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1eyacht/config/proto/train.proto\x12\x12yacht.config.proto\"o\n\x0bTrainConfig\x12\x12\n\ntimestamps\x18\x01 \x01(\x05\x12\x15\n\rlearning_rate\x18\x02 \x01(\x02\x12\x0f\n\x07n_steps\x18\x03 \x01(\x05\x12\x12\n\nbatch_size\x18\x04 \x01(\x05\x12\x10\n\x08n_epochs\x18\x05 \x01(\x05\x62\x06proto3'
+  serialized_pb=b'\n\x1eyacht/config/proto/train.proto\x12\x12yacht.config.proto\"m\n\x0bTrainConfig\x12\x10\n\x08\x65pisodes\x18\x01 \x01(\x05\x12\x15\n\rlearning_rate\x18\x02 \x01(\x02\x12\x0f\n\x07n_steps\x18\x03 \x01(\x05\x12\x12\n\nbatch_size\x18\x04 \x01(\x05\x12\x10\n\x08n_epochs\x18\x05 \x01(\x05\x62\x06proto3'
 )
 
 
@@ -34,7 +34,7 @@ _TRAINCONFIG = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='timestamps', full_name='yacht.config.proto.TrainConfig.timestamps', index=0,
+      name='episodes', full_name='yacht.config.proto.TrainConfig.episodes', index=0,
       number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -81,7 +81,7 @@ _TRAINCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=54,
-  serialized_end=165,
+  serialized_end=163,
 )
 
 DESCRIPTOR.message_types_by_name['TrainConfig'] = _TRAINCONFIG

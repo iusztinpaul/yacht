@@ -7,9 +7,10 @@ message InputConfig {
   string market = 1;
   string dataset = 2;
   string env = 3;
-  repeated string tickers = 4;
-  repeated string intervals = 5;
-  string start = 6;
-  string end = 7;
-  int32 window_size = 8;
+  string normalizer = 4;
+  repeated string tickers = 5;
+  repeated string intervals = 6;
+  string start = 7;
+  string end = 8;
+  int32 window_size = 9;
 }

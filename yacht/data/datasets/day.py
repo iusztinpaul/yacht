@@ -31,7 +31,7 @@ class DayForecastDataset(TradingDataset):
             start: datetime,
             end: datetime,
     ):
-        assert '1d' in intervals, 'One day bar interval is mandatory.'
+        assert '1d' == intervals[0], 'One day bar interval is mandatory to exist & to be at the first position.'
         assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
 
         super().__init__(market, ticker, intervals, start, end)

@@ -35,12 +35,6 @@ class Market(ABC):
 
         self.connection = self.open()
 
-    def __enter__(self):
-        self.connection = self.open()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
     def open(self) -> Any:
         raise NotImplementedError()
 

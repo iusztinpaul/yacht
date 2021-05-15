@@ -3,7 +3,7 @@ syntax = "proto3";
 package yacht.config.proto;
 
 message TrainConfig {
-  int32 timestamps = 1;
+  int32 episodes = 1;
   float learning_rate = 2;
   int32 n_steps = 3;
   int32 batch_size = 4;

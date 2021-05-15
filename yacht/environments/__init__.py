@@ -8,7 +8,7 @@ from gym.envs.registration import register
 
 from yacht.data.datasets import build_dataset
 from .enums import *
-
+from ..data.normalizers import build_normalizer
 
 logger = logging.getLogger(__file__)
 
@@ -19,10 +19,12 @@ environment_registry = {
 
 def build_env(input_config, storage_path):
     dataset = build_dataset(input_config, storage_path)
+    normalizer = build_normalizer(input_config)
     env_class = environment_registry[input_config.env]
 
     return env_class(
         dataset=dataset,
+        normalizer=normalizer,
         window_size=input_config.window_size
     )
 

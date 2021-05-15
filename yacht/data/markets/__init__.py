@@ -9,7 +9,7 @@ market_registry = {
 }
 
 
-def build_market(input_config, storage_path):
+def build_market(input_config, storage_path) -> Market:
     market_class = market_registry[input_config.market]
 
     return market_class(

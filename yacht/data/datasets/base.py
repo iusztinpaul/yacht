@@ -23,6 +23,9 @@ class TradingDataset(Dataset, ABC):
         self.start = start
         self.end = end
 
+    def close(self):
+        self.market.close()
+
     def get_prices(self) -> np.array:
         raise NotImplementedError()
 

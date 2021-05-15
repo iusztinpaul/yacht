@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1eyacht/config/proto/input.proto\x12\x12yacht.config.proto\"\x90\x01\n\x0bInputConfig\x12\x0e\n\x06market\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x61taset\x18\x02 \x01(\t\x12\x0b\n\x03\x65nv\x18\x03 \x01(\t\x12\x0f\n\x07tickers\x18\x04 \x03(\t\x12\x11\n\tintervals\x18\x05 \x03(\t\x12\r\n\x05start\x18\x06 \x01(\t\x12\x0b\n\x03\x65nd\x18\x07 \x01(\t\x12\x13\n\x0bwindow_size\x18\x08 \x01(\x05\x62\x06proto3'
+  serialized_pb=b'\n\x1eyacht/config/proto/input.proto\x12\x12yacht.config.proto\"\xa4\x01\n\x0bInputConfig\x12\x0e\n\x06market\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x61taset\x18\x02 \x01(\t\x12\x0b\n\x03\x65nv\x18\x03 \x01(\t\x12\x12\n\nnormalizer\x18\x04 \x01(\t\x12\x0f\n\x07tickers\x18\x05 \x03(\t\x12\x11\n\tintervals\x18\x06 \x03(\t\x12\r\n\x05start\x18\x07 \x01(\t\x12\x0b\n\x03\x65nd\x18\x08 \x01(\t\x12\x13\n\x0bwindow_size\x18\t \x01(\x05\x62\x06proto3'
 )
 
 
@@ -55,36 +55,43 @@ _INPUTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='tickers', full_name='yacht.config.proto.InputConfig.tickers', index=3,
-      number=4, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
+      name='normalizer', full_name='yacht.config.proto.InputConfig.normalizer', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='intervals', full_name='yacht.config.proto.InputConfig.intervals', index=4,
+      name='tickers', full_name='yacht.config.proto.InputConfig.tickers', index=4,
       number=5, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='start', full_name='yacht.config.proto.InputConfig.start', index=5,
-      number=6, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
+      name='intervals', full_name='yacht.config.proto.InputConfig.intervals', index=5,
+      number=6, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='end', full_name='yacht.config.proto.InputConfig.end', index=6,
+      name='start', full_name='yacht.config.proto.InputConfig.start', index=6,
       number=7, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='window_size', full_name='yacht.config.proto.InputConfig.window_size', index=7,
-      number=8, type=5, cpp_type=1, label=1,
+      name='end', full_name='yacht.config.proto.InputConfig.end', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='window_size', full_name='yacht.config.proto.InputConfig.window_size', index=8,
+      number=9, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -102,7 +109,7 @@ _INPUTCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=55,
-  serialized_end=199,
+  serialized_end=219,
 )
 
 DESCRIPTOR.message_types_by_name['InputConfig'] = _INPUTCONFIG

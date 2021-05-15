@@ -11,8 +11,9 @@ The `compilation` command is run from the root folder:
 ```shell
   protoc -I=. --python_out=. yacht/config/proto/*.proto
   ```
+
 ## Train
 ```shell
-python train.py --config_file config/crypto.yaml
+python main.py train --config_file day.config.txt --storage_path ./storage/day
 ```
 
