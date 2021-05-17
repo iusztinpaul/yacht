@@ -43,7 +43,6 @@ class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
         new_observation = dict()
         current_index = 0
         for interval in self.intervals:
-            # TODO: Check if this splitting is correct
             bar_units = DayForecastDataset.get_day_bar_units_for(interval)
             new_observation[interval] = observations[:, :, current_index:current_index + bar_units, :]
             new_observation[interval] = new_observation[interval].reshape(batch_size, window_size, -1)

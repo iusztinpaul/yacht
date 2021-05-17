@@ -21,7 +21,7 @@ class TradingEnv(gym.Env):
 
         # spaces
         self.action_space = spaces.Discrete(len(Actions))
-        self.observation_space_shape = (self.window_size, *self.dataset.get_features_observation_space_shape())
+        self.observation_space_shape = (self.window_size, *self.dataset.get_item_shape())
         self.observation_space = spaces.Box(
             low=-np.inf,
             high=np.inf,
@@ -97,7 +97,9 @@ class TradingEnv(gym.Env):
                 self.dataset[self._current_tick - n + 1]
             )
         observation = np.stack(observation, axis=0)
-        observation = self.normalizer(observation)
+        observation[..., :self.dataset.num_price_features] = self.normalizer(
+            observation[..., :self.dataset.num_price_features]
+        )
 
         return observation
 

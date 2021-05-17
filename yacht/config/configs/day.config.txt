@@ -1,11 +1,12 @@
 input: {
     market: 'Binance'
     dataset: 'DayForecastDataset'
+    dataset_normalizer: 'ZeroCenteredNormalizer'
     env: 'DayForecastEnv'
-    normalizer: 'LastClosingPriceNormalizer'
+    env_normalizer: 'LastClosingPriceNormalizer'
     tickers: ['BTC']
     intervals: ['1d', '6h', '1h', '30m']
-    features: ['Close', 'High', 'Low']
+    features: ['Close', 'High', 'Low', 'Volume']
     start: '18/8/2017'
     end: '1/1/2021'
     window_size: 10

@@ -3,6 +3,7 @@ from .day import *
 
 from yacht import utils
 from ..markets import build_market
+from ..normalizers import build_normalizer
 
 dataset_registry = {
     'DayForecastDataset': DayForecastDataset
@@ -12,6 +13,7 @@ dataset_registry = {
 def build_dataset(input_config, storage_path) -> TradingDataset:
     market = build_market(input_config, storage_path)
     dataset_cls = dataset_registry[input_config.dataset]
+    normalizer = build_normalizer(input_config.dataset_normalizer)
 
     # TODO: Add multiple ticker support starting from here
     ticker = input_config.tickers[0]
@@ -24,6 +26,7 @@ def build_dataset(input_config, storage_path) -> TradingDataset:
         intervals=input_config.intervals,
         features=input_config.features,
         start=start,
-        end=end
+        end=end,
+        normalizer=normalizer
     )
 

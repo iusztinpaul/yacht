@@ -19,7 +19,7 @@ environment_registry = {
 
 def build_env(input_config, storage_path):
     dataset = build_dataset(input_config, storage_path)
-    normalizer = build_normalizer(input_config)
+    normalizer = build_normalizer(input_config.env_normalizer)
     env_class = environment_registry[input_config.env]
 
     return env_class(

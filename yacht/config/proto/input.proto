@@ -6,12 +6,13 @@ package yacht.config.proto;
 message InputConfig {
   string market = 1;
   string dataset = 2;
-  string env = 3;
-  string normalizer = 4;
-  repeated string tickers = 5;
-  repeated string intervals = 6;
-  repeated string features = 7;
-  string start = 8;
-  string end = 9;
-  int32 window_size = 10;
+  string dataset_normalizer = 3;
+  string env = 4;
+  string env_normalizer = 5;
+  repeated string tickers = 6;
+  repeated string intervals = 7;
+  repeated string features = 8;
+  string start = 9;
+  string end = 10;
+  int32 window_size = 11;
 }
