@@ -16,7 +16,8 @@ class DayForecastEnv(TradingEnv):
         else:
             raise RuntimeError(f'Wrong Position: {self._position}')
 
-        step_reward = sign * np.log10(np.abs(price_diff)) if price_diff != 0 else 0
+        # step_reward = sign * np.log10(np.abs(price_diff)) if price_diff != 0 else 0
+        step_reward = sign if price_diff != 0 else 0
 
         return step_reward
 

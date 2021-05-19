@@ -150,14 +150,16 @@ class TradingEnv(gym.Env):
         plt.plot(
             short_positions.index,
             self.prices.loc[short_positions.index],
-            'ro'
+            'rv',
+            markersize=6
         )
 
         long_positions = position_ticks[position_ticks == Positions.Long]
         plt.plot(
             long_positions.index,
             self.prices.loc[long_positions.index],
-            'go'
+            'g^',
+            markersize=6
         )
 
         plt.suptitle(

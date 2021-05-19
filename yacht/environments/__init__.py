@@ -8,6 +8,7 @@ from gym.envs.registration import register
 
 from yacht.data.datasets import build_dataset
 from .enums import *
+from ..config import InputConfig
 from ..data.normalizers import build_normalizer
 
 logger = logging.getLogger(__file__)
@@ -17,12 +18,12 @@ environment_registry = {
 }
 
 
-def build_env(input_config, storage_path):
-    dataset = build_dataset(input_config, storage_path)
+def build_env(input_config: InputConfig, storage_path: str, train: bool):
+    dataset = build_dataset(input_config, storage_path, train)
     normalizer = build_normalizer(input_config.env_normalizer)
-    env_class = environment_registry[input_config.env]
 
-    return env_class(
+    return gym.make(
+        input_config.env,
         dataset=dataset,
         normalizer=normalizer,
         window_size=input_config.window_size
@@ -31,8 +32,8 @@ def build_env(input_config, storage_path):
 
 def register_gym_envs():
     to_register_envs = {
-        'day.config.txt-forecast-v0': {
-            'entry_point': 'yacht.environments.day.config.txt:DayForecastEnv',
+        'DayForecastEnv-v0': {
+            'entry_point': 'yacht.environments.day:DayForecastEnv',
             'kwargs': {
                 'window_size': 14
             }

@@ -5,7 +5,7 @@ import os
 
 from yacht.config import load_config
 from yacht.environments import build_env
-from yacht import utils, eval
+from yacht import utils, back_testing
 from yacht import environments
 from yacht.agents import build_agent
 
@@ -37,15 +37,19 @@ if __name__ == '__main__':
     )
     environments.register_gym_envs()
     config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file))
+    logger.info(f'Config:\n{config}')
 
-    env = build_env(config.input, storage_path)
+    env = build_env(config.input, storage_path, train=True)
     agent = build_agent(config, env)
 
     if args.mode == 'train':
+        logger.info('Started training...')
         # TODO: See what the other parameters are doing.
         agent.learn(config.train.episodes)
 
     if config.meta.back_test:
-        eval.run_agent(env, agent)
+        logger.info('Started back testing...')
+        env = build_env(config.input, storage_path, train=False)
+        back_testing.run_agent(env, agent)
 
     env.close()

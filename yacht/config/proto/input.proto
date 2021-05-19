@@ -14,5 +14,6 @@ message InputConfig {
   repeated string features = 8;
   string start = 9;
   string end = 10;
-  int32 window_size = 11;
+  float back_test_split_ratio = 11;
+  int32 window_size = 12;
 }
