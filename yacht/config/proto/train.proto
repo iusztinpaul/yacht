@@ -5,11 +5,8 @@ package yacht.config.proto;
 message TrainConfig {
   int32 episodes = 1;
   float learning_rate = 2;
-  int32 n_steps = 3;
-  int32 batch_size = 4;
-  int32 n_epochs = 5;
-  int32 log_freq = 6;
-  int32 val_freq = 7;
-  int32 k_fold_splits = 8;
-  float k_fold_embargo_ratio = 9;
+  int32 batch_size = 3;
+  int32 n_epochs = 4;
+  int32 k_fold_splits = 5;
+  float k_fold_embargo_ratio = 6;
 }

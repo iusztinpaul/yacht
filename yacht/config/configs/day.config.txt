@@ -25,13 +25,10 @@ agent: {
     }
 }
 train: {
-    episodes: 1000
+    episodes: 10
     learning_rate: 0.0003
-    n_steps: 1024
     batch_size: 64
-    n_epochs: 10
-    log_freq: 100
-    val_freq: 100
+    n_epochs: 5
     k_fold_splits: 3
     k_fold_embargo_ratio: 0.01
 }

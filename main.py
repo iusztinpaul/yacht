@@ -10,6 +10,7 @@ from yacht.environments import build_env
 from yacht import utils, back_testing
 from yacht import environments
 from yacht.agents import build_agent
+from yacht.trainer import build_trainer
 
 logger = logging.getLogger(__file__)
 
@@ -47,40 +48,23 @@ if __name__ == '__main__':
     agent = build_agent(config, train_env)
 
     if args.mode == 'train':
-        logger.info(f'Starting training for {config.train.episodes} episodes.')
-        for i in range(config.train.episodes // config.train.k_fold_splits):
-            k_fold = build_k_fold(config.input, config.train)
-            for k, (train_indices, val_indices) in enumerate(k_fold.split(X=dataset.get_folding_values())):
-                episode = i * config.train.k_fold_splits + k
-                logger.info(f'Episode - {episode}')
+        trainer = build_trainer(
+            config=config,
+            agent=agent,
+            dataset=dataset,
+            train_env=train_env,
+            val_env=val_env
+        )
+        trainer.train(config=config)
 
-                # TODO: Is it ok to slide the window between 2 splits of train intervals ? Data not contiguous
-                train_dataset = build_dataset_wrapper(dataset, indices=train_indices)
-                val_dataset = build_dataset_wrapper(dataset, indices=val_indices)
+        if config.meta.back_test:
+            logger.info('Starting back testing...')
+            dataset = build_dataset(config.input, config.train, storage_path, mode='test')
+            back_test_env = build_env(config.input, dataset)
 
-                train_env.set_dataset(train_dataset)
-                val_env.set_dataset(val_dataset)
+            back_testing.run_agent(back_test_env, agent)
 
-                agent = agent.learn(
-                    total_timesteps=1,
-                    callback=None,
-                    tb_log_name=config.input.env,
-                    log_interval=1,
-                    eval_env=val_env,
-                    eval_freq=len(train_indices),
-                    n_eval_episodes=1,
-                    eval_log_path=None,
-                    reset_num_timesteps=True
-                )
-
-    if config.meta.back_test:
-        logger.info('Starting back testing...')
-        dataset = build_dataset(config.input, config.train, storage_path, mode='test')
-        back_test_env = build_env(config.input, dataset)
-
-        back_testing.run_agent(back_test_env, agent)
-
-        back_test_env.close()
+            back_test_env.close()
 
     train_env.close()
     val_env.close()
