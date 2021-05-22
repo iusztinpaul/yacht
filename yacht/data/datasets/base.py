@@ -1,12 +1,12 @@
 import logging
 from abc import ABC
 from datetime import datetime
-from typing import List, Tuple, Any, Dict
+from typing import List, Tuple, Dict
 
 import numpy as np
+import pandas as pd
 from torch.utils.data import Dataset
 
-from yacht.data.k_fold import PurgedKFold
 from yacht.data.markets import Market
 from yacht.data.normalizers import Normalizer
 
@@ -15,12 +15,12 @@ logger = logging.getLogger(__file__)
 
 
 class TradingDataset(Dataset, ABC):
-    PRICE_FEATURES = {
+    PRICE_FEATURES = (
         'Close',
         'Open',
         'High',
         'Low'
-    }
+    )
 
     def __init__(
             self,
@@ -30,7 +30,8 @@ class TradingDataset(Dataset, ABC):
             features: List[str],
             start: datetime,
             end: datetime,
-            normalizer: Normalizer
+            normalizer: Normalizer,
+            data: Dict[str, pd.DataFrame] = None
     ):
         assert '1d' == intervals[0], 'One day bar interval is mandatory to exist & index=0 in input.intervals config.'
         assert 'Close' == features[0], 'Close feature/column is mandatory & index=0 in input.features config.'
@@ -46,14 +47,17 @@ class TradingDataset(Dataset, ABC):
         assert set(self.features) == set(self.price_features).union(set(self.other_features)), \
             '"self.features" should be all the supported features.'
 
-        logger.info(
-            f'Downloading & loading data in memory for ticker - {ticker} - '
-            f'from {start} to {end} - for intervals: {intervals}'
-        )
-        self.data = dict()
-        for interval in intervals:
-            self.market.download(ticker, interval, start, end)
-            self.data[interval] = self.market.get(ticker, interval, start, end)
+        if data is not None:
+            self.data = data
+        else:
+            logger.info(
+                f'Downloading & loading data in memory for ticker - {ticker} - '
+                f'from {start} to {end} - for intervals: {intervals}'
+            )
+            self.data = dict()
+            for interval in intervals:
+                self.market.download(ticker, interval, start, end)
+                self.data[interval] = self.market.get(ticker, interval, start, end)
 
     def close(self):
         self.market.close()
@@ -81,7 +85,10 @@ class TradingDataset(Dataset, ABC):
         # Always move price features at the beginning of the list, with `Close` price as the first one.
         features = price_features + other_features
 
-        return features, price_features, other_features,
+        return features, price_features, other_features
+
+    def get_folding_values(self) -> np.array:
+        return self.get_prices()
 
     def get_prices(self) -> np.array:
         raise NotImplementedError()
@@ -90,7 +97,7 @@ class TradingDataset(Dataset, ABC):
         raise NotImplementedError()
 
 
-class TrainValMixin:
+class IndexedDatasetMixin:
     def __init__(
             self,
             market: Market,
@@ -100,24 +107,20 @@ class TrainValMixin:
             start: datetime,
             end: datetime,
             normalizer: Normalizer,
-            k_fold: PurgedKFold,
-            mode: str
+            data: Dict[str, pd.DataFrame],
+            indices: List[int]
     ):
         assert TradingDataset in type(self).mro(), \
             'IndexedMixin should be coupled with a TradingDataset class or subclass'
-        assert mode in ('train', 'val')
 
-        super().__init__(market, ticker, intervals, features, start, end, normalizer)
+        super().__init__(market, ticker, intervals, features, start, end, normalizer, data)
 
-        self.k_fold = k_fold
-        self.mode = mode
+        self.getitem_index_mappings = indices
 
-        if mode == 'train':
-            self.getitem_index_mappings = next(k_fold.split(self.data['1d']))[0]
-        else:
-            self.getitem_index_mappings = next(k_fold.split(self.data['1d']))[1]
+    def __len__(self):
+        return len(self.getitem_index_mappings)
 
-    def __getitem__(self, index: Dict[str, Any]):
+    def __getitem__(self, index: int):
         index = self.getitem_index_mappings[index]
 
         return super().__getitem__(index)

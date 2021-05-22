@@ -20,6 +20,17 @@ def interval_to_timedelta(string: str) -> timedelta:
     return mappings[string]
 
 
+def get_train_val_num_days(
+        start: Union[str, datetime],
+        end: Union[str, datetime],
+        split_ratio: float,
+        offset_ratio: float
+) -> int:
+    train_val_start, train_val_end, _, _ = split_period(start, end, split_ratio, offset_ratio)
+
+    return get_num_days(train_val_start, train_val_end)
+
+
 def get_num_days(start: Union[str, datetime], end: Union[str, datetime]) -> int:
     if isinstance(start, str):
         start = string_to_datetime(start)
@@ -31,9 +42,19 @@ def get_num_days(start: Union[str, datetime], end: Union[str, datetime]) -> int:
     return difference.days
 
 
-def split_period(start: datetime, end: datetime, split_ratio: float, offset_ratio: float = 0.01):
+def split_period(
+        start: Union[str, datetime],
+        end: Union[str, datetime],
+        split_ratio: float,
+        offset_ratio: float
+):
     assert split_ratio < 1
     assert offset_ratio < 1
+
+    if isinstance(start, str):
+        start = string_to_datetime(start)
+    if isinstance(end, str):
+        end = string_to_datetime(end)
 
     start_timestamp = start.timestamp()
     end_timestamp = end.timestamp()

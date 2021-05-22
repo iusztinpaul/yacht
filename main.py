@@ -4,7 +4,9 @@ import os
 
 
 from yacht.config import load_config
-from yacht.environments import build_train_val_env, build_back_test_env
+from yacht.data.datasets import build_dataset, build_dataset_wrapper, IndexedDatasetMixin
+from yacht.data.k_fold import build_k_fold
+from yacht.environments import build_env
 from yacht import utils, back_testing
 from yacht import environments
 from yacht.agents import build_agent
@@ -31,7 +33,7 @@ if __name__ == '__main__':
         storage_path = args.storage_path
 
     utils.load_env(root_dir=ROOT_DIR)
-    utils.setup_logger(
+    log_dir = utils.setup_logger(
         level=args.logger_level,
         storage_path=storage_path
     )
@@ -39,23 +41,45 @@ if __name__ == '__main__':
     config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file))
     logger.info(f'Config:\n{config}')
 
-    train_env = build_train_val_env(config.input, storage_path, mode='train')
-    val_env = build_train_val_env(config.input, storage_path, mode='val')
+    dataset = build_dataset(config.input, config.train, storage_path, mode='trainval')
+    train_env = build_env(config.input, dataset)
+    val_env = build_env(config.input, dataset)
     agent = build_agent(config, train_env)
 
     if args.mode == 'train':
-        logger.info('Started training...')
-        agent = agent.learn(
-            config.train.steps,
-            log_interval=config.train.log_freq,
-            eval_env=val_env,
-            eval_freq=config.train.val_freq
-        )
+        logger.info(f'Starting training for {config.train.episodes} episodes.')
+        for i in range(config.train.episodes // config.train.k_fold_splits):
+            k_fold = build_k_fold(config.input, config.train)
+            for k, (train_indices, val_indices) in enumerate(k_fold.split(X=dataset.get_folding_values())):
+                episode = i * config.train.k_fold_splits + k
+                logger.info(f'Episode - {episode}')
+
+                # TODO: Is it ok to slide the window between 2 splits of train intervals ? Data not contiguous
+                train_dataset = build_dataset_wrapper(dataset, indices=train_indices)
+                val_dataset = build_dataset_wrapper(dataset, indices=val_indices)
+
+                train_env.set_dataset(train_dataset)
+                val_env.set_dataset(val_dataset)
+
+                agent = agent.learn(
+                    total_timesteps=1,
+                    callback=None,
+                    tb_log_name=config.input.env,
+                    log_interval=1,
+                    eval_env=val_env,
+                    eval_freq=len(train_indices),
+                    n_eval_episodes=1,
+                    eval_log_path=None,
+                    reset_num_timesteps=True
+                )
 
     if config.meta.back_test:
-        logger.info('Started back testing...')
-        back_test_env = build_back_test_env(config.input, storage_path)
+        logger.info('Starting back testing...')
+        dataset = build_dataset(config.input, config.train, storage_path, mode='test')
+        back_test_env = build_env(config.input, dataset)
+
         back_testing.run_agent(back_test_env, agent)
+
         back_test_env.close()
 
     train_env.close()

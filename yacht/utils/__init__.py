@@ -32,6 +32,12 @@ def setup_logger(level: str, storage_path: Optional[str] = None):
         file_handler.setFormatter(log_formatter)
         root_logger.addHandler(file_handler)
 
+    log_dir = os.path.join(storage_path, 'log')
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
+
+    return log_dir
+
 
 def load_env(root_dir: str):
     env_path = Path(root_dir) / '.env.default'

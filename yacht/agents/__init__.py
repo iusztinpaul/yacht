@@ -2,6 +2,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.base_class import BaseAlgorithm
 from torch import nn
 
+from yacht import utils
 from yacht.agents.modules.day import MultipleTimeFramesFeatureExtractor, DayForecastNetwork
 from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.environments import TradingEnv
@@ -51,13 +52,22 @@ def build_agent(config, env: TradingEnv) -> BaseAlgorithm:
         }
     }
 
+    train_val_num_days = utils.get_train_val_num_days(
+        input_config.start,
+        input_config.end,
+        input_config.back_test_split_ratio,
+        train_config.k_fold_embargo_ratio
+    )
+    train_val_num_days = train_val_num_days - train_val_num_days % train_config.batch_size
+    assert train_val_num_days > 0
+
     # TODO: Look over all Agents hyper-parameters
     return agent_class(
         policy=policy_class,
         env=env,
         verbose=agent_config.verbose,
         learning_rate=train_config.learning_rate,
-        n_steps=train_config.n_steps,
+        n_steps=train_val_num_days,
         batch_size=train_config.batch_size,
         n_epochs=train_config.n_epochs,
         policy_kwargs=policy_kwargs

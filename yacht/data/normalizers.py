@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 
 
@@ -27,6 +25,9 @@ class ZeroCenteredNormalizer(Normalizer):
         other_features = (other_features - mean) / std
 
         return other_features
+
+
+#######################################################################################################################
 
 
 normalizer_registry = {

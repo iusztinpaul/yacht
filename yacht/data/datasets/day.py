@@ -1,10 +1,11 @@
 import logging
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 import numpy as np
+import pandas as pd
 
-from yacht.data.datasets import TradingDataset, TrainValMixin
+from yacht.data.datasets import TradingDataset, IndexedDatasetMixin
 from yacht.data.markets import Market
 from yacht.data.normalizers import Normalizer
 
@@ -29,11 +30,12 @@ class DayForecastDataset(TradingDataset):
             features: List[str],
             start: datetime,
             end: datetime,
-            normalizer: Normalizer
+            normalizer: Normalizer,
+            data: Dict[str, pd.DataFrame] = None
     ):
         assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
 
-        super().__init__(market, ticker, intervals, features, start, end, normalizer)
+        super().__init__(market, ticker, intervals, features, start, end, normalizer, data)
 
     def __len__(self):
         return len(self.data[self.intervals[0]].index)
@@ -82,5 +84,5 @@ class DayForecastDataset(TradingDataset):
         return item
 
 
-class TrainValDayForecastDataset(TrainValMixin, DayForecastDataset):
+class IndexedDayForecastDataset(IndexedDatasetMixin, DayForecastDataset):
     pass

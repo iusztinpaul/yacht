@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.model_selection._split import _BaseKFold
 
 from yacht import utils
+from yacht.config import InputConfig, TrainConfig
 
 
 class PurgedKFold(_BaseKFold):
@@ -73,3 +74,25 @@ class PurgedKFold(_BaseKFold):
 
     def compute_embargo_offset(self, X) -> int:
         return int(X.shape[0] * self.embargo_ratio)
+
+
+#######################################################################################################################
+
+
+def build_k_fold(input_config: InputConfig, train_config: TrainConfig) -> PurgedKFold:
+    train_val_start, train_val_end, _, _ = utils.split_period(
+        input_config.start,
+        input_config.end,
+        input_config.back_test_split_ratio,
+        train_config.k_fold_embargo_ratio
+    )
+
+    k_fold = PurgedKFold(
+        start=train_val_start,
+        end=train_val_end,
+        interval='1d',
+        n_splits=train_config.k_fold_splits,
+        embargo_ratio=train_config.k_fold_embargo_ratio
+    )
+
+    return k_fold

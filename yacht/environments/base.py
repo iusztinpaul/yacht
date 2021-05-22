@@ -17,7 +17,7 @@ class TradingEnv(gym.Env):
         self.dataset = dataset
         self.normalizer = normalizer
         self.window_size = window_size
-        self.prices = self.dataset.get_prices()
+        self.prices = dataset.get_prices()
 
         # spaces
         self.action_space = spaces.Discrete(len(Actions))
@@ -41,6 +41,22 @@ class TradingEnv(gym.Env):
         self._total_profit = None
         self._first_rendering = None
         self.history = None
+
+    def set_dataset(self, dataset: TradingDataset):
+        self.dataset = dataset
+        self.prices = self.dataset.get_prices()
+
+        # spaces
+        self.observation_space_shape = (self.window_size, *self.dataset.get_item_shape())
+        self.observation_space = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=self.observation_space_shape,
+            dtype=np.float32
+        )
+
+        # episode
+        self._end_tick = len(self.prices) - 1
 
     def reset(self):
         self._done = False
