@@ -4,3 +4,4 @@ from .agent_pb2 import *
 from .train_pb2 import *
 from .backbone_pb2 import *
 from .feature_extractor_pb2 import *
+from .meta_pb2 import *

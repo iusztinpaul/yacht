@@ -1,10 +1,23 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Union
 
 
 def string_to_datetime(string: str) -> datetime:
     # day/month/year
     return datetime.strptime(string, "%d/%m/%Y")
+
+
+def interval_to_timedelta(string: str) -> timedelta:
+    mappings = {
+        '15m': timedelta(minutes=15),
+        '30m': timedelta(minutes=30),
+        '1h': timedelta(hours=1),
+        '6h': timedelta(hours=6),
+        '12h': timedelta(hours=12),
+        '1d': timedelta(days=1)
+    }
+
+    return mappings[string]
 
 
 def get_num_days(start: Union[str, datetime], end: Union[str, datetime]) -> int:

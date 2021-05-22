@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 
-from yacht.data.datasets import TradingDataset
+from yacht.data.datasets import TradingDataset, TrainValMixin
 from yacht.data.markets import Market
 from yacht.data.normalizers import Normalizer
 
@@ -34,15 +34,6 @@ class DayForecastDataset(TradingDataset):
         assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
 
         super().__init__(market, ticker, intervals, features, start, end, normalizer)
-
-        logger.info(
-            f'Downloading & loading data in memory for ticker - {ticker} - '
-            f'from {start} to {end} - for intervals: {intervals}'
-        )
-        self.data = dict()
-        for interval in intervals:
-            self.market.download(ticker, interval, start, end)
-            self.data[interval] = self.market.get(ticker, interval, start, end)
 
     def __len__(self):
         return len(self.data[self.intervals[0]].index)
@@ -89,3 +80,7 @@ class DayForecastDataset(TradingDataset):
             ])
 
         return item
+
+
+class TrainValDayForecastDataset(TrainValMixin, DayForecastDataset):
+    pass

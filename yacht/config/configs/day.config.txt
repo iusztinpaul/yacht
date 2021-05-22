@@ -25,11 +25,13 @@ agent: {
     }
 }
 train: {
-    episodes: 10000
+    steps: 10000
     learning_rate: 0.0003
     n_steps: 2048
     batch_size: 64
     n_epochs: 10
+    log_freq: 100
+    val_freq: 1000
 }
 meta: {
     back_test: true

@@ -4,7 +4,7 @@ import os
 
 
 from yacht.config import load_config
-from yacht.environments import build_env
+from yacht.environments import build_train_val_env, build_back_test_env
 from yacht import utils, back_testing
 from yacht import environments
 from yacht.agents import build_agent
@@ -39,17 +39,24 @@ if __name__ == '__main__':
     config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file))
     logger.info(f'Config:\n{config}')
 
-    env = build_env(config.input, storage_path, train=True)
-    agent = build_agent(config, env)
+    train_env = build_train_val_env(config.input, storage_path, mode='train')
+    val_env = build_train_val_env(config.input, storage_path, mode='val')
+    agent = build_agent(config, train_env)
 
     if args.mode == 'train':
         logger.info('Started training...')
-        # TODO: See what the other parameters are doing.
-        agent.learn(config.train.episodes)
+        agent = agent.learn(
+            config.train.steps,
+            log_interval=config.train.log_freq,
+            eval_env=val_env,
+            eval_freq=config.train.val_freq
+        )
 
     if config.meta.back_test:
         logger.info('Started back testing...')
-        env = build_env(config.input, storage_path, train=False)
-        back_testing.run_agent(env, agent)
+        back_test_env = build_back_test_env(config.input, storage_path)
+        back_testing.run_agent(back_test_env, agent)
+        back_test_env.close()
 
-    env.close()
+    train_env.close()
+    val_env.close()

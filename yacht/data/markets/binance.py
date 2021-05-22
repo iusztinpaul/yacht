@@ -39,6 +39,10 @@ class Binance(Market):
         self.connection[interval].to_hdf(self.storage_file, interval, mode='w')
 
     def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
+        """
+            Returns: data within [start, end)
+        """
+
         if interval not in self.connection:
             raise RuntimeError(f'Table: "{interval}" not supported')
         end = end - timedelta(microseconds=1)

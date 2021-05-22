@@ -6,7 +6,6 @@ from typing import Union, List, Any
 
 import pandas as pd
 
-
 logger = logging.getLogger(__file__)
 
 
@@ -45,6 +44,10 @@ class Market(ABC):
         raise NotImplementedError()
 
     def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
+        """
+            Returns: data within [start, end)
+        """
+
         raise NotImplementedError()
 
     def request(self, ticker: str, interval: str, start: datetime, end: datetime = None) -> List[List[Any]]:

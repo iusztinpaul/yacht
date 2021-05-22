@@ -6,7 +6,7 @@ from .day import *
 import gym
 from gym.envs.registration import register
 
-from yacht.data.datasets import build_dataset
+from yacht.data.datasets import build_train_val_dataset, build_back_test_dataset
 from .enums import *
 from ..config import InputConfig
 from ..data.normalizers import build_normalizer
@@ -18,8 +18,20 @@ environment_registry = {
 }
 
 
-def build_env(input_config: InputConfig, storage_path: str, train: bool):
-    dataset = build_dataset(input_config, storage_path, train)
+def build_train_val_env(input_config: InputConfig, storage_path: str, mode: str):
+    dataset = build_train_val_dataset(input_config, storage_path, mode)
+    normalizer = build_normalizer(input_config.env_normalizer)
+
+    return gym.make(
+        input_config.env,
+        dataset=dataset,
+        normalizer=normalizer,
+        window_size=input_config.window_size
+    )
+
+
+def build_back_test_env(input_config: InputConfig, storage_path: str):
+    dataset = build_back_test_dataset(input_config, storage_path)
     normalizer = build_normalizer(input_config.env_normalizer)
 
     return gym.make(
