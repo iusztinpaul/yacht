@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Union
 
 from .base import *
 from .day import *
@@ -47,7 +47,7 @@ def build_dataset(input_config, train_config, storage_path, mode: str) -> Tradin
     )
 
 
-def build_dataset_wrapper(dataset: TradingDataset, indices: List[int]) -> Type[IndexedDatasetMixin, TradingDataset]:
+def build_dataset_wrapper(dataset: TradingDataset, indices: List[int]) -> Union[IndexedDatasetMixin, TradingDataset]:
     dataset_class_name = dataset.__class__.__name__
     dataset_class_name = f'Indexed{dataset_class_name}'
     dataset_class = dataset_registry[dataset_class_name]
