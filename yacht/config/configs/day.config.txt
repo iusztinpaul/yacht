@@ -25,12 +25,14 @@ agent: {
     }
 }
 train: {
-    episodes: 1000
+    episodes: 1
     learning_rate: 0.0003
     batch_size: 64
     n_epochs: 5
     k_fold_splits: 3
     k_fold_embargo_ratio: 0.01
+    eval_frequency: 1
+    log_frequency: 50
 }
 meta: {
     back_test: true

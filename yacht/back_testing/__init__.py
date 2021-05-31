@@ -11,6 +11,7 @@ def run_agent(env, agent, render: bool = True):
     while True:
         action, _states = agent.predict(observation, deterministic=True)
         observation, reward, done, info = env.step(action)
+        env.render()
         if done:
             logger.info(f'Back test info:\n{info}')
             break

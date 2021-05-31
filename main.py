@@ -41,7 +41,7 @@ if __name__ == '__main__':
     config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file))
     logger.info(f'Config:\n{config}')
 
-    dataset = build_dataset(config.input, config.train, storage_path, mode='trainval')
+    dataset = build_dataset(config, storage_path, mode='trainval')
     train_env = build_env(config.input, dataset)
     val_env = build_env(config.input, dataset)
     agent = build_agent(config, train_env)
@@ -54,11 +54,11 @@ if __name__ == '__main__':
             train_env=train_env,
             val_env=val_env
         )
-        trainer.train(config=config)
+        trainer.train()
 
         if config.meta.back_test:
             logger.info('Starting back testing...')
-            dataset = build_dataset(config.input, config.train, storage_path, mode='test')
+            dataset = build_dataset(config, storage_path, mode='test')
             back_test_env = build_env(config.input, dataset)
 
             back_testing.run_agent(back_test_env, agent)

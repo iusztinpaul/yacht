@@ -1,9 +1,11 @@
 import logging
 
 from stable_baselines3.common.base_class import BaseAlgorithm
+from tqdm import tqdm
 
+from yacht.config import TrainConfig
 from yacht.data.datasets import TradingDataset, build_dataset_wrapper
-from yacht.data.k_fold import build_k_fold
+from yacht.data.k_fold import build_k_fold, PurgedKFold
 from yacht.environments import TradingEnv
 
 logger = logging.getLogger(__file__)
@@ -12,51 +14,56 @@ logger = logging.getLogger(__file__)
 class Trainer:
     def __init__(
             self,
-            episodes: int,
+            train_config: TrainConfig,
+            name: str,
             agent: BaseAlgorithm,
             dataset: TradingDataset,
             train_env: TradingEnv,
             val_env: TradingEnv,
-            name: str,
-            k_fold_splits: int
+            k_fold: PurgedKFold,
     ):
-        self.episodes = episodes
+        assert train_config.episodes >= train_config.eval_frequency
+
+        self.train_config = train_config
+        self.name = name
         self.agent = agent
         self.dataset = dataset
         self.train_env = train_env
         self.val_env = val_env
-        self.name = name
-        self.k_fold_splits = k_fold_splits
+        self.k_fold = k_fold
 
-    def train(self, config):
-        logger.info(f'Starting training for {self.episodes} episodes.')
-        for i in range(self.episodes // self.k_fold_splits):
-            k_fold = build_k_fold(config.input, config.train)
-            for k, (train_indices, val_indices) in enumerate(k_fold.split(X=self.dataset.get_folding_values())):
-                episode = i * config.train.k_fold_splits + k
-                logger.info(f'Episode - {episode}')
-
-                self.train_on_episode(train_indices, val_indices)
-
-    def train_on_episode(self, train_indices, val_indices):
+    def train(self):
         # TODO: Is it ok to slide the window between 2 splits of train intervals ? Data not contiguous
-        train_dataset = build_dataset_wrapper(self.dataset, indices=train_indices)
-        val_dataset = build_dataset_wrapper(self.dataset, indices=val_indices)
+        # TODO: Save logs.
 
-        self.train_env.set_dataset(train_dataset)
-        self.val_env.set_dataset(val_dataset)
+        logger.info(f'Starting training for {self.train_config.episodes} episodes.')
+        progress_bar = tqdm(total=self.train_config.episodes)
+        print()
+        for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_folding_values())):
+            train_dataset = build_dataset_wrapper(self.dataset, indices=train_indices)
+            val_dataset = build_dataset_wrapper(self.dataset, indices=val_indices)
+            self.train_env.set_dataset(train_dataset)
+            self.val_env.set_dataset(val_dataset)
 
-        self.agent = self.agent.learn(
-            total_timesteps=1,
-            callback=None,
-            tb_log_name=self.name,
-            log_interval=1,
-            eval_env=self.val_env,
-            eval_freq=len(train_indices),
-            n_eval_episodes=1,
-            eval_log_path=None,
-            reset_num_timesteps=True
-        )
+            k_fold_split_time_steps = self.train_config.episodes // self.k_fold.n_splits * len(train_indices)
+            # For stable baselines3 `eval_freq` is relative to the episode time steps.
+            steps_eval_frequency = self.train_config.eval_frequency * len(train_indices)
+            self.agent = self.agent.learn(
+                total_timesteps=k_fold_split_time_steps,
+                callback=None,
+                tb_log_name=self.name,
+                log_interval=self.train_config.log_frequency,
+                eval_env=self.val_env,
+                eval_freq=steps_eval_frequency,
+                n_eval_episodes=1,
+                eval_log_path=None,
+                reset_num_timesteps=True
+            )
+
+            progress_bar.update(n=self.train_config.episodes // self.k_fold.n_splits)
+            print()
+
+        progress_bar.close()
 
 
 #######################################################################################################################
@@ -69,12 +76,14 @@ def build_trainer(
         train_env: TradingEnv,
         val_env: TradingEnv
 ) -> Trainer:
+    k_fold = build_k_fold(config)
+
     return Trainer(
-        episodes=config.train.episodes,
+        train_config=config.train,
         agent=agent,
+        name=config.input.env,
         dataset=dataset,
         train_env=train_env,
         val_env=val_env,
-        name=config.input.env,
-        k_fold_splits=config.train.k_fold_splits
+        k_fold=k_fold,
     )

@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.model_selection._split import _BaseKFold
 
 from yacht import utils
-from yacht.config import InputConfig, TrainConfig
+from yacht.config import Config
 
 
 class PurgedKFold(_BaseKFold):
@@ -79,7 +79,10 @@ class PurgedKFold(_BaseKFold):
 #######################################################################################################################
 
 
-def build_k_fold(input_config: InputConfig, train_config: TrainConfig) -> PurgedKFold:
+def build_k_fold(config: Config) -> PurgedKFold:
+    input_config = config.input
+    train_config = config.train
+
     train_val_start, train_val_end, _, _ = utils.split_period(
         input_config.start,
         input_config.end,

@@ -6,6 +6,7 @@ from .day import *
 import yacht.utils as utils
 from yacht.data.markets import build_market
 from yacht.data.normalizers import build_normalizer
+from yacht.config import Config
 
 dataset_registry = {
     'DayForecastDataset': DayForecastDataset,
@@ -13,8 +14,11 @@ dataset_registry = {
 }
 
 
-def build_dataset(input_config, train_config, storage_path, mode: str) -> TradingDataset:
+def build_dataset(config: Config, storage_path, mode: str) -> TradingDataset:
     assert mode in ('trainval', 'test')
+
+    input_config = config.input
+    train_config = config.train
 
     market = build_market(input_config, storage_path)
     dataset_cls = dataset_registry[input_config.dataset]

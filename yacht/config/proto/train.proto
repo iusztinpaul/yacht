@@ -9,4 +9,6 @@ message TrainConfig {
   int32 n_epochs = 4;
   int32 k_fold_splits = 5;
   float k_fold_embargo_ratio = 6;
+  int32 eval_frequency = 7;
+  int32 log_frequency = 8;
 }
