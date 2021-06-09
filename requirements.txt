@@ -1,7 +1,6 @@
 python-binance==0.7.11
 gym-anytrading==1.2.0
 stable-baselines3==1.0
-torch==1.8.1+cu111
 tables==3.6.1
 tqdm==4.60.0
 pandas~=1.2.4

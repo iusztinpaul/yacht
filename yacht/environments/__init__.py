@@ -19,13 +19,9 @@ environment_registry = {
 
 
 def build_env(input_config: InputConfig, dataset: TradingDataset):
-    normalizer = build_normalizer(input_config.env_normalizer)
-
     return gym.make(
         input_config.env,
         dataset=dataset,
-        normalizer=normalizer,
-        window_size=input_config.window_size
     )
 
 
@@ -34,7 +30,6 @@ def register_gym_envs():
         'DayForecastEnv-v0': {
             'entry_point': 'yacht.environments.day:DayForecastEnv',
             'kwargs': {
-                'window_size': 14
             }
         }
     }

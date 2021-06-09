@@ -22,7 +22,8 @@ def build_dataset(config: Config, storage_path, mode: str) -> TradingDataset:
 
     market = build_market(input_config, storage_path)
     dataset_cls = dataset_registry[input_config.dataset]
-    normalizer = build_normalizer(input_config.dataset_normalizer)
+    price_normalizer = build_normalizer(input_config.price_normalizer)
+    other_normalizer = build_normalizer(input_config.other_normalizer)
 
     # TODO: Add multiple ticker support starting from here
     ticker = input_config.tickers[0]
@@ -47,7 +48,9 @@ def build_dataset(config: Config, storage_path, mode: str) -> TradingDataset:
         features=input_config.features,
         start=start,
         end=end,
-        normalizer=normalizer,
+        price_normalizer=price_normalizer,
+        other_normalizer=other_normalizer,
+        window_size=input_config.window_size
     )
 
 
@@ -63,7 +66,9 @@ def build_dataset_wrapper(dataset: TradingDataset, indices: List[int]) -> Union[
         dataset.features,
         dataset.start,
         dataset.end,
-        dataset.normalizer,
+        dataset.price_normalizer,
+        dataset.other_normalizer,
+        dataset.window_size,
         dataset.data,
         indices
     )

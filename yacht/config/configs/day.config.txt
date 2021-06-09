@@ -1,9 +1,9 @@
 input: {
     market: 'Binance'
     dataset: 'DayForecastDataset'
-    dataset_normalizer: 'ZeroCenteredNormalizer'
+    price_normalizer: 'LastClosingPriceNormalizer'
+    other_normalizer: 'ZeroCenteredNormalizer'
     env: 'DayForecastEnv-v0'
-    env_normalizer: 'LastClosingPriceNormalizer'
     tickers: ['BTC']
     intervals: ['1d', '6h', '1h', '30m']
     features: ['Close', 'High', 'Low', 'Volume']
@@ -25,7 +25,7 @@ agent: {
     }
 }
 train: {
-    episodes: 1
+    episodes: 40
     learning_rate: 0.0003
     batch_size: 64
     n_epochs: 5

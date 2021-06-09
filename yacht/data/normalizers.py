@@ -19,10 +19,12 @@ class LastClosingPriceNormalizer(Normalizer):
 
 class ZeroCenteredNormalizer(Normalizer):
     def __call__(self, other_features: np.array):
-        _, features_size = other_features.shape
-        mean = np.mean(other_features, axis=0).reshape(1, features_size)
-        std = np.std(other_features, axis=0).reshape(1, features_size) + 10e-27
-        other_features = (other_features - mean) / std
+        # window_size x concatenated_day_units x features
+
+        window_size, _, features_size = other_features.shape
+        mean = np.mean(other_features, axis=1).reshape((window_size, 1, features_size))
+        std = np.std(other_features, axis=1).reshape((window_size, 1, features_size))
+        other_features = (other_features - mean) / np.sqrt(std**2 + 10e-27)
 
         return other_features
 

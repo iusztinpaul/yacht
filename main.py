@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 
+import matplotlib.pyplot as plt
 
 from yacht.config import load_config
 from yacht.data.datasets import build_dataset
@@ -18,11 +19,15 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("mode", choices=('train', ))
-parser.add_argument("--config_file", required=True, help='Path to your *.yaml configuration file.')
-parser.add_argument("--resume_training", default=False, action='store_true', help='Resume training or not.')
-parser.add_argument("--storage_path", required=True, help='Directory where your model & logs will be saved.')
-parser.add_argument("--logger_level", default='info', choices=('info', 'debug', 'warn'))
+parser.add_argument('mode', choices=('train', 'back_test', 'max_possible_profit'))
+parser.add_argument(
+    '--config_file_name',
+    required=True,
+    help='Name of the *.config file from the configuration dir.'
+)
+parser.add_argument('--resume_training', default=False, action='store_true', help='Resume training or not.')
+parser.add_argument('--storage_path', required=True, help='Directory where your model & logs will be saved.')
+parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 'warn'))
 
 
 if __name__ == '__main__':
@@ -38,15 +43,15 @@ if __name__ == '__main__':
         storage_path=storage_path
     )
     environments.register_gym_envs()
-    config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file))
+    config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file_name))
     logger.info(f'Config:\n{config}')
 
-    dataset = build_dataset(config, storage_path, mode='trainval')
-    train_env = build_env(config.input, dataset)
-    val_env = build_env(config.input, dataset)
-    agent = build_agent(config, train_env)
-
     if args.mode == 'train':
+        dataset = build_dataset(config, storage_path, mode='trainval')
+        train_env = build_env(config.input, dataset)
+        val_env = build_env(config.input, dataset)
+        agent = build_agent(config, train_env)
+
         trainer = build_trainer(
             config=config,
             agent=agent,
@@ -54,16 +59,44 @@ if __name__ == '__main__':
             train_env=train_env,
             val_env=val_env
         )
-        trainer.train()
+        agent = trainer.train()
+        # agent.save(os.path.join(storage_path, 'agent'))
 
         if config.meta.back_test:
             logger.info('Starting back testing...')
             dataset = build_dataset(config, storage_path, mode='test')
             back_test_env = build_env(config.input, dataset)
 
-            back_testing.run_agent(back_test_env, agent)
+            back_testing.run_agent(back_test_env, agent, render=False, render_all=True)
 
             back_test_env.close()
 
-    train_env.close()
-    val_env.close()
+        dataset.close()
+        train_env.close()
+        val_env.close()
+    elif args.mode == 'back_test':
+        logger.info('Starting back testing...')
+
+        dataset = build_dataset(config, storage_path, mode='test')
+        back_test_env = build_env(config.input, dataset)
+        agent = build_agent(
+            config,
+            back_test_env,
+            resume=True,
+            agent_path=os.path.join(storage_path, 'agent')
+        )
+
+        back_testing.run_agent(back_test_env, agent, render=False, render_all=True)
+
+        dataset.close()
+        back_test_env.close()
+    elif args.mode == 'max_possible_profit':
+        dataset = build_dataset(config, storage_path, mode='test')
+        back_test_env = build_env(config.input, dataset)
+        back_test_env.max_possible_profit()
+        back_test_env.render_all()
+        back_test_env.save_rendering(name='max_possible_profit.png')
+        plt.show()
+
+        dataset.close()
+        back_test_env.close()

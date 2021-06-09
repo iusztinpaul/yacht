@@ -30,11 +30,26 @@ class TradingDataset(Dataset, ABC):
             features: List[str],
             start: datetime,
             end: datetime,
-            normalizer: Normalizer,
+            price_normalizer: Normalizer,
+            other_normalizer: Normalizer,
+            window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
+        """
+            market:
+            ticker:
+            intervals: data bars frequency
+            features: supported data features
+            start:
+            end:
+            normalizer:
+            window_size: The past information that you want to add to the current item that you query from the dataset.
+            data: If data != None, it will be encapsulated within the Dataset Object, otherwise it will be queried
+                    from the market.
+        """
         assert '1d' == intervals[0], 'One day bar interval is mandatory to exist & index=0 in input.intervals config.'
         assert 'Close' == features[0], 'Close feature/column is mandatory & index=0 in input.features config.'
+        assert window_size >= 1
 
         self.market = market
         self.ticker = ticker
@@ -42,7 +57,9 @@ class TradingDataset(Dataset, ABC):
         self.features, self.price_features, self.other_features = self.split_features(features)
         self.start = start
         self.end = end
-        self.normalizer = normalizer
+        self.price_normalizer = price_normalizer
+        self.other_normalizer = other_normalizer
+        self.window_size = window_size
 
         assert set(self.features) == set(self.price_features).union(set(self.other_features)), \
             '"self.features" should be all the supported features.'
@@ -61,6 +78,10 @@ class TradingDataset(Dataset, ABC):
 
     def close(self):
         self.market.close()
+
+    @property
+    def storage_dir(self) -> str:
+        return self.market.storage_dir
 
     @property
     def num_price_features(self) -> int:
@@ -87,7 +108,10 @@ class TradingDataset(Dataset, ABC):
 
         return features, price_features, other_features
 
-    def get_folding_values(self) -> np.array:
+    def __getitem__(self, current_index: int):
+        raise NotImplementedError()
+
+    def get_k_folding_values(self) -> np.array:
         return self.get_prices()
 
     def get_prices(self) -> np.array:
@@ -106,14 +130,20 @@ class IndexedDatasetMixin:
             features: List[str],
             start: datetime,
             end: datetime,
-            normalizer: Normalizer,
+            price_normalizer: Normalizer,
+            other_normalizer: Normalizer,
+            window_size: int,
             data: Dict[str, pd.DataFrame],
             indices: List[int]
     ):
+        """
+            Mixin wrapper that is used with k_folding techniques to map indices within the data.
+        """
+
         assert TradingDataset in type(self).mro(), \
             'IndexedMixin should be coupled with a TradingDataset class or subclass'
 
-        super().__init__(market, ticker, intervals, features, start, end, normalizer, data)
+        super().__init__(market, ticker, intervals, features, start, end, price_normalizer, other_normalizer, window_size, data)
 
         self.getitem_index_mappings = indices
 

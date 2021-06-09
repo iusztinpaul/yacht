@@ -30,12 +30,25 @@ class DayForecastDataset(TradingDataset):
             features: List[str],
             start: datetime,
             end: datetime,
-            normalizer: Normalizer,
+            price_normalizer: Normalizer,
+            other_normalizer: Normalizer,
+            window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
         assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
 
-        super().__init__(market, ticker, intervals, features, start, end, normalizer, data)
+        super().__init__(
+            market,
+            ticker,
+            intervals,
+            features,
+            start,
+            end,
+            price_normalizer,
+            other_normalizer,
+            window_size,
+            data
+        )
 
     def __len__(self):
         return len(self.data[self.intervals[0]].index)
@@ -45,7 +58,7 @@ class DayForecastDataset(TradingDataset):
 
     def get_item_shape(self) -> List[int]:
         interval_shape = 0
-        for interval in self.current_intervals:
+        for interval in self.intervals:
             interval_shape += self.INTERVAL_TO_DAY_BAR_UNITS[interval]
 
         features_shape = len(self.features)
@@ -57,31 +70,36 @@ class DayForecastDataset(TradingDataset):
         return cls.INTERVAL_TO_DAY_BAR_UNITS[interval]
 
     @property
-    def current_intervals(self):
-        return self.intervals
-
-    @property
     def supported_intervals(self):
         return list(self.INTERVAL_TO_DAY_BAR_UNITS.keys())
 
-    def __getitem__(self, day_index):
-        item = np.empty(shape=(0, len(self.features)))
-        for interval in self.current_intervals:
-            bars_per_day = self.INTERVAL_TO_DAY_BAR_UNITS[interval]
-            start_index = day_index * bars_per_day
-            end_index = (day_index + 1) * bars_per_day
+    def __getitem__(self, day_index: int) -> np.array:
+        window_item = []
+        for i in reversed(range(self.window_size)):
+            item = np.empty(shape=(0, len(self.features)))
+            for interval in self.intervals:
+                bars_per_day = self.INTERVAL_TO_DAY_BAR_UNITS[interval]
+                start_index = (day_index - i) * bars_per_day
+                end_index = (day_index - i + 1) * bars_per_day
 
-            features = self.data[interval][self.features].iloc[start_index: end_index].values
-            features[..., self.num_price_features:] = self.normalizer(
-                features[..., self.num_price_features:]
-            )
+                features = self.data[interval][self.features].iloc[start_index: end_index].values
+                item = np.concatenate([
+                    item,
+                    features
+                ], axis=0)
 
-            item = np.concatenate([
-                item,
-                features
-            ])
+            window_item.append(item)
 
-        return item
+        window_item = np.stack(window_item, axis=0)
+        # Normalize data at window level.
+        window_item[..., :self.num_price_features] = self.price_normalizer(
+            window_item[..., :self.num_price_features]
+        )
+        window_item[..., self.num_price_features:] = self.other_normalizer(
+            window_item[..., self.num_price_features:]
+        )
+
+        return window_item
 
 
 class IndexedDayForecastDataset(IndexedDatasetMixin, DayForecastDataset):

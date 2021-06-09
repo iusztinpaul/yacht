@@ -1,3 +1,5 @@
+import os
+
 import gym
 import pandas as pd
 from gym import spaces
@@ -5,18 +7,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from yacht.data.datasets import TradingDataset
-from yacht.data.normalizers import Normalizer
 from yacht.environments.enums import Positions, Actions
 
 
 class TradingEnv(gym.Env):
-    def __init__(self, dataset: TradingDataset, normalizer: Normalizer, window_size: int):
-        assert window_size >= 1
-
+    def __init__(self, dataset: TradingDataset):
         self.seed()
         self.dataset = dataset
-        self.normalizer = normalizer
-        self.window_size = window_size
+        self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
 
         # spaces
@@ -41,6 +39,8 @@ class TradingEnv(gym.Env):
         self._total_profit = None
         self._first_rendering = None
         self.history = None
+
+        self.reset()
 
     def set_dataset(self, dataset: TradingDataset):
         self.dataset = dataset
@@ -78,10 +78,10 @@ class TradingEnv(gym.Env):
         if self._current_tick == self._end_tick:
             self._done = True
 
-        step_reward = self._calculate_reward(action)
+        step_reward = self.calculate_reward(action)
         self._total_reward += step_reward
 
-        self._update_profit(action)
+        self.update_profit(action)
 
         trade = False
         if ((action == Actions.Buy.value and self._position == Positions.Short) or
@@ -106,16 +106,8 @@ class TradingEnv(gym.Env):
 
         return observation, step_reward, self._done, info
 
-    def _get_observation(self) -> dict:
-        observation = []
-        for n in range(self.window_size, 0, -1):
-            observation.append(
-                self.dataset[self._current_tick - n + 1]
-            )
-        observation = np.stack(observation, axis=0)
-        observation[..., :self.dataset.num_price_features] = self.normalizer(
-            observation[..., :self.dataset.num_price_features]
-        )
+    def _get_observation(self) -> np.array:
+        observation = self.dataset[self._current_tick]
 
         return observation
 
@@ -184,20 +176,18 @@ class TradingEnv(gym.Env):
         )
 
     def close(self):
-        self.dataset.close()
         plt.close()
 
-    def save_rendering(self, filepath):
-        plt.savefig(filepath)
+    def save_rendering(self, name='trades.png'):
+        plt.savefig(
+            os.path.join(self.dataset.storage_dir, name)
+        )
 
-    def pause_rendering(self):
-        plt.show()
-
-    def _calculate_reward(self, action):
+    def calculate_reward(self, action):
         raise NotImplementedError
 
-    def _update_profit(self, action):
+    def update_profit(self, action):
         raise NotImplementedError
 
-    def max_possible_profit(self):  # trade fees are ignored
-        raise NotImplementedError
+    def max_possible_profit(self):
+        raise NotImplementedError()

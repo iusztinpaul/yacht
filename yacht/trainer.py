@@ -39,7 +39,7 @@ class Trainer:
         logger.info(f'Starting training for {self.train_config.episodes} episodes.')
         progress_bar = tqdm(total=self.train_config.episodes)
         print()
-        for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_folding_values())):
+        for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_k_folding_values())):
             train_dataset = build_dataset_wrapper(self.dataset, indices=train_indices)
             val_dataset = build_dataset_wrapper(self.dataset, indices=val_indices)
             self.train_env.set_dataset(train_dataset)
@@ -64,6 +64,8 @@ class Trainer:
             print()
 
         progress_bar.close()
+
+        return self.agent
 
 
 #######################################################################################################################
