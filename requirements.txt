@@ -11,3 +11,4 @@ gym~=0.18.0
 python-dotenv==0.17.1
 protobuf==3.16.0
 sklearn==0.0
+mplfinance==0.12.7a17

@@ -45,11 +45,13 @@ def build_dataset(config: Config, storage_path, mode: str, render_split: bool = 
         daily_prices = daily_prices['Close']
 
         renderer = TrainTestSplitRenderer(
+            prices=daily_prices,
             train_interval=(train_val_start, train_val_end),
             test_interval=(back_test_start, back_test_end)
         )
-        renderer.render(daily_prices)
+        renderer.render()
         renderer.save(os.path.join(storage_path, 'trainval_test_split.png'))
+        renderer.close()
 
     if mode == 'trainval':
         start = train_val_start

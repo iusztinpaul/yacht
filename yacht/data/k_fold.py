@@ -37,19 +37,20 @@ class PurgedKFold(_BaseKFold):
         self.interval = interval
         self.purge_ratio = purge_ratio
         self.embargo_ratio = embargo_ratio
-        self.renderer = KFoldRenderer()
+        self.renderer = None
 
         self.from_to_series = self.build_from_to_series(start, end, interval)
 
         # Current state
         self.current_split = 0
-        self.X = None
         self.train_indices = None
         self.test_indices = None
 
     def split(self, X, y=None, groups=None):
         if (X.index == self.from_to_series.index).sum() != len(self.from_to_series):
             raise ValueError('X and date values must have the same index.')
+
+        self.renderer = KFoldRenderer(prices=X)
 
         indices = np.arange(X.shape[0])
         embargo_offset = self.compute_embargo_offset(X)
@@ -70,7 +71,6 @@ class PurgedKFold(_BaseKFold):
 
             # Keep internal state
             self.current_split += 1
-            self.X = X
             self.train_indices = train_indices
             self.test_indices = test_indices
 
@@ -108,15 +108,17 @@ class PurgedKFold(_BaseKFold):
         return indices[:int(indices.shape[0] * (1 - self.purge_ratio))]
 
     def render(self, storage_dir, show=False):
-        assert all((self.X is not None, self.train_indices is not None, self.test_indices is not None))
+        assert all((self.train_indices is not None, self.test_indices is not None))
 
-        self.renderer.render(self.X, self.train_indices, self.test_indices)
+        self.renderer.render(self.train_indices, self.test_indices)
         self.renderer.save(
             os.path.join(storage_dir, f'k_fold_split_{self.current_split}.png')
         )
         if show:
             self.renderer.show()
 
+    def close(self):
+        self.renderer.close()
 
 
 #######################################################################################################################

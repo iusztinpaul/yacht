@@ -65,15 +65,15 @@ if __name__ == '__main__':
         if config.meta.back_test:
             logger.info('Starting back testing...')
             dataset = build_dataset(config, storage_path, mode='test')
+
             back_test_env = build_env(config.input, dataset)
-
-            back_testing.run_agent(back_test_env, agent, render=False, render_all=True)
-
+            back_testing.run_agent(back_test_env, agent, render=True, render_all=False)
             back_test_env.close()
 
         dataset.close()
         train_env.close()
         val_env.close()
+        trainer.close()
     elif args.mode == 'back_test':
         logger.info('Starting back testing...')
 
@@ -86,7 +86,7 @@ if __name__ == '__main__':
             agent_path=os.path.join(storage_path, 'agent')
         )
 
-        back_testing.run_agent(back_test_env, agent, render=False, render_all=True)
+        back_testing.run_agent(back_test_env, agent, render=True, render_all=False)
 
         dataset.close()
         back_test_env.close()

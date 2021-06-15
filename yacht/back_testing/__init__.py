@@ -1,7 +1,5 @@
 import logging
 
-import matplotlib.pyplot as plt
-
 
 logger = logging.getLogger(__file__)
 
@@ -14,6 +12,7 @@ def run_agent(env, agent, render: bool = True, render_all=False):
     while True:
         action, _states = agent.predict(observation, deterministic=True)
         observation, reward, done, info = env.step(action)
+
         if render:
             env.render()
         if done:
@@ -21,6 +20,6 @@ def run_agent(env, agent, render: bool = True, render_all=False):
             break
 
     if render_all:
-        fig = env.render_all()
-        fig.show()
-        env.save_rendering(name='back_test.png', fig=fig)
+        env.render_all(show=True)
+
+    env.save_rendering(name='back_test.png')

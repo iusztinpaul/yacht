@@ -1,50 +1,57 @@
 import datetime
-import os
-from typing import Tuple
+from typing import Tuple, List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from yacht.environments import Positions
+from yacht import utils
+
 
 class BaseRenderer:
-    def __init__(self):
+    def __init__(self, prices: pd.Series):
+        self.prices = prices
+
         self.fig = None
         self.ax = None
 
-    def render(self, prices: pd.Series, *args, **kwargs):
+    def render(self, *args, **kwargs):
         raise NotImplementedError()
 
     def show(self):
         self.fig.show()
+
+    def close(self):
+        plt.close(self.fig)
 
     def save(self, file_path: str):
         self.fig.savefig(file_path)
 
 
 class KFoldRenderer(BaseRenderer):
-    def render(self, prices: pd.Series, train_indices: np.array, val_indices: np.array):
+    def render(self, train_indices: np.array, val_indices: np.array):
         self.fig, self.ax = plt.subplots()
 
-        self.ax.plot(prices)
+        self.ax.plot(self.prices)
         self.ax.set_xticks(
-            prices.index[
-                np.linspace(0, prices.shape[0] - 1, 5).astype(np.int16)
+            self.prices.index[
+                np.linspace(0, self.prices.shape[0] - 1, 5).astype(np.int16)
             ])
 
-        y_min = np.min(prices) * 0.9
-        y_max = np.max(prices) * 1.1
+        y_min = np.min(self.prices) * 0.9
+        y_max = np.max(self.prices) * 1.1
 
         x_line_2_left = None
         x_line_2_right = None
         if np.max(val_indices) < np.min(train_indices):
             # Val split is in the left.
-            x_line_1_left = prices.index[val_indices[-1]]
-            x_line_1_right = prices.index[train_indices[0]]
+            x_line_1_left = self.prices.index[val_indices[-1]]
+            x_line_1_right = self.prices.index[train_indices[0]]
         elif np.max(train_indices) < np.min(val_indices):
             # Val split is in the right.
-            x_line_1_left = prices.index[train_indices[-1]]
-            x_line_1_right = prices.index[val_indices[0]]
+            x_line_1_left = self.prices.index[train_indices[-1]]
+            x_line_1_right = self.prices.index[val_indices[0]]
         else:
             # Val split is in the middle.
             diff = np.diff(train_indices)
@@ -52,13 +59,13 @@ class KFoldRenderer(BaseRenderer):
             discontinuity_point = np.where(diff != 1)[0]
             assert len(discontinuity_point) == 1, 'There should be only one discontinuity point.'
 
-            x_line_1_left = prices.index[train_indices[discontinuity_point - 1].item()]
-            x_line_1_right = prices.index[val_indices[0]]
-            x_line_2_left = prices.index[val_indices[-1]]
-            x_line_2_right = prices.index[train_indices[discontinuity_point].item()]
+            x_line_1_left = self.prices.index[train_indices[discontinuity_point - 1].item()]
+            x_line_1_right = self.prices.index[val_indices[0]]
+            x_line_2_left = self.prices.index[val_indices[-1]]
+            x_line_2_right = self.prices.index[train_indices[discontinuity_point].item()]
 
         self.ax.text(
-            x=prices.index[int(np.median(val_indices))],
+            x=self.prices.index[int(np.median(val_indices))],
             y=y_max + 10,
             s='Val'
         )
@@ -96,21 +103,24 @@ class KFoldRenderer(BaseRenderer):
 class TrainTestSplitRenderer(BaseRenderer):
     def __init__(
             self,
+            prices: pd.Series,
             train_interval: Tuple[datetime.datetime, datetime.datetime],
             test_interval: Tuple[datetime.datetime, datetime.datetime]
     ):
+        super().__init__(prices)
+
         assert len(train_interval) == 2 and len(test_interval) == 2
         assert train_interval[0] < train_interval[1] and test_interval[0] < test_interval[1]
 
         self.train_interval = train_interval
         self.test_interval = test_interval
 
-    def render(self, prices: pd.Series):
+    def render(self):
         self.fig, self.ax = plt.subplots()
-        self.ax.plot(prices)
+        self.ax.plot(self.prices)
 
-        y_min = np.min(prices) * 0.9
-        y_max = np.max(prices) * 1.1
+        y_min = np.min(self.prices) * 0.9
+        y_max = np.max(self.prices) * 1.1
 
         if self.train_interval[1] < self.test_interval[0]:
             x_line_left = self.train_interval[1]
@@ -155,28 +165,47 @@ class TrainTestSplitRenderer(BaseRenderer):
         )
 
 
-class PriceRenderer(BaseRenderer):
-    def __init__(self, prices: pd.DataFrame):
-        self.prices = prices
+class TradingRenderer(BaseRenderer):
+    def __init__(self, prices: pd.Series, start: datetime, end: datetime):
+        super().__init__(prices)
 
-    def render(self):
-        pass
+        self.start = start
+        self.end = end
+        self.num_days = utils.get_num_days(start, end)
 
+        self.rendered_prices = None
 
-class RewardRenderer(BaseRenderer):
-    def render(self):
-        pass
+    def render(self, positions: List[Optional[Positions]]):
+        plt.cla()
 
+        if self.fig is None:
+            self.fig, self.ax = plt.subplots()
 
-class ActionRenderer(BaseRenderer):
-    def render(self):
-        pass
+        self.ax.plot(self.prices)
 
+        num_missing_positions = self.num_days - len(positions)
+        positions = positions + [None] * num_missing_positions
 
-class Renderer(BaseRenderer):
-    price_renderer = PriceRenderer
-    reward_renderer = RewardRenderer
-    action_renderer = ActionRenderer
+        position_ticks = pd.Series(index=self.prices.index)
+        position_history = np.array(positions)
+        position_ticks[position_history == Positions.Short] = Positions.Short
+        position_ticks[position_history == Positions.Long] = Positions.Long
 
-    def render(self):
-        pass
+        short_positions = position_ticks[position_ticks == Positions.Short]
+        self.ax.plot(
+            short_positions.index,
+            self.prices.loc[short_positions.index],
+            'rv',
+            markersize=6
+        )
+
+        long_positions = position_ticks[position_ticks == Positions.Long]
+        self.ax.plot(
+            long_positions.index,
+            self.prices.loc[long_positions.index],
+            'g^',
+            markersize=6
+        )
+
+    def pause(self):
+        plt.pause(0.01)
