@@ -128,64 +128,8 @@ class TradingEnv(gym.Env):
     def render(self, mode='live'):
         self.renderer.render(self._position_history)
         self.renderer.pause()
-        # def _plot_position(position, tick):
-        #     color = None
-        #     if position == Positions.Short:
-        #         color = 'red'
-        #     elif position == Positions.Long:
-        #         color = 'green'
-        #     if color:
-        #         plt.scatter(tick, self.prices[tick], color=color)
-        #
-        # if self._first_rendering:
-        #     self._first_rendering = False
-        #     plt.cla()
-        #     plt.plot(self.prices)
-        #     start_position = self._position_history[self._start_tick]
-        #     _plot_position(start_position, self._start_tick)
-        #
-        # _plot_position(self._position, self._current_tick)
-        #
-        # plt.suptitle(
-        #     "Total Reward: %.6f" % self._total_reward + ' ~ ' +
-        #     "Total Profit: %.6f" % self._total_profit
-        # )
-        #
-        # plt.pause(0.01)
 
     def render_all(self, show=True):
-        # fig, ax = plt.subplots()
-        #
-        # ax.plot(self.prices)
-        #
-        # position_ticks = pd.Series(index=self.prices.index)
-        #
-        # position_history = np.array(self._position_history)
-        # position_ticks[position_history == Positions.Short] = Positions.Short
-        # position_ticks[position_history == Positions.Long] = Positions.Long
-        #
-        # short_positions = position_ticks[position_ticks == Positions.Short]
-        # ax.plot(
-        #     short_positions.index,
-        #     self.prices.loc[short_positions.index],
-        #     'rv',
-        #     markersize=6
-        # )
-        #
-        # long_positions = position_ticks[position_ticks == Positions.Long]
-        # ax.plot(
-        #     long_positions.index,
-        #     self.prices.loc[long_positions.index],
-        #     'g^',
-        #     markersize=6
-        # )
-        #
-        # ax.set_title(
-        #     "Total Reward: %.6f" % self._total_reward + ' ~ ' +
-        #     "Total Profit: %.6f" % self._total_profit
-        # )
-        #
-        # return fig
         self.renderer.render(self._position_history)
         if show:
             self.renderer.show()

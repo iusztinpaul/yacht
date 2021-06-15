@@ -2,6 +2,7 @@ import datetime
 from typing import Tuple, List, Optional
 
 import matplotlib.pyplot as plt
+import mplfinance as mpf
 import numpy as np
 import pandas as pd
 
@@ -20,13 +21,16 @@ class BaseRenderer:
         raise NotImplementedError()
 
     def show(self):
-        self.fig.show()
+        if self.fig:
+            self.fig.show()
 
     def close(self):
-        plt.close(self.fig)
+        if self.fig:
+            plt.close(self.fig)
 
     def save(self, file_path: str):
-        self.fig.savefig(file_path)
+        if self.fig:
+            self.fig.savefig(file_path)
 
 
 class KFoldRenderer(BaseRenderer):
@@ -115,6 +119,32 @@ class TrainTestSplitRenderer(BaseRenderer):
         self.train_interval = train_interval
         self.test_interval = test_interval
 
+    # def render(self, file_path: str = None):
+    #     if self.train_interval[1] < self.test_interval[0]:
+    #         x_line_left = self.train_interval[1]
+    #         x_line_right = self.test_interval[0]
+    #     else:
+    #         x_line_left = self.test_interval[1]
+    #         x_line_right = self.train_interval[0]
+    #
+    #     plot_arguments = {
+    #         'data': self.prices,
+    #         'type': 'line',
+    #         'vlines': {
+    #             'vlines': [x_line_left, x_line_right],
+    #             'colors': 'g',
+    #             'linestyle': '-.',
+    #             'linewidths': 1.5
+    #         }
+    #     }
+    #     if file_path:
+    #         plot_arguments['savefig'] = {
+    #             'fname': file_path,
+    #             'dpi': 100,
+    #         }
+    #
+    #     mpf.plot(**plot_arguments)
+
     def render(self):
         self.fig, self.ax = plt.subplots()
         self.ax.plot(self.prices)
@@ -180,8 +210,13 @@ class TradingRenderer(BaseRenderer):
 
         if self.fig is None:
             self.fig, self.ax = plt.subplots()
+            self.ax.set_xticks(
+                self.prices.index[
+                    np.linspace(0, self.prices.shape[0] - 1, 5).astype(np.int16)
+                ])
 
         self.ax.plot(self.prices)
+        self.ax.plot(self.prices[:len(positions)])
 
         num_missing_positions = self.num_days - len(positions)
         positions = positions + [None] * num_missing_positions
@@ -208,4 +243,4 @@ class TradingRenderer(BaseRenderer):
         )
 
     def pause(self):
-        plt.pause(0.01)
+        plt.pause(0.005)
