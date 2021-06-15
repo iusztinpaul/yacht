@@ -134,7 +134,7 @@ class IndexedDatasetMixin:
             other_normalizer: Normalizer,
             window_size: int,
             data: Dict[str, pd.DataFrame],
-            indices: List[int]
+            indices: np.array
     ):
         """
             Mixin wrapper that is used with k_folding techniques to map indices within the data.
@@ -142,15 +142,52 @@ class IndexedDatasetMixin:
 
         assert TradingDataset in type(self).mro(), \
             'IndexedMixin should be coupled with a TradingDataset class or subclass'
+        assert len(indices.shape) == 1
 
-        super().__init__(market, ticker, intervals, features, start, end, price_normalizer, other_normalizer, window_size, data)
+        super().__init__(
+            market,
+            ticker,
+            intervals,
+            features,
+            start,
+            end,
+            price_normalizer,
+            other_normalizer,
+            window_size,
+            data
+        )
 
-        self.getitem_index_mappings = indices
+        self.getitem_index_mappings = self._adjust_indices_to_window(indices)
 
-    def __len__(self):
+    def _adjust_indices_to_window(self, indices: np.array) -> np.array:
+        """
+            A window fashion aggregation of data does not allow discontinuity in the indices. For example if you have
+            the following indices: [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 15] with a window_size of 2 and you want to get
+            an item start from index 5 the naive approach will take indices [9, 10], where 9 is not within this split.
+            Because of that this adjusting finds the point of discontinuity and removes items from that point equal to
+            the window size. Therefore, in our example the new list will be: [0, 1, 2, 3, 4, 11, 12, 13, 14, 15].
+            Now the result for index 5 will be [10, 11].
+        """
+        delta = np.diff(indices)
+        # Shift items one unit to the right for consistency between delta & indices.
+        delta = np.concatenate([np.ones(shape=(1, )), delta], axis=0)
+        discontinuity_starting_point = np.where(delta != 1)[0]
+
+        assert len(discontinuity_starting_point) in (0, 1), 'No more than 1 discontinuity point is supported'
+        if len(discontinuity_starting_point) == 0:
+            return indices
+
+        discontinuity_starting_point = discontinuity_starting_point[0]
+        indices = np.concatenate([
+            indices[:discontinuity_starting_point], indices[(discontinuity_starting_point + 1 + self.window_size):]
+            ], axis=-1)
+
+        return indices
+
+    def __len__(self) -> int:
         return len(self.getitem_index_mappings)
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> np.array:
         index = self.getitem_index_mappings[index]
 
         return super().__getitem__(index)

@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1eyacht/config/proto/train.proto\x12\x12yacht.config.proto\"\xc0\x01\n\x0bTrainConfig\x12\x10\n\x08\x65pisodes\x18\x01 \x01(\x05\x12\x15\n\rlearning_rate\x18\x02 \x01(\x02\x12\x12\n\nbatch_size\x18\x03 \x01(\x05\x12\x10\n\x08n_epochs\x18\x04 \x01(\x05\x12\x15\n\rk_fold_splits\x18\x05 \x01(\x05\x12\x1c\n\x14k_fold_embargo_ratio\x18\x06 \x01(\x02\x12\x16\n\x0e\x65val_frequency\x18\x07 \x01(\x05\x12\x15\n\rlog_frequency\x18\x08 \x01(\x05\x62\x06proto3')
+  serialized_pb=_b('\n\x1eyacht/config/proto/train.proto\x12\x12yacht.config.proto\"\xdc\x01\n\x0bTrainConfig\x12\x10\n\x08\x65pisodes\x18\x01 \x01(\x05\x12\x15\n\rlearning_rate\x18\x02 \x01(\x02\x12\x12\n\nbatch_size\x18\x03 \x01(\x05\x12\x10\n\x08n_epochs\x18\x04 \x01(\x05\x12\x15\n\rk_fold_splits\x18\x05 \x01(\x05\x12\x1a\n\x12k_fold_purge_ratio\x18\x06 \x01(\x02\x12\x1c\n\x14k_fold_embargo_ratio\x18\x07 \x01(\x02\x12\x16\n\x0e\x65val_frequency\x18\x08 \x01(\x05\x12\x15\n\rlog_frequency\x18\t \x01(\x05\x62\x06proto3')
 )
 
 
@@ -68,22 +68,29 @@ _TRAINCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='k_fold_embargo_ratio', full_name='yacht.config.proto.TrainConfig.k_fold_embargo_ratio', index=5,
+      name='k_fold_purge_ratio', full_name='yacht.config.proto.TrainConfig.k_fold_purge_ratio', index=5,
       number=6, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='eval_frequency', full_name='yacht.config.proto.TrainConfig.eval_frequency', index=6,
-      number=7, type=5, cpp_type=1, label=1,
+      name='k_fold_embargo_ratio', full_name='yacht.config.proto.TrainConfig.k_fold_embargo_ratio', index=6,
+      number=7, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='eval_frequency', full_name='yacht.config.proto.TrainConfig.eval_frequency', index=7,
+      number=8, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='log_frequency', full_name='yacht.config.proto.TrainConfig.log_frequency', index=7,
-      number=8, type=5, cpp_type=1, label=1,
+      name='log_frequency', full_name='yacht.config.proto.TrainConfig.log_frequency', index=8,
+      number=9, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -101,7 +108,7 @@ _TRAINCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=55,
-  serialized_end=247,
+  serialized_end=275,
 )
 
 DESCRIPTOR.message_types_by_name['TrainConfig'] = _TRAINCONFIG

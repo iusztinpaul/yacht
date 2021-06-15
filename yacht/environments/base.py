@@ -146,7 +146,9 @@ class TradingEnv(gym.Env):
         plt.pause(0.01)
 
     def render_all(self):
-        plt.plot(self.prices)
+        fig, ax = plt.subplots()
+
+        ax.plot(self.prices)
 
         position_ticks = pd.Series(index=self.prices.index)
 
@@ -155,7 +157,7 @@ class TradingEnv(gym.Env):
         position_ticks[position_history == Positions.Long] = Positions.Long
 
         short_positions = position_ticks[position_ticks == Positions.Short]
-        plt.plot(
+        ax.plot(
             short_positions.index,
             self.prices.loc[short_positions.index],
             'rv',
@@ -163,23 +165,26 @@ class TradingEnv(gym.Env):
         )
 
         long_positions = position_ticks[position_ticks == Positions.Long]
-        plt.plot(
+        ax.plot(
             long_positions.index,
             self.prices.loc[long_positions.index],
             'g^',
             markersize=6
         )
 
-        plt.suptitle(
+        ax.set_title(
             "Total Reward: %.6f" % self._total_reward + ' ~ ' +
             "Total Profit: %.6f" % self._total_profit
         )
 
+        return fig
+
     def close(self):
         plt.close()
 
-    def save_rendering(self, name='trades.png'):
-        plt.savefig(
+    def save_rendering(self, name='trades.png', fig=None):
+        figure = fig if fig else plt
+        figure.savefig(
             os.path.join(self.dataset.storage_dir, name)
         )
 

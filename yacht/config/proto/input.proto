@@ -15,5 +15,6 @@ message InputConfig {
   string start = 9;
   string end = 10;
   float back_test_split_ratio = 11;
-  int32 window_size = 12;
+  float back_test_embargo_ratio = 12;
+  int32 window_size = 13;
 }

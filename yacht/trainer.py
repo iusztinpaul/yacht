@@ -33,13 +33,14 @@ class Trainer:
         self.k_fold = k_fold
 
     def train(self):
-        # TODO: Is it ok to slide the window between 2 splits of train intervals ? Data not contiguous
         # TODO: Save logs.
 
         logger.info(f'Starting training for {self.train_config.episodes} episodes.')
         progress_bar = tqdm(total=self.train_config.episodes)
         print()
         for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_k_folding_values())):
+            self.k_fold.render(self.dataset.storage_dir)
+
             train_dataset = build_dataset_wrapper(self.dataset, indices=train_indices)
             val_dataset = build_dataset_wrapper(self.dataset, indices=val_indices)
             self.train_env.set_dataset(train_dataset)

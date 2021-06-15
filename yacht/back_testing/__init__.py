@@ -21,8 +21,6 @@ def run_agent(env, agent, render: bool = True, render_all=False):
             break
 
     if render_all:
-        plt.cla()
-        env.render_all()
-        plt.show()
-
-    env.save_rendering(name='back_test.png')
+        fig = env.render_all()
+        fig.show()
+        env.save_rendering(name='back_test.png', fig=fig)

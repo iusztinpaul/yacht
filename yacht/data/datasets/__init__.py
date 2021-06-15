@@ -1,3 +1,4 @@
+import os.path
 from typing import Union
 
 from .base import *
@@ -7,6 +8,7 @@ import yacht.utils as utils
 from yacht.data.markets import build_market
 from yacht.data.normalizers import build_normalizer
 from yacht.config import Config
+from ..renderers import TrainTestSplitRenderer
 
 dataset_registry = {
     'DayForecastDataset': DayForecastDataset,
@@ -14,11 +16,10 @@ dataset_registry = {
 }
 
 
-def build_dataset(config: Config, storage_path, mode: str) -> TradingDataset:
+def build_dataset(config: Config, storage_path, mode: str, render_split: bool = True) -> TradingDataset:
     assert mode in ('trainval', 'test')
 
     input_config = config.input
-    train_config = config.train
 
     market = build_market(input_config, storage_path)
     dataset_cls = dataset_registry[input_config.dataset]
@@ -31,8 +32,24 @@ def build_dataset(config: Config, storage_path, mode: str) -> TradingDataset:
         input_config.start,
         input_config.end,
         input_config.back_test_split_ratio,
-        train_config.k_fold_embargo_ratio
+        input_config.back_test_embargo_ratio
     )
+
+    if render_split:
+        daily_prices = market.get(
+            ticker=ticker,
+            interval='1d',
+            start=min(train_val_start, back_test_start),
+            end=max(train_val_end, back_test_end)
+        )
+        daily_prices = daily_prices['Close']
+
+        renderer = TrainTestSplitRenderer(
+            train_interval=(train_val_start, train_val_end),
+            test_interval=(back_test_start, back_test_end)
+        )
+        renderer.render(daily_prices)
+        renderer.save(os.path.join(storage_path, 'trainval_test_split.png'))
 
     if mode == 'trainval':
         start = train_val_start
