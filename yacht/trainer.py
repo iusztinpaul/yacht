@@ -87,7 +87,7 @@ def build_trainer(
     return Trainer(
         train_config=config.train,
         agent=agent,
-        name=config.input.env,
+        name=config.environment.name,
         dataset=dataset,
         train_env=train_env,
         val_env=val_env,

@@ -1,14 +1,19 @@
 from enum import Enum
 
 
-class Actions(Enum):
-    Sell = 0
-    Buy = 1
-
-
-class Positions(Enum):
-    Short = 0
+class Position(Enum):
+    Short = -1
+    Hold = 0
     Long = 1
 
+    @classmethod
+    def build(cls, position: int):
+        if position > 0:
+            return Position.Long
+        elif position == 0:
+            return Position.Hold
+        else:
+            return Position.Short
+
     def opposite(self):
-        return Positions.Short if self == Positions.Long else Positions.Long
+        return Position.Short if self == Position.Long else Position.Long

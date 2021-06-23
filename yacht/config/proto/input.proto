@@ -8,13 +8,12 @@ message InputConfig {
   string dataset = 2;
   string price_normalizer = 3;
   string other_normalizer = 4;
-  string env = 5;
-  repeated string tickers = 6;
-  repeated string intervals = 7;
-  repeated string features = 8;
-  string start = 9;
-  string end = 10;
-  float back_test_split_ratio = 11;
-  float back_test_embargo_ratio = 12;
-  int32 window_size = 13;
+  repeated string tickers = 5;
+  repeated string intervals = 6;
+  repeated string features = 7;
+  string start = 8;
+  string end = 9;
+  float back_test_split_ratio = 10;
+  float back_test_embargo_ratio = 11;
+  int32 window_size = 12;
 }

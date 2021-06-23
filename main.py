@@ -48,8 +48,8 @@ if __name__ == '__main__':
 
     if args.mode == 'train':
         dataset = build_dataset(config, storage_path, mode='trainval')
-        train_env = build_env(config.input, dataset)
-        val_env = build_env(config.input, dataset)
+        train_env = build_env(config.environment, dataset)
+        val_env = build_env(config.environment, dataset)
         agent = build_agent(config, train_env)
 
         trainer = build_trainer(
@@ -66,7 +66,7 @@ if __name__ == '__main__':
             logger.info('Starting back testing...')
             dataset = build_dataset(config, storage_path, mode='test')
 
-            back_test_env = build_env(config.input, dataset)
+            back_test_env = build_env(config.environment, dataset)
             back_testing.run_agent(back_test_env, agent, render=True, render_all=False)
             back_test_env.close()
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         logger.info('Starting back testing...')
 
         dataset = build_dataset(config, storage_path, mode='test')
-        back_test_env = build_env(config.input, dataset)
+        back_test_env = build_env(config.environment, dataset)
         agent = build_agent(
             config,
             back_test_env,
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         back_test_env.close()
     elif args.mode == 'max_possible_profit':
         dataset = build_dataset(config, storage_path, mode='test')
-        back_test_env = build_env(config.input, dataset)
+        back_test_env = build_env(config.environment, dataset)
         back_test_env.max_possible_profit()
         back_test_env.render_all()
         back_test_env.save_rendering(name='max_possible_profit.png')

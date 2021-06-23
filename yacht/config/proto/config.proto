@@ -3,13 +3,15 @@ syntax = "proto3";
 package yacht.config.proto;
 
 import "yacht/config/proto/input.proto";
+import "yacht/config/proto/environment.proto";
 import "yacht/config/proto/agent.proto";
 import "yacht/config/proto/train.proto";
 import "yacht/config/proto/meta.proto";
 
 message Config {
    InputConfig input = 1;
-   AgentConfig agent = 2;
-   TrainConfig train = 3;
-   MetaConfig meta = 4;
+   EnvironmentConfig environment = 2;
+   AgentConfig agent = 3;
+   TrainConfig train = 4;
+   MetaConfig meta = 5;
 }

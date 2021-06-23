@@ -6,7 +6,7 @@ import mplfinance as mpf
 import numpy as np
 import pandas as pd
 
-from yacht.environments import Positions
+from yacht.environments import Position
 from yacht import utils
 
 
@@ -205,7 +205,7 @@ class TradingRenderer(BaseRenderer):
 
         self.rendered_prices = None
 
-    def render(self, positions: List[Optional[Positions]]):
+    def render(self, positions: List[Optional[Position]]):
         plt.cla()
 
         if self.fig is None:
@@ -223,10 +223,10 @@ class TradingRenderer(BaseRenderer):
 
         position_ticks = pd.Series(index=self.prices.index)
         position_history = np.array(positions)
-        position_ticks[position_history == Positions.Short] = Positions.Short
-        position_ticks[position_history == Positions.Long] = Positions.Long
+        position_ticks[position_history == Position.Short] = Position.Short
+        position_ticks[position_history == Position.Long] = Position.Long
 
-        short_positions = position_ticks[position_ticks == Positions.Short]
+        short_positions = position_ticks[position_ticks == Position.Short]
         self.ax.plot(
             short_positions.index,
             self.prices.loc[short_positions.index],
@@ -234,7 +234,7 @@ class TradingRenderer(BaseRenderer):
             markersize=6
         )
 
-        long_positions = position_ticks[position_ticks == Positions.Long]
+        long_positions = position_ticks[position_ticks == Position.Long]
         self.ax.plot(
             long_positions.index,
             self.prices.loc[long_positions.index],
@@ -243,4 +243,4 @@ class TradingRenderer(BaseRenderer):
         )
 
     def pause(self):
-        plt.pause(0.005)
+        plt.pause(0.0005)

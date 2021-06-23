@@ -2,10 +2,13 @@ from .enums import *
 from .base import *
 from .day import *
 
+from .action_schemas import build_action_schema
+from .reward_schemas import build_reward_schema
+
 import gym
 from gym.envs.registration import register
 
-from ..config import InputConfig
+from ..config.proto.environment_pb2 import EnvironmentConfig
 
 logger = logging.getLogger(__file__)
 
@@ -14,10 +17,15 @@ environment_registry = {
 }
 
 
-def build_env(input_config: InputConfig, dataset: TradingDataset):
+def build_env(env_config: EnvironmentConfig, dataset: TradingDataset):
+    reward_schema = build_reward_schema(env_config)
+    action_schema = build_action_schema(env_config)
+
     return gym.make(
-        input_config.env,
+        env_config.name,
         dataset=dataset,
+        reward_schema=reward_schema,
+        action_schema=action_schema
     )
 
 

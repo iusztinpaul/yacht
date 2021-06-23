@@ -3,7 +3,6 @@ input: {
     dataset: 'DayForecastDataset'
     price_normalizer: 'LastClosingPriceNormalizer'
     other_normalizer: 'ZeroCenteredNormalizer'
-    env: 'DayForecastEnv-v0'
     tickers: ['BTC']
     intervals: ['1d', '6h', '1h', '30m']
     features: ['Close', 'High', 'Low', 'Volume']
@@ -12,6 +11,13 @@ input: {
     back_test_split_ratio: 0.4
     back_test_embargo_ratio: 0.03
     window_size: 10
+}
+environment: {
+    name: 'DayForecastEnv-v0'
+    reward_schema: 'DayCurrentValueRewardSchema'
+    reward_scaling: 0.0001
+    action_schema: 'ContinuousActionScheme'
+    max_units_per_asset: 10000
 }
 agent: {
     name: 'PPO'

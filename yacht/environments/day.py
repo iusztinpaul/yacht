@@ -1,7 +1,7 @@
 import logging
 
-from yacht.environments import TradingEnv, Positions
-
+from yacht.environments import TradingEnv, Position
+from yacht.environments.reward_schemas import DayCurrentValueRewardSchema
 
 logger = logging.getLogger(__file__)
 
@@ -18,9 +18,9 @@ class DayForecastEnv(TradingEnv):
         last_trade_price = self.prices[self._last_trade_tick]
         price_diff = current_price - last_trade_price
 
-        if self._position == Positions.Short:
+        if self._position == Position.Short:
             sign = 1 if price_diff < 0 else -1
-        elif self._position == Positions.Long:
+        elif self._position == Position.Long:
             sign = 1 if price_diff > 0 else -1
         else:
             raise RuntimeError(f'Wrong Position: {self._position}')
@@ -31,20 +31,10 @@ class DayForecastEnv(TradingEnv):
         return step_reward
 
     def update_profit(self, action):
-        current_price = self.prices[self._current_tick]
-        last_trade_price = self.prices[self._last_trade_tick]
-
-        if self._position == Positions.Short:
-            if last_trade_price > current_price:
-                self._total_profit += 1
-            else:
-                self._total_profit -= 1
-
-        if self._position == Positions.Long:
-            if current_price > last_trade_price:
-                self._total_profit += 1
-            else:
-                self._total_profit -= 1
+        if isinstance(self.reward_schema, DayCurrentValueRewardSchema):
+            self._total_profit = self.reward_schema.current_value
+        else:
+            raise NotImplementedError()
 
     def max_possible_profit(self):
         current_tick = self._start_tick
@@ -55,19 +45,19 @@ class DayForecastEnv(TradingEnv):
         logger.info(f'A total of {total_num_ticks} ticks.')
         while current_tick + 1 <= self._end_tick:
             if self.prices[current_tick] <= self.prices[current_tick + 1]:
-                self._position_history.append(Positions.Long)
+                self._position_history.append(Position.Long)
                 current_tick += 1
 
                 while current_tick + 1 <= self._end_tick and \
-                    self.prices[current_tick] <= self.prices[current_tick + 1]:
+                        self.prices[current_tick] <= self.prices[current_tick + 1]:
                     current_tick += 1
                     self._position_history.append(None)
             else:
-                self._position_history.append(Positions.Short)
+                self._position_history.append(Position.Short)
                 current_tick += 1
 
                 while current_tick + 1 <= self._end_tick and \
-                    self.prices[current_tick] > self.prices[current_tick + 1]:
+                        self.prices[current_tick] > self.prices[current_tick + 1]:
                     current_tick += 1
                     self._position_history.append(None)
 
