@@ -32,11 +32,13 @@ class TradingEnv(gym.Env):
             dtype=np.float32
         )
 
-        # episode
+        # Track
         self._start_tick = self.window_size - 1
         self._end_tick = len(self.prices) - 2  # Another -1 because the reward is calculated with one step further.
         self._done = None
         self._current_tick = None
+        self._current_state = None
+        self._current_reward = None
         self._total_reward = None
         self._total_profit = None
         self.history = None
@@ -78,6 +80,8 @@ class TradingEnv(gym.Env):
     def reset(self):
         self._done = False
         self._current_tick = self._start_tick
+        self._current_state = None
+        self._current_reward = None
         self._total_reward = 0.
         self._total_profit = 1.  # unit
         self.history = {}
@@ -85,34 +89,39 @@ class TradingEnv(gym.Env):
         return self.get_next_observation()
 
     def step(self, action: np.array):
-        self._current_tick += 1
+        # TODO: Is this ok ?
+        if self._done is True:
+            return self._current_state, self._current_reward, self._done, {}
+        else:
+            self._current_tick += 1
 
-        if self._current_tick == self._end_tick:
-            self._done = True
+            if self._current_tick == self._end_tick:
+                self._done = True
 
-        action = self.action_schema.get_value(action)
-        position = Position.build(position=action)
+            action = self.action_schema.get_value(action)
+            position = Position.build(position=action)
 
-        step_reward = self.reward_schema.calculate_reward(
-            action=action,
-            dataset=self.dataset,
-            current_index=self._current_tick - 1
-        )
-        self._total_reward += step_reward
+            self._current_reward = self.reward_schema.calculate_reward(
+                action=action,
+                dataset=self.dataset,
+                current_index=self._current_tick - 1
+            )
+            self._total_reward += self._current_reward
 
-        self.update_profit(action)
+            self.update_profit(action)
 
-        observation = self.get_next_observation()
-        info = dict(
-            total_reward=self._total_reward,
-            total_profit=self._total_profit,
-            action=action,
-            position=position,
-            reward=step_reward,
-        )
-        self._update_history(info)
+            self._current_state = self.get_next_observation()
 
-        return observation, step_reward, self._done, info
+            info = dict(
+                total_reward=self._total_reward,
+                total_profit=self._total_profit,
+                action=action,
+                position=position,
+                reward=self._current_reward,
+            )
+            self._update_history(info)
+
+            return self._current_state, self._current_reward, self._done, info
 
     def get_next_observation(self) -> np.array:
         observation, _ = self.dataset[self._current_tick]

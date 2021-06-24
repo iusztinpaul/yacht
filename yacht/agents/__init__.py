@@ -57,22 +57,13 @@ def build_agent(config, env: TradingEnv, resume: bool = False, agent_path: str =
             }
         }
 
-        train_val_num_days = utils.get_train_val_num_days(
-            input_config.start,
-            input_config.end,
-            input_config.back_test_split_ratio,
-            train_config.k_fold_embargo_ratio
-        )
-        train_val_num_days = train_val_num_days - train_val_num_days % train_config.batch_size
-        assert train_val_num_days > 0
-
         # TODO: Look over all Agents hyper-parameters
         return agent_class(
             policy=policy_class,
             env=env,
             verbose=agent_config.verbose,
             learning_rate=train_config.learning_rate,
-            n_steps=train_val_num_days,
+            n_steps=train_config.collecting_n_steps,
             batch_size=train_config.batch_size,
             n_epochs=train_config.n_epochs,
             policy_kwargs=policy_kwargs

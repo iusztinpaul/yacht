@@ -40,17 +40,19 @@ class Trainer:
         print()
         for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_k_folding_values())):
             self.k_fold.render(self.dataset.storage_dir)
-            logger.info(f'Train split length: {len(train_indices)}')
-            logger.info(f'Validation split length: {len(val_indices)}')
+            logger.info(f'\nTrain split length: {len(train_indices)}')
+            logger.info(f'Collecting steps per episode: {self.train_config.collecting_n_steps}')
+            logger.info(f'Validation split length: {len(val_indices)}\n')
 
             train_dataset = build_dataset_wrapper(self.dataset, indices=train_indices)
             val_dataset = build_dataset_wrapper(self.dataset, indices=val_indices)
             self.train_env.set_dataset(train_dataset)
             self.val_env.set_dataset(val_dataset)
 
-            k_fold_split_time_steps = self.train_config.episodes // self.k_fold.n_splits * len(train_indices)
+            k_fold_num_episodes = self.train_config.episodes // self.k_fold.n_splits
+            k_fold_split_time_steps = k_fold_num_episodes * self.train_config.collecting_n_steps
             # For stable baselines3 `eval_freq` is relative to the episode time steps.
-            steps_eval_frequency = self.train_config.eval_frequency * len(train_indices)
+            steps_eval_frequency = self.train_config.eval_frequency * self.train_config.collecting_n_steps
             self.agent = self.agent.learn(
                 total_timesteps=k_fold_split_time_steps,
                 callback=None,

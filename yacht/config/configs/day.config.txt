@@ -36,10 +36,11 @@ train: {
     learning_rate: 0.0003
     batch_size: 64
     n_epochs: 5
+    collecting_n_steps: 448
     k_fold_splits: 3
     k_fold_purge_ratio: 0.02
     k_fold_embargo_ratio: 0.01
-    eval_frequency: 1
+    eval_frequency: 5
     log_frequency: 50
 }
 meta: {
