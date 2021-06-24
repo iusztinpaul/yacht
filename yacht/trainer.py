@@ -40,6 +40,8 @@ class Trainer:
         print()
         for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_k_folding_values())):
             self.k_fold.render(self.dataset.storage_dir)
+            logger.info(f'Train split length: {len(train_indices)}')
+            logger.info(f'Validation split length: {len(val_indices)}')
 
             train_dataset = build_dataset_wrapper(self.dataset, indices=train_indices)
             val_dataset = build_dataset_wrapper(self.dataset, indices=val_indices)

@@ -9,11 +9,20 @@ from yacht.data.datasets import DayForecastDataset
 
 
 class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
-    def __init__(self, observation_space: gym.Space, features_dim, intervals: List[str], features: List[str]):
+    def __init__(
+            self,
+            observation_space: gym.Space,
+            features_dim,
+            intervals: List[str],
+            features: List[str],
+            drop_out_p: float = 0.5
+    ):
         super().__init__(observation_space, features_dim)
         self.intervals = intervals
         self.features = features
 
+        self.drop_out_layer = nn.Dropout(p=drop_out_p)
+        self.relu_layer = nn.ReLU()
         self.input_dense_layers = dict()
         for interval in self.intervals:
             bar_units = DayForecastDataset.get_day_bar_units_for(interval)
@@ -27,9 +36,11 @@ class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
 
         features = []
         for interval, layer in self.input_dense_layers.items():
-            features.append(
-                layer(observations[interval])
-            )
+            interval_feature = layer(observations[interval])
+            # interval_feature = self.relu_layer(interval_feature)
+            interval_feature = self.drop_out_layer(interval_feature)
+
+            features.append(interval_feature)
 
         features = torch.stack(features, dim=1)
         features = torch.transpose(features, 1, 3)

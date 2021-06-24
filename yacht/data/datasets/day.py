@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -53,9 +53,6 @@ class DayForecastDataset(TradingDataset):
     def __len__(self):
         return len(self.data[self.intervals[0]].index)
 
-    def get_prices(self) -> np.array:
-        return self.data['1d'].loc[:, 'Close']
-
     def get_item_shape(self) -> List[int]:
         interval_shape = 0
         for interval in self.intervals:
@@ -73,7 +70,7 @@ class DayForecastDataset(TradingDataset):
     def supported_intervals(self):
         return list(self.INTERVAL_TO_DAY_BAR_UNITS.keys())
 
-    def __getitem__(self, day_index: int) -> np.array:
+    def __getitem__(self, day_index: int) -> Tuple[np.array, np.array]:
         window_item = []
         for i in reversed(range(self.window_size)):
             item = np.empty(shape=(0, len(self.features)))
@@ -91,6 +88,8 @@ class DayForecastDataset(TradingDataset):
             window_item.append(item)
 
         window_item = np.stack(window_item, axis=0)
+        unnormalized_window_item = window_item.copy()
+
         # Normalize data at window level.
         window_item[..., :self.num_price_features] = self.price_normalizer(
             window_item[..., :self.num_price_features]
@@ -99,7 +98,7 @@ class DayForecastDataset(TradingDataset):
             window_item[..., self.num_price_features:]
         )
 
-        return window_item
+        return window_item, unnormalized_window_item
 
 
 class IndexedDayForecastDataset(IndexedDatasetMixin, DayForecastDataset):

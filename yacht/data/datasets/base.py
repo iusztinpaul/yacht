@@ -72,7 +72,7 @@ class TradingDataset(Dataset, ABC):
                 f'from {start} to {end} - for intervals: {intervals}'
             )
             self.data = dict()
-            for interval in intervals:
+            for interval in self.intervals:
                 self.market.download(ticker, interval, start, end)
                 self.data[interval] = self.market.get(ticker, interval, start, end)
 
@@ -108,14 +108,14 @@ class TradingDataset(Dataset, ABC):
 
         return features, price_features, other_features
 
-    def __getitem__(self, current_index: int):
+    def __getitem__(self, current_index: int) -> Tuple[np.array, np.array]:
         raise NotImplementedError()
 
     def get_k_folding_values(self) -> np.array:
-        return self.get_prices()
+        return self.get_prices().loc[:, 'Close']
 
-    def get_prices(self) -> np.array:
-        raise NotImplementedError()
+    def get_prices(self) -> pd.DataFrame:
+        return self.data['1d']
 
     def get_item_shape(self) -> List[int]:
         raise NotImplementedError()
@@ -187,13 +187,13 @@ class IndexedDatasetMixin:
     def __len__(self) -> int:
         return len(self.getitem_index_mappings)
 
-    def __getitem__(self, index: int) -> np.array:
+    def __getitem__(self, index: int) -> Tuple[np.array, np.array]:
         index = self.getitem_index_mappings[index]
 
         return super().__getitem__(index)
 
-    def get_prices(self) -> np.array:
+    def get_prices(self) -> pd.DataFrame:
         prices = super().get_prices()
-        prices = prices[self.getitem_index_mappings]
+        prices = prices.iloc[self.getitem_index_mappings]
 
         return prices

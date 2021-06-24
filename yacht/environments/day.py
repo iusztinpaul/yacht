@@ -13,23 +13,6 @@ class DayForecastEnv(TradingEnv):
 
         return observation
 
-    def calculate_reward(self, action):
-        current_price = self.prices[self._current_tick]
-        last_trade_price = self.prices[self._last_trade_tick]
-        price_diff = current_price - last_trade_price
-
-        if self._position == Position.Short:
-            sign = 1 if price_diff < 0 else -1
-        elif self._position == Position.Long:
-            sign = 1 if price_diff > 0 else -1
-        else:
-            raise RuntimeError(f'Wrong Position: {self._position}')
-
-        # step_reward = sign * np.log10(np.abs(price_diff)) if price_diff != 0 else 0
-        step_reward = sign if price_diff != 0 else 0
-
-        return step_reward
-
     def update_profit(self, action):
         if isinstance(self.reward_schema, DayCurrentValueRewardSchema):
             self._total_profit = self.reward_schema.current_value
@@ -37,6 +20,8 @@ class DayForecastEnv(TradingEnv):
             raise NotImplementedError()
 
     def max_possible_profit(self):
+        # FIXME: obsolete
+
         current_tick = self._start_tick
         last_trade_tick = current_tick
         total_num_ticks = self._end_tick - current_tick
