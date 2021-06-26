@@ -30,14 +30,14 @@ agent: {
             output_features_dim: 32
         }
         net_arch: {
-            shared: [64, 32]
+            shared: [16, 32]
             vf: [32]
             pi: [32]
         }
     }
 }
 train: {
-    episodes: 30
+    episodes: 15
     learning_rate: 0.0005
     batch_size: 32
     n_epochs: 5

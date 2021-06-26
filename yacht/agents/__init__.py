@@ -2,6 +2,7 @@ from typing import Union
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.base_class import BaseAlgorithm
+from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from torch import nn
 
 from yacht.agents.modules.day import MultipleTimeFramesFeatureExtractor, DayForecastNetwork
@@ -46,7 +47,7 @@ def build_agent(config, env: TradingEnv, resume: bool = False, agent_path: str =
         feature_extractor_class = feature_extractor_registry[policy_config.feature_extractor.name]
         activation_fn_class = activation_fn_registry[policy_config.activation_fn]
         policy_kwargs = {
-            'net_arch': _build_net_arch_dict(policy_config.net_arch),
+            'net_arch': _build_net_arch_dict(policy_config.net_arch, agent_class),
             'activation_fn': activation_fn_class,
             'features_extractor_class': feature_extractor_class,
             'features_extractor_kwargs': {
@@ -70,8 +71,8 @@ def build_agent(config, env: TradingEnv, resume: bool = False, agent_path: str =
         )
 
 
-def _build_net_arch_dict(net_arch: NetArchitectureConfig) -> Union[list, dict]:
-    is_policy_based = len(net_arch.shared) > 0 and len(net_arch.vf) > 0
+def _build_net_arch_dict(net_arch: NetArchitectureConfig, agent_class: type) -> Union[list, dict]:
+    is_policy_based = OnPolicyAlgorithm in agent_class.mro()
     structured_net_arch = [] if is_policy_based else dict()
 
     if is_policy_based:

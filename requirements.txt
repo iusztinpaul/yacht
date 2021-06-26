@@ -1,14 +1,22 @@
+# Data
 python-binance==0.7.11
-gym-anytrading==1.2.0
-stable-baselines3==1.0
+stockstats==0.3.2
 tables==3.6.1
-tqdm==4.60.0
 pandas~=1.2.4
-numpy~=1.20.2
-matplotlib~=3.4.1
-python-dateutil~=2.8.1
+
+# Machine Learning
+stable-baselines3==1.0
 gym~=0.18.0
+sklearn==0.0
+
+# General
+tqdm==4.60.0
+numpy~=1.20.2
+python-dateutil~=2.8.1
 python-dotenv==0.17.1
 protobuf==3.16.0
-sklearn==0.0
+
+# Rendering
+matplotlib~=3.4.1
 mplfinance==0.12.7a17
+
