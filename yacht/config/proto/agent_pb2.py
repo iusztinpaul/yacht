@@ -12,8 +12,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from yacht.config.proto import feature_extractor_pb2 as yacht_dot_config_dot_proto_dot_feature__extractor__pb2
-from yacht.config.proto import backbone_pb2 as yacht_dot_config_dot_proto_dot_backbone__pb2
+from yacht.config.proto import policy_pb2 as yacht_dot_config_dot_proto_dot_policy__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -21,9 +20,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1eyacht/config/proto/agent.proto\x12\x12yacht.config.proto\x1a*yacht/config/proto/feature_extractor.proto\x1a!yacht/config/proto/backbone.proto\"\xa9\x01\n\x0b\x41gentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\x12\x45\n\x11\x66\x65\x61ture_extractor\x18\x03 \x01(\x0b\x32*.yacht.config.proto.FeatureExtractorConfig\x12\x34\n\x08\x62\x61\x63kbone\x18\x04 \x01(\x0b\x32\".yacht.config.proto.BackboneConfigb\x06proto3')
+  serialized_pb=_b('\n\x1eyacht/config/proto/agent.proto\x12\x12yacht.config.proto\x1a\x1fyacht/config/proto/policy.proto\"^\n\x0b\x41gentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\x12\x30\n\x06policy\x18\x03 \x01(\x0b\x32 .yacht.config.proto.PolicyConfigb\x06proto3')
   ,
-  dependencies=[yacht_dot_config_dot_proto_dot_feature__extractor__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_backbone__pb2.DESCRIPTOR,])
+  dependencies=[yacht_dot_config_dot_proto_dot_policy__pb2.DESCRIPTOR,])
 
 
 
@@ -50,15 +49,8 @@ _AGENTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='feature_extractor', full_name='yacht.config.proto.AgentConfig.feature_extractor', index=2,
+      name='policy', full_name='yacht.config.proto.AgentConfig.policy', index=2,
       number=3, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='backbone', full_name='yacht.config.proto.AgentConfig.backbone', index=3,
-      number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -75,12 +67,11 @@ _AGENTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=134,
-  serialized_end=303,
+  serialized_start=87,
+  serialized_end=181,
 )
 
-_AGENTCONFIG.fields_by_name['feature_extractor'].message_type = yacht_dot_config_dot_proto_dot_feature__extractor__pb2._FEATUREEXTRACTORCONFIG
-_AGENTCONFIG.fields_by_name['backbone'].message_type = yacht_dot_config_dot_proto_dot_backbone__pb2._BACKBONECONFIG
+_AGENTCONFIG.fields_by_name['policy'].message_type = yacht_dot_config_dot_proto_dot_policy__pb2._POLICYCONFIG
 DESCRIPTOR.message_types_by_name['AgentConfig'] = _AGENTCONFIG
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 

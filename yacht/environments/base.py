@@ -120,6 +120,7 @@ class TradingEnv(gym.Env):
                 action=action.item(),
                 position=position,
                 reward=self._current_reward,
+                step=self._current_tick
             )
             self._update_history(info)
 

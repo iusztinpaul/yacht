@@ -1,7 +1,7 @@
 import logging
 
 from yacht.environments import TradingEnv, Position
-from yacht.environments.reward_schemas import DayCurrentValueRewardSchema
+from yacht.environments.reward_schemas import DayTotalValueRewardSchema
 
 logger = logging.getLogger(__file__)
 
@@ -14,8 +14,8 @@ class DayForecastEnv(TradingEnv):
         return observation
 
     def update_profit(self, action):
-        if isinstance(self.reward_schema, DayCurrentValueRewardSchema):
-            self._total_profit = self.reward_schema.current_value
+        if isinstance(self.reward_schema, DayTotalValueRewardSchema):
+            self._total_profit = self.reward_schema.total_value
         else:
             raise NotImplementedError()
 

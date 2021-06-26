@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package yacht.config.proto;
+
+message NetArchitectureConfig {
+    repeated int32 shared = 1;
+    repeated int32 vf = 2;
+    repeated int32 qf = 3;
+    repeated int32 pi = 4;
+}

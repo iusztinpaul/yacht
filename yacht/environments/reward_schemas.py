@@ -13,11 +13,11 @@ class RewardSchema(ABC):
         raise NotImplementedError()
 
 
-class DayCurrentValueRewardSchema(RewardSchema):
+class DayTotalValueRewardSchema(RewardSchema):
     def __init__(self, reward_scaling: float):
         assert 0 < reward_scaling <= 1, '"reward_scaling" should be within (0, 1].'
 
-        self.current_value = 0
+        self.total_value = 0
         self.reward_scaling = reward_scaling
 
     def calculate_reward(self, action: np.array, dataset: TradingDataset, current_index: int):
@@ -32,22 +32,23 @@ class DayCurrentValueRewardSchema(RewardSchema):
         current_close_price = dataset.data['1d'].iloc[current_index]['Close']
         future_close_price = dataset.data['1d'].iloc[current_index + 1]['Close']
 
-        prediction_sign = np.sign(action)
-        if prediction_sign > 0:
+        action_side = np.sign(action)
+        action_magnitude = np.abs(action)
+        if action_side > 0:
             if future_close_price > current_close_price:
-                next_value = self.current_value + np.abs(action)
+                next_value = self.total_value + action_magnitude
             else:
-                next_value = self.current_value + np.abs(action)
-        elif prediction_sign < 0:
+                next_value = self.total_value - action_magnitude
+        elif action_side < 0:
             if future_close_price < current_close_price:
-                next_value = self.current_value + np.abs(action)
+                next_value = self.total_value + action_magnitude
             else:
-                next_value = self.current_value + np.abs(action)
+                next_value = self.total_value - action_magnitude
         else:
-            next_value = self.current_value
+            next_value = self.total_value
 
-        reward = (next_value - self.current_value) * self.reward_scaling
-        self.current_value = next_value
+        reward = (next_value - self.total_value) * self.reward_scaling
+        self.total_value = next_value
 
         return reward
 
@@ -56,7 +57,7 @@ class DayCurrentValueRewardSchema(RewardSchema):
 
 
 reward_schema_registry = {
-    'DayCurrentValueRewardSchema': DayCurrentValueRewardSchema
+    'DayTotalValueRewardSchema': DayTotalValueRewardSchema
 }
 
 
