@@ -10,21 +10,14 @@ logger = logging.getLogger(__file__)
 
 
 class Market(ABC):
-    # TODO: Hook those column to the features from the config
-    COLUMNS = (
-        'Open',
-        'High',
-        'Low',
-        'Close',
-        'Volume'
-    )
-
     def __init__(
             self,
+            features: List[str],
             api_key,
             api_secret,
             storage_dir: str
     ):
+        self.features = features
         self.api_key = api_key
         self.api_secret = api_secret
 

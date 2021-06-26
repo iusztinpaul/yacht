@@ -56,7 +56,7 @@ def build_agent(config, env: TradingEnv, storage_path: str, resume: bool = False
                 'features_dim': feature_extractor_config.output_features_dim,
                 'activation_fn': activation_fn_class,
                 'intervals': input_config.intervals,
-                'features': input_config.features
+                'features': list(input_config.features) + list(input_config.technical_indicators)
             }
         }
 

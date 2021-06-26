@@ -36,6 +36,12 @@ def build_dataset(config: Config, storage_path, mode: str, render_split: bool = 
     )
 
     if render_split:
+        market.download(
+            tickers=ticker,
+            interval='1d',
+            start=min(train_val_start, back_test_start),
+            end=max(train_val_end, back_test_end)
+        )
         daily_prices = market.get(
             ticker=ticker,
             interval='1d',
@@ -62,7 +68,7 @@ def build_dataset(config: Config, storage_path, mode: str, render_split: bool = 
         market=market,
         ticker=ticker,
         intervals=input_config.intervals,
-        features=input_config.features,
+        features=list(input_config.features) + list(input_config.technical_indicators),
         start=start,
         end=end,
         price_normalizer=price_normalizer,
