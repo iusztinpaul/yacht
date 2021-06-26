@@ -111,8 +111,8 @@ class TradingDataset(Dataset, ABC):
     def __getitem__(self, current_index: int) -> Tuple[np.array, np.array]:
         raise NotImplementedError()
 
-    def get_k_folding_values(self) -> np.array:
-        return self.get_prices().loc[:, 'Close']
+    def get_k_folding_values(self) -> pd.DataFrame:
+        return self.get_prices()
 
     def get_prices(self) -> pd.DataFrame:
         return self.data['1d']

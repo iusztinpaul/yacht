@@ -46,7 +46,7 @@ class PurgedKFold(_BaseKFold):
         self.train_indices = None
         self.test_indices = None
 
-    def split(self, X, y=None, groups=None):
+    def split(self, X: pd.DataFrame, y=None, groups=None):
         if (X.index == self.from_to_series.index).sum() != len(self.from_to_series):
             raise ValueError('X and date values must have the same index.')
 

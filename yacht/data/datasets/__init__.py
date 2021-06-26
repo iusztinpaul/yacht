@@ -42,8 +42,6 @@ def build_dataset(config: Config, storage_path, mode: str, render_split: bool = 
             start=min(train_val_start, back_test_start),
             end=max(train_val_end, back_test_end)
         )
-        daily_prices = daily_prices['Close']
-
         renderer = TrainTestSplitRenderer(
             prices=daily_prices,
             train_interval=(train_val_start, train_val_end),

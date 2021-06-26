@@ -39,6 +39,7 @@ class TradingEnv(gym.Env):
         self._current_tick = None
         self._current_state = None
         self._current_reward = None
+        self._last_position = None
         self._total_reward = None
         self._total_profit = None
         self.history = None
@@ -47,7 +48,7 @@ class TradingEnv(gym.Env):
 
         # Rendering
         self.renderer = TradingRenderer(
-            prices=self.prices.loc[:, 'Close'],
+            prices=self.prices,
             start=dataset.start,
             end=dataset.end
         )
@@ -72,7 +73,7 @@ class TradingEnv(gym.Env):
 
         # Rendering
         self.renderer = TradingRenderer(
-            prices=self.prices.loc[:, 'Close'],
+            prices=self.prices,
             start=dataset.start,
             end=dataset.end
         )
@@ -82,6 +83,7 @@ class TradingEnv(gym.Env):
         self._current_tick = self._start_tick
         self._current_state = None
         self._current_reward = None
+        self._last_position = None
         self._total_reward = 0.
         self._total_profit = 1.  # unit
         self.history = {}
@@ -115,7 +117,7 @@ class TradingEnv(gym.Env):
             info = dict(
                 total_reward=self._total_reward,
                 total_profit=self._total_profit,
-                action=action,
+                action=action.item(),
                 position=position,
                 reward=self._current_reward,
             )
@@ -131,32 +133,31 @@ class TradingEnv(gym.Env):
     def _update_history(self, info):
         if not self.history:
             self.history = {key: [] for key in info.keys()}
-            self.history['render_position'] = (self.window_size - 1) * [None]
+            self.history['position'] = (self.window_size - 1) * [np.nan]
+            self.history['action'] = (self.window_size - 1) * [0]
 
-        if len(self.history['position']) == 0 or self.history['position'][-1] != info['position']:
-            self.history['render_position'].append(info['position'])
+        position = info.pop('position')
+        if self._last_position != position:
+            self.history['position'].append(position)
+            self._last_position = position
         else:
-            self.history['render_position'].append(None)
+            self.history['position'].append(np.nan)
 
         for key, value in info.items():
             self.history[key].append(value)
 
-    def render(self, mode='live'):
-        self.renderer.render(self.history['render_position'])
-        self.renderer.pause()
+    def render(self, mode='live', name='trades.png'):
+        raise NotImplementedError()
 
-    def render_all(self, show=True):
-        self.renderer.render(self.history['render_position'])
-        if show:
-            self.renderer.show()
+    def render_all(self, name='trades.png'):
+        self.renderer.render(
+            save_file_path=os.path.join(self.dataset.storage_dir, name),
+            positions=self.history['position'],
+            actions=self.history['action']
+        )
 
     def close(self):
-        self.renderer.close()
-
-    def save_rendering(self, name='trades.png'):
-        self.renderer.save(
-            os.path.join(self.dataset.storage_dir, name)
-        )
+        pass
 
     def calculate_reward(self, action):
         raise NotImplementedError

@@ -1,17 +1,19 @@
 import datetime
+from abc import ABC
 from typing import Tuple, List, Optional
 
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 import numpy as np
 import pandas as pd
+from matplotlib import animation
 
 from yacht.environments import Position
 from yacht import utils
 
 
-class BaseRenderer:
-    def __init__(self, prices: pd.Series):
+class BaseRenderer(ABC):
+    def __init__(self, prices: pd.DataFrame):
         self.prices = prices
 
         self.fig = None
@@ -20,6 +22,8 @@ class BaseRenderer:
     def render(self, *args, **kwargs):
         raise NotImplementedError()
 
+
+class MatPlotLibRenderer(BaseRenderer, ABC):
     def show(self):
         if self.fig:
             self.fig.show()
@@ -33,7 +37,17 @@ class BaseRenderer:
             self.fig.savefig(file_path)
 
 
-class KFoldRenderer(BaseRenderer):
+class MplFinanceRenderer(BaseRenderer, ABC):
+    def render(self, save_file_path: str, **kwargs):
+        raise NotImplementedError()
+
+
+class KFoldRenderer(MatPlotLibRenderer):
+    def __init__(self, prices: pd.DataFrame):
+        super().__init__(prices)
+
+        self.prices = self.prices.loc[:, 'Close']
+
     def render(self, train_indices: np.array, val_indices: np.array):
         self.fig, self.ax = plt.subplots()
 
@@ -104,46 +118,21 @@ class KFoldRenderer(BaseRenderer):
             )
 
 
-class TrainTestSplitRenderer(BaseRenderer):
+class TrainTestSplitRenderer(MatPlotLibRenderer):
     def __init__(
             self,
-            prices: pd.Series,
+            prices: pd.DataFrame,
             train_interval: Tuple[datetime.datetime, datetime.datetime],
             test_interval: Tuple[datetime.datetime, datetime.datetime]
     ):
         super().__init__(prices)
+        self.prices = self.prices.loc[:, 'Close']
 
         assert len(train_interval) == 2 and len(test_interval) == 2
         assert train_interval[0] < train_interval[1] and test_interval[0] < test_interval[1]
 
         self.train_interval = train_interval
         self.test_interval = test_interval
-
-    # def render(self, file_path: str = None):
-    #     if self.train_interval[1] < self.test_interval[0]:
-    #         x_line_left = self.train_interval[1]
-    #         x_line_right = self.test_interval[0]
-    #     else:
-    #         x_line_left = self.test_interval[1]
-    #         x_line_right = self.train_interval[0]
-    #
-    #     plot_arguments = {
-    #         'data': self.prices,
-    #         'type': 'line',
-    #         'vlines': {
-    #             'vlines': [x_line_left, x_line_right],
-    #             'colors': 'g',
-    #             'linestyle': '-.',
-    #             'linewidths': 1.5
-    #         }
-    #     }
-    #     if file_path:
-    #         plot_arguments['savefig'] = {
-    #             'fname': file_path,
-    #             'dpi': 100,
-    #         }
-    #
-    #     mpf.plot(**plot_arguments)
 
     def render(self):
         self.fig, self.ax = plt.subplots()
@@ -195,52 +184,69 @@ class TrainTestSplitRenderer(BaseRenderer):
         )
 
 
-class TradingRenderer(BaseRenderer):
-    def __init__(self, prices: pd.Series, start: datetime, end: datetime):
+class TradingRenderer(MplFinanceRenderer):
+    def __init__(self, prices: pd.DataFrame, start: datetime, end: datetime):
         super().__init__(prices)
 
         self.start = start
         self.end = end
         self.num_days = utils.get_num_days(start, end)
 
-        self.rendered_prices = None
-
-    def render(self, positions: List[Optional[Position]]):
-        plt.cla()
-
-        if self.fig is None:
-            self.fig, self.ax = plt.subplots()
-            self.ax.set_xticks(
-                self.prices.index[
-                    np.linspace(0, self.prices.shape[0] - 1, 5).astype(np.int16)
-                ])
-
-        self.ax.plot(self.prices)
-        self.ax.plot(self.prices[:len(positions)])
-
+    def render(self, save_file_path: str, positions: List[Optional[Position]], actions: List[int]):
+        # Calculate positions.
         num_missing_positions = self.num_days - len(positions)
-        positions = positions + [None] * num_missing_positions
+        positions = positions + [np.nan] * num_missing_positions
+        positions = pd.Series(index=self.prices.index, data=positions)
 
-        position_ticks = pd.Series(index=self.prices.index)
-        position_history = np.array(positions)
-        position_ticks[position_history == Position.Short] = Position.Short
-        position_ticks[position_history == Position.Long] = Position.Long
+        short_positions_index = positions[positions == Position.Short].index
+        short_positions = positions.copy()
+        short_positions[positions == Position.Short] = self.prices.loc[short_positions_index, 'High']
+        short_positions[positions == Position.Long] = np.nan
+        short_positions[positions == Position.Hold] = np.nan
 
-        short_positions = position_ticks[position_ticks == Position.Short]
-        self.ax.plot(
-            short_positions.index,
-            self.prices.loc[short_positions.index],
-            'rv',
-            markersize=6
+        long_positions_index = positions[positions == Position.Long].index
+        long_positions = positions.copy()
+        long_positions[positions == Position.Long] = self.prices.loc[long_positions_index, 'Low']
+        long_positions[positions == Position.Short] = np.nan
+        long_positions[positions == Position.Hold] = np.nan
+
+        hold_position_index = positions[positions == Position.Hold].index
+        hold_positions = positions.copy()
+        hold_positions[positions == Position.Hold] = \
+            (self.prices.loc[hold_position_index, 'Low'] + self.prices.loc[hold_position_index, 'High']) / 2
+        hold_positions[positions == Position.Short] = np.nan
+        hold_positions[positions == Position.Long] = np.nan
+
+        # Calculate actions.
+        num_missing_actions = self.num_days - len(actions)
+        actions = actions + [0] * num_missing_actions
+        actions = pd.Series(index=self.prices.index, data=actions)
+
+        additional_plots = [
+            mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1)
+        ]
+        if len(short_positions[short_positions.notna()]) > 0:
+            additional_plots.append(
+                mpf.make_addplot(short_positions, type='scatter', markersize=25, marker='v', color='r')
+            )
+        if len(long_positions[long_positions.notna()]) > 0:
+            additional_plots.append(
+                mpf.make_addplot(long_positions, type='scatter', markersize=25, marker='^', color='g')
+            )
+        if len(hold_positions[hold_positions.notna()]) > 0:
+            additional_plots.append(
+                mpf.make_addplot(hold_positions, type='scatter', markersize=25, marker='.', color='y')
+            )
+
+        mpf.plot(
+            self.prices,
+            addplot=additional_plots,
+            type='candle',
+            ylabel='Prices',
+            panel_ratios=(1, 1, 0.5),
+            figratio=(2, 1),
+            figscale=1.5,
+            savefig=save_file_path,
+            volume=True,
+            volume_panel=2
         )
-
-        long_positions = position_ticks[position_ticks == Position.Long]
-        self.ax.plot(
-            long_positions.index,
-            self.prices.loc[long_positions.index],
-            'g^',
-            markersize=6
-        )
-
-    def pause(self):
-        plt.pause(0.0005)

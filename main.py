@@ -67,7 +67,7 @@ if __name__ == '__main__':
             dataset = build_dataset(config, storage_path, mode='test')
 
             back_test_env = build_env(config.environment, dataset)
-            back_testing.run_agent(back_test_env, agent, render=True, render_all=False)
+            back_testing.run_agent(back_test_env, agent, render=False, render_all=True)
             back_test_env.close()
 
         dataset.close()
@@ -94,8 +94,7 @@ if __name__ == '__main__':
         dataset = build_dataset(config, storage_path, mode='test')
         back_test_env = build_env(config.environment, dataset)
         back_test_env.max_possible_profit()
-        back_test_env.render_all()
-        back_test_env.save_rendering(name='max_possible_profit.png')
+        back_test_env.render_all(name='max_possible_profit.png')
         plt.show()
 
         dataset.close()

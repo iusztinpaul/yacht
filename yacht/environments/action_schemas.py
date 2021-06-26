@@ -10,7 +10,7 @@ class ActionSchema(ABC):
     def get_action_space(self) -> Space:
         raise NotImplementedError()
 
-    def get_value(self, action: np.array) -> int:
+    def get_value(self, action: np.array) -> np.array:
         raise NotImplementedError()
 
 
@@ -26,7 +26,7 @@ class ContinuousActionScheme(ActionSchema):
     def get_action_space(self) -> Space:
         return spaces.Box(low=-1, high=1, shape=(self.num_assets, ))
 
-    def get_value(self, action: np.array) -> int:
+    def get_value(self, action: np.array) -> np.array:
         return (action * self.max_units_per_asset).astype(np.int32)
 
 

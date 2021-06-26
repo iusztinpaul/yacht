@@ -20,6 +20,4 @@ def run_agent(env, agent, render: bool = True, render_all=False):
             break
 
     if render_all:
-        env.render_all(show=True)
-
-    env.save_rendering(name='back_test.png')
+        env.render_all(name='back_test.png')
