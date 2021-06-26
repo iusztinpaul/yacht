@@ -202,7 +202,7 @@ class TradingRenderer(MplFinanceRenderer):
         # Calculate positions.
         num_missing_positions = self.num_days - len(positions)
         positions = positions + [np.nan] * num_missing_positions
-        positions = pd.Series(index=self.prices.index, data=positions)
+        positions: pd.Series = pd.Series(index=self.prices.index, data=positions)
 
         short_positions_index = positions[positions == Position.Short].index
         short_positions = positions.copy()
@@ -226,7 +226,7 @@ class TradingRenderer(MplFinanceRenderer):
         # Calculate actions.
         num_missing_actions = self.num_days - len(actions)
         actions = actions + [0] * num_missing_actions
-        actions = pd.Series(index=self.prices.index, data=actions)
+        actions: pd.Series = pd.Series(index=self.prices.index, data=actions)
 
         additional_plots = [
             mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions')
