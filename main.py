@@ -32,8 +32,8 @@ parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    if '.' in args.storage_path:
-        storage_path = os.path.join(ROOT_DIR, args.storage_path)
+    if '.' == args.storage_path[0]:
+        storage_path = os.path.join(ROOT_DIR, args.storage_path[2:])
     else:
         storage_path = args.storage_path
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         dataset = build_dataset(config, storage_path, mode='trainval')
         train_env = build_env(config.environment, dataset)
         val_env = build_env(config.environment, dataset)
-        agent = build_agent(config, train_env)
+        agent = build_agent(config, train_env, storage_path)
 
         trainer = build_trainer(
             config=config,
@@ -82,8 +82,9 @@ if __name__ == '__main__':
         agent = build_agent(
             config,
             back_test_env,
+            storage_path,
             resume=True,
-            agent_path=os.path.join(storage_path, 'agent')
+            agent_file=os.path.join(storage_path, 'agent')
         )
 
         back_testing.run_agent(back_test_env, agent, render=True, render_all=False)

@@ -6,11 +6,17 @@ message TrainConfig {
   int32 episodes = 1;
   float learning_rate = 2;
   int32 batch_size = 3;
-  int32 n_epochs = 4;
-  int32 collecting_n_steps = 5;
-  int32 k_fold_splits = 6;
-  float k_fold_purge_ratio = 7;
-  float k_fold_embargo_ratio = 8;
-  int32 eval_frequency = 9;
-  int32 log_frequency = 10;
+  int32 collecting_n_steps = 4;
+  int32 n_epochs = 5;
+  float gamma = 6;
+  float gae_lambda = 7;
+  float clip_range = 8;
+  float entropy_coefficient = 9;
+  float vf_coefficient = 10;
+  float max_grad_norm = 11;
+  int32 k_fold_splits = 12;
+  float k_fold_purge_ratio = 13;
+  float k_fold_embargo_ratio = 14;
+  int32 eval_frequency = 15;
+  int32 log_frequency = 16;
 }

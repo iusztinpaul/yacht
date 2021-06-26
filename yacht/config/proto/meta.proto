@@ -3,5 +3,6 @@ syntax = "proto3";
 package yacht.config.proto;
 
 message MetaConfig {
-  bool back_test = 1;
+  string device = 1;
+  bool back_test = 2;
 }

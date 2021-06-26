@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 from stable_baselines3 import PPO
@@ -27,7 +28,7 @@ activation_fn_registry = {
 }
 
 
-def build_agent(config, env: TradingEnv, resume: bool = False, agent_path: str = None) -> BaseAlgorithm:
+def build_agent(config, env: TradingEnv, storage_path: str, resume: bool = False, agent_file: str = None) -> BaseAlgorithm:
     agent_config = config.agent
     policy_config = config.agent.policy
     feature_extractor_config = policy_config.feature_extractor
@@ -37,7 +38,8 @@ def build_agent(config, env: TradingEnv, resume: bool = False, agent_path: str =
     # The agent is the main wrapper over all the logic.
     agent_class = agents_registry[agent_config.name]
     if resume:
-        assert agent_path is not None
+        assert agent_file is not None
+        agent_path = os.path.join(storage_path, agent_file)
 
         return agent_class.load(agent_path)
     else:
@@ -64,10 +66,18 @@ def build_agent(config, env: TradingEnv, resume: bool = False, agent_path: str =
             env=env,
             verbose=agent_config.verbose,
             learning_rate=train_config.learning_rate,
-            n_steps=train_config.collecting_n_steps,
             batch_size=train_config.batch_size,
+            n_steps=train_config.collecting_n_steps,
             n_epochs=train_config.n_epochs,
-            policy_kwargs=policy_kwargs
+            gamma=train_config.gamma,
+            gae_lambda=train_config.gae_lambda,
+            clip_range=train_config.clip_range,
+            ent_coef=train_config.entropy_coefficient,
+            vf_coef=train_config.vf_coefficient,
+            max_grad_norm=train_config.max_grad_norm,
+            policy_kwargs=policy_kwargs,
+            tensorboard_log=storage_path,
+            device='cuda' if config.meta.device == 'gpu' else config.meta.device
         )
 
 

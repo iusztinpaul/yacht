@@ -40,14 +40,21 @@ train: {
     episodes: 15
     learning_rate: 0.0005
     batch_size: 32
-    n_epochs: 5
     collecting_n_steps: 480
+    n_epochs: 5
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    entropy_coefficient: 0.0,
+    vf_coefficient: 0.5
+    max_grad_norm: 0.5
     k_fold_splits: 3
     k_fold_purge_ratio: 0.03
     k_fold_embargo_ratio: 0.01
     eval_frequency: 1
-    log_frequency: 50
+    log_frequency: 1
 }
 meta: {
+    device: 'gpu'
     back_test: true
 }

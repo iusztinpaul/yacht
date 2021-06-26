@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1dyacht/config/proto/meta.proto\x12\x12yacht.config.proto\"\x1f\n\nMetaConfig\x12\x11\n\tback_test\x18\x01 \x01(\x08\x62\x06proto3')
+  serialized_pb=_b('\n\x1dyacht/config/proto/meta.proto\x12\x12yacht.config.proto\"/\n\nMetaConfig\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x11\n\tback_test\x18\x02 \x01(\x08\x62\x06proto3')
 )
 
 
@@ -33,8 +33,15 @@ _METACONFIG = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='back_test', full_name='yacht.config.proto.MetaConfig.back_test', index=0,
-      number=1, type=8, cpp_type=7, label=1,
+      name='device', full_name='yacht.config.proto.MetaConfig.device', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='back_test', full_name='yacht.config.proto.MetaConfig.back_test', index=1,
+      number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -52,7 +59,7 @@ _METACONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=53,
-  serialized_end=84,
+  serialized_end=100,
 )
 
 DESCRIPTOR.message_types_by_name['MetaConfig'] = _METACONFIG

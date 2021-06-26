@@ -49,19 +49,20 @@ class Trainer:
             self.train_env.set_dataset(train_dataset)
             self.val_env.set_dataset(val_dataset)
 
+            # For stable baselines3 `freq` is relative to the episode time steps.
             k_fold_num_episodes = self.train_config.episodes // self.k_fold.n_splits
             k_fold_split_time_steps = k_fold_num_episodes * self.train_config.collecting_n_steps
-            # For stable baselines3 `eval_freq` is relative to the episode time steps.
             steps_eval_frequency = self.train_config.eval_frequency * self.train_config.collecting_n_steps
+            log_frequency = self.train_config.log_frequency * self.train_config.collecting_n_steps
             self.agent = self.agent.learn(
                 total_timesteps=k_fold_split_time_steps,
                 callback=None,
                 tb_log_name=self.name,
-                log_interval=self.train_config.log_frequency,
+                log_interval=log_frequency,
                 eval_env=self.val_env,
                 eval_freq=steps_eval_frequency,
                 n_eval_episodes=1,
-                eval_log_path=None,
+                # eval_log_path=self.dataset.storage_dir,
                 reset_num_timesteps=True
             )
 
