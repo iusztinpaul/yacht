@@ -110,7 +110,7 @@ class PurgedKFold(_BaseKFold):
     def render(self, storage_dir, show=False):
         assert all((self.train_indices is not None, self.test_indices is not None))
 
-        self.renderer.render(self.train_indices, self.test_indices)
+        self.renderer.render(train_indices=self.train_indices, val_indices=self.test_indices)
         self.renderer.save(
             os.path.join(storage_dir, f'k_fold_split_{self.current_split}.png')
         )

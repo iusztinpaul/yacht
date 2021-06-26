@@ -8,7 +8,7 @@ input: {
     features: ['Close', 'High', 'Low', 'Volume']
     start: '18/8/2017'
     end: '1/1/2021'
-    back_test_split_ratio: 0.4
+    back_test_split_ratio: 0.35
     back_test_embargo_ratio: 0.03
     window_size: 10
 }
@@ -33,12 +33,12 @@ agent: {
 }
 train: {
     episodes: 1
-    learning_rate: 0.0003
+    learning_rate: 0.0005
     batch_size: 64
     n_epochs: 5
     collecting_n_steps: 448
     k_fold_splits: 3
-    k_fold_purge_ratio: 0.02
+    k_fold_purge_ratio: 0.03
     k_fold_embargo_ratio: 0.01
     eval_frequency: 1
     log_frequency: 50

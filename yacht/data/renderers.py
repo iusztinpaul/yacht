@@ -1,4 +1,5 @@
 import datetime
+import os
 from abc import ABC
 from typing import Tuple, List, Optional
 
@@ -6,7 +7,6 @@ import matplotlib.pyplot as plt
 import mplfinance as mpf
 import numpy as np
 import pandas as pd
-from matplotlib import animation
 
 from yacht.environments import Position
 from yacht import utils
@@ -19,7 +19,7 @@ class BaseRenderer(ABC):
         self.fig = None
         self.ax = None
 
-    def render(self, *args, **kwargs):
+    def render(self, **kwargs):
         raise NotImplementedError()
 
 
@@ -48,7 +48,10 @@ class KFoldRenderer(MatPlotLibRenderer):
 
         self.prices = self.prices.loc[:, 'Close']
 
-    def render(self, train_indices: np.array, val_indices: np.array):
+    def render(self, **kwargs):
+        train_indices: np.array = kwargs['train_indices']
+        val_indices: np.array = kwargs['val_indices']
+
         self.fig, self.ax = plt.subplots()
 
         self.ax.plot(self.prices)
@@ -192,7 +195,10 @@ class TradingRenderer(MplFinanceRenderer):
         self.end = end
         self.num_days = utils.get_num_days(start, end)
 
-    def render(self, save_file_path: str, positions: List[Optional[Position]], actions: List[int]):
+    def render(self, save_file_path: str, **kwargs):
+        positions: List[Optional[Position]] = kwargs['positions']
+        actions: List[int] = kwargs['actions']
+
         # Calculate positions.
         num_missing_positions = self.num_days - len(positions)
         positions = positions + [np.nan] * num_missing_positions
@@ -223,7 +229,7 @@ class TradingRenderer(MplFinanceRenderer):
         actions = pd.Series(index=self.prices.index, data=actions)
 
         additional_plots = [
-            mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1)
+            mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions')
         ]
         if len(short_positions[short_positions.notna()]) > 0:
             additional_plots.append(
@@ -238,9 +244,11 @@ class TradingRenderer(MplFinanceRenderer):
                 mpf.make_addplot(hold_positions, type='scatter', markersize=25, marker='.', color='y')
             )
 
+        title = os.path.split(save_file_path)[1].split('.')[0]
         mpf.plot(
             self.prices,
             addplot=additional_plots,
+            title=title,
             type='candle',
             ylabel='Prices',
             panel_ratios=(1, 1, 0.5),
