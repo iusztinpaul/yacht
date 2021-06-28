@@ -23,6 +23,7 @@ class TradingEnv(gym.Env):
 
         # spaces
         self.action_space = self.action_schema.get_action_space()
+        # TODO: Refactor observation space creation.
         self.observation_space_shape = (self.window_size, *self.dataset.get_item_shape())
         self.observation_space = spaces.Box(
             low=-np.inf,
@@ -39,7 +40,7 @@ class TradingEnv(gym.Env):
         self._current_state = None
         self._current_reward = None
         self._last_position = None
-        self._total_reward = None
+        self._total_value = None
         self._total_profit = None
         self.history = None
 
@@ -83,8 +84,7 @@ class TradingEnv(gym.Env):
         self._current_state = None
         self._current_reward = None
         self._last_position = None
-        self._total_reward = 0.
-        self._total_profit = 1.  # unit
+        self._total_value = 0.
         self.history = {}
 
         return self.get_next_observation()
@@ -107,21 +107,18 @@ class TradingEnv(gym.Env):
                 dataset=self.dataset,
                 current_index=self._current_tick - 1
             )
-            self._total_reward += self._current_reward
-
-            self.update_profit(action)
+            self.update_total_value(action)
 
             self._current_state = self.get_next_observation()
 
             info = dict(
-                total_reward=self._total_reward,
-                total_profit=self._total_profit,
+                step=self._current_tick,
                 action=action.item(),
                 position=position,
                 reward=self._current_reward,
-                step=self._current_tick
+                total_value=self._total_value
             )
-            self._update_history(info)
+            self.update_history(info)
 
             return self._current_state, self._current_reward, self._done, info
 
@@ -130,12 +127,14 @@ class TradingEnv(gym.Env):
 
         return observation
 
-    def _update_history(self, info):
+    def update_history(self, info):
         if not self.history:
             self.history = {key: [] for key in info.keys()}
+            # There are no positions & actions before the starting point.
             self.history['position'] = (self.window_size - 1) * [np.nan]
             self.history['action'] = (self.window_size - 1) * [0]
 
+        # For easier processing add a position only when it is changing.
         position = info.pop('position')
         if self._last_position != position:
             self.history['position'].append(position)
@@ -162,7 +161,7 @@ class TradingEnv(gym.Env):
     def calculate_reward(self, action):
         raise NotImplementedError
 
-    def update_profit(self, action):
+    def update_total_value(self, action):
         raise NotImplementedError
 
     def max_possible_profit(self):

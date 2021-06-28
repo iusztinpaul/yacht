@@ -25,8 +25,6 @@ class Trainer(ABC):
             dataset: TradingDataset,
             train_env: TradingEnv,
     ):
-        assert train_config.episodes >= train_config.eval_frequency
-
         self.train_config = train_config
         self.name = name
         self.agent = agent
@@ -89,6 +87,8 @@ class KFoldTrainer(Trainer):
             val_env: TradingEnv,
             k_fold: PurgedKFold,
     ):
+        assert train_config.episodes >= train_config.eval_frequency
+
         super().__init__(
             train_config=train_config,
             name=name,

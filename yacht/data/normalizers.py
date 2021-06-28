@@ -29,12 +29,18 @@ class ZeroCenteredNormalizer(Normalizer):
         return other_features
 
 
+class IdentityNormalizer(Normalizer):
+    def __call__(self, features: np.array):
+        return features
+
+
 #######################################################################################################################
 
 
 normalizer_registry = {
     'LastClosingPriceNormalizer': LastClosingPriceNormalizer,
-    'ZeroCenteredNormalizer': ZeroCenteredNormalizer
+    'ZeroCenteredNormalizer': ZeroCenteredNormalizer,
+    'IdentityNormalizer': IdentityNormalizer
 }
 
 

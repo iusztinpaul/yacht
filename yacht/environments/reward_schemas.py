@@ -2,7 +2,6 @@ from abc import ABC
 from typing import Union
 
 import numpy as np
-import pandas as pd
 
 from yacht.config.proto.environment_pb2 import EnvironmentConfig
 from yacht.data.datasets import TradingDataset

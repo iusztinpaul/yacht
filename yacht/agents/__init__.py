@@ -61,7 +61,7 @@ def build_agent(
                 'features_dim': feature_extractor_config.output_features_dim,
                 'activation_fn': activation_fn_class,
                 'intervals': input_config.intervals,
-                'features': list(input_config.features) + list(input_config.technical_indicators)
+                'features': ['total'] + list(input_config.features) + list(input_config.technical_indicators)
             }
         }
 

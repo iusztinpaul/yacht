@@ -58,7 +58,7 @@ class DayForecastDataset(TradingDataset):
         for interval in self.intervals:
             interval_shape += self.INTERVAL_TO_DAY_BAR_UNITS[interval]
 
-        features_shape = len(self.features)
+        features_shape = len(self.features) + 1  # +1 because of the total total_score within the environment
 
         return [interval_shape, features_shape]
 

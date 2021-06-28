@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 from yacht.environments import TradingEnv, Position
 from yacht.environments.reward_schemas import DayTotalValueRewardSchema
 
@@ -13,11 +15,19 @@ class DayForecastEnv(TradingEnv):
 
         return observation
 
-    def update_profit(self, action):
+    def update_total_value(self, action):
         if isinstance(self.reward_schema, DayTotalValueRewardSchema):
-            self._total_profit = self.reward_schema.total_value
+            self._total_value = self.reward_schema.total_value
         else:
             raise NotImplementedError()
+
+    def get_next_observation(self) -> np.array:
+        observation = super().get_next_observation()
+
+        total_value = np.tile(self._total_value, (self.window_size, observation.shape[1], 1))
+        observation = np.concatenate([observation, total_value], axis=-1)
+
+        return observation
 
     def max_possible_profit(self):
         # FIXME: obsolete
