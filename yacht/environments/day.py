@@ -29,40 +29,50 @@ class DayForecastEnv(TradingEnv):
 
         return observation
 
-    def max_possible_profit(self):
-        # FIXME: obsolete
+    def update_history(self, info):
+        super().update_history(info)
 
+        self.history['max_value'] = self._current_tick * self.action_schema.max_units_per_asset
+
+    def max_possible_profit(self):
         current_tick = self._start_tick
         last_trade_tick = current_tick
         total_num_ticks = self._end_tick - current_tick
         profit = 0.
+        self.history['position'] = []
+        self.history['action'] = []
 
         logger.info(f'A total of {total_num_ticks} ticks.')
         while current_tick + 1 <= self._end_tick:
             if self.prices[current_tick] <= self.prices[current_tick + 1]:
-                self._position_history.append(Position.Long)
+                self.history['position'].append(Position.Long)
+                self.history['action'].append(self.action_schema.max_units_per_asset)
                 current_tick += 1
 
                 while current_tick + 1 <= self._end_tick and \
                         self.prices[current_tick] <= self.prices[current_tick + 1]:
                     current_tick += 1
-                    self._position_history.append(None)
+                    self.history['position'].append(None)
+                    self.history['action'].append(self.action_schema.max_units_per_asset)
             else:
-                self._position_history.append(Position.Short)
+                self.history['position'].append(Position.Short)
+                self.history['action'].append(-self.action_schema.max_units_per_asset)
                 current_tick += 1
 
                 while current_tick + 1 <= self._end_tick and \
                         self.prices[current_tick] > self.prices[current_tick + 1]:
                     current_tick += 1
-                    self._position_history.append(None)
+                    self.history['position'].append(None)
+                    self.history['action'].append(-self.action_schema.max_units_per_asset)
 
             num_ticks = current_tick - last_trade_tick
             profit += num_ticks
 
             last_trade_tick = current_tick
 
+        profit = profit * self.action_schema.max_units_per_asset
+
         logger.info(f'{profit}/{total_num_ticks} accuracy.')
-        self._total_reward = profit
-        self._total_profit = profit
+        self._total_value = profit
 
         return profit

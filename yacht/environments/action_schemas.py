@@ -7,6 +7,10 @@ from yacht.config.proto.environment_pb2 import EnvironmentConfig
 
 
 class ActionSchema(ABC):
+    def __init__(self, num_assets: int, max_units_per_asset: int):
+        self.num_assets = num_assets
+        self.max_units_per_asset = max_units_per_asset
+
     def get_action_space(self) -> Space:
         raise NotImplementedError()
 
@@ -19,10 +23,6 @@ class DiscreteActionScheme(ActionSchema):
 
 
 class ContinuousActionScheme(ActionSchema):
-    def __init__(self, num_assets: int, max_units_per_asset: int):
-        self.num_assets = num_assets
-        self.max_units_per_asset = max_units_per_asset
-
     def get_action_space(self) -> Space:
         return spaces.Box(low=-1, high=1, shape=(self.num_assets, ))
 

@@ -46,7 +46,10 @@ class DayTotalValueRewardSchema(RewardSchema):
         else:
             next_value = self.total_value
 
-        reward = (next_value - self.total_value) * self.reward_scaling
+        change_reward = next_value - self.total_value
+        current_score_reward = next_value
+        reward = (change_reward + current_score_reward) * self.reward_scaling
+
         self.total_value = next_value
 
         return reward

@@ -39,7 +39,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    episodes: 30
+    episodes: 300
     learning_rate: 0.0005
     batch_size: 64
     collecting_n_steps: 704
