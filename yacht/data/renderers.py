@@ -13,8 +13,8 @@ from yacht import utils
 
 
 class BaseRenderer(ABC):
-    def __init__(self, prices: pd.DataFrame):
-        self.prices = prices
+    def __init__(self, data: pd.DataFrame):
+        self.data = data
 
         self.fig = None
         self.ax = None
@@ -43,10 +43,10 @@ class MplFinanceRenderer(BaseRenderer, ABC):
 
 
 class KFoldRenderer(MatPlotLibRenderer):
-    def __init__(self, prices: pd.DataFrame):
-        super().__init__(prices)
+    def __init__(self, data: pd.DataFrame):
+        super().__init__(data)
 
-        self.prices = self.prices.loc[:, 'Close']
+        self.prices = self.data.loc[:, 'Close']
 
     def render(self, **kwargs):
         train_indices: np.array = kwargs['train_indices']
@@ -124,12 +124,12 @@ class KFoldRenderer(MatPlotLibRenderer):
 class TrainTestSplitRenderer(MatPlotLibRenderer):
     def __init__(
             self,
-            prices: pd.DataFrame,
+            data: pd.DataFrame,
             train_interval: Tuple[datetime.datetime, datetime.datetime],
             test_interval: Tuple[datetime.datetime, datetime.datetime]
     ):
-        super().__init__(prices)
-        self.prices = self.prices.loc[:, 'Close']
+        super().__init__(data)
+        self.prices = self.data.loc[:, 'Close']
 
         assert len(train_interval) == 2 and len(test_interval) == 2
         assert train_interval[0] < train_interval[1] and test_interval[0] < test_interval[1]
@@ -188,8 +188,8 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
 
 
 class TradingRenderer(MplFinanceRenderer):
-    def __init__(self, prices: pd.DataFrame, start: datetime, end: datetime):
-        super().__init__(prices)
+    def __init__(self, data: pd.DataFrame, start: datetime, end: datetime):
+        super().__init__(data)
 
         self.start = start
         self.end = end
@@ -202,31 +202,31 @@ class TradingRenderer(MplFinanceRenderer):
         # Calculate positions.
         num_missing_positions = self.num_days - len(positions)
         positions = positions + [np.nan] * num_missing_positions
-        positions: pd.Series = pd.Series(index=self.prices.index, data=positions)
+        positions: pd.Series = pd.Series(index=self.data.index, data=positions)
 
         short_positions_index = positions[positions == Position.Short].index
         short_positions = positions.copy()
-        short_positions[positions == Position.Short] = self.prices.loc[short_positions_index, 'High']
+        short_positions[positions == Position.Short] = self.data.loc[short_positions_index, 'High']
         short_positions[positions == Position.Long] = np.nan
         short_positions[positions == Position.Hold] = np.nan
 
         long_positions_index = positions[positions == Position.Long].index
         long_positions = positions.copy()
-        long_positions[positions == Position.Long] = self.prices.loc[long_positions_index, 'Low']
+        long_positions[positions == Position.Long] = self.data.loc[long_positions_index, 'Low']
         long_positions[positions == Position.Short] = np.nan
         long_positions[positions == Position.Hold] = np.nan
 
         hold_position_index = positions[positions == Position.Hold].index
         hold_positions = positions.copy()
         hold_positions[positions == Position.Hold] = \
-            (self.prices.loc[hold_position_index, 'Low'] + self.prices.loc[hold_position_index, 'High']) / 2
+            (self.data.loc[hold_position_index, 'Low'] + self.data.loc[hold_position_index, 'High']) / 2
         hold_positions[positions == Position.Short] = np.nan
         hold_positions[positions == Position.Long] = np.nan
 
         # Calculate actions.
         num_missing_actions = self.num_days - len(actions)
         actions = actions + [0] * num_missing_actions
-        actions: pd.Series = pd.Series(index=self.prices.index, data=actions)
+        actions: pd.Series = pd.Series(index=self.data.index, data=actions)
 
         additional_plots = [
             mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions')
@@ -246,7 +246,7 @@ class TradingRenderer(MplFinanceRenderer):
 
         title = os.path.split(save_file_path)[1].split('.')[0]
         mpf.plot(
-            self.prices,
+            self.data,
             addplot=additional_plots,
             title=title,
             type='candle',
@@ -258,3 +258,21 @@ class TradingRenderer(MplFinanceRenderer):
             volume=True,
             volume_panel=2
         )
+
+
+class RewardsRenderer(MatPlotLibRenderer):
+    def __init__(self, data: pd.DataFrame, rolling_window: int = 100):
+        super().__init__(data)
+
+        self.rewards = data.loc[:, 'Rewards']
+        self.rolling_window = rolling_window
+
+    def render(self):
+        ma_rewards = self.rewards.rolling(self.rolling_window, min_periods=1).mean()
+
+        self.fig, self.ax = plt.subplots(ncols=2, figsize=(12, 6))
+        self.ax[0].plot(ma_rewards)
+        self.ax[0].set_title('Moving Average Rewards')
+
+        self.ax[1].plot(self.rewards)
+        self.ax[1].set_title('Rewards')

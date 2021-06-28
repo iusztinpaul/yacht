@@ -49,7 +49,7 @@ def build_dataset(config: Config, storage_path, mode: str, render_split: bool = 
             end=max(train_val_end, back_test_end)
         )
         renderer = TrainTestSplitRenderer(
-            prices=daily_prices,
+            data=daily_prices,
             train_interval=(train_val_start, train_val_end),
             test_interval=(back_test_start, back_test_end)
         )

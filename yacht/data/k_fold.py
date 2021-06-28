@@ -1,7 +1,6 @@
 import os.path
 from datetime import datetime
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.model_selection._split import _BaseKFold
@@ -50,7 +49,7 @@ class PurgedKFold(_BaseKFold):
         if (X.index == self.from_to_series.index).sum() != len(self.from_to_series):
             raise ValueError('X and date values must have the same index.')
 
-        self.renderer = KFoldRenderer(prices=X)
+        self.renderer = KFoldRenderer(data=X)
 
         indices = np.arange(X.shape[0])
         embargo_offset = self.compute_embargo_offset(X)

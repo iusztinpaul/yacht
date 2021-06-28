@@ -1,5 +1,4 @@
 import os
-from typing import Union
 
 import gym
 from gym import spaces
@@ -48,7 +47,7 @@ class TradingEnv(gym.Env):
 
         # Rendering
         self.renderer = TradingRenderer(
-            prices=self.prices,
+            data=self.prices,
             start=dataset.start,
             end=dataset.end
         )
@@ -73,7 +72,7 @@ class TradingEnv(gym.Env):
 
         # Rendering
         self.renderer = TradingRenderer(
-            prices=self.prices,
+            data=self.prices,
             start=dataset.start,
             end=dataset.end
         )

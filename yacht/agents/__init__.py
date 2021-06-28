@@ -28,7 +28,12 @@ activation_fn_registry = {
 }
 
 
-def build_agent(config, env: TradingEnv, storage_path: str, resume: bool = False, agent_file: str = None) -> BaseAlgorithm:
+def build_agent(
+        config, env: TradingEnv,
+        storage_path: str,
+        resume: bool = False,
+        agent_file: str = None
+) -> BaseAlgorithm:
     agent_config = config.agent
     policy_config = config.agent.policy
     feature_extractor_config = policy_config.feature_extractor
