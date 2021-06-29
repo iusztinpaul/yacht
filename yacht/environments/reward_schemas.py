@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Union
 
 import numpy as np
@@ -8,8 +8,13 @@ from yacht.data.datasets import TradingDataset
 
 
 class RewardSchema(ABC):
+    @abstractmethod
     def calculate_reward(self, action: Union[int, float], dataset: TradingDataset, current_index: int):
-        raise NotImplementedError()
+        pass
+
+    @abstractmethod
+    def reset(self):
+        pass
 
 
 class DayTotalValueRewardSchema(RewardSchema):
@@ -53,6 +58,9 @@ class DayTotalValueRewardSchema(RewardSchema):
         self.total_value = next_value
 
         return reward
+
+    def reset(self):
+        self.total_value = 0
 
 
 #######################################################################################################################

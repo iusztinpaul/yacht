@@ -87,6 +87,8 @@ class TradingEnv(gym.Env):
         self._total_value = 0.
         self.history = {}
 
+        self.reward_schema.reset()
+
         return self.get_next_observation()
 
     def step(self, action: np.array):
