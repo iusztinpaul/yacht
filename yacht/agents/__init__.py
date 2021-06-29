@@ -29,7 +29,8 @@ activation_fn_registry = {
 
 
 def build_agent(
-        config, env: TradingEnv,
+        config,
+        env: TradingEnv,
         storage_path: str,
         resume: bool = False,
         agent_file: str = None
@@ -58,10 +59,13 @@ def build_agent(
             'activation_fn': activation_fn_class,
             'features_extractor_class': feature_extractor_class,
             'features_extractor_kwargs': {
-                'features_dim': feature_extractor_config.output_features_dim,
+                'features_dim': feature_extractor_config.features_dim,
                 'activation_fn': activation_fn_class,
+                'window_size': input_config.window_size,
                 'intervals': input_config.intervals,
-                'features': ['total'] + list(input_config.features) + list(input_config.technical_indicators)
+                'features': list(input_config.features) + list(input_config.technical_indicators),
+                'env_features_len': env.observation_env_features_len,
+                'drop_out_p': feature_extractor_config.drop_out_p
             }
         }
 

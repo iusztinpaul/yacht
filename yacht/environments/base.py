@@ -1,4 +1,6 @@
 import os
+from abc import abstractmethod
+from typing import Dict, List, Optional, Union
 
 import gym
 from gym import spaces
@@ -11,10 +13,16 @@ from yacht.environments.reward_schemas import RewardSchema
 
 
 class TradingEnv(gym.Env):
-    def __init__(self, dataset: TradingDataset, reward_schema: RewardSchema, action_schema: ActionSchema):
+    def __init__(
+            self,
+            dataset: TradingDataset,
+            reward_schema: RewardSchema,
+            action_schema: ActionSchema,
+            seed: int = 0
+    ):
         from yacht.data.renderers import TradingRenderer
 
-        self.seed()
+        self.seed(seed)
         self.dataset = dataset
         self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
@@ -23,14 +31,8 @@ class TradingEnv(gym.Env):
 
         # spaces
         self.action_space = self.action_schema.get_action_space()
-        # TODO: Refactor observation space creation.
-        self.observation_space_shape = (self.window_size, *self.dataset.get_item_shape())
-        self.observation_space = spaces.Box(
-            low=-np.inf,
-            high=np.inf,
-            shape=self.observation_space_shape,
-            dtype=np.float32
-        )
+        self.observation_space = spaces.Dict(self.get_observation_space())
+        assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
 
         # Track
         self._start_tick = self.window_size - 1
@@ -53,6 +55,16 @@ class TradingEnv(gym.Env):
             end=dataset.end
         )
 
+    @property
+    def intervals(self) -> List[str]:
+        return self.dataset.intervals
+
+    @property
+    def observation_env_features_len(self) -> int:
+        return self.observation_space['env_features'].shape[0] \
+            if self.observation_space['env_features'] is not None \
+            else 0
+
     def set_dataset(self, dataset: TradingDataset):
         from yacht.data.renderers import TradingRenderer
 
@@ -60,13 +72,8 @@ class TradingEnv(gym.Env):
         self.prices = self.dataset.get_prices()
 
         # spaces
-        self.observation_space_shape = (self.window_size, *self.dataset.get_item_shape())
-        self.observation_space = spaces.Box(
-            low=-np.inf,
-            high=np.inf,
-            shape=self.observation_space_shape,
-            dtype=np.float32
-        )
+        self.observation_space = spaces.Dict(self.get_observation_space())
+        assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
 
         # episode
         self._end_tick = len(self.prices) - 1
@@ -124,8 +131,14 @@ class TradingEnv(gym.Env):
 
             return self._current_state, self._current_reward, self._done, info
 
-    def get_next_observation(self) -> np.array:
-        observation, _ = self.dataset[self._current_tick]
+    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
+        observation_space = self.dataset.get_external_observation_space()
+        observation_space['env_features'] = None
+
+        return observation_space
+
+    def get_next_observation(self) -> Dict[str, np.array]:
+        observation = self.dataset[self._current_tick]
 
         return observation
 
@@ -147,8 +160,9 @@ class TradingEnv(gym.Env):
         for key, value in info.items():
             self.history[key].append(value)
 
-    def render(self, mode='live', name='trades.png'):
-        raise NotImplementedError()
+    @abstractmethod
+    def render(self, mode='human', name='trades.png'):
+        pass
 
     def render_all(self, name='trades.png'):
         self.renderer.render(

@@ -1,10 +1,11 @@
 import logging
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Tuple, Dict
 
 import numpy as np
 import pandas as pd
+from gym import Space
 from torch.utils.data import Dataset
 
 from yacht.data.markets import Market
@@ -111,8 +112,9 @@ class TradingDataset(Dataset, ABC):
 
         return features, price_features, other_features
 
-    def __getitem__(self, current_index: int) -> Tuple[np.array, np.array]:
-        raise NotImplementedError()
+    @abstractmethod
+    def __getitem__(self, current_index: int) -> Dict[str, np.array]:
+        pass
 
     def get_k_folding_values(self) -> pd.DataFrame:
         return self.get_prices()
@@ -120,8 +122,9 @@ class TradingDataset(Dataset, ABC):
     def get_prices(self) -> pd.DataFrame:
         return self.data['1d']
 
-    def get_item_shape(self) -> List[int]:
-        raise NotImplementedError()
+    @abstractmethod
+    def get_external_observation_space(self) -> Dict[str, Space]:
+        pass
 
 
 class IndexedDatasetMixin:

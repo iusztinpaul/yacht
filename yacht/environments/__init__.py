@@ -8,6 +8,7 @@ from .reward_schemas import build_reward_schema
 import gym
 from gym.envs.registration import register
 
+from .wrappers import MultiFrequencyDictToBoxWrapper
 from ..config.proto.environment_pb2 import EnvironmentConfig
 
 logger = logging.getLogger(__file__)
@@ -21,12 +22,15 @@ def build_env(env_config: EnvironmentConfig, dataset: TradingDataset):
     reward_schema = build_reward_schema(env_config)
     action_schema = build_action_schema(env_config)
 
-    return gym.make(
+    env = gym.make(
         env_config.name,
         dataset=dataset,
         reward_schema=reward_schema,
         action_schema=action_schema
     )
+    env = MultiFrequencyDictToBoxWrapper(env)
+
+    return env
 
 
 def register_gym_envs():

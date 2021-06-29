@@ -28,7 +28,8 @@ agent: {
         activation_fn: 'ReLU',
         feature_extractor: {
             name: 'MultipleTimeFramesFeatureExtractor'
-            output_features_dim: 32
+            features_dim: [32, 32],
+            drop_out_p: 0.25
         }
         net_arch: {
             shared: [16, 32]

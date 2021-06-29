@@ -1,7 +1,8 @@
 import logging
+from typing import Dict
 
 import numpy as np
-
+from gym import spaces
 from yacht.environments import TradingEnv, Position
 from yacht.environments.reward_schemas import DayTotalValueRewardSchema
 
@@ -21,11 +22,15 @@ class DayForecastEnv(TradingEnv):
         else:
             raise NotImplementedError()
 
-    def get_next_observation(self) -> np.array:
-        observation = super().get_next_observation()
+    def get_observation_space(self) -> Dict[str, spaces.Space]:
+        observation_space = super().get_observation_space()
+        observation_space['env_features'] = spaces.Box(low=-np.inf, high=np.inf, shape=(1, ), dtype=np.float32)
 
-        total_value = np.tile(self._total_value, (self.window_size, observation.shape[1], 1))
-        observation = np.concatenate([observation, total_value], axis=-1)
+        return observation_space
+
+    def get_next_observation(self) -> Dict[str, np.array]:
+        observation = super().get_next_observation()
+        observation['env_features'] = self._total_value
 
         return observation
 

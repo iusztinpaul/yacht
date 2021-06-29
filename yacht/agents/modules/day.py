@@ -6,6 +6,7 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from torch import nn
 from torch.autograd import Variable
 
+from yacht.agents.utils import unflatten_observations
 from yacht.data.datasets import DayForecastDataset
 
 
@@ -13,83 +14,75 @@ class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
     def __init__(
             self,
             observation_space: gym.Space,
-            features_dim,
+            features_dim: List[int],
+            window_size: int,
             intervals: List[str],
             features: List[str],
+            env_features_len: int,
             activation_fn: nn.Module,
             drop_out_p: float = 0.5,
             device='cuda'
     ):
-        super().__init__(observation_space, features_dim)
+        super().__init__(observation_space, features_dim[0])
+
+        assert len(features_dim) == 2
+
+        self.window_size = window_size
         self.intervals = intervals
         self.features = features
+        self.env_features_len = env_features_len
 
-        self.drop_out_layer = nn.Dropout(p=drop_out_p)
-        self.relu_layer = activation_fn()
-        self.layers = {
-            'dense': dict(),
+        self.interval_layers = {
+            'conv': dict(),
             'weight': dict()
         }
         for interval in self.intervals:
             bar_units = DayForecastDataset.get_day_bar_units_for(interval)
-            self.layers['dense'][interval] = nn.Linear(
-                bar_units,
-                features_dim,
+            self.interval_layers['conv'][interval] = nn.Conv1d(
+                in_channels=len(self.features),
+                out_channels=features_dim[0],
+                kernel_size=self.window_size * bar_units,
+                stride=1
             ).to(device)
-            self.layers['weight'][interval] = Variable(
+            self.interval_layers['weight'][interval] = Variable(
                 torch.tensor(1 / len(self.intervals), device=device),
                 requires_grad=True
             ).to(device)
-        self.global_feature_dense_layer = nn.Linear(
-            len(self.features) * features_dim,
-            features_dim
+
+        self.drop_out_layer = nn.Dropout(p=drop_out_p)
+        self.relu_layer = activation_fn()
+        self.dense_layer = nn.Linear(
+            len(self.intervals) * features_dim[0] + self.env_features_len,
+            features_dim[1]
         )
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        observations = self.to_dict(observations)
-        batch_size, window_size, _, _ = observations['1d'].shape
+        observations = unflatten_observations(observations, self.intervals)
+        batch_size, window_size, channel_size, _ = observations['1d'].shape
 
         features = []
         for interval in self.intervals:
-            layer = self.layers['dense'][interval]
-            weight = self.layers['weight'][interval]
+            layer = self.interval_layers['conv'][interval]
+            weight = self.interval_layers['weight'][interval]
 
-            interval_feature = layer(observations[interval])
-            interval_feature = self.relu_layer(interval_feature)
-            interval_feature = self.drop_out_layer(interval_feature)
+            interval_feature = observations[interval]
+            interval_feature = torch.transpose(interval_feature, 1, 2)
+            interval_feature = interval_feature.reshape(batch_size, channel_size, -1)
+            interval_feature = layer(interval_feature)
+            interval_feature = torch.squeeze(interval_feature, dim=-1)
             interval_feature = interval_feature * weight
 
             features.append(interval_feature)
 
-        features = torch.stack(features, dim=0)
-        features = torch.sum(features, dim=0)
-        features = torch.reshape(features, (batch_size, window_size, -1))
+        # Add env_features after learning the price window features.
+        features.append(observations['env_features'])
+        features = torch.cat(features, dim=-1)
 
-        features = self.global_feature_dense_layer(features)
+        features = self.dense_layer(features)
         features = self.relu_layer(features)
         features = self.drop_out_layer(features)
 
-        if window_size == 1:
-            features = torch.squeeze(features, dim=1)
-
         return features
-
-    def to_dict(self, observations: torch.Tensor) -> dict:
-        batch_size = observations.shape[0]
-        window_size = observations.shape[1]
-        features_size = observations.shape[3]
-
-        new_observation = dict()
-        current_index = 0
-        for interval in self.intervals:
-            bar_units = DayForecastDataset.get_day_bar_units_for(interval)
-            new_observation[interval] = observations[:, :, current_index:current_index + bar_units, :]
-            new_observation[interval] = new_observation[interval].reshape(batch_size, window_size, -1, features_size)
-            new_observation[interval] = torch.transpose(new_observation[interval], 2, 3)
-
-            current_index += bar_units
-
-        return new_observation
 
 
 class DayForecastNetwork(nn.Module):
