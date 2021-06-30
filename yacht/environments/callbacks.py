@@ -1,7 +1,12 @@
+import logging
+
 import pandas as pd
 from stable_baselines3.common.callbacks import BaseCallback
 
 from yacht.data.renderers import RewardsRenderer
+
+
+logger = logging.getLogger(__file__)
 
 
 class RewardsRenderCallback(BaseCallback):
@@ -28,4 +33,18 @@ class RewardsRenderCallback(BaseCallback):
         renderer.save(self.storage_path)
 
     def _on_step(self) -> bool:
+        return True
+
+
+class LoggerCallback(BaseCallback):
+    def __init__(self, collecting_n_steps: int, verbose: int = 0):
+        super().__init__(verbose)
+
+        self.collecting_n_steps = collecting_n_steps
+
+    def _on_step(self) -> bool:
+        current_episode = self.num_timesteps / self.collecting_n_steps
+        if current_episode == int(current_episode):
+            logger.info(f'Started episode: {current_episode}.')
+
         return True

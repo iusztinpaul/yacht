@@ -32,7 +32,7 @@ agent: {
             drop_out_p: 0.25
         }
         net_arch: {
-            shared: [16, 32]
+            shared: [128, 256, 64]
             vf: [32]
             pi: [32]
         }
@@ -40,10 +40,10 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    episodes: 30
+    collect_n_times: 1
+    collecting_n_steps: 2048
     learning_rate: 0.00025
     batch_size: 64
-    collecting_n_steps: 2048
     n_epochs: 5
     gamma: 0.9
     gae_lambda: 0.95

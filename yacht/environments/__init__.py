@@ -3,12 +3,14 @@ from .base import *
 from .day import *
 
 from .action_schemas import build_action_schema
+from .monitors import RewardRendererMonitor
 from .reward_schemas import build_reward_schema
 
 import gym
 from gym.envs.registration import register
 
-from .wrappers import MultiFrequencyDictToBoxWrapper
+from .wrappers import MultipleTimeFrameDictToBoxWrapper
+from ..config import Config
 from ..config.proto.environment_pb2 import EnvironmentConfig
 
 logger = logging.getLogger(__file__)
@@ -18,7 +20,9 @@ environment_registry = {
 }
 
 
-def build_env(env_config: EnvironmentConfig, dataset: TradingDataset):
+def build_env(config: Config, dataset: TradingDataset):
+    env_config: EnvironmentConfig = config.environment
+
     reward_schema = build_reward_schema(env_config)
     action_schema = build_action_schema(env_config)
 
@@ -28,7 +32,12 @@ def build_env(env_config: EnvironmentConfig, dataset: TradingDataset):
         reward_schema=reward_schema,
         action_schema=action_schema
     )
-    env = MultiFrequencyDictToBoxWrapper(env)
+    env = MultipleTimeFrameDictToBoxWrapper(env)
+    env = RewardRendererMonitor(
+        env=env,
+        final_step=config.train.collecting_n_steps * config.train.collect_n_times,
+        storage_dir=dataset.storage_dir
+    )
 
     return env
 

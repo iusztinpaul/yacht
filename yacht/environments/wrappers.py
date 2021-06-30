@@ -9,7 +9,7 @@ from yacht.agents.utils import unflatten_observations
 from yacht.environments import TradingEnv
 
 
-class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
+class MultipleTimeFrameDictToBoxWrapper(gym.Wrapper):
     def __init__(self, env: TradingEnv):
         super().__init__(env)
 

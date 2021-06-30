@@ -69,7 +69,6 @@ def build_agent(
             }
         }
 
-        # TODO: Look over all Agents hyper-parameters
         return agent_class(
             policy=policy_class,
             env=env,

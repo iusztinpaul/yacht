@@ -8,7 +8,6 @@ import mplfinance as mpf
 import numpy as np
 import pandas as pd
 
-from yacht.environments import Position
 from yacht import utils
 
 
@@ -196,6 +195,8 @@ class TradingRenderer(MplFinanceRenderer):
         self.num_days = utils.get_num_days(start, end)
 
     def render(self, save_file_path: str, **kwargs):
+        from yacht.environments import Position
+
         positions: List[Optional[Position]] = kwargs['positions']
         actions: List[int] = kwargs['actions']
 
@@ -261,7 +262,7 @@ class TradingRenderer(MplFinanceRenderer):
 
 
 class RewardsRenderer(MatPlotLibRenderer):
-    def __init__(self, data: pd.DataFrame, rolling_window: int = 100):
+    def __init__(self, data: pd.DataFrame, rolling_window: int = 5):
         super().__init__(data)
 
         self.rewards = data.loc[:, 'Rewards']

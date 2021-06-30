@@ -20,8 +20,7 @@ class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
             features: List[str],
             env_features_len: int,
             activation_fn: nn.Module,
-            drop_out_p: float = 0.5,
-            device='cuda'
+            drop_out_p: float = 0.5
     ):
         super().__init__(observation_space, features_dim[0])
 
@@ -32,22 +31,17 @@ class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
         self.features = features
         self.env_features_len = env_features_len
 
-        self.interval_layers = {
-            'conv': dict(),
-            'weight': dict()
-        }
+        self.interval_encoders = dict()
         for interval in self.intervals:
             bar_units = DayForecastDataset.get_day_bar_units_for(interval)
-            self.interval_layers['conv'][interval] = nn.Conv1d(
-                in_channels=len(self.features),
-                out_channels=features_dim[0],
+            self.interval_encoders[interval] = IntervalObservationEncoder(
+                num_input_channel=len(self.features),
+                num_output_channel=features_dim[0],
                 kernel_size=self.window_size * bar_units,
-                stride=1
-            ).to(device)
-            self.interval_layers['weight'][interval] = Variable(
-                torch.tensor(1 / len(self.intervals), device=device),
-                requires_grad=True
-            ).to(device)
+                initial_output_weight_value=1 / len(self.intervals)
+            )
+
+        self.interval_encoders = nn.ModuleDict(self.interval_encoders)
 
         self.drop_out_layer = nn.Dropout(p=drop_out_p)
         self.relu_layer = activation_fn()
@@ -62,15 +56,8 @@ class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
 
         features = []
         for interval in self.intervals:
-            layer = self.interval_layers['conv'][interval]
-            weight = self.interval_layers['weight'][interval]
-
-            interval_feature = observations[interval]
-            interval_feature = torch.transpose(interval_feature, 1, 2)
-            interval_feature = interval_feature.reshape(batch_size, channel_size, -1)
-            interval_feature = layer(interval_feature)
-            interval_feature = torch.squeeze(interval_feature, dim=-1)
-            interval_feature = interval_feature * weight
+            encoder = self.interval_encoders[interval]
+            interval_feature = encoder(observations[interval])
 
             features.append(interval_feature)
 
@@ -83,6 +70,41 @@ class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
         features = self.drop_out_layer(features)
 
         return features
+
+
+class IntervalObservationEncoder(nn.Module):
+    def __init__(
+            self,
+            num_input_channel: int,
+            num_output_channel: int,
+            kernel_size: int,
+            initial_output_weight_value: float
+    ):
+        super().__init__()
+
+        assert initial_output_weight_value <= 1
+
+        self.conv_1d = nn.Conv1d(
+            in_channels=num_input_channel,
+            out_channels=num_output_channel,
+            kernel_size=kernel_size,
+            stride=1
+        )
+        self.weight = nn.Parameter(
+            torch.tensor(initial_output_weight_value).type(torch.FloatTensor),
+            requires_grad=True,
+        )
+
+    def forward(self, observation: torch.Tensor) -> torch.Tensor:
+        batch_size, window_size, channel_size, _ = observation.shape
+
+        interval_feature = torch.transpose(observation, 1, 2)
+        interval_feature = interval_feature.reshape(batch_size, channel_size, -1)
+        interval_feature = self.conv_1d(interval_feature)
+        interval_feature = torch.squeeze(interval_feature, dim=-1)
+        interval_feature = interval_feature * self.weight
+
+        return interval_feature
 
 
 class DayForecastNetwork(nn.Module):

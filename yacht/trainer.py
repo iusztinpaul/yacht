@@ -11,7 +11,7 @@ from yacht.config import TrainConfig
 from yacht.data.datasets import TradingDataset, build_dataset_wrapper
 from yacht.data.k_fold import build_k_fold, PurgedKFold
 from yacht.environments import TradingEnv
-from yacht.environments.callbacks import RewardsRenderCallback
+from yacht.environments.callbacks import RewardsRenderCallback, LoggerCallback
 
 logger = logging.getLogger(__file__)
 
@@ -45,23 +45,22 @@ class Trainer(ABC):
         pass
 
     def build_callbacks(self) -> List[BaseCallback]:
-        train_rewards_render_callback = RewardsRenderCallback(
-            storage_path=os.path.join(self.dataset.storage_dir, 'train_rewards.png'),
-            verbose=0
-        )
+        logger_callback = LoggerCallback(collecting_n_steps=self.train_config.collecting_n_steps)
 
-        return [train_rewards_render_callback]
+        return [
+            logger_callback
+        ]
 
 
 class NoEvalTrainer(Trainer):
     def train(self) -> BaseAlgorithm:
-        logger.info(f'Starting training for {self.train_config.episodes} episodes.')
+        logger.info(f'Starting training for {self.train_config.collect_n_times} times.')
 
         logger.info(f'Train split length: {len(self.dataset)}')
         logger.info(f'Collecting steps per episode: {self.train_config.collecting_n_steps}')
         logger.info(f'Validation split length: 0\n')
 
-        train_num_time_steps = self.train_config.episodes * self.train_config.collecting_n_steps
+        train_num_time_steps = self.train_config.collect_n_times * self.train_config.collecting_n_steps
         log_frequency = self.train_config.log_frequency * self.train_config.collecting_n_steps
         self.agent = self.agent.learn(
             total_timesteps=train_num_time_steps,
@@ -87,7 +86,7 @@ class KFoldTrainer(Trainer):
             val_env: TradingEnv,
             k_fold: PurgedKFold,
     ):
-        assert train_config.episodes >= train_config.eval_frequency
+        assert train_config.collect_n_times >= train_config.eval_frequency
 
         super().__init__(
             train_config=train_config,
@@ -104,10 +103,10 @@ class KFoldTrainer(Trainer):
         # TODO: Save logs.
 
         logger.info(
-            f'Starting training for {self.train_config.episodes} '
+            f'Starting training for {self.train_config.collect_n_times} '
             f'episodes with a k_fold {self.k_fold.n_splits} splits.'
         )
-        progress_bar = tqdm(total=self.train_config.episodes)
+        progress_bar = tqdm(total=self.train_config.collect_n_times)
         print()
         for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_k_folding_values())):
             logger.info(f'Train split length: {len(train_indices)}')
@@ -122,7 +121,7 @@ class KFoldTrainer(Trainer):
             self.val_env.set_dataset(val_dataset)
 
             # For stable baselines3 `freq` is relative to the episode time steps.
-            k_fold_num_episodes = self.train_config.episodes // self.k_fold.n_splits
+            k_fold_num_episodes = self.train_config.collect_n_times // self.k_fold.n_splits
             k_fold_split_time_steps = k_fold_num_episodes * self.train_config.collecting_n_steps
             steps_eval_frequency = self.train_config.eval_frequency * self.train_config.collecting_n_steps
             log_frequency = self.train_config.log_frequency * self.train_config.collecting_n_steps
@@ -138,7 +137,7 @@ class KFoldTrainer(Trainer):
                 reset_num_timesteps=True
             )
 
-            progress_bar.update(n=self.train_config.episodes // self.k_fold.n_splits)
+            progress_bar.update(n=self.train_config.collect_n_times // self.k_fold.n_splits)
             print()
 
         progress_bar.close()
