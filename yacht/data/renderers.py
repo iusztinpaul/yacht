@@ -262,7 +262,7 @@ class TradingRenderer(MplFinanceRenderer):
 
 
 class RewardsRenderer(MatPlotLibRenderer):
-    def __init__(self, data: pd.DataFrame, rolling_window: int = 5):
+    def __init__(self, data: pd.DataFrame, rolling_window: int = 50):
         super().__init__(data)
 
         self.rewards = data.loc[:, 'Rewards']

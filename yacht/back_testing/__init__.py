@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__file__)
 
 
-def run_agent(env, agent, render: bool = True, render_all=False):
+def run_agent(env, agent, render: bool = True, render_all=False, name='backtest'):
     assert render is not True or render_all is not True, \
         'Either render on the fly or in the end.'
 
@@ -20,4 +20,4 @@ def run_agent(env, agent, render: bool = True, render_all=False):
             break
 
     if render_all:
-        env.render_all(name='back_test.png')
+        env.render_all(name=f'{name}.png')

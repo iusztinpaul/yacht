@@ -4,7 +4,7 @@ input: {
     price_normalizer: 'IdentityNormalizer'
     other_normalizer: 'IdentityNormalizer'
     tickers: ['BTC']
-    intervals: ['1d', '6h', '1h', '30m']
+    intervals: ['1d', '6h', '1h']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd','boll_ub','boll_lb','rsi_30', 'cci_30', 'dx_30','close_30_sma','close_60_sma']
     start: '18/8/2017'
@@ -28,22 +28,22 @@ agent: {
         activation_fn: 'ReLU',
         feature_extractor: {
             name: 'MultipleTimeFramesFeatureExtractor'
-            features_dim: [32, 32],
+            features_dim: [64, 32],
             drop_out_p: 0.25
         }
         net_arch: {
-            shared: [128, 256, 64]
-            vf: [32]
-            pi: [32]
+            shared: []
+            vf: [16]
+            pi: [16]
         }
     }
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 1
-    collecting_n_steps: 2048
+    collect_n_times: 100
+    collecting_n_steps: 1024
     learning_rate: 0.00025
-    batch_size: 64
+    batch_size: 1024
     n_epochs: 5
     gamma: 0.9
     gae_lambda: 0.95

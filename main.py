@@ -68,11 +68,23 @@ if __name__ == '__main__':
 
             if config.meta.back_test:
                 logger.info('Starting back testing...')
+                back_testing.run_agent(
+                    train_env,
+                    agent,
+                    render=False,
+                    render_all=True,
+                    name='trainval_split_backtest'
+                )
                 dataset = build_dataset(config, storage_path, mode='test')
-
-                back_test_env = build_env(config, dataset)
-                back_testing.run_agent(back_test_env, agent, render=False, render_all=True)
-                back_test_env.close()
+                test_env = build_env(config, dataset)
+                back_testing.run_agent(
+                    test_env,
+                    agent,
+                    render=False,
+                    render_all=True,
+                    name='test_split_backtest'
+                )
+                test_env.close()
 
             dataset.close()
             train_env.close()
@@ -80,26 +92,50 @@ if __name__ == '__main__':
     elif args.mode == 'back_test':
         logger.info('Starting back testing...')
 
-        dataset = build_dataset(config, storage_path, mode='test')
-        back_test_env = build_env(config, dataset)
+        trainval_dataset = build_dataset(config, storage_path, mode='trainval')
+        trainval_env = build_env(config, trainval_dataset)
         agent = build_agent(
             config,
-            back_test_env,
+            trainval_env,
             storage_path,
             resume=True,
             agent_file=os.path.join(storage_path, 'agent')
         )
+        back_testing.run_agent(
+            trainval_env,
+            agent,
+            render=True,
+            render_all=False,
+            name='trainval_split_backtest'
+        )
 
-        back_testing.run_agent(back_test_env, agent, render=True, render_all=False)
+        test_dataset = build_dataset(config, storage_path, mode='test')
+        test_env = build_env(config, test_dataset)
+        agent = build_agent(
+            config,
+            test_env,
+            storage_path,
+            resume=True,
+            agent_file=os.path.join(storage_path, 'agent')
+        )
+        back_testing.run_agent(
+            test_env,
+            agent,
+            render=True,
+            render_all=False,
+            name='test_split_backtest'
+        )
 
-        dataset.close()
-        back_test_env.close()
+        trainval_dataset.close()
+        trainval_env.close()
+        test_dataset.close()
+        test_env.close()
     elif args.mode == 'max_possible_profit':
         dataset = build_dataset(config, storage_path, mode='test')
-        back_test_env = build_env(config, dataset)
-        back_test_env.max_possible_profit()
-        back_test_env.render_all(name='max_possible_profit.png')
+        test_env = build_env(config, dataset)
+        test_env.max_possible_profit()
+        test_env.render_all(name='max_possible_profit.png')
         plt.show()
 
         dataset.close()
-        back_test_env.close()
+        test_env.close()

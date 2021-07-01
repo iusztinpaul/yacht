@@ -11,7 +11,7 @@ from yacht.config import TrainConfig
 from yacht.data.datasets import TradingDataset, build_dataset_wrapper
 from yacht.data.k_fold import build_k_fold, PurgedKFold
 from yacht.environments import TradingEnv
-from yacht.environments.callbacks import RewardsRenderCallback, LoggerCallback
+from yacht.environments.callbacks import LoggerCallback
 
 logger = logging.getLogger(__file__)
 
