@@ -8,6 +8,8 @@ def run_agent(env, agent, render: bool = True, render_all=False, name='backtest'
     assert render is not True or render_all is not True, \
         'Either render on the fly or in the end.'
 
+    agent.policy.eval()
+
     observation = env.reset()
     while True:
         action, _states = agent.predict(observation, deterministic=True)

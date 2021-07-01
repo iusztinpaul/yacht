@@ -4,7 +4,6 @@ import gym
 import torch
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from torch import nn
-from torch.autograd import Variable
 
 from yacht.agents.utils import unflatten_observations
 from yacht.data.datasets import DayForecastDataset
@@ -22,7 +21,7 @@ class MultipleTimeFramesFeatureExtractor(BaseFeaturesExtractor):
             activation_fn: nn.Module,
             drop_out_p: float = 0.5
     ):
-        super().__init__(observation_space, features_dim[0])
+        super().__init__(observation_space, features_dim[1])
 
         assert len(features_dim) == 2
 

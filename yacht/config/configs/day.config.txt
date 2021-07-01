@@ -28,11 +28,11 @@ agent: {
         activation_fn: 'ReLU',
         feature_extractor: {
             name: 'MultipleTimeFramesFeatureExtractor'
-            features_dim: [64, 32],
+            features_dim: [64, 128],
             drop_out_p: 0.25
         }
         net_arch: {
-            shared: []
+            shared: [64]
             vf: [16]
             pi: [16]
         }
@@ -40,15 +40,15 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 100
+    collect_n_times: 30
     collecting_n_steps: 1024
-    learning_rate: 0.00025
+    learning_rate: 0.0001
     batch_size: 1024
-    n_epochs: 5
+    n_epochs: 1
     gamma: 0.9
     gae_lambda: 0.95
     clip_range: 0.2
-    entropy_coefficient: 0.01,
+    entropy_coefficient: 0.015,
     vf_coefficient: 0.5
     max_grad_norm: 0.5
     k_fold_splits: 3

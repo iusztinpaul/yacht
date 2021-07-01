@@ -31,6 +31,8 @@ class Trainer(ABC):
         self.dataset = dataset
         self.train_env = train_env
 
+        self.agent.policy.train()
+
     def __enter__(self):
         return self
 
@@ -45,7 +47,10 @@ class Trainer(ABC):
         pass
 
     def build_callbacks(self) -> List[BaseCallback]:
-        logger_callback = LoggerCallback(collecting_n_steps=self.train_config.collecting_n_steps)
+        logger_callback = LoggerCallback(
+            collect_n_times=self.train_config.collect_n_times,
+            collecting_n_steps=self.train_config.collecting_n_steps
+        )
 
         return [
             logger_callback

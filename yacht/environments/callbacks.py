@@ -21,6 +21,6 @@ class LoggerCallback(BaseCallback):
     def _on_step(self) -> bool:
         current_episode = self.num_timesteps / self.collecting_n_steps
         if current_episode == int(current_episode):
-            logger.info(f'Training for collect_n_time [{current_episode}/{self.collect_n_times}].')
+            logger.info(f'Training for collect_n_time: [{current_episode}/{self.collect_n_times}].')
 
         return True
