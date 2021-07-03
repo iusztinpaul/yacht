@@ -64,7 +64,7 @@ if __name__ == '__main__':
         )
         with trainer:
             agent = trainer.train()
-            # agent.save(os.path.join(storage_path, 'agent'))
+            agent.save(os.path.join(storage_path, 'agent'))
 
             if config.meta.back_test:
                 logger.info('Starting back testing...')
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     elif args.mode == 'max_possible_profit':
         dataset = build_dataset(config, storage_path, mode='test')
         test_env = build_env(config, dataset)
-        test_env.max_possible_profit()
+        test_env.max_possible_profit(stateless=False)
         test_env.render_all(name='max_possible_profit.png')
         plt.show()
 

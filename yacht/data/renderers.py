@@ -37,7 +37,7 @@ class MatPlotLibRenderer(BaseRenderer, ABC):
 
 
 class MplFinanceRenderer(BaseRenderer, ABC):
-    def render(self, save_file_path: str, **kwargs):
+    def render(self, title: str, save_file_path: str, **kwargs):
         raise NotImplementedError()
 
 
@@ -194,7 +194,7 @@ class TradingRenderer(MplFinanceRenderer):
         self.end = end
         self.num_days = utils.get_num_days(start, end)
 
-    def render(self, save_file_path: str, **kwargs):
+    def render(self, title: str, save_file_path: str, **kwargs):
         from yacht.environments import Position
 
         positions: List[Optional[Position]] = kwargs['positions']
@@ -245,7 +245,6 @@ class TradingRenderer(MplFinanceRenderer):
                 mpf.make_addplot(hold_positions, type='scatter', markersize=25, marker='.', color='y')
             )
 
-        title = os.path.split(save_file_path)[1].split('.')[0]
         mpf.plot(
             self.data,
             addplot=additional_plots,

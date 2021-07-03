@@ -22,4 +22,5 @@ def run_agent(env, agent, render: bool = True, render_all=False, name='backtest'
             break
 
     if render_all:
-        env.render_all(name=f'{name}.png')
+        title = f'{info["total_value_completeness"]*100}%'
+        env.render_all(title=title, name=f'{name}.png')

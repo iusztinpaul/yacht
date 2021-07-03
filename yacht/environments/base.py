@@ -61,6 +61,10 @@ class TradingEnv(gym.Env):
         np.random.seed(seed)
 
     @property
+    def current_profit(self):
+        return self._total_value
+
+    @property
     def intervals(self) -> List[str]:
         return self.dataset.intervals
 
@@ -114,7 +118,6 @@ class TradingEnv(gym.Env):
                 self._done = True
 
             action = self.action_schema.get_value(action)
-            position = Position.build(position=action)
 
             self._current_reward = self.reward_schema.calculate_reward(
                 action=action,
@@ -125,16 +128,26 @@ class TradingEnv(gym.Env):
 
             self._current_state = self.get_next_observation()
 
-            info = dict(
-                step=self._current_tick,
-                action=action.item(),
-                position=position,
-                reward=self._current_reward,
-                total_value=self._total_value
-            )
+            info = self.create_info(action)
             self.update_history(info)
 
             return self._current_state, self._current_reward, self._done, info
+
+    def create_info(self, action: np.array) -> dict:
+        action = action.item()
+        position = Position.build(position=action)
+
+        info = dict(
+            step=self._current_tick,
+            action=action,
+            position=position,
+            reward=self._current_reward,
+            total_value=self._total_value,
+            max_possible_value=(self._current_tick - self._start_tick) * self.action_schema.max_units_per_asset,
+            total_value_completeness=round(self._total_value / self.max_possible_profit(stateless=True), 2)
+        )
+
+        return info
 
     def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
         observation_space = self.dataset.get_external_observation_space()
@@ -169,8 +182,9 @@ class TradingEnv(gym.Env):
     def render(self, mode='human', name='trades.png'):
         pass
 
-    def render_all(self, name='trades.png'):
+    def render_all(self, title, name='trades.png'):
         self.renderer.render(
+            title=title,
             save_file_path=os.path.join(self.dataset.storage_dir, name),
             positions=self.history['position'],
             actions=self.history['action']
@@ -185,5 +199,5 @@ class TradingEnv(gym.Env):
     def update_total_value(self, action):
         raise NotImplementedError
 
-    def max_possible_profit(self):
+    def max_possible_profit(self, stateless=True):
         raise NotImplementedError()
