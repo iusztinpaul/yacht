@@ -64,7 +64,7 @@ if __name__ == '__main__':
         )
         with trainer:
             agent = trainer.train()
-            agent.save(os.path.join(storage_path, 'agent'))
+            agent.save(path=os.path.join(storage_path, 'agent'))
 
             if config.meta.back_test:
                 logger.info('Starting back testing...')
