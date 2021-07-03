@@ -5,7 +5,7 @@ package yacht.config.proto;
 
 message EnvironmentConfig {
   string name = 1;
-  string reward_schema = 2;
+  repeated string reward_schemas = 2;
   float reward_scaling = 3;
   string action_schema = 4;
   int32 max_units_per_asset = 5;

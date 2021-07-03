@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$yacht/config/proto/environment.proto\x12\x12yacht.config.proto\"\x84\x01\n\x11\x45nvironmentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x15\n\rreward_schema\x18\x02 \x01(\t\x12\x16\n\x0ereward_scaling\x18\x03 \x01(\x02\x12\x15\n\raction_schema\x18\x04 \x01(\t\x12\x1b\n\x13max_units_per_asset\x18\x05 \x01(\x05\x62\x06proto3')
+  serialized_pb=_b('\n$yacht/config/proto/environment.proto\x12\x12yacht.config.proto\"\x85\x01\n\x11\x45nvironmentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0ereward_schemas\x18\x02 \x03(\t\x12\x16\n\x0ereward_scaling\x18\x03 \x01(\x02\x12\x15\n\raction_schema\x18\x04 \x01(\t\x12\x1b\n\x13max_units_per_asset\x18\x05 \x01(\x05\x62\x06proto3')
 )
 
 
@@ -40,9 +40,9 @@ _ENVIRONMENTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reward_schema', full_name='yacht.config.proto.EnvironmentConfig.reward_schema', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='reward_schemas', full_name='yacht.config.proto.EnvironmentConfig.reward_schemas', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -80,7 +80,7 @@ _ENVIRONMENTCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=61,
-  serialized_end=193,
+  serialized_end=194,
 )
 
 DESCRIPTOR.message_types_by_name['EnvironmentConfig'] = _ENVIRONMENTCONFIG

@@ -10,6 +10,7 @@ import gym
 from gym.envs.registration import register
 
 from .wrappers import MultipleTimeFrameDictToBoxWrapper
+from .. import utils
 from ..config import Config
 from ..config.proto.environment_pb2 import EnvironmentConfig
 
@@ -23,8 +24,13 @@ environment_registry = {
 def build_env(config: Config, dataset: TradingDataset):
     env_config: EnvironmentConfig = config.environment
 
-    reward_schema = build_reward_schema(env_config)
-    action_schema = build_action_schema(env_config)
+    action_schema = build_action_schema(config)
+    reward_schema = build_reward_schema(
+        config, max_score=utils.compute_max_score(
+            num_days=dataset.num_days,
+            action_max_score=action_schema.max_units_per_asset
+        )
+    )
 
     env = gym.make(
         env_config.name,

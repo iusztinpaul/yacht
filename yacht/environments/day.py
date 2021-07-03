@@ -4,7 +4,7 @@ from typing import Dict
 import numpy as np
 from gym import spaces
 from yacht.environments import TradingEnv, Position
-from yacht.environments.reward_schemas import DayTotalValueRewardSchema
+from yacht.environments.reward_schemas import LeaderBoardRewardSchema
 
 logger = logging.getLogger(__file__)
 
@@ -17,10 +17,13 @@ class DayForecastEnv(TradingEnv):
         return observation
 
     def update_total_value(self, action):
-        if isinstance(self.reward_schema, DayTotalValueRewardSchema):
-            self._total_value = self.reward_schema.total_value
-        else:
-            raise NotImplementedError()
+        # TODO: Find a better way to calculate total_value & not duplicate code.
+        leader_board_reward_schema = [
+            reward_schema for reward_schema in self.reward_schema.reward_schemas
+            if isinstance(reward_schema, LeaderBoardRewardSchema)
+        ][0]
+
+        self._total_value = leader_board_reward_schema.total_score
 
     def get_observation_space(self) -> Dict[str, spaces.Space]:
         observation_space = super().get_observation_space()

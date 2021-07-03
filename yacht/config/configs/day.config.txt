@@ -15,7 +15,7 @@ input: {
 }
 environment: {
     name: 'DayForecastEnv-v0'
-    reward_schema: 'DayTotalValueRewardSchema'
+    reward_schemas: ['PriceChangeRewardSchema', 'LeaderBoardRewardSchema']
     reward_scaling: 0.0001
     action_schema: 'ContinuousActionScheme'
     max_units_per_asset: 10000
@@ -40,7 +40,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 30
+    collect_n_times: 10
     collecting_n_steps: 1024
     learning_rate: 0.0001
     batch_size: 1024

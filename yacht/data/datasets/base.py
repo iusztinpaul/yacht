@@ -95,6 +95,10 @@ class TradingDataset(Dataset, ABC):
     def num_other_features(self) -> int:
         return len(self.other_features)
 
+    @property
+    def num_days(self) -> int:
+        return len(self.data['1d'])
+
     @classmethod
     def split_features(cls, features: List[str]) -> Tuple[List[str], List[str], List[str]]:
         price_features = []
