@@ -40,7 +40,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 10
+    collect_n_times: 100
     collecting_n_steps: 1024
     learning_rate: 0.0001
     batch_size: 1024
@@ -48,7 +48,7 @@ train: {
     gamma: 0.9
     gae_lambda: 0.95
     clip_range: 0.2
-    entropy_coefficient: 0.015,
+    entropy_coefficient: 0.025,
     vf_coefficient: 0.5
     max_grad_norm: 0.5
     k_fold_splits: 3

@@ -1,6 +1,7 @@
 import os
+import random
 from abc import abstractmethod
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import gym
 from gym import spaces
@@ -22,7 +23,7 @@ class TradingEnv(gym.Env):
     ):
         from yacht.data.renderers import TradingRenderer
 
-        self.seed(seed)
+        self.seed(seed=seed)
         self.dataset = dataset
         self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
@@ -54,6 +55,10 @@ class TradingEnv(gym.Env):
             start=dataset.start,
             end=dataset.end
         )
+
+    def seed(self, seed=None):
+        random.seed(seed)
+        np.random.seed(seed)
 
     @property
     def intervals(self) -> List[str]:
