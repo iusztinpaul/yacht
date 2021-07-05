@@ -16,7 +16,7 @@ input: {
 environment: {
     name: 'DayForecastEnv-v0'
     reward_schemas: ['PriceChangeRewardSchema', 'LeaderBoardRewardSchema']
-    reward_scaling: 0.0001
+    reward_scaling: 0.001
     action_schema: 'ContinuousActionScheme'
     max_units_per_asset: 10000
 }
@@ -44,7 +44,7 @@ train: {
     collecting_n_steps: 1024
     learning_rate: 0.0001
     batch_size: 1024
-    n_epochs: 5
+    n_epochs: 3
     gamma: 0.9
     gae_lambda: 0.95
     clip_range: 0.2

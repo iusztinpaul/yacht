@@ -113,30 +113,32 @@ class LeaderBoardRewardSchema(RewardSchema):
     def percentile_to_reward(cls, p: float) -> int:
         assert 0 <= p <= 1
 
-        if p <= 0.5:
+        if p < 0.5:
             return 0
-        elif p <= 0.6:
+        elif p < 0.6:
             return 1
-        elif p <= 0.7:
+        elif p < 0.7:
             return 2
-        elif p <= 0.8:
+        elif p < 0.8:
             return 3
-        elif p <= 0.9:
+        elif p < 0.9:
             return 5
-        elif p <= 0.92:
+        elif p < 0.92:
             return 8
-        elif p <= 0.94:
+        elif p < 0.94:
             return 13
-        elif p <= 0.95:
+        elif p < 0.95:
             return 21
-        elif p <= 0.96:
+        elif p < 0.96:
             return 34
-        elif p <= 0.97:
+        elif p < 0.97:
             return 55
-        elif p <= 98.:
+        elif p < 98.:
             return 89
-        else:
+        elif p < 99:
             return 143
+        else:
+            return 232
 
 
 #######################################################################################################################

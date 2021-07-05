@@ -26,6 +26,7 @@ parser.add_argument(
     required=True,
     help='Name of the *.config file from the configuration dir.'
 )
+parser.add_argument('--save_agent', default=1, help='Save agent checkpoints or not.')
 parser.add_argument('--resume_training', default=False, action='store_true', help='Resume training or not.')
 parser.add_argument('--storage_path', required=True, help='Directory where your model & logs will be saved.')
 parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 'warn'))
@@ -60,11 +61,11 @@ if __name__ == '__main__':
             agent=agent,
             dataset=dataset,
             train_env=train_env,
-            val_env=val_env
+            val_env=val_env,
+            save=bool(args.save_agent)
         )
         with trainer:
             agent = trainer.train()
-            agent.save(path=os.path.join(storage_path, 'agent'))
 
             if config.meta.back_test:
                 logger.info('Starting back testing...')

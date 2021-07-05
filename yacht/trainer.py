@@ -24,6 +24,7 @@ class Trainer(ABC):
             agent: BaseAlgorithm,
             dataset: TradingDataset,
             train_env: TradingEnv,
+            save: bool = True
     ):
         self.train_config = train_config
         self.name = name
@@ -31,13 +32,25 @@ class Trainer(ABC):
         self.dataset = dataset
         self.train_env = train_env
 
-        self.agent.policy.train()
+        self.save = save
 
     def __enter__(self):
+        self.agent.policy.train()
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.save is True:
+            self.agent.save(path=self.build_checkpoint_path('last_checkpoint.pt'))
+
         self.close()
+
+    def build_checkpoint_path(self, file_name) -> str:
+        checkpoint_dir = os.path.join(self.dataset.storage_dir, 'checkpoints')
+        if not os.path.exists(checkpoint_dir):
+            os.mkdir(checkpoint_dir)
+
+        return os.path.join(checkpoint_dir, file_name)
 
     def close(self):
         pass
@@ -73,7 +86,7 @@ class NoEvalTrainer(Trainer):
             tb_log_name=self.name,
             log_interval=log_frequency,
             n_eval_episodes=1,
-            # eval_log_path=self.dataset.storage_dir,
+            eval_log_path=self.dataset.storage_dir,
             reset_num_timesteps=True
         )
 
@@ -138,7 +151,7 @@ class KFoldTrainer(Trainer):
                 eval_env=self.val_env,
                 eval_freq=steps_eval_frequency,
                 n_eval_episodes=1,
-                # eval_log_path=self.dataset.storage_dir,
+                eval_log_path=self.dataset.storage_dir,
                 reset_num_timesteps=True
             )
 
@@ -166,7 +179,8 @@ def build_trainer(
         agent: BaseAlgorithm,
         dataset: TradingDataset,
         train_env: TradingEnv,
-        val_env: TradingEnv
+        val_env: TradingEnv,
+        save: bool
 ) -> Trainer:
     trainer_class = trainer_registry[config.train.trainer_name]
     trainer_kwargs = {
@@ -174,7 +188,8 @@ def build_trainer(
         'agent': agent,
         'name': f'{agent.__class__.__name__}_{config.environment.name}',
         'dataset': dataset,
-        'train_env': train_env
+        'train_env': train_env,
+        'save': save
     }
     if trainer_class == KFoldTrainer:
         k_fold = build_k_fold(config)

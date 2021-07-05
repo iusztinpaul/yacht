@@ -44,7 +44,7 @@ class DayForecastEnv(TradingEnv):
 
     def max_possible_profit(self, stateless=True):
         if stateless:
-            return self.dataset.num_days * (self._end_tick - self._start_tick)
+            return self.action_schema.max_units_per_asset * (self._end_tick - self._start_tick)
         else:
             current_tick = self._start_tick
             last_trade_tick = current_tick
