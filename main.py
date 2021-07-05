@@ -33,7 +33,7 @@ parser.add_argument(
     default=None,
     help='File path to the *.pt file that you want to resume from. If None it will resume from last_checkpoint.pt'
 )
-parser.add_argument('--storage_path', required=True, help='Directory where your model & logs will be saved.')
+parser.add_argument('--storage_dir', required=True, help='Directory where your model & logs will be saved.')
 parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 'warn'))
 
 
@@ -41,10 +41,10 @@ if __name__ == '__main__':
     matplotlib.use('Agg')
 
     args = parser.parse_args()
-    if '.' == args.storage_path[0]:
-        storage_path = os.path.join(ROOT_DIR, args.storage_path[2:])
+    if '.' == args.storage_dir[0]:
+        storage_path = os.path.join(ROOT_DIR, args.storage_dir[2:])
     else:
-        storage_path = args.storage_path
+        storage_path = args.storage_dir
 
     utils.load_env(root_dir=ROOT_DIR)
     log_dir = utils.setup_logger(
@@ -62,7 +62,7 @@ if __name__ == '__main__':
         agent = build_agent(
             config=config,
             env=train_env,
-            storage_path=storage_path,
+            storage_dir=storage_path,
             resume=args.resume_training,
             agent_path=args.agent_path
         )

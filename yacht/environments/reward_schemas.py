@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Union, List
+from typing import Union, List, Tuple
 
 import numpy as np
 from scipy.stats import norm
 
+from yacht import utils
 from yacht.config import Config
 from yacht.config.proto.environment_pb2 import EnvironmentConfig
 from yacht.data.datasets import TradingDataset
@@ -75,6 +76,21 @@ class LeaderBoardRewardSchema(RewardSchema):
         self.max_score = max_score
         self.total_score = 0
 
+        self.percentile_thresholds = (
+            0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5,
+            0.5, 0.6, 0.7, 0.8, 0.9, 0.925, 0.95, 0.96, 0.97, 0.98, 0.99
+        )
+        assert len(self.percentile_thresholds) % 2 == 0
+
+        # Rewards are symmetric relative to 0.5
+        self.thresholds_cutting_point = len(self.percentile_thresholds) // 2
+        self.rewards = utils.fib_sequence(
+            n=self.thresholds_cutting_point + 1
+        )
+
+        assert self.percentile_thresholds[self.thresholds_cutting_point] == 0.5
+        assert self.thresholds_cutting_point + 1 == len(self.rewards)
+
     def reset(self):
         self.total_score = 0
 
@@ -109,37 +125,31 @@ class LeaderBoardRewardSchema(RewardSchema):
 
         return reward
 
-    @classmethod
-    def percentile_to_reward(cls, p: float) -> int:
+    def percentile_to_reward(self, p: float) -> int:
         assert 0 <= p <= 1
 
-        if p < 0.5:
+        if p == 0.5:
             return 0
-        elif p < 0.6:
-            return 1
-        elif p < 0.7:
-            return 2
-        elif p < 0.8:
-            return 3
-        elif p < 0.9:
-            return 5
-        elif p < 0.92:
-            return 8
-        elif p < 0.94:
-            return 13
-        elif p < 0.95:
-            return 21
-        elif p < 0.96:
-            return 34
-        elif p < 0.97:
-            return 55
-        elif p < 98.:
-            return 89
-        elif p < 99:
-            return 143
+        elif p < 0.5:
+            return -self._associate_percentile_with_reward(
+                thresholds=self.percentile_thresholds[:self.thresholds_cutting_point][::-1],
+                rewards=self.rewards,
+                p=p
+            )
         else:
-            return 232
+            return self._associate_percentile_with_reward(
+                thresholds=self.percentile_thresholds[self.thresholds_cutting_point:],
+                rewards=self.rewards,
+                p=p
+            )
 
+    @classmethod
+    def _associate_percentile_with_reward(cls, thresholds: List[float], rewards: List[int], p: float) -> int:
+        for i in range(len(rewards)):
+            if p <= thresholds[i]:
+                return rewards[i]
+        else:
+            return rewards[i+1]
 
 #######################################################################################################################
 

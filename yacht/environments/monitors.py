@@ -1,5 +1,4 @@
-import os
-from typing import Optional, Tuple
+from typing import Tuple
 
 import gym
 import pandas as pd
@@ -15,14 +14,13 @@ class RewardRendererMonitor(Monitor):
             env: gym.Env,
             final_step: int,
             storage_dir: str,
-            filename: Optional[str] = None,
             allow_early_resets: bool = True,
             reset_keywords: Tuple[str, ...] = (),
             info_keywords: Tuple[str, ...] = (),
     ):
         super(RewardRendererMonitor, self).__init__(
             env,
-            filename,
+            storage_dir,
             allow_early_resets,
             reset_keywords,
             info_keywords

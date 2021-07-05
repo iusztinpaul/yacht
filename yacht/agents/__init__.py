@@ -37,7 +37,7 @@ activation_fn_registry = {
 def build_agent(
         config,
         env: TradingEnv,
-        storage_path: str,
+        storage_dir: str,
         resume: bool = False,
         agent_path: str = None
 ) -> BaseAlgorithm:
@@ -81,7 +81,7 @@ def build_agent(
         return agent_class(
             policy=policy_class,
             env=env,
-            verbose=agent_config.verbose,
+            verbose=1 if agent_config.verbose else 0,
             learning_rate=train_config.learning_rate,
             batch_size=train_config.batch_size,
             n_steps=train_config.collecting_n_steps,
@@ -93,7 +93,7 @@ def build_agent(
             vf_coef=train_config.vf_coefficient,
             max_grad_norm=train_config.max_grad_norm,
             policy_kwargs=policy_kwargs,
-            tensorboard_log=storage_path,
+            tensorboard_log=os.path.join(storage_dir, 'tensorboard'),
             device='cuda' if config.meta.device == 'gpu' else config.meta.device
         )
 
