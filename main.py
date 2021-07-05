@@ -20,7 +20,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('mode', choices=('train', 'back_test', 'max_possible_profit'))
+parser.add_argument('mode', choices=('train', 'backtest', 'max_possible_profit'))
 parser.add_argument(
     '--config_file_name',
     required=True,
@@ -28,6 +28,11 @@ parser.add_argument(
 )
 parser.add_argument('--save_agent', default=1, help='Save agent checkpoints or not.')
 parser.add_argument('--resume_training', default=False, action='store_true', help='Resume training or not.')
+parser.add_argument(
+    '--agent_path',
+    default=None,
+    help='File path to the *.pt file that you want to resume from. If None it will resume from last_checkpoint.pt'
+)
 parser.add_argument('--storage_path', required=True, help='Directory where your model & logs will be saved.')
 parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 'warn'))
 
@@ -54,7 +59,13 @@ if __name__ == '__main__':
         dataset = build_dataset(config, storage_path, mode='trainval')
         train_env = build_env(config, dataset)
         val_env = build_env(config, dataset)
-        agent = build_agent(config, train_env, storage_path)
+        agent = build_agent(
+            config=config,
+            env=train_env,
+            storage_path=storage_path,
+            resume=args.resume_training,
+            agent_path=args.agent_path
+        )
 
         trainer = build_trainer(
             config=config,
@@ -74,7 +85,7 @@ if __name__ == '__main__':
                     agent,
                     render=False,
                     render_all=True,
-                    name='trainval_split_backtest'
+                    name='after_train_trainval_backtest'
                 )
                 dataset = build_dataset(config, storage_path, mode='test')
                 test_env = build_env(config, dataset)
@@ -83,14 +94,14 @@ if __name__ == '__main__':
                     agent,
                     render=False,
                     render_all=True,
-                    name='test_split_backtest'
+                    name='after_train_test_backtest'
                 )
                 test_env.close()
 
             dataset.close()
             train_env.close()
             val_env.close()
-    elif args.mode == 'back_test':
+    elif args.mode == 'backtest':
         logger.info('Starting back testing...')
 
         trainval_dataset = build_dataset(config, storage_path, mode='trainval')
@@ -100,14 +111,14 @@ if __name__ == '__main__':
             trainval_env,
             storage_path,
             resume=True,
-            agent_file=os.path.join(storage_path, 'agent')
+            agent_path=args.agent_path
         )
         back_testing.run_agent(
             trainval_env,
             agent,
-            render=True,
-            render_all=False,
-            name='trainval_split_backtest'
+            render=False,
+            render_all=True,
+            name='after_backtest_trainval_split_backtest'
         )
 
         test_dataset = build_dataset(config, storage_path, mode='test')
@@ -117,14 +128,14 @@ if __name__ == '__main__':
             test_env,
             storage_path,
             resume=True,
-            agent_file=os.path.join(storage_path, 'agent')
+            agent_path=args.agent_path
         )
         back_testing.run_agent(
             test_env,
             agent,
-            render=True,
-            render_all=False,
-            name='test_split_backtest'
+            render=False,
+            render_all=True,
+            name='after_backtest_test_split_backtest'
         )
 
         trainval_dataset.close()

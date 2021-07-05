@@ -1,5 +1,6 @@
-from .parsers import *
 from .misc import *
+from .parsers import *
+from .paths import *
 
 import logging
 import os

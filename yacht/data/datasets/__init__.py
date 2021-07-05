@@ -16,12 +16,12 @@ dataset_registry = {
 }
 
 
-def build_dataset(config: Config, storage_path, mode: str, render_split: bool = True) -> TradingDataset:
+def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = True) -> TradingDataset:
     assert mode in ('trainval', 'test')
 
     input_config = config.input
 
-    market = build_market(input_config, storage_path)
+    market = build_market(input_config, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]
     price_normalizer = build_normalizer(input_config.price_normalizer)
     other_normalizer = build_normalizer(input_config.other_normalizer)
@@ -54,7 +54,7 @@ def build_dataset(config: Config, storage_path, mode: str, render_split: bool = 
             test_interval=(back_test_start, back_test_end)
         )
         renderer.render()
-        renderer.save(os.path.join(storage_path, 'trainval_test_split.png'))
+        renderer.save(utils.build_graphics_path(storage_dir, 'trainval_test_split.png'))
         renderer.close()
 
     if mode == 'trainval':

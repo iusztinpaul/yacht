@@ -1,5 +1,4 @@
 import logging
-import os
 from abc import ABC, abstractmethod
 from typing import List
 
@@ -7,6 +6,7 @@ from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from tqdm import tqdm
 
+from yacht import utils
 from yacht.config import TrainConfig
 from yacht.data.datasets import TradingDataset, build_dataset_wrapper
 from yacht.data.k_fold import build_k_fold, PurgedKFold
@@ -41,16 +41,11 @@ class Trainer(ABC):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.save is True:
-            self.agent.save(path=self.build_checkpoint_path('last_checkpoint.pt'))
+            self.agent.save(
+                path=utils.build_last_checkpoint_path(self.dataset.storage_dir)
+            )
 
         self.close()
-
-    def build_checkpoint_path(self, file_name) -> str:
-        checkpoint_dir = os.path.join(self.dataset.storage_dir, 'checkpoints')
-        if not os.path.exists(checkpoint_dir):
-            os.mkdir(checkpoint_dir)
-
-        return os.path.join(checkpoint_dir, file_name)
 
     def close(self):
         pass

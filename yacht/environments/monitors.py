@@ -5,6 +5,7 @@ import gym
 import pandas as pd
 from stable_baselines3.common.monitor import Monitor
 
+from yacht import utils
 from yacht.data.renderers import RewardsRenderer
 
 
@@ -28,7 +29,7 @@ class RewardRendererMonitor(Monitor):
         )
 
         self.final_step = final_step
-        self.storage_path = os.path.join(storage_dir, 'train_episode_rewards.png')
+        self.storage_path = utils.build_graphics_path(storage_dir, 'train_episode_rewards.png')
 
     def step(self, action):
         observation, reward, done, info = super().step(action)

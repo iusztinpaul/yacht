@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from gym import spaces
 
-from yacht.agents.utils import unflatten_observations
+from yacht.agents.misc import unflatten_observations
 from yacht.environments import TradingEnv
 
 

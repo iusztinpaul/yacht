@@ -7,6 +7,7 @@ import gym
 from gym import spaces
 import numpy as np
 
+from yacht import utils
 from yacht.data.datasets import TradingDataset
 from yacht.environments.action_schemas import ActionSchema
 from yacht.environments.enums import Position
@@ -185,7 +186,7 @@ class TradingEnv(gym.Env):
     def render_all(self, title, name='trades.png'):
         self.renderer.render(
             title=title,
-            save_file_path=os.path.join(self.dataset.storage_dir, name),
+            save_file_path=utils.build_graphics_path(self.dataset.storage_dir, name),
             positions=self.history['position'],
             actions=self.history['action']
         )

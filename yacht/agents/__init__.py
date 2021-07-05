@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Union
 
@@ -6,10 +7,15 @@ from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from torch import nn
 
+from yacht import utils
 from yacht.agents.modules.day import MultipleTimeFramesFeatureExtractor, DayForecastNetwork
 from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
 from yacht.environments import TradingEnv
+
+
+logger = logging.getLogger(__file__)
+
 
 agents_registry = {
     'PPO': PPO
@@ -33,7 +39,7 @@ def build_agent(
         env: TradingEnv,
         storage_path: str,
         resume: bool = False,
-        agent_file: str = None
+        agent_path: str = None
 ) -> BaseAlgorithm:
     agent_config = config.agent
     policy_config = config.agent.policy
@@ -44,8 +50,11 @@ def build_agent(
     # The agent is the main wrapper over all the logic.
     agent_class = agents_registry[agent_config.name]
     if resume:
-        assert agent_file is not None
-        agent_path = os.path.join(storage_path, agent_file)
+        if agent_path is None:
+            agent_path = utils.build_last_checkpoint_path(env.dataset.storage_dir)
+            logger.info(f'Resuming from the last checkpoint: {agent_path}')
+
+            assert os.path.exists(agent_path)
 
         return agent_class.load(agent_path)
     else:

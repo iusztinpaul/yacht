@@ -111,7 +111,7 @@ class PurgedKFold(_BaseKFold):
 
         self.renderer.render(train_indices=self.train_indices, val_indices=self.test_indices)
         self.renderer.save(
-            os.path.join(storage_dir, f'k_fold_split_{self.current_split}.png')
+            utils.build_graphics_path(storage_dir, f'k_fold_split_{self.current_split}.png')
         )
         if show:
             self.renderer.show()
