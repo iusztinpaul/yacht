@@ -1,4 +1,7 @@
+import os
+
 from google.protobuf import text_format
+from google.protobuf.text_format import MessageToString
 
 from yacht.config.proto import *
 
@@ -10,3 +13,9 @@ def load_config(config_path: str):
         text_format.Merge(config_str, config)
 
     return config
+
+
+def export_config(config: Config, storage_dir: str):
+    with open(os.path.join(storage_dir, 'config.txt'), 'w') as f:
+        config_txt = MessageToString(config)
+        f.write(config_txt)

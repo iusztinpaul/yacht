@@ -5,7 +5,7 @@ import os
 import matplotlib
 import matplotlib.pyplot as plt
 
-from yacht.config import load_config
+from yacht.config import load_config, export_config
 from yacht.data.datasets import build_dataset
 from yacht.environments import build_env
 from yacht import utils, back_testing
@@ -42,27 +42,28 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if '.' == args.storage_dir[0]:
-        storage_path = os.path.join(ROOT_DIR, args.storage_dir[2:])
+        storage_dir = os.path.join(ROOT_DIR, args.storage_dir[2:])
     else:
-        storage_path = args.storage_dir
+        storage_dir = args.storage_dir
 
     utils.load_env(root_dir=ROOT_DIR)
     log_dir = utils.setup_logger(
         level=args.logger_level,
-        storage_path=storage_path
+        storage_dir=storage_dir
     )
     environments.register_gym_envs()
     config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file_name))
+    export_config(config, storage_dir)
     logger.info(f'Config:\n{config}')
 
     if args.mode == 'train':
-        dataset = build_dataset(config, storage_path, mode='trainval')
+        dataset = build_dataset(config, storage_dir, mode='trainval')
         train_env = build_env(config, dataset)
         val_env = build_env(config, dataset)
         agent = build_agent(
             config=config,
             env=train_env,
-            storage_dir=storage_path,
+            storage_dir=storage_dir,
             resume=args.resume_training,
             agent_path=args.agent_path
         )
@@ -87,7 +88,7 @@ if __name__ == '__main__':
                     render_all=True,
                     name='after_train_trainval_backtest'
                 )
-                dataset = build_dataset(config, storage_path, mode='test')
+                dataset = build_dataset(config, storage_dir, mode='test')
                 test_env = build_env(config, dataset)
                 back_testing.run_agent(
                     test_env,
@@ -104,12 +105,12 @@ if __name__ == '__main__':
     elif args.mode == 'backtest':
         logger.info('Starting back testing...')
 
-        trainval_dataset = build_dataset(config, storage_path, mode='trainval')
+        trainval_dataset = build_dataset(config, storage_dir, mode='trainval')
         trainval_env = build_env(config, trainval_dataset)
         agent = build_agent(
             config,
             trainval_env,
-            storage_path,
+            storage_dir,
             resume=True,
             agent_path=args.agent_path
         )
@@ -121,12 +122,12 @@ if __name__ == '__main__':
             name='after_backtest_trainval_split_backtest'
         )
 
-        test_dataset = build_dataset(config, storage_path, mode='test')
+        test_dataset = build_dataset(config, storage_dir, mode='test')
         test_env = build_env(config, test_dataset)
         agent = build_agent(
             config,
             test_env,
-            storage_path,
+            storage_dir,
             resume=True,
             agent_path=args.agent_path
         )
@@ -143,7 +144,7 @@ if __name__ == '__main__':
         test_dataset.close()
         test_env.close()
     elif args.mode == 'max_possible_profit':
-        dataset = build_dataset(config, storage_path, mode='test')
+        dataset = build_dataset(config, storage_dir, mode='test')
         test_env = build_env(config, dataset)
         test_env.max_possible_profit(stateless=False)
         test_env.render_all(name='max_possible_profit.png')

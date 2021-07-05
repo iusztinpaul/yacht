@@ -10,6 +10,14 @@ logger = logging.getLogger(__file__)
 
 
 class Market(ABC):
+    MANDATORY_FEATURES = {
+        'Close',
+        'Open',
+        'High',
+        'Low',
+        'Volume'
+    }
+
     def __init__(
             self,
             features: List[str],
@@ -17,7 +25,7 @@ class Market(ABC):
             api_secret,
             storage_dir: str
     ):
-        self.features = features
+        self.features = list(set(features).union(self.MANDATORY_FEATURES))
         self.api_key = api_key
         self.api_secret = api_secret
 

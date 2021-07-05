@@ -5,7 +5,7 @@ input: {
     other_normalizer: 'IdentityNormalizer'
     tickers: ['BTC']
     intervals: ['1d', '6h', '1h']
-    features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    features: ['Close', 'Volume']
     technical_indicators: ['macd','boll_ub','boll_lb','rsi_30', 'cci_30', 'dx_30','close_30_sma','close_60_sma']
     start: '18/8/2017'
     end: '1/1/2021'
@@ -16,7 +16,7 @@ input: {
 environment: {
     name: 'DayForecastEnv-v0'
     reward_schemas: ['PriceChangeRewardSchema', 'LeaderBoardRewardSchema']
-    reward_scaling: 0.001
+    reward_scaling: 0.00001
     action_schema: 'ContinuousActionScheme'
     max_units_per_asset: 10000
 }
@@ -40,11 +40,11 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 10
+    collect_n_times: 100
     collecting_n_steps: 1024
     learning_rate: 0.0001
     batch_size: 1024
-    n_epochs: 3
+    n_epochs: 1
     gamma: 0.9
     gae_lambda: 0.95
     clip_range: 0.2

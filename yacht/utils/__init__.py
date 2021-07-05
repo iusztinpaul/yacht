@@ -17,8 +17,8 @@ logger_levels = {
 }
 
 
-def setup_logger(level: str, storage_path: Optional[str] = None):
-    Path(storage_path).mkdir(parents=True, exist_ok=True)
+def setup_logger(level: str, storage_dir: Optional[str] = None):
+    Path(storage_dir).mkdir(parents=True, exist_ok=True)
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logger_levels[level])
@@ -29,12 +29,12 @@ def setup_logger(level: str, storage_path: Optional[str] = None):
     console_handler.setFormatter(log_formatter)
     root_logger.addHandler(console_handler)
 
-    if storage_path:
-        file_handler = logging.FileHandler(os.path.join(storage_path, 'logger.log'))
+    if storage_dir:
+        file_handler = logging.FileHandler(os.path.join(storage_dir, 'logger.log'))
         file_handler.setFormatter(log_formatter)
         root_logger.addHandler(file_handler)
 
-    log_dir = os.path.join(storage_path, 'log')
+    log_dir = os.path.join(storage_dir, 'log')
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
 
