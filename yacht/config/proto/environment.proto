@@ -3,9 +3,12 @@ syntax = "proto3";
 package yacht.config.proto;
 
 
+import "yacht/config/proto/reward_schema.proto";
+
+
 message EnvironmentConfig {
   string name = 1;
-  repeated string reward_schemas = 2;
+  repeated RewardSchemaConfig reward_schemas = 2;
   float reward_scaling = 3;
   string action_schema = 4;
   int32 max_units_per_asset = 5;

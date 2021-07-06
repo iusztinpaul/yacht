@@ -12,6 +12,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from yacht.config.proto import reward_schema_pb2 as yacht_dot_config_dot_proto_dot_reward__schema__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -19,8 +20,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$yacht/config/proto/environment.proto\x12\x12yacht.config.proto\"\x85\x01\n\x11\x45nvironmentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0ereward_schemas\x18\x02 \x03(\t\x12\x16\n\x0ereward_scaling\x18\x03 \x01(\x02\x12\x15\n\raction_schema\x18\x04 \x01(\t\x12\x1b\n\x13max_units_per_asset\x18\x05 \x01(\x05\x62\x06proto3')
-)
+  serialized_pb=_b('\n$yacht/config/proto/environment.proto\x12\x12yacht.config.proto\x1a&yacht/config/proto/reward_schema.proto\"\xad\x01\n\x11\x45nvironmentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12>\n\x0ereward_schemas\x18\x02 \x03(\x0b\x32&.yacht.config.proto.RewardSchemaConfig\x12\x16\n\x0ereward_scaling\x18\x03 \x01(\x02\x12\x15\n\raction_schema\x18\x04 \x01(\t\x12\x1b\n\x13max_units_per_asset\x18\x05 \x01(\x05\x62\x06proto3')
+  ,
+  dependencies=[yacht_dot_config_dot_proto_dot_reward__schema__pb2.DESCRIPTOR,])
 
 
 
@@ -41,7 +43,7 @@ _ENVIRONMENTCONFIG = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='reward_schemas', full_name='yacht.config.proto.EnvironmentConfig.reward_schemas', index=1,
-      number=2, type=9, cpp_type=9, label=3,
+      number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -79,10 +81,11 @@ _ENVIRONMENTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=61,
-  serialized_end=194,
+  serialized_start=101,
+  serialized_end=274,
 )
 
+_ENVIRONMENTCONFIG.fields_by_name['reward_schemas'].message_type = yacht_dot_config_dot_proto_dot_reward__schema__pb2._REWARDSCHEMACONFIG
 DESCRIPTOR.message_types_by_name['EnvironmentConfig'] = _ENVIRONMENTCONFIG
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
