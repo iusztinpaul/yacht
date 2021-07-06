@@ -5,7 +5,7 @@ tables==3.6.1
 pandas~=1.2.4
 
 # Machine Learning
-stable-baselines3[extra]==1.0
+stable-baselines3[extra]==1.1.0
 gym~=0.18.0
 sklearn==0.0
 tensorboard==2.5.0
@@ -22,3 +22,6 @@ protobuf==3.16.0
 matplotlib~=3.4.1
 mplfinance==0.12.7a17
 
+
+# Finance
+pyfolio-reloaded==0.9.3

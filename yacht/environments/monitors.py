@@ -33,7 +33,7 @@ class RewardRendererMonitor(Monitor):
         observation, reward, done, info = super().step(action)
 
         if self.total_steps == self.final_step:
-            rewards = pd.DataFrame(data={'Rewards': self.episode_rewards})
+            rewards = pd.DataFrame(data={'Rewards': self.episode_returns})
             renderer = RewardsRenderer(data=rewards)
             renderer.render()
             renderer.save(self.storage_path)

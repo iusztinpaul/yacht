@@ -5,10 +5,11 @@ import os
 import matplotlib
 import matplotlib.pyplot as plt
 
+import yacht.agents.predict
 from yacht.config import load_config, export_config
 from yacht.data.datasets import build_dataset
 from yacht.environments import build_env
-from yacht import utils, back_testing
+from yacht import utils, evaluation
 from yacht import environments
 from yacht.agents import build_agent
 from yacht.trainer import build_trainer
@@ -81,7 +82,7 @@ if __name__ == '__main__':
 
             if config.meta.back_test:
                 logger.info('Starting back testing...')
-                back_testing.run_agent(
+                evaluation.backtest(
                     train_env,
                     agent,
                     render=False,
@@ -90,7 +91,7 @@ if __name__ == '__main__':
                 )
                 dataset = build_dataset(config, storage_dir, mode='test')
                 test_env = build_env(config, dataset)
-                back_testing.run_agent(
+                evaluation.backtest(
                     test_env,
                     agent,
                     render=False,
@@ -114,7 +115,7 @@ if __name__ == '__main__':
             resume=True,
             agent_path=args.agent_path
         )
-        back_testing.run_agent(
+        evaluation.backtest(
             trainval_env,
             agent,
             render=False,
@@ -131,7 +132,7 @@ if __name__ == '__main__':
             resume=True,
             agent_path=args.agent_path
         )
-        back_testing.run_agent(
+        evaluation.backtest(
             test_env,
             agent,
             render=False,

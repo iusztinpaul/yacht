@@ -99,6 +99,9 @@ class TradingDataset(Dataset, ABC):
     def num_days(self) -> int:
         return len(self.data['1d'])
 
+    def index_to_datetime(self, integer_index: int) -> datetime:
+        return self.data['1d'].index[integer_index].to_pydatetime()
+
     @classmethod
     def split_features(cls, features: List[str]) -> Tuple[List[str], List[str], List[str]]:
         price_features = []
@@ -120,14 +123,14 @@ class TradingDataset(Dataset, ABC):
     def __getitem__(self, current_index: int) -> Dict[str, np.array]:
         pass
 
-    def get_k_folding_values(self) -> pd.DataFrame:
-        return self.get_prices()
-
     def get_prices(self) -> pd.DataFrame:
         return self.data['1d']
 
     @abstractmethod
     def get_external_observation_space(self) -> Dict[str, Space]:
+        """
+            Returns the gym spaces observation space in the format that the dataset gives the data.
+        """
         pass
 
 

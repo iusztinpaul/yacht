@@ -121,7 +121,7 @@ class KFoldTrainer(Trainer):
         )
         progress_bar = tqdm(total=self.train_config.collect_n_times)
         print()
-        for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_k_folding_values())):
+        for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_prices())):
             logger.info(f'Train split length: {len(train_indices)}')
             logger.info(f'Collecting steps per episode: {self.train_config.collecting_n_steps}')
             logger.info(f'Validation split length: {len(val_indices)}\n')

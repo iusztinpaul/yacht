@@ -1,9 +1,11 @@
+import datetime
 import os
 import random
 from abc import abstractmethod
 from typing import Dict, List, Optional
 
 import gym
+import pandas as pd
 from gym import spaces
 import numpy as np
 
@@ -113,24 +115,27 @@ class TradingEnv(gym.Env):
         if self._done is True:
             return self._current_state, self._current_reward, self._done, {}
         else:
-            self._current_tick += 1
-
-            if self._current_tick == self._end_tick:
-                self._done = True
-
+            # For a_t compute r_t
             action = self.action_schema.get_value(action)
-
             self._current_reward = self.reward_schema.calculate_reward(
                 action=action,
                 dataset=self.dataset,
                 current_index=self._current_tick - 1
             )
-            self.update_total_value(action)
 
-            self._current_state = self.get_next_observation()
-
+            # Log info for s_t
             info = self.create_info(action)
             self.update_history(info)
+
+            # Update interval state after (s_t, a_t, r_t)
+            self.update_total_value(action)
+
+            # Get s_t+1
+            self._current_tick += 1
+            if self._current_tick == self._end_tick:
+                self._done = True
+
+            self._current_state = self.get_next_observation()
 
             return self._current_state, self._current_reward, self._done, info
 
@@ -140,6 +145,7 @@ class TradingEnv(gym.Env):
 
         info = dict(
             step=self._current_tick,
+            done=self._done,
             action=action,
             position=position,
             reward=self._current_reward,
@@ -164,9 +170,16 @@ class TradingEnv(gym.Env):
     def update_history(self, info):
         if not self.history:
             self.history = {key: [] for key in info.keys()}
-            # There are no positions & actions before the starting point.
+
+            # There are no positions & actions before s_t.
             self.history['position'] = (self.window_size - 1) * [np.nan]
             self.history['action'] = (self.window_size - 1) * [0]
+
+            current_date = self.dataset.index_to_datetime(self._current_tick)
+            self.history['date'] = [
+                current_date - datetime.timedelta(days=day_delta)
+                for day_delta in range(1, self.window_size)
+            ]
 
         # For easier processing add a position only when it is changing.
         position = info.pop('position')
@@ -176,8 +189,24 @@ class TradingEnv(gym.Env):
         else:
             self.history['position'].append(np.nan)
 
+        current_date = self.dataset.index_to_datetime(self._current_tick)
+        self.history['date'].append(current_date)
+
         for key, value in info.items():
             self.history[key].append(value)
+
+    def create_report(self) -> pd.DataFrame:
+        report = pd.DataFrame(
+            data={
+                'Date': self.history['date'],
+                'Total Value': self.history['total_value'],
+                'Max Possible Value': self.history['max_possible_value'],
+            }
+        )
+        report['Date'] = pd.to_datetime(report['Date'])
+        report.set_index('Date', inplace=True, drop=True)
+
+        return report
 
     @abstractmethod
     def render(self, mode='human', name='trades.png'):
