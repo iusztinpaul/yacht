@@ -33,10 +33,13 @@ class DayForecastEnv(TradingEnv):
 
         return observation
 
-    def update_history(self, info):
-        super().update_history(info)
+    def create_info(self, action: np.array) -> dict:
+        info = super().create_info(action)
 
-        self.history['max_value'] = self._tick_t * self.action_schema.max_units_per_asset
+        info['max_possible_value'] = (self._tick_t - self._start_tick) * self.action_schema.max_units_per_asset
+        info['total_value_completeness'] = round(self._total_value / self.max_possible_profit(stateless=True), 2)
+
+        return info
 
     def create_baseline_report(self) -> pd.DataFrame:
         # Clean env.

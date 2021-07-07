@@ -41,7 +41,7 @@ def backtest(
     )
 
     if verbose is True:
-        logger.info('Backtest final results: ')
+        logger.info('Backtest statistics in report to the baseline: ')
         logger.info(pprint.pformat(backtest_statistics, indent=4))
 
     if plot:

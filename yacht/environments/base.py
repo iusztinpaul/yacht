@@ -31,6 +31,7 @@ class TradingEnv(gym.Env):
 
         self.seed(seed=seed)
 
+        # General
         self.dataset = dataset
         self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
@@ -42,16 +43,28 @@ class TradingEnv(gym.Env):
         self.observation_space = spaces.Dict(self.get_observation_space())
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
 
-        # Track
+        # Ticks
         self._start_tick = self.window_size - 1
         self._end_tick = len(self.prices) - 2  # Another -1 because the reward is calculated with one step further.
-        self._done = None
         self._tick_t = None
+
+        # State
+        self._done = None
         self._s_t = None
         self._a_t = None
         self._position_previous_t = None
         self._r_t = None
-        self._total_value = None
+
+        # Global information
+        self._total_value = 0
+        self._total_hits = 0
+        self._total_profit_hits = 0
+        self._total_loss_misses = 0
+        self._num_longs = 0
+        self._num_shorts = 0
+        self._num_holds = 0
+
+        # History
         self.history = None
 
         self.reset()
@@ -67,25 +80,31 @@ class TradingEnv(gym.Env):
         random.seed(seed)
         np.random.seed(seed)
 
-    @property
-    def current_profit(self):
-        return self._total_value
+    def reset(self):
+        self._tick_t = self._start_tick
 
-    @property
-    def intervals(self) -> List[str]:
-        return self.dataset.intervals
+        # State
+        self._done = False
+        self._s_t = None
+        self._a_t = None
+        self._position_previous_t = None
+        self._r_t = None
 
-    @property
-    def observation_env_features_len(self) -> int:
-        return self.observation_space['env_features'].shape[0] \
-            if self.observation_space['env_features'] is not None \
-            else 0
+        # Global information
+        self._total_value = 0
+        self._total_hits = 0
+        self._total_profit_hits = 0
+        self._total_loss_misses = 0
+        self._num_longs = 0
+        self._num_shorts = 0
+        self._num_holds = 0
 
-    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
-        observation_space = self.dataset.get_external_observation_space()
-        observation_space['env_features'] = None
+        # History
+        self.history = {}
 
-        return observation_space
+        self.reward_schema.reset()
+
+        return self.get_next_observation()
 
     def set_dataset(self, dataset: TradingDataset):
         from yacht.data.renderers import TradingRenderer
@@ -107,19 +126,25 @@ class TradingEnv(gym.Env):
             end=dataset.end
         )
 
-    def reset(self):
-        self._done = False
-        self._tick_t = self._start_tick
-        self._s_t = None
-        self._a_t = None
-        self._position_previous_t = None
-        self._r_t = None
-        self._total_value = 0.
-        self.history = {}
+    @property
+    def current_profit(self):
+        return self._total_value
 
-        self.reward_schema.reset()
+    @property
+    def intervals(self) -> List[str]:
+        return self.dataset.intervals
 
-        return self.get_next_observation()
+    @property
+    def observation_env_features_len(self) -> int:
+        return self.observation_space['env_features'].shape[0] \
+            if self.observation_space['env_features'] is not None \
+            else 0
+
+    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
+        observation_space = self.dataset.get_external_observation_space()
+        observation_space['env_features'] = None
+
+        return observation_space
 
     def step(self, action: np.array):
         if self._done is True:
@@ -159,15 +184,25 @@ class TradingEnv(gym.Env):
         action = action.item()
         position = Position.build(position=action)
 
+        if position == Position.Long:
+            self._num_longs += 1
+        elif position == Position.Short:
+            self._num_shorts += 1
+        else:
+            self._num_holds += 1
+
         info = dict(
+            # State info
             step=self._tick_t,
             done=self._done,
             action=action,
             position=position,
             reward=self._r_t,
+            # Global information
             total_value=self._total_value,
-            max_possible_value=(self._tick_t - self._start_tick) * self.action_schema.max_units_per_asset,
-            total_value_completeness=round(self._total_value / self.max_possible_profit(stateless=True), 2)
+            num_longs=self._num_longs,
+            num_shorts=self._num_shorts,
+            num_holds=self._num_holds
         )
 
         return info
@@ -180,6 +215,7 @@ class TradingEnv(gym.Env):
             self.history['position'] = (self.window_size - 1) * [np.nan]
             self.history['action'] = (self.window_size - 1) * [0]
 
+            # Map indices to their corresponding dates.
             current_date = self.dataset.index_to_datetime(self._tick_t)
             self.history['date'] = [
                 current_date - datetime.timedelta(days=day_delta)
@@ -194,6 +230,7 @@ class TradingEnv(gym.Env):
         else:
             self.history['position'].append(np.nan)
 
+        # Map index_t to its corresponding date.
         current_date = self.dataset.index_to_datetime(self._tick_t)
         self.history['date'].append(current_date)
 
