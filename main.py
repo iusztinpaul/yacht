@@ -82,13 +82,17 @@ if __name__ == '__main__':
 
             if config.meta.back_test:
                 logger.info('Starting back testing...')
+
+                logger.info('Trainval split:')
                 evaluation.backtest(
                     train_env,
                     agent,
                     render=False,
                     render_all=True,
-                    name='after_train_trainval_backtest'
+                    name='trainval_backtest'
                 )
+
+                logger.info('Test split:')
                 dataset = build_dataset(config, storage_dir, mode='test')
                 test_env = build_env(config, dataset)
                 evaluation.backtest(
@@ -96,7 +100,7 @@ if __name__ == '__main__':
                     agent,
                     render=False,
                     render_all=True,
-                    name='after_train_test_backtest'
+                    name='test_backtest'
                 )
                 test_env.close()
 
@@ -106,6 +110,7 @@ if __name__ == '__main__':
     elif args.mode == 'backtest':
         logger.info('Starting back testing...')
 
+        logger.info('Trainval split:')
         trainval_dataset = build_dataset(config, storage_dir, mode='trainval')
         trainval_env = build_env(config, trainval_dataset)
         agent = build_agent(
@@ -120,9 +125,10 @@ if __name__ == '__main__':
             agent,
             render=False,
             render_all=True,
-            name='after_backtest_trainval_split_backtest'
+            name='trainval_backtest'
         )
 
+        logger.info('Test split:')
         test_dataset = build_dataset(config, storage_dir, mode='test')
         test_env = build_env(config, test_dataset)
         agent = build_agent(
@@ -137,7 +143,7 @@ if __name__ == '__main__':
             agent,
             render=False,
             render_all=True,
-            name='after_backtest_test_split_backtest'
+            name='test_backtest'
         )
 
         trainval_dataset.close()

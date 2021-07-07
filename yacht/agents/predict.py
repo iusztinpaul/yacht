@@ -1,4 +1,5 @@
 import logging
+import pprint
 
 import pandas as pd
 from stable_baselines3.common.base_class import BaseAlgorithm
@@ -28,8 +29,11 @@ def run_agent(
 
         if render:
             env.render()
+
         if done:
-            logger.info(f'Back test info:\n{info}')
+            logger.info(f'Backtest info:\n')
+            logger.info(pprint.pformat(info, indent=4))
+
             break
 
     if render_all:

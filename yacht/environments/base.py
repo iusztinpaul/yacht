@@ -1,5 +1,5 @@
 import datetime
-import os
+import logging
 import random
 from abc import abstractmethod
 from typing import Dict, List, Optional
@@ -16,6 +16,9 @@ from yacht.environments.enums import Position
 from yacht.environments.reward_schemas import RewardSchema
 
 
+logger = logging.getLogger(__file__)
+
+
 class TradingEnv(gym.Env):
     def __init__(
             self,
@@ -27,6 +30,7 @@ class TradingEnv(gym.Env):
         from yacht.data.renderers import TradingRenderer
 
         self.seed(seed=seed)
+
         self.dataset = dataset
         self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
@@ -42,12 +46,12 @@ class TradingEnv(gym.Env):
         self._start_tick = self.window_size - 1
         self._end_tick = len(self.prices) - 2  # Another -1 because the reward is calculated with one step further.
         self._done = None
-        self._current_tick = None
-        self._current_state = None
-        self._current_reward = None
-        self._last_position = None
+        self._tick_t = None
+        self._s_t = None
+        self._a_t = None
+        self._position_previous_t = None
+        self._r_t = None
         self._total_value = None
-        self._total_profit = None
         self.history = None
 
         self.reset()
@@ -77,6 +81,12 @@ class TradingEnv(gym.Env):
             if self.observation_space['env_features'] is not None \
             else 0
 
+    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
+        observation_space = self.dataset.get_external_observation_space()
+        observation_space['env_features'] = None
+
+        return observation_space
+
     def set_dataset(self, dataset: TradingDataset):
         from yacht.data.renderers import TradingRenderer
 
@@ -88,7 +98,7 @@ class TradingEnv(gym.Env):
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
 
         # episode
-        self._end_tick = len(self.prices) - 1
+        self._end_tick = len(self.prices) - 2
 
         # Rendering
         self.renderer = TradingRenderer(
@@ -99,10 +109,11 @@ class TradingEnv(gym.Env):
 
     def reset(self):
         self._done = False
-        self._current_tick = self._start_tick
-        self._current_state = None
-        self._current_reward = None
-        self._last_position = None
+        self._tick_t = self._start_tick
+        self._s_t = None
+        self._a_t = None
+        self._position_previous_t = None
+        self._r_t = None
         self._total_value = 0.
         self.history = {}
 
@@ -111,16 +122,17 @@ class TradingEnv(gym.Env):
         return self.get_next_observation()
 
     def step(self, action: np.array):
-        # TODO: Is this ok ?
         if self._done is True:
-            return self._current_state, self._current_reward, self._done, {}
+            info = self.on_done()
+
+            return self._s_t, self._r_t, self._done, info
         else:
             # For a_t compute r_t
             action = self.action_schema.get_value(action)
-            self._current_reward = self.reward_schema.calculate_reward(
+            self._r_t = self.reward_schema.calculate_reward(
                 action=action,
                 dataset=self.dataset,
-                current_index=self._current_tick - 1
+                current_index=self._tick_t - 1
             )
 
             # Log info for s_t
@@ -131,41 +143,34 @@ class TradingEnv(gym.Env):
             self.update_total_value(action)
 
             # Get s_t+1
-            self._current_tick += 1
-            if self._current_tick == self._end_tick:
+            self._tick_t += 1
+            if self._tick_t == self._end_tick:
                 self._done = True
 
-            self._current_state = self.get_next_observation()
+            self._s_t = self.get_next_observation()
 
-            return self._current_state, self._current_reward, self._done, info
+            if self._done is True:
+                done_info = self.on_done()
+                info.update(done_info)
+
+            return self._s_t, self._r_t, self._done, info
 
     def create_info(self, action: np.array) -> dict:
         action = action.item()
         position = Position.build(position=action)
 
         info = dict(
-            step=self._current_tick,
+            step=self._tick_t,
             done=self._done,
             action=action,
             position=position,
-            reward=self._current_reward,
+            reward=self._r_t,
             total_value=self._total_value,
-            max_possible_value=(self._current_tick - self._start_tick) * self.action_schema.max_units_per_asset,
+            max_possible_value=(self._tick_t - self._start_tick) * self.action_schema.max_units_per_asset,
             total_value_completeness=round(self._total_value / self.max_possible_profit(stateless=True), 2)
         )
 
         return info
-
-    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
-        observation_space = self.dataset.get_external_observation_space()
-        observation_space['env_features'] = None
-
-        return observation_space
-
-    def get_next_observation(self) -> Dict[str, np.array]:
-        observation = self.dataset[self._current_tick]
-
-        return observation
 
     def update_history(self, info):
         if not self.history:
@@ -175,7 +180,7 @@ class TradingEnv(gym.Env):
             self.history['position'] = (self.window_size - 1) * [np.nan]
             self.history['action'] = (self.window_size - 1) * [0]
 
-            current_date = self.dataset.index_to_datetime(self._current_tick)
+            current_date = self.dataset.index_to_datetime(self._tick_t)
             self.history['date'] = [
                 current_date - datetime.timedelta(days=day_delta)
                 for day_delta in range(1, self.window_size)
@@ -183,28 +188,57 @@ class TradingEnv(gym.Env):
 
         # For easier processing add a position only when it is changing.
         position = info.pop('position')
-        if self._last_position != position:
+        if self._position_previous_t != position:
             self.history['position'].append(position)
-            self._last_position = position
+            self._position_previous_t = position
         else:
             self.history['position'].append(np.nan)
 
-        current_date = self.dataset.index_to_datetime(self._current_tick)
+        current_date = self.dataset.index_to_datetime(self._tick_t)
         self.history['date'].append(current_date)
 
         for key, value in info.items():
             self.history[key].append(value)
 
+    def get_next_observation(self) -> Dict[str, np.array]:
+        observation = self.dataset[self._tick_t]
+
+        return observation
+
+    def on_done(self) -> dict:
+        from yacht.evaluation import compute_backtest_results
+
+        report = self.create_report()
+
+        backtest_results, _ = compute_backtest_results(
+            report,
+            value_col_name='Total Value',
+        )
+        backtest_results = dict(zip(backtest_results.index, backtest_results.values))
+
+        return backtest_results
+
     def create_report(self) -> pd.DataFrame:
         report = pd.DataFrame(
             data={
                 'Date': self.history['date'],
-                'Total Value': self.history['total_value'],
-                'Max Possible Value': self.history['max_possible_value'],
+                'Total Value': self.history['total_value']
             }
         )
         report['Date'] = pd.to_datetime(report['Date'])
         report.set_index('Date', inplace=True, drop=True)
+
+        return report
+
+    def create_baseline_report(self) -> pd.DataFrame:
+        data = self.dataset.get_prices()
+
+        report = pd.DataFrame(
+            index=data.index,
+            data={
+                'Total Value': data.loc[:, 'Close']
+            }
+        )
 
         return report
 
@@ -223,11 +257,18 @@ class TradingEnv(gym.Env):
     def close(self):
         pass
 
+    @abstractmethod
     def calculate_reward(self, action):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def update_total_value(self, action):
-        raise NotImplementedError
+        pass
 
-    def max_possible_profit(self, stateless=True):
-        raise NotImplementedError()
+    @abstractmethod
+    def max_possible_profit(self, stateless: bool = True) -> float:
+        """
+            @param stateless: If true will directly return the value, otherwise it will fill the 'history' for
+                rendering and other observations.
+        """
+        pass

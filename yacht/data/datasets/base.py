@@ -77,9 +77,6 @@ class TradingDataset(Dataset, ABC):
                 self.market.download(ticker, interval, start, end)
                 self.data[interval] = self.market.get(ticker, interval, start, end)
 
-            logger.info(f'Data info:')
-            logger.info(f'\n{self.data["1d"].info()}')
-
     def close(self):
         self.market.close()
 
