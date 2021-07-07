@@ -152,25 +152,25 @@ class TradingEnv(gym.Env):
 
             return self._s_t, self._r_t, self._done, info
         else:
+            # Get s_t+1
+            self._tick_t += 1
+            if self._tick_t == self._end_tick:
+                self._done = True
+
             # For a_t compute r_t
-            action = self.action_schema.get_value(action)
+            self._a_t = self.action_schema.get_value(action)
             self._r_t = self.reward_schema.calculate_reward(
-                action=action,
+                action=self._a_t,
                 dataset=self.dataset,
                 current_index=self._tick_t - 1
             )
 
             # Log info for s_t
-            info = self.create_info(action)
+            info = self.create_info()
             self.update_history(info)
 
             # Update interval state after (s_t, a_t, r_t)
-            self.update_total_value(action)
-
-            # Get s_t+1
-            self._tick_t += 1
-            if self._tick_t == self._end_tick:
-                self._done = True
+            self.update_total_value()
 
             self._s_t = self.get_next_observation()
 
@@ -180,8 +180,8 @@ class TradingEnv(gym.Env):
 
             return self._s_t, self._r_t, self._done, info
 
-    def create_info(self, action: np.array) -> dict:
-        action = action.item()
+    def create_info(self) -> dict:
+        action = self._a_t.item()
         position = Position.build(position=action)
 
         if position == Position.Long:
@@ -191,9 +191,20 @@ class TradingEnv(gym.Env):
         else:
             self._num_holds += 1
 
+        if self._r_t >= 0:
+            self._total_profit_hits += abs(action)
+            self._total_hits += 1
+        else:
+            self._total_loss_misses += abs(action)
+
+        if self._tick_t - self._start_tick != 0:
+            hit_ratio = self._total_hits / (self._tick_t - self._start_tick)
+        else:
+            hit_ratio = 0.
+
         info = dict(
             # State info
-            step=self._tick_t,
+            step=self._tick_t - 1,  # Already incremented the tick at the start of the step() method.
             done=self._done,
             action=action,
             position=position,
@@ -202,7 +213,10 @@ class TradingEnv(gym.Env):
             total_value=self._total_value,
             num_longs=self._num_longs,
             num_shorts=self._num_shorts,
-            num_holds=self._num_holds
+            num_holds=self._num_holds,
+            profit_hits=self._total_profit_hits,
+            loss_misses=self._total_loss_misses,
+            hit_ratio=hit_ratio
         )
 
         return info
