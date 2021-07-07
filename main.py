@@ -4,8 +4,8 @@ import os
 
 import matplotlib
 import matplotlib.pyplot as plt
+import wandb
 
-import yacht.agents.predict
 from yacht.config import load_config, export_config
 from yacht.data.datasets import build_dataset
 from yacht.environments import build_env
@@ -54,6 +54,7 @@ if __name__ == '__main__':
     )
     environments.register_gym_envs()
     config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file_name))
+    utils.init_wandb(config=config)
     export_config(config, storage_dir)
     logger.info(f'Config:\n{config}')
 
@@ -159,3 +160,5 @@ if __name__ == '__main__':
 
         dataset.close()
         test_env.close()
+
+    wandb.finish()

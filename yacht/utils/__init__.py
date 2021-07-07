@@ -1,3 +1,6 @@
+import wandb
+from google.protobuf.json_format import MessageToDict
+
 from .misc import *
 from .parsers import *
 from .paths import *
@@ -9,6 +12,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
+from ..config import Config
 
 logger_levels = {
     'info': logging.INFO,
@@ -48,3 +52,17 @@ def load_env(root_dir: str):
     env_path = Path(root_dir) / '.env'
     if env_path.exists():
         load_dotenv(dotenv_path=env_path, override=True)
+
+
+def init_wandb(config: Config):
+    wandb.login(key=os.environ['WANDB_API_KEY'])
+
+    name = f'{config.environment.name}__{config.agent.name}'
+    config = MessageToDict(config)
+
+    wandb.init(
+        project='yacht',
+        entity='iusztinpaul',
+        name=name,
+        config=config
+    )

@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 
+import wandb
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from tqdm import tqdm
@@ -36,6 +37,7 @@ class Trainer(ABC):
 
     def __enter__(self):
         self.agent.policy.train()
+        wandb.watch(self.agent.policy.features_extractor, log_freq=1)
 
         return self
 
