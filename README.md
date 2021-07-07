@@ -1,6 +1,7 @@
 # Yet Another Charming Trader - Yacht
 
-## Install
+# Install
+## Requirements
 * Code tested with `Python 3.8`, `pytorch 1.8.1`, `cuda 11.1` & `cudnn 8.0` on `Ubuntu 20.04`
 * Requirements are installed from `requirements.txt` within a `conda` environment
 * Install torch separately with:
@@ -8,6 +9,7 @@
 pip install torch==1.8.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
+## Config compiler
 * The configuration system is built upon `proto bufs`. If you want to recompile / change the proto bufs files,
 you should install the `protoc` compiler on your system:
 ```shell
