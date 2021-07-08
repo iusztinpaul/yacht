@@ -40,9 +40,9 @@ def build_env(config: Config, dataset: TradingDataset):
     )
     env = MultipleTimeFrameDictToBoxWrapper(env)
     env = RewardRendererMonitor(
-        env=env,
         final_step=config.train.collecting_n_steps * config.train.collect_n_times,
-        storage_dir=dataset.storage_dir
+        storage_dir=dataset.storage_dir,
+        env=env,
     )
 
     return env

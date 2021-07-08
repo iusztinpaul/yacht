@@ -51,10 +51,10 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 1
-    collecting_n_steps: 1024
+    collect_n_times: 2
+    collecting_n_steps: 739
     learning_rate: 0.0001
-    batch_size: 1024
+    batch_size: 739
     n_epochs: 3
     gamma: 0.9
     gae_lambda: 0.95

@@ -8,23 +8,15 @@ from yacht import utils
 from yacht.data.renderers import RewardsRenderer
 
 
-class RewardRendererMonitor(Monitor):
+class RewardRendererMonitorMixin:
     def __init__(
             self,
-            env: gym.Env,
             final_step: int,
             storage_dir: str,
-            allow_early_resets: bool = True,
-            reset_keywords: Tuple[str, ...] = (),
-            info_keywords: Tuple[str, ...] = (),
+            *args,
+            **kwargs
     ):
-        super(RewardRendererMonitor, self).__init__(
-            env,
-            storage_dir,
-            allow_early_resets,
-            reset_keywords,
-            info_keywords
-        )
+        super().__init__(*args, **kwargs)
 
         self.final_step = final_step
         self.storage_path = utils.build_graphics_path(storage_dir, 'train_episode_rewards.png')
@@ -39,3 +31,7 @@ class RewardRendererMonitor(Monitor):
             renderer.save(self.storage_path)
 
         return observation, reward, done, info
+
+
+class RewardRendererMonitor(RewardRendererMonitorMixin, Monitor):
+    pass

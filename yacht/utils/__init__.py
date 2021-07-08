@@ -1,3 +1,5 @@
+import json
+
 import wandb
 from google.protobuf.json_format import MessageToDict
 
@@ -54,10 +56,8 @@ def load_env(root_dir: str):
         load_dotenv(dotenv_path=env_path, override=True)
 
 
-def init_wandb(config: Config):
-    wandb.login(key=os.environ['WANDB_API_KEY'])
-
-    name = f'{config.environment.name}__{config.agent.name}'
+def init_wandb(config: Config, mode: str, storage_dir: str):
+    name = create_project_name(config, mode, storage_dir)
     config = MessageToDict(config)
 
     wandb.init(
@@ -66,3 +66,33 @@ def init_wandb(config: Config):
         name=name,
         config=config
     )
+
+
+def create_project_name(config: Config, mode: str, storage_dir: str):
+    assert mode in ('train', 'val', 'trainval', 'test')
+
+    project_iteration = get_project_iteration(mode, storage_dir)
+    name = f'{config.environment.name}__{config.agent.name}__{project_iteration}'
+
+    return name
+
+
+def get_project_iteration(mode, storage_dir: str) -> int:
+    cache_file_path = build_cache_path(storage_dir)
+
+    if os.path.exists(cache_file_path):
+        with open(cache_file_path, 'r') as f:
+            local_cache = json.load(f)
+    else:
+        local_cache = dict()
+
+    key = f'num_iteration_{mode}'
+    if key not in local_cache:
+        local_cache[key] = 0
+    else:
+        local_cache[key] += 1
+
+    with open(cache_file_path, 'w') as f:
+        json.dump(local_cache, f)
+
+    return local_cache[key]

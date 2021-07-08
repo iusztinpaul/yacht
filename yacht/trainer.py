@@ -8,11 +8,12 @@ from stable_baselines3.common.callbacks import BaseCallback
 from tqdm import tqdm
 
 from yacht import utils
-from yacht.config import TrainConfig
+from yacht.config import Config
 from yacht.data.datasets import TradingDataset, build_dataset_wrapper
 from yacht.data.k_fold import build_k_fold, PurgedKFold
 from yacht.environments import TradingEnv
-from yacht.environments.callbacks import LoggerCallback
+from yacht.environments.callbacks import LoggerCallback, WandBCallback
+from yacht.utils import init_wandb
 
 logger = logging.getLogger(__file__)
 
@@ -20,14 +21,15 @@ logger = logging.getLogger(__file__)
 class Trainer(ABC):
     def __init__(
             self,
-            train_config: TrainConfig,
+            config: Config,
             name: str,
             agent: BaseAlgorithm,
             dataset: TradingDataset,
             train_env: TradingEnv,
             save: bool = True
     ):
-        self.train_config = train_config
+        self.config = config
+        self.train_config = config.train
         self.name = name
         self.agent = agent
         self.dataset = dataset
@@ -37,7 +39,12 @@ class Trainer(ABC):
 
     def __enter__(self):
         self.agent.policy.train()
-        wandb.watch(self.agent.policy.features_extractor, log_freq=1)
+
+        init_wandb(
+            config=self.config,
+            mode='train',
+            storage_dir=self.dataset.storage_dir
+        )
 
         return self
 
@@ -46,6 +53,8 @@ class Trainer(ABC):
             self.agent.save(
                 path=utils.build_last_checkpoint_path(self.dataset.storage_dir)
             )
+
+        wandb.finish()
 
         self.close()
 
@@ -61,9 +70,11 @@ class Trainer(ABC):
             collect_n_times=self.train_config.collect_n_times,
             collecting_n_steps=self.train_config.collecting_n_steps
         )
+        wandb_callback = WandBCallback()
 
         return [
-            logger_callback
+            logger_callback,
+            wandb_callback
         ]
 
 
@@ -71,8 +82,8 @@ class NoEvalTrainer(Trainer):
     def train(self) -> BaseAlgorithm:
         logger.info(f'Starting training for {self.train_config.collect_n_times} times.')
 
-        logger.info(f'Train split length: {len(self.dataset)}')
         logger.info(f'Collecting steps per episode: {self.train_config.collecting_n_steps}')
+        logger.info(f'Train split length: {len(self.dataset)}')
         logger.info(f'Validation split length: 0\n')
 
         train_num_time_steps = self.train_config.collect_n_times * self.train_config.collecting_n_steps
@@ -93,7 +104,7 @@ class NoEvalTrainer(Trainer):
 class KFoldTrainer(Trainer):
     def __init__(
             self,
-            train_config: TrainConfig,
+            config: Config,
             name: str,
             agent: BaseAlgorithm,
             dataset: TradingDataset,
@@ -101,10 +112,11 @@ class KFoldTrainer(Trainer):
             val_env: TradingEnv,
             k_fold: PurgedKFold,
     ):
+        train_config = config.train
         assert train_config.collect_n_times >= train_config.eval_frequency
 
         super().__init__(
-            train_config=train_config,
+            config=config,
             name=name,
             agent=agent,
             dataset=dataset,
@@ -181,7 +193,7 @@ def build_trainer(
 ) -> Trainer:
     trainer_class = trainer_registry[config.train.trainer_name]
     trainer_kwargs = {
-        'train_config': config.train,
+        'config': config,
         'agent': agent,
         'name': f'{agent.__class__.__name__}_{config.environment.name}',
         'dataset': dataset,

@@ -148,7 +148,10 @@ class TradingEnv(gym.Env):
 
     def step(self, action: np.array):
         if self._done is True:
-            info = self.on_done()
+            episode_metrics = self.on_done()
+            info = {
+                'episode_metrics': episode_metrics
+            }
 
             return self._s_t, self._r_t, self._done, info
         else:
@@ -175,8 +178,8 @@ class TradingEnv(gym.Env):
             self._s_t = self.get_next_observation()
 
             if self._done is True:
-                done_info = self.on_done()
-                info.update(done_info)
+                episode_metrics = self.on_done()
+                info['episode_metrics'] = episode_metrics
 
             return self._s_t, self._r_t, self._done, info
 
@@ -257,6 +260,9 @@ class TradingEnv(gym.Env):
         return observation
 
     def on_done(self) -> dict:
+        """
+            Returns episode metrics in a dictionary format.
+        """
         from yacht.evaluation import compute_backtest_results
 
         report = self.create_report()

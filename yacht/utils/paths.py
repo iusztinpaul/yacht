@@ -19,3 +19,7 @@ def build_graphics_path(storage_dir: str, file_name: str) -> str:
         os.mkdir(graphics_dir)
 
     return os.path.join(graphics_dir, file_name)
+
+
+def build_cache_path(storage_dir: str) -> str:
+    return os.path.join(storage_dir, '.cache.json')

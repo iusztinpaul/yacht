@@ -48,13 +48,13 @@ if __name__ == '__main__':
         storage_dir = args.storage_dir
 
     utils.load_env(root_dir=ROOT_DIR)
+    wandb.login(key=os.environ['WANDB_API_KEY'])
     log_dir = utils.setup_logger(
         level=args.logger_level,
         storage_dir=storage_dir
     )
     environments.register_gym_envs()
     config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file_name))
-    utils.init_wandb(config=config)
     export_config(config, storage_dir)
     logger.info(f'Config:\n{config}')
 
@@ -160,5 +160,3 @@ if __name__ == '__main__':
 
         dataset.close()
         test_env.close()
-
-    wandb.finish()
