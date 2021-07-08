@@ -56,28 +56,16 @@ def load_env(root_dir: str):
         load_dotenv(dotenv_path=env_path, override=True)
 
 
-def init_wandb(config: Config, mode: str, storage_dir: str):
-    name = create_project_name(config, mode, storage_dir)
-    config = MessageToDict(config)
+def create_project_name(config: Config, storage_dir: str):
 
-    wandb.init(
-        project='yacht',
-        entity='iusztinpaul',
-        name=name,
-        config=config
-    )
-
-
-def create_project_name(config: Config, mode: str, storage_dir: str):
-    assert mode in ('train', 'val', 'trainval', 'test')
-
-    project_iteration = get_project_iteration(mode, storage_dir)
+    project_iteration = get_project_iteration(storage_dir)
     name = f'{config.environment.name}__{config.agent.name}__{project_iteration}'
 
     return name
 
 
-def get_project_iteration(mode, storage_dir: str) -> int:
+def get_project_iteration(storage_dir: str) -> int:
+    # TODO: For more cache data build some generic cache functions to query and create.
     cache_file_path = build_cache_path(storage_dir)
 
     if os.path.exists(cache_file_path):
@@ -86,7 +74,7 @@ def get_project_iteration(mode, storage_dir: str) -> int:
     else:
         local_cache = dict()
 
-    key = f'num_iteration_{mode}'
+    key = f'num_iteration'
     if key not in local_cache:
         local_cache[key] = 0
     else:

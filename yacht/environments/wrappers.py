@@ -3,10 +3,11 @@ from typing import Dict, List
 import gym
 import numpy as np
 import torch
+import wandb
 from gym import spaces
 
 from yacht.agents.misc import unflatten_observations
-from yacht.environments import TradingEnv
+from yacht.environments import TradingEnv, Mode
 
 
 class MultipleTimeFrameDictToBoxWrapper(gym.Wrapper):
@@ -66,3 +67,49 @@ class MultipleTimeFrameDictToBoxWrapper(gym.Wrapper):
         observations = observations.numpy()
 
         return observations
+
+
+class WandBWrapper(gym.Wrapper):
+    def __init__(self, env: gym.Env, mode: Mode):
+        super().__init__(env)
+
+        self.mode = mode
+
+    def step(self, action):
+        obs, reward, terminal, info = self.env.step(action)
+
+        is_done = info['done']
+        episode_metrics = info.get('episode_metrics', False)
+        episode_data = info.get('episode', False)
+
+        info_to_log = dict()
+
+        info_to_log['total_value'] = info['total_value']
+        info_to_log['num_longs'] = info['num_longs']
+        info_to_log['num_shorts'] = info['num_shorts']
+        info_to_log['num_holds'] = info['num_holds']
+        info_to_log['profit_hits'] = info['profit_hits']
+        info_to_log['loss_misses'] = info['loss_misses']
+        info_to_log['hit_ratio'] = info['hit_ratio']
+
+        if is_done and episode_metrics:
+            # TODO: Log more metrics after we understand them.
+            info_to_log['episode_metrics'] = {
+                'Annual return': episode_metrics['Annual return'],
+                'Cumulative returns': episode_metrics['Cumulative returns'],
+                'Annual volatility': episode_metrics['Annual volatility'],
+                'Sharpe ratio': episode_metrics['Sharpe ratio']
+            }
+
+            # Translate the keys for easier understanding
+            info_to_log['episode'] = {
+                'reward': episode_data['r'],
+                'length': episode_data['l'],
+                'seconds': episode_data['t']
+            }
+
+        wandb.log({
+            self.mode.value: info_to_log
+        })
+
+        return obs, reward, terminal, info

@@ -31,7 +31,7 @@ python main.py train --config_file day.config.txt --storage_path ./storage/day
 python main.py backtest --config_file day.config.txt --storage_path ./storage/day
 ```
 
-## Max Possible Profit
+## Max Possible Profit / Baseline
 ```shell
-python main.py max_possible_profit --config_file day.config.txt --storage_path ./storage/day
+python main.py baseline --config_file day.config.txt --storage_path ./storage/day
 ```

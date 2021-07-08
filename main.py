@@ -8,11 +8,12 @@ import wandb
 
 from yacht.config import load_config, export_config
 from yacht.data.datasets import build_dataset
-from yacht.environments import build_env
+from yacht.environments import build_env, Mode
 from yacht import utils, evaluation
 from yacht import environments
 from yacht.agents import build_agent
 from yacht.trainer import build_trainer
+from yacht.utils.wandb import WandBContext
 
 logger = logging.getLogger(__file__)
 
@@ -58,105 +59,108 @@ if __name__ == '__main__':
     export_config(config, storage_dir)
     logger.info(f'Config:\n{config}')
 
-    if args.mode == 'train':
-        dataset = build_dataset(config, storage_dir, mode='trainval')
-        train_env = build_env(config, dataset)
-        val_env = build_env(config, dataset)
-        agent = build_agent(
-            config=config,
-            env=train_env,
-            storage_dir=storage_dir,
-            resume=args.resume_training,
-            agent_path=args.agent_path
-        )
+    with WandBContext(config, storage_dir):
+        mode = Mode.from_string(args.mode)
+        if mode == Mode.Train:
+            dataset = build_dataset(config, storage_dir, mode='trainval')
+            train_env = build_env(config, dataset, mode=Mode.Train)
+            val_env = build_env(config, dataset, mode=Mode.Validation)
+            agent = build_agent(
+                config=config,
+                env=train_env,
+                storage_dir=storage_dir,
+                resume=args.resume_training,
+                agent_path=args.agent_path
+            )
 
-        trainer = build_trainer(
-            config=config,
-            agent=agent,
-            dataset=dataset,
-            train_env=train_env,
-            val_env=val_env,
-            save=bool(args.save_agent)
-        )
-        with trainer:
-            agent = trainer.train()
+            trainer = build_trainer(
+                config=config,
+                agent=agent,
+                dataset=dataset,
+                train_env=train_env,
+                val_env=val_env,
+                save=bool(args.save_agent)
+            )
+            with trainer:
+                agent = trainer.train()
 
-            if config.meta.back_test:
-                logger.info('Starting back testing...')
+                if config.meta.back_test:
+                    logger.info('Starting back testing...')
 
-                logger.info('Trainval split:')
-                evaluation.backtest(
-                    train_env,
-                    agent,
-                    render=False,
-                    render_all=True,
-                    name='trainval_backtest'
-                )
+                    logger.info('Trainval split:')
+                    train_env = build_env(config, dataset, mode=Mode.BacktestTrain)
+                    evaluation.backtest(
+                        train_env,
+                        agent,
+                        render=False,
+                        render_all=True,
+                        name='trainval_backtest'
+                    )
 
-                logger.info('Test split:')
-                dataset = build_dataset(config, storage_dir, mode='test')
-                test_env = build_env(config, dataset)
-                evaluation.backtest(
-                    test_env,
-                    agent,
-                    render=False,
-                    render_all=True,
-                    name='test_backtest'
-                )
-                test_env.close()
+                    logger.info('Test split:')
+                    dataset = build_dataset(config, storage_dir, mode='test')
+                    test_env = build_env(config, dataset, mode=Mode.Backtest)
+                    evaluation.backtest(
+                        test_env,
+                        agent,
+                        render=False,
+                        render_all=True,
+                        name='test_backtest'
+                    )
+                    test_env.close()
+
+                dataset.close()
+                train_env.close()
+                val_env.close()
+        elif mode == Mode.Backtest:
+            logger.info('Starting back testing...')
+
+            logger.info('Trainval split:')
+            trainval_dataset = build_dataset(config, storage_dir, mode='trainval')
+            trainval_env = build_env(config, trainval_dataset, mode=Mode.BacktestTrain)
+            agent = build_agent(
+                config,
+                trainval_env,
+                storage_dir,
+                resume=True,
+                agent_path=args.agent_path
+            )
+            evaluation.backtest(
+                trainval_env,
+                agent,
+                render=False,
+                render_all=True,
+                name='trainval_backtest'
+            )
+
+            logger.info('Test split:')
+            test_dataset = build_dataset(config, storage_dir, mode='test')
+            test_env = build_env(config, test_dataset, mode=Mode.Backtest)
+            agent = build_agent(
+                config,
+                test_env,
+                storage_dir,
+                resume=True,
+                agent_path=args.agent_path
+            )
+            evaluation.backtest(
+                test_env,
+                agent,
+                render=False,
+                render_all=True,
+                name='test_backtest'
+            )
+
+            trainval_dataset.close()
+            trainval_env.close()
+            test_dataset.close()
+            test_env.close()
+        elif mode == Mode.Baseline:
+            dataset = build_dataset(config, storage_dir, mode='test')
+            test_env = build_env(config, dataset, mode=Mode.Baseline)
+            test_env.max_possible_profit(stateless=False)
+            test_env.render_all(name='max_possible_profit.png')
+            plt.show()
 
             dataset.close()
-            train_env.close()
-            val_env.close()
-    elif args.mode == 'backtest':
-        logger.info('Starting back testing...')
-
-        logger.info('Trainval split:')
-        trainval_dataset = build_dataset(config, storage_dir, mode='trainval')
-        trainval_env = build_env(config, trainval_dataset)
-        agent = build_agent(
-            config,
-            trainval_env,
-            storage_dir,
-            resume=True,
-            agent_path=args.agent_path
-        )
-        evaluation.backtest(
-            trainval_env,
-            agent,
-            render=False,
-            render_all=True,
-            name='trainval_backtest'
-        )
-
-        logger.info('Test split:')
-        test_dataset = build_dataset(config, storage_dir, mode='test')
-        test_env = build_env(config, test_dataset)
-        agent = build_agent(
-            config,
-            test_env,
-            storage_dir,
-            resume=True,
-            agent_path=args.agent_path
-        )
-        evaluation.backtest(
-            test_env,
-            agent,
-            render=False,
-            render_all=True,
-            name='test_backtest'
-        )
-
-        trainval_dataset.close()
-        trainval_env.close()
-        test_dataset.close()
-        test_env.close()
-    elif args.mode == 'max_possible_profit':
-        dataset = build_dataset(config, storage_dir, mode='test')
-        test_env = build_env(config, dataset)
-        test_env.max_possible_profit(stateless=False)
-        test_env.render_all(name='max_possible_profit.png')
-        plt.show()
-
-        dataset.close()
-        test_env.close()
+            test_env.close()

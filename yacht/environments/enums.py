@@ -17,3 +17,16 @@ class Position(Enum):
 
     def opposite(self):
         return Position.Short if self == Position.Long else Position.Long
+
+
+class Mode(Enum):
+    Train = 'train'
+    Validation = 'validation'
+    TrainVal = 'trainval'
+    Backtest = 'backtest'
+    BacktestTrain = 'backtest_train'
+    Baseline = 'baseline'
+
+    @classmethod
+    def from_string(cls, value: str) -> 'Mode':
+        return cls(value.lower())

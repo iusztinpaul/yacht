@@ -9,7 +9,7 @@ from .reward_schemas import build_reward_schema
 import gym
 from gym.envs.registration import register
 
-from .wrappers import MultipleTimeFrameDictToBoxWrapper
+from .wrappers import MultipleTimeFrameDictToBoxWrapper, WandBWrapper
 from .. import utils
 from ..config import Config
 from ..config.proto.environment_pb2 import EnvironmentConfig
@@ -21,7 +21,7 @@ environment_registry = {
 }
 
 
-def build_env(config: Config, dataset: TradingDataset):
+def build_env(config: Config, dataset: TradingDataset, mode: Mode):
     env_config: EnvironmentConfig = config.environment
 
     action_schema = build_action_schema(config)
@@ -43,6 +43,10 @@ def build_env(config: Config, dataset: TradingDataset):
         final_step=config.train.collecting_n_steps * config.train.collect_n_times,
         storage_dir=dataset.storage_dir,
         env=env,
+    )
+    env = WandBWrapper(
+        env=env,
+        mode=mode
     )
 
     return env

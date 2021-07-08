@@ -2,7 +2,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 
-import wandb
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from tqdm import tqdm
@@ -13,7 +12,6 @@ from yacht.data.datasets import TradingDataset, build_dataset_wrapper
 from yacht.data.k_fold import build_k_fold, PurgedKFold
 from yacht.environments import TradingEnv
 from yacht.environments.callbacks import LoggerCallback, WandBCallback
-from yacht.utils import init_wandb
 
 logger = logging.getLogger(__file__)
 
@@ -40,12 +38,6 @@ class Trainer(ABC):
     def __enter__(self):
         self.agent.policy.train()
 
-        init_wandb(
-            config=self.config,
-            mode='train',
-            storage_dir=self.dataset.storage_dir
-        )
-
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -53,8 +45,6 @@ class Trainer(ABC):
             self.agent.save(
                 path=utils.build_last_checkpoint_path(self.dataset.storage_dir)
             )
-
-        wandb.finish()
 
         self.close()
 
