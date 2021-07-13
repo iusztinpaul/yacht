@@ -42,7 +42,7 @@ class WandBContext:
 
         self.run = wandb.init(
             project='yacht',
-            entity='iusztinpaul',
+            entity='yacht',
             name=self.run_name,
             config=config
         )

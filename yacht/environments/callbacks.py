@@ -40,8 +40,8 @@ class WandBCallback(BaseCallback):
                 policy.value_net,
                 policy.action_net
             ),
-            log='all',
-            log_freq=10
+            log='parameters',
+            log_freq=100
         )
 
     def _on_training_end(self) -> None:
