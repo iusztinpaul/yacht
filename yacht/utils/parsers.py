@@ -1,5 +1,13 @@
+import os
 from datetime import datetime, timedelta
 from typing import Union
+
+
+def file_path_to_name(file_path: str) -> str:
+    if not file_path:
+        return file_path
+
+    return os.path.split(file_path)[1].split('.')[0]
 
 
 def string_to_datetime(string: str) -> datetime:

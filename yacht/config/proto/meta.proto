@@ -4,5 +4,6 @@ package yacht.config.proto;
 
 message MetaConfig {
   string device = 1;
-  bool back_test = 2;
+  bool backtest = 2;
+  string experiment_tracker = 3;
 }

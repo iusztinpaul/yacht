@@ -1,6 +1,5 @@
 import datetime
-import os
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Tuple, List, Optional
 
 import matplotlib.pyplot as plt
@@ -9,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from yacht import utils
+from yacht.utils.wandb import WandBContext
 
 
 class BaseRenderer(ABC):
@@ -19,7 +19,11 @@ class BaseRenderer(ABC):
         self.ax = None
 
     def render(self, **kwargs):
-        raise NotImplementedError()
+        self._render(**kwargs)
+
+    @abstractmethod
+    def _render(self, **kwargs):
+        pass
 
 
 class MatPlotLibRenderer(BaseRenderer, ABC):
@@ -35,10 +39,18 @@ class MatPlotLibRenderer(BaseRenderer, ABC):
         if self.fig:
             self.fig.savefig(file_path)
 
+            WandBContext.log_image_from(file_path)
+        
 
 class MplFinanceRenderer(BaseRenderer, ABC):
     def render(self, title: str, save_file_path: str, **kwargs):
-        raise NotImplementedError()
+        self._render(title, save_file_path, **kwargs)
+
+        WandBContext.log_image_from(save_file_path)
+
+    @abstractmethod
+    def _render(self, title: str, save_file_path: str, **kwargs):
+        pass
 
 
 class KFoldRenderer(MatPlotLibRenderer):
@@ -47,7 +59,7 @@ class KFoldRenderer(MatPlotLibRenderer):
 
         self.prices = self.data.loc[:, 'Close']
 
-    def render(self, **kwargs):
+    def _render(self, **kwargs):
         train_indices: np.array = kwargs['train_indices']
         val_indices: np.array = kwargs['val_indices']
 
@@ -136,7 +148,7 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         self.train_interval = train_interval
         self.test_interval = test_interval
 
-    def render(self):
+    def _render(self):
         self.fig, self.ax = plt.subplots()
         self.ax.plot(self.prices)
 
@@ -194,7 +206,7 @@ class TradingRenderer(MplFinanceRenderer):
         self.end = end
         self.num_days = utils.get_num_days(start, end)
 
-    def render(self, title: str, save_file_path: str, **kwargs):
+    def _render(self, title: str, save_file_path: str, **kwargs):
         from yacht.environments import Position
 
         positions: List[Optional[Position]] = kwargs['positions']
@@ -267,7 +279,7 @@ class RewardsRenderer(MatPlotLibRenderer):
         self.rewards = data.loc[:, 'Rewards']
         self.rolling_window = rolling_window
 
-    def render(self):
+    def _render(self):
         ma_rewards = self.rewards.rolling(self.rolling_window, min_periods=1).mean()
 
         self.fig, self.ax = plt.subplots(ncols=2, figsize=(12, 6))

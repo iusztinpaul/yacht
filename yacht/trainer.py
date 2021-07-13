@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 
+import wandb
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from tqdm import tqdm
@@ -42,9 +43,13 @@ class Trainer(ABC):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.save is True:
+            save_path = utils.build_last_checkpoint_path(self.dataset.storage_dir)
             self.agent.save(
-                path=utils.build_last_checkpoint_path(self.dataset.storage_dir)
+                path=save_path
             )
+
+            if utils.get_experiment_tracker_name(self.dataset.storage_dir) == 'wandb':
+                wandb.save(save_path)
 
         self.close()
 
@@ -56,16 +61,18 @@ class Trainer(ABC):
         pass
 
     def build_callbacks(self) -> List[BaseCallback]:
-        logger_callback = LoggerCallback(
-            collect_n_times=self.train_config.collect_n_times,
-            collecting_n_steps=self.train_config.collecting_n_steps
-        )
-        wandb_callback = WandBCallback()
-
-        return [
-            logger_callback,
-            wandb_callback
+        callbacks = [
+            LoggerCallback(
+                collect_n_times=self.train_config.collect_n_times,
+                collecting_n_steps=self.train_config.collecting_n_steps
+            )
         ]
+
+        if utils.get_experiment_tracker_name(self.dataset.storage_dir) == 'wandb':
+            wandb_callback = WandBCallback()
+            callbacks.append(wandb_callback)
+
+        return callbacks
 
 
 class NoEvalTrainer(Trainer):

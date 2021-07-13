@@ -1,11 +1,7 @@
-import json
-
-import wandb
-from google.protobuf.json_format import MessageToDict
-
+from .paths import *
+from .cache import *
 from .misc import *
 from .parsers import *
-from .paths import *
 
 import logging
 import os
@@ -57,30 +53,19 @@ def load_env(root_dir: str):
 
 
 def create_project_name(config: Config, storage_dir: str):
-
     project_iteration = get_project_iteration(storage_dir)
     name = f'{config.environment.name}__{config.agent.name}__{project_iteration}'
 
     return name
 
 
-def get_project_iteration(storage_dir: str) -> int:
-    # TODO: For more cache data build some generic cache functions to query and create.
-    cache_file_path = build_cache_path(storage_dir)
-
-    if os.path.exists(cache_file_path):
-        with open(cache_file_path, 'r') as f:
-            local_cache = json.load(f)
+def get_project_iteration(storage_dir: str, key: str = 'num_iteration') -> int:
+    num_iteration = query_cache(storage_dir, key)
+    if num_iteration is None:
+        num_iteration = 0
     else:
-        local_cache = dict()
+        num_iteration += 1
 
-    key = f'num_iteration'
-    if key not in local_cache:
-        local_cache[key] = 0
-    else:
-        local_cache[key] += 1
+    write_to_cache(storage_dir, key, num_iteration)
 
-    with open(cache_file_path, 'w') as f:
-        json.dump(local_cache, f)
-
-    return local_cache[key]
+    return num_iteration

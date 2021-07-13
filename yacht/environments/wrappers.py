@@ -83,16 +83,15 @@ class WandBWrapper(gym.Wrapper):
         episode_data = info.get('episode', False)
 
         info_to_log = dict()
-
-        info_to_log['total_value'] = info['total_value']
-        info_to_log['num_longs'] = info['num_longs']
-        info_to_log['num_shorts'] = info['num_shorts']
-        info_to_log['num_holds'] = info['num_holds']
-        info_to_log['profit_hits'] = info['profit_hits']
-        info_to_log['loss_misses'] = info['loss_misses']
-        info_to_log['hit_ratio'] = info['hit_ratio']
-
         if is_done and episode_metrics:
+            info_to_log['total_value'] = info['total_value']
+            info_to_log['num_longs'] = info['num_longs']
+            info_to_log['num_shorts'] = info['num_shorts']
+            info_to_log['num_holds'] = info['num_holds']
+            info_to_log['profit_hits'] = info['profit_hits']
+            info_to_log['loss_misses'] = info['loss_misses']
+            info_to_log['hit_ratio'] = info['hit_ratio']
+
             # TODO: Log more metrics after we understand them.
             info_to_log['episode_metrics'] = {
                 'Annual return': episode_metrics['Annual return'],

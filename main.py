@@ -84,7 +84,7 @@ if __name__ == '__main__':
             with trainer:
                 agent = trainer.train()
 
-                if config.meta.back_test:
+                if config.meta.backtest:
                     logger.info('Starting back testing...')
 
                     logger.info('Trainval split:')

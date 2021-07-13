@@ -44,10 +44,11 @@ def build_env(config: Config, dataset: TradingDataset, mode: Mode):
         storage_dir=dataset.storage_dir,
         env=env,
     )
-    env = WandBWrapper(
-        env=env,
-        mode=mode
-    )
+    if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
+        env = WandBWrapper(
+            env=env,
+            mode=mode
+        )
 
     return env
 
