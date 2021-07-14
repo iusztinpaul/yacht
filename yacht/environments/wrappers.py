@@ -47,11 +47,12 @@ class MultipleTimeFrameDictToBoxWrapper(gym.Wrapper):
         flattened_observation = [observation[interval] for interval in intervals]
         flattened_observation = np.concatenate(flattened_observation, axis=1)
 
+        # TODO: This way of adding env features is not that good.
         env_features = np.array(observation['env_features'], dtype=np.float32)
         env_features = env_features.reshape((1, -1, 1))
         env_features = np.tile(
             env_features,
-            (flattened_observation.shape[0], env_features.shape[1], flattened_observation.shape[2])
+            (1, 1, flattened_observation.shape[2])
         )
         flattened_observation = np.concatenate([
             flattened_observation,
@@ -91,6 +92,7 @@ class WandBWrapper(gym.Wrapper):
             info_to_log['profit_hits'] = info['profit_hits']
             info_to_log['loss_misses'] = info['loss_misses']
             info_to_log['hit_ratio'] = info['hit_ratio']
+            info_to_log['total_assets'] = info['total_assets']
 
             # TODO: Log more metrics after we understand them.
             info_to_log['episode_metrics'] = {

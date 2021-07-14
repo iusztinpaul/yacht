@@ -13,11 +13,7 @@ from yacht.data.datasets import TradingDataset
 
 class RewardSchema(ABC):
     @abstractmethod
-    def calculate_reward(self, action: Union[int, float], dataset: TradingDataset, current_index: int) -> float:
-        pass
-
-    @abstractmethod
-    def reset(self):
+    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
         pass
 
 
@@ -25,17 +21,32 @@ class RewardSchemaAggregator(RewardSchema):
     def __init__(self, reward_schemas: List[RewardSchema]):
         self.reward_schemas = reward_schemas
 
-    def calculate_reward(self, action: Union[int, float], dataset: TradingDataset, current_index: int) -> float:
+    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
         rewards = [
-            reward_schema.calculate_reward(action, dataset, current_index)
+            reward_schema.calculate_reward(action, current_state, next_state)
             for reward_schema in self.reward_schemas
         ]
 
         return sum(rewards)
 
-    def reset(self):
-        for reward_schema in self.reward_schemas:
-            reward_schema.reset()
+
+class AssetsPriceChangeRewardSchema(RewardSchema):
+    def __init__(self, reward_scaling: float):
+        assert 0 < reward_scaling <= 1, '"reward_scaling" should be within (0, 1].'
+
+        self.reward_scaling = reward_scaling
+
+    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict):
+        # TODO: Fix this method for k-fold setup.
+        begin_total_assets = current_state['env_features'][0] + \
+            current_state['env_features'][1] * current_state['1d'][-1, 0, 0]
+        end_total_assets = next_state['env_features'][0] + \
+            next_state['env_features'][1] * next_state['1d'][-1, 0, 0]
+
+        reward = end_total_assets - begin_total_assets
+        reward = reward * self.reward_scaling
+
+        return reward
 
 
 class ScoreBasedRewardSchema(RewardSchema, ABC):
@@ -72,9 +83,6 @@ class PriceChangeRewardSchema(ScoreBasedRewardSchema):
         reward *= self.reward_scaling
 
         return reward
-
-    def reset(self):
-        pass
 
 
 class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
@@ -143,6 +151,7 @@ class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
 
 
 reward_schema_registry = {
+    'AssetsPriceChangeRewardSchema': AssetsPriceChangeRewardSchema,
     'PriceChangeRewardSchema': PriceChangeRewardSchema,
     'LeaderBoardRewardSchema': LeaderBoardRewardSchema
 }

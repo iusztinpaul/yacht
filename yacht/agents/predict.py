@@ -39,7 +39,7 @@ def run_agent(
     if render_all:
         episode_metrics = info['episode_metrics']
         title = f'SR={round(episode_metrics["sharpe_ratio"], 4)};' \
-                f'Total Value={round(info["total_value"], 4)}/{round(info["max_possible_value"], 4)};' \
+                f'Total Assets={round(info["total_assets"], 4)};' \
                 f'Annual Return={round(episode_metrics["annual_return"], 4)}'
         env.render_all(title=title, name=f'{name}.png')
 

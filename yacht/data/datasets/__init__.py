@@ -1,8 +1,7 @@
-import os.path
 from typing import Union
 
 from .base import *
-from .day import *
+from .multi_frequency import *
 
 import yacht.utils as utils
 from yacht.data.markets import build_market
@@ -11,8 +10,8 @@ from yacht.config import Config
 from ..renderers import TrainTestSplitRenderer
 
 dataset_registry = {
-    'DayForecastDataset': DayForecastDataset,
-    'IndexedDayForecastDataset': IndexedDayForecastDataset
+    'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
+    'IndexedDayMultiFrequencyDataset': IndexedDayMultiFrequencyDataset
 }
 
 

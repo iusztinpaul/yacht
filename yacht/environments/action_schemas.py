@@ -23,12 +23,19 @@ class DiscreteActionScheme(ActionSchema):
     pass
 
 
-class ContinuousActionScheme(ActionSchema):
+class ContinuousFloatActionSchema(ActionSchema):
     def get_action_space(self) -> Space:
         return spaces.Box(low=-1, high=1, shape=(self.num_assets, ))
 
     def get_value(self, action: np.array) -> np.array:
-        return (action * self.max_units_per_asset).astype(np.int32)
+        return action * self.max_units_per_asset
+
+
+class ContinuousIntegerActionSchema(ContinuousFloatActionSchema):
+    def get_value(self, action: np.array) -> np.array:
+        action = super().get_value(action)
+
+        return action.astype(np.int32)
 
 
 #######################################################################################################################
@@ -36,7 +43,8 @@ class ContinuousActionScheme(ActionSchema):
 
 action_schema_registry = {
     'DiscreteActionScheme': DiscreteActionScheme,
-    'ContinuousActionScheme': ContinuousActionScheme
+    'ContinuousFloatActionSchema': ContinuousFloatActionSchema,
+    'ContinuousIntegerActionSchema': ContinuousIntegerActionSchema
 }
 
 
@@ -44,7 +52,7 @@ def build_action_schema(config: Config):
     env_config: EnvironmentConfig = config.environment
     action_schema_class = action_schema_registry[env_config.action_schema]
 
-    if action_schema_class == ContinuousActionScheme:
+    if action_schema_class in (ContinuousIntegerActionSchema, ContinuousFloatActionSchema):
         assert env_config.max_units_per_asset > 0
 
         # TODO: Support multiple assets for action schema.

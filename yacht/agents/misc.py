@@ -2,7 +2,7 @@ from typing import List, Dict
 
 import torch
 
-from yacht.data.datasets import DayForecastDataset
+from yacht.data.datasets import DayMultiFrequencyDataset
 
 
 def unflatten_observations(observations: torch.Tensor, intervals: List[str]) -> Dict[str, torch.Tensor]:
@@ -25,7 +25,7 @@ def unflatten_observations(observations: torch.Tensor, intervals: List[str]) -> 
     unflattened_observation = dict()
     current_index = 0
     for interval in intervals:
-        bar_units = DayForecastDataset.get_day_bar_units_for(interval)
+        bar_units = DayMultiFrequencyDataset.get_day_bar_units_for(interval)
         unflattened_observation[interval] = observations[:, :, current_index:current_index + bar_units, :]
         unflattened_observation[interval] = unflattened_observation[interval].reshape(
             batch_size, window_size, -1, features_size

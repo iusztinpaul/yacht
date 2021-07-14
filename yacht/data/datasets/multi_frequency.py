@@ -14,7 +14,7 @@ from yacht.data.normalizers import Normalizer
 logger = logging.getLogger(__file__)
 
 
-class DayForecastDataset(TradingDataset):
+class DayMultiFrequencyDataset(TradingDataset):
     INTERVAL_TO_DAY_BAR_UNITS = {
         '1d': 1,
         '12h': 2,
@@ -101,5 +101,5 @@ class DayForecastDataset(TradingDataset):
         return window_item
 
 
-class IndexedDayForecastDataset(IndexedDatasetMixin, DayForecastDataset):
+class IndexedDayMultiFrequencyDataset(IndexedDatasetMixin, DayMultiFrequencyDataset):
     pass

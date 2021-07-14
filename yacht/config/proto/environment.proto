@@ -8,8 +8,11 @@ import "yacht/config/proto/reward_schema.proto";
 
 message EnvironmentConfig {
   string name = 1;
-  repeated RewardSchemaConfig reward_schemas = 2;
-  float reward_scaling = 3;
-  string action_schema = 4;
-  int32 max_units_per_asset = 5;
+  float buy_commission = 2;
+  float sell_commission = 3;
+  float initial_cash_position = 4;
+  repeated RewardSchemaConfig reward_schemas = 5;
+  float reward_scaling = 6;
+  string action_schema = 7;
+  int32 max_units_per_asset = 8;
 }

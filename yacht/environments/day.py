@@ -12,7 +12,7 @@ logger = logging.getLogger(__file__)
 
 
 class DayForecastEnv(TradingEnv):
-    def update_total_value(self):
+    def update_internal_state(self):
         # TODO: Find a better way to calculate total_value & not duplicate code.
         leader_board_reward_schema = [
             reward_schema for reward_schema in self.reward_schema.reward_schemas
@@ -37,7 +37,7 @@ class DayForecastEnv(TradingEnv):
         info = super().create_info()
 
         info['max_possible_value'] = (self._tick_t - self._start_tick) * self.action_schema.max_units_per_asset
-        info['total_value_completeness'] = round(self._total_value / self.max_possible_profit(stateless=True), 2)
+        info['total_assets'] = round(self._total_value / self.max_possible_profit(stateless=True), 2)
 
         return info
 

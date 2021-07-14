@@ -32,11 +32,21 @@ def build_env(config: Config, dataset: TradingDataset, mode: Mode):
         )
     )
 
+    env_kwargs = {
+        'dataset': dataset,
+        'reward_schema': reward_schema,
+        'action_schema': action_schema
+    }
+    if env_config.name == 'SingleAssetTradingEnvironment-v0':
+        env_kwargs.update({
+            'buy_commission': env_config.buy_commission,
+            'sell_commission': env_config.sell_commission,
+            'initial_cash_position': env_config.initial_cash_position
+        })
+
     env = gym.make(
         env_config.name,
-        dataset=dataset,
-        reward_schema=reward_schema,
-        action_schema=action_schema
+        **env_kwargs
     )
     env = MultipleTimeFrameDictToBoxWrapper(env)
     env = RewardRendererMonitor(
@@ -57,6 +67,11 @@ def register_gym_envs():
     to_register_envs = {
         'DayForecastEnv-v0': {
             'entry_point': 'yacht.environments.day:DayForecastEnv',
+            'kwargs': {
+            }
+        },
+        'SingleAssetTradingEnvironment-v0': {
+            'entry_point': 'yacht.environments.single_asset:SingleAssetTradingEnvironment',
             'kwargs': {
             }
         }

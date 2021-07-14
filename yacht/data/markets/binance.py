@@ -97,7 +97,7 @@ class Binance(Market):
             ])
 
         df['Open time'] = pd.to_datetime(df['Open time'], unit='ms')
-        df['Open time'] = df['Open time'].tz_localize('UTC')
+        df['Open time'] = df['Open time']
         df['Open'] = pd.to_numeric(df['Open'])
         df['High'] = pd.to_numeric(df['High'])
         df['Low'] = pd.to_numeric(df['Low'])

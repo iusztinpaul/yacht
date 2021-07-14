@@ -67,8 +67,6 @@ class TradingEnv(gym.Env):
         # History
         self.history = None
 
-        self.reset()
-
         # Rendering
         self.renderer = TradingRenderer(
             data=self.prices,
@@ -102,11 +100,12 @@ class TradingEnv(gym.Env):
         # History
         self.history = {}
 
-        self.reward_schema.reset()
+        self._s_t = self.get_next_observation()
 
-        return self.get_next_observation()
+        return self._s_t
 
     def set_dataset(self, dataset: TradingDataset):
+        # TODO: Find a better way to reinject the dataset.
         from yacht.data.renderers import TradingRenderer
 
         self.dataset = dataset
@@ -140,12 +139,6 @@ class TradingEnv(gym.Env):
             if self.observation_space['env_features'] is not None \
             else 0
 
-    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
-        observation_space = self.dataset.get_external_observation_space()
-        observation_space['env_features'] = None
-
-        return observation_space
-
     def step(self, action: np.array):
         if self._done is True:
             episode_metrics = self.on_done()
@@ -155,31 +148,37 @@ class TradingEnv(gym.Env):
 
             return self._s_t, self._r_t, self._done, info
         else:
-            # Get s_t+1
+            # Get s_t+1.
             self._tick_t += 1
             if self._tick_t == self._end_tick:
                 self._done = True
 
-            # For a_t compute r_t
             self._a_t = self.action_schema.get_value(action)
+            # Update internal state after (s_t, a_t).
+            self.update_internal_state()
+
+            # Get next observation only to compute the reward. Do not update the env state yet.
+            # Get the next observation only after the interval state is updated because the next observation depends on
+            # the interval state changes.
+            next_state = self.get_next_observation()
+
+            # For a_t compute r_t.
             self._r_t = self.reward_schema.calculate_reward(
                 action=self._a_t,
-                dataset=self.dataset,
-                current_index=self._tick_t - 1
+                current_state=self._s_t,
+                next_state=next_state
             )
 
-            # Log info for s_t
+            # Log info for s_t.
             info = self.create_info()
             self.update_history(info)
-
-            # Update interval state after (s_t, a_t, r_t)
-            self.update_total_value()
-
-            self._s_t = self.get_next_observation()
 
             if self._done is True:
                 episode_metrics = self.on_done()
                 info['episode_metrics'] = episode_metrics
+
+            # Only at the end of the step update the env state.
+            self._s_t = next_state
 
             return self._s_t, self._r_t, self._done, info
 
@@ -194,6 +193,7 @@ class TradingEnv(gym.Env):
         else:
             self._num_holds += 1
 
+        # TODO: Find a better way to compute the hits ratios.
         if self._r_t >= 0:
             self._total_profit_hits += abs(action)
             self._total_hits += 1
@@ -254,6 +254,12 @@ class TradingEnv(gym.Env):
 
         for key, value in info.items():
             self.history[key].append(value)
+
+    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
+        observation_space = self.dataset.get_external_observation_space()
+        observation_space['env_features'] = None
+
+        return observation_space
 
     def get_next_observation(self) -> Dict[str, np.array]:
         observation = self.dataset[self._tick_t]
@@ -323,11 +329,7 @@ class TradingEnv(gym.Env):
         pass
 
     @abstractmethod
-    def calculate_reward(self, action):
-        pass
-
-    @abstractmethod
-    def update_total_value(self, action):
+    def update_internal_state(self):
         pass
 
     @abstractmethod
