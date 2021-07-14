@@ -11,7 +11,7 @@ input: {
     end: '1/1/2021'
     back_test_split_ratio: 0.4
     back_test_embargo_ratio: 0.03
-    window_size: 1
+    window_size: 3
 }
 environment: {
     name: 'DayForecastEnv-v0'
@@ -51,7 +51,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 100
+    collect_n_times: 1
     collecting_n_steps: 739
     learning_rate: 0.0001
     batch_size: 739
@@ -71,5 +71,5 @@ train: {
 meta: {
     device: 'gpu'
     backtest: true,
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
 }

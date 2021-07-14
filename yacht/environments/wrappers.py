@@ -94,10 +94,10 @@ class WandBWrapper(gym.Wrapper):
 
             # TODO: Log more metrics after we understand them.
             info_to_log['episode_metrics'] = {
-                'Annual return': episode_metrics['Annual return'],
-                'Cumulative returns': episode_metrics['Cumulative returns'],
-                'Annual volatility': episode_metrics['Annual volatility'],
-                'Sharpe ratio': episode_metrics['Sharpe ratio']
+                'annual_return': episode_metrics['annual_return'],
+                'cumulative_returns': episode_metrics['cumulative_returns'],
+                'annual_volatility': episode_metrics['annual_volatility'],
+                'sharpe_ratio': episode_metrics['sharpe_ratio']
             }
 
             # Translate the keys for easier understanding

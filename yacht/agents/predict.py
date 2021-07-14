@@ -37,7 +37,10 @@ def run_agent(
             break
 
     if render_all:
-        title = f'{info["total_value_completeness"]*100}%'
+        episode_metrics = info['episode_metrics']
+        title = f'SR={round(episode_metrics["sharpe_ratio"], 4)};' \
+                f'Total Value={round(info["total_value"], 4)}/{round(info["max_possible_value"], 4)};' \
+                f'Annual Return={round(episode_metrics["annual_return"], 4)}'
         env.render_all(title=title, name=f'{name}.png')
 
     return env.create_report()

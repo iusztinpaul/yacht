@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta
+from functools import reduce
 from typing import Union
 
 
@@ -83,3 +84,7 @@ def split_period(
     start_2 = start_2.replace(hour=0, minute=0, second=0, microsecond=0)
 
     return start_1, end_1, start_2, end_2
+
+
+def english_title_to_snake_case(string: str):
+    return reduce(lambda x, y: x + ('_' if y == ' ' else y), string).lower()

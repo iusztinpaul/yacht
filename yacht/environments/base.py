@@ -226,10 +226,11 @@ class TradingEnv(gym.Env):
 
     def update_history(self, info):
         if not self.history:
-            self.history = {key: [] for key in info.keys()}
+            self.history = {
+                key: (self.window_size - 1) * [np.nan] for key in info.keys()
+            }
 
             # There are no positions & actions before s_t.
-            self.history['position'] = (self.window_size - 1) * [np.nan]
             self.history['action'] = (self.window_size - 1) * [0]
 
             # Map indices to their corresponding dates.
@@ -271,9 +272,16 @@ class TradingEnv(gym.Env):
             report,
             value_col_name='Total Value',
         )
-        backtest_results = dict(zip(backtest_results.index, backtest_results.values))
 
-        return backtest_results
+        backtest_results = dict(
+            zip(backtest_results.index, backtest_results.values)
+        )
+        # Map all indices from plain english title to snake case for consistency.
+        snake_case_backtest_results = dict()
+        for k, v in backtest_results.items():
+            snake_case_backtest_results[utils.english_title_to_snake_case(k)] = v
+
+        return snake_case_backtest_results
 
     def create_report(self) -> pd.DataFrame:
         report = pd.DataFrame(
