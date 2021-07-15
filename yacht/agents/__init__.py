@@ -8,7 +8,7 @@ from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from torch import nn
 
 from yacht import utils
-from yacht.agents.modules.day import MultiFrequencyFeatureExtractor
+from yacht.agents.modules.multi_frequency import MultiFrequencyFeatureExtractor
 from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
 from yacht.environments import TradingEnv

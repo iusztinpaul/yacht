@@ -10,7 +10,7 @@ from yacht.agents.misc import unflatten_observations
 from yacht.environments import TradingEnv, Mode
 
 
-class MultipleTimeFrameDictToBoxWrapper(gym.Wrapper):
+class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
     def __init__(self, env: TradingEnv):
         super().__init__(env)
 
@@ -23,12 +23,12 @@ class MultipleTimeFrameDictToBoxWrapper(gym.Wrapper):
         bars_size = sum([v.shape[1] for k, v in current_observation_space.spaces.items() if k != 'env_features'])
 
         env_features_space = current_observation_space['env_features']
-        env_features_size = env_features_space.shape[0] if env_features_space is not None else 0
+        env_features_size = env_features_space.shape[1] if env_features_space is not None else 0
 
         return spaces.Box(
             low=-np.inf,
             high=np.inf,
-            shape=(window_size, bars_size + env_features_size, feature_size),
+            shape=(window_size, bars_size, feature_size + env_features_size),
             dtype=np.float32
         )
 
@@ -47,17 +47,17 @@ class MultipleTimeFrameDictToBoxWrapper(gym.Wrapper):
         flattened_observation = [observation[interval] for interval in intervals]
         flattened_observation = np.concatenate(flattened_observation, axis=1)
 
-        # TODO: This way of adding env features is not that good.
-        env_features = np.array(observation['env_features'], dtype=np.float32)
-        env_features = env_features.reshape((1, -1, 1))
+        env_features = observation['env_features']
+        window_size, feature_size = env_features.shape
+        env_features = env_features.reshape((window_size, 1, feature_size))
         env_features = np.tile(
             env_features,
-            (1, 1, flattened_observation.shape[2])
+            (1, flattened_observation.shape[1], 1)
         )
         flattened_observation = np.concatenate([
             flattened_observation,
             env_features
-        ], axis=1)
+        ], axis=-1)
 
         return flattened_observation
 
@@ -89,9 +89,9 @@ class WandBWrapper(gym.Wrapper):
             info_to_log['num_longs'] = info['num_longs']
             info_to_log['num_shorts'] = info['num_shorts']
             info_to_log['num_holds'] = info['num_holds']
-            info_to_log['profit_hits'] = info['profit_hits']
-            info_to_log['loss_misses'] = info['loss_misses']
-            info_to_log['hit_ratio'] = info['hit_ratio']
+            # info_to_log['profit_hits'] = info['profit_hits']
+            # info_to_log['loss_misses'] = info['loss_misses']
+            # info_to_log['hit_ratio'] = info['hit_ratio']
             info_to_log['total_assets'] = info['total_assets']
 
             # TODO: Log more metrics after we understand them.

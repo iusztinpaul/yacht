@@ -9,7 +9,7 @@ from .reward_schemas import build_reward_schema
 import gym
 from gym.envs.registration import register
 
-from .wrappers import MultipleTimeFrameDictToBoxWrapper, WandBWrapper
+from .wrappers import MultiFrequencyDictToBoxWrapper, WandBWrapper
 from .. import utils
 from ..config import Config
 from ..config.proto.environment_pb2 import EnvironmentConfig
@@ -48,7 +48,7 @@ def build_env(config: Config, dataset: TradingDataset, mode: Mode):
         env_config.name,
         **env_kwargs
     )
-    env = MultipleTimeFrameDictToBoxWrapper(env)
+    env = MultiFrequencyDictToBoxWrapper(env)
     env = RewardRendererMonitor(
         final_step=config.train.collecting_n_steps * config.train.collect_n_times,
         storage_dir=dataset.storage_dir,

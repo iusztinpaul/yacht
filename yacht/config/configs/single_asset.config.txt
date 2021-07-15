@@ -4,7 +4,7 @@ input: {
     price_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
     other_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
     tickers: ['BTC']
-    intervals: ['1d']
+    intervals: ['1d', '6h']
     features: ['Close', 'Volume']
     technical_indicators: ['macd','boll_ub','boll_lb','rsi_30', 'cci_30', 'dx_30','close_30_sma','close_60_sma']
     start: '18/8/2017'
@@ -67,5 +67,5 @@ train: {
 meta: {
     device: 'gpu'
     backtest: true,
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

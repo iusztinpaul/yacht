@@ -34,7 +34,7 @@ class MultiFrequencyFeatureExtractor(BaseFeaturesExtractor):
         for interval in self.intervals:
             bar_units = DayMultiFrequencyDataset.get_day_bar_units_for(interval)
             self.interval_encoders[interval] = IntervalObservationEncoder(
-                num_input_channel=len(self.features),
+                num_input_channel=len(self.features) + self.env_features_len,
                 num_output_channel=features_dim[0],
                 kernel_size=self.window_size * bar_units,
                 initial_output_weight_value=1 / len(self.intervals)
@@ -45,7 +45,7 @@ class MultiFrequencyFeatureExtractor(BaseFeaturesExtractor):
         self.drop_out_layer = nn.Dropout(p=drop_out_p)
         self.relu_layer = activation_fn()
         self.dense_layer = nn.Linear(
-            len(self.intervals) * features_dim[0] + self.env_features_len,
+            len(self.intervals) * features_dim[0],
             features_dim[1]
         )
 

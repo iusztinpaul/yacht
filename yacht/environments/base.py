@@ -41,7 +41,7 @@ class TradingEnv(gym.Env):
         # Spaces.
         self.action_space = self.action_schema.get_action_space()
         self.observation_space = spaces.Dict(self.get_observation_space())
-        assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
+        assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 2
 
         # Ticks.
         self._start_tick = self.window_size - 1
@@ -140,8 +140,12 @@ class TradingEnv(gym.Env):
         return self.dataset.intervals
 
     @property
+    def is_history_initialized(self) -> bool:
+        return len(self.history) > 0
+
+    @property
     def observation_env_features_len(self) -> int:
-        return self.observation_space['env_features'].shape[0] \
+        return self.observation_space['env_features'].shape[1] \
             if self.observation_space['env_features'] is not None \
             else 0
 
@@ -163,9 +167,11 @@ class TradingEnv(gym.Env):
             # Update internal state after (s_t, a_t).
             self.update_internal_state()
 
+            # Log info for s_t.
+            info = self.create_info()
+            self.update_history(info)
+
             # Get next observation only to compute the reward. Do not update the env state yet.
-            # Get the next observation only after the interval state is updated because the next observation depends on
-            # the interval state changes.
             next_state = self.get_next_observation()
 
             # For a_t compute r_t.
@@ -174,10 +180,6 @@ class TradingEnv(gym.Env):
                 current_state=self._s_t,
                 next_state=next_state
             )
-
-            # Log info for s_t.
-            info = self.create_info()
-            self.update_history(info)
 
             if self._done is True:
                 episode_metrics = self.on_done()
@@ -226,16 +228,16 @@ class TradingEnv(gym.Env):
             self._num_holds += 1
 
         # TODO: Find a better way to compute the hits ratios.
-        if self._r_t >= 0:
-            self._total_profit_hits += abs(action)
-            self._total_hits += 1
-        else:
-            self._total_loss_misses += abs(action)
+        # if self._r_t > 0:
+        #     self._total_profit_hits += abs(action)
+        #     self._total_hits += 1
+        # else:
+        #     self._total_loss_misses += abs(action)
 
-        if self._tick_t - self._start_tick != 0:
-            hit_ratio = self._total_hits / (self._tick_t - self._start_tick)
-        else:
-            hit_ratio = 0.
+        # if self._tick_t - self._start_tick != 0:
+        #     hit_ratio = self._total_hits / (self._tick_t - self._start_tick)
+        # else:
+        #     hit_ratio = 0.
 
         info = dict(
             # State info
@@ -243,15 +245,14 @@ class TradingEnv(gym.Env):
             done=self._done,
             action=action,
             position=position,
-            reward=self._r_t,
             # Global information
             total_value=self._total_value,
             num_longs=self._num_longs,
             num_shorts=self._num_shorts,
             num_holds=self._num_holds,
-            profit_hits=self._total_profit_hits,
-            loss_misses=self._total_loss_misses,
-            hit_ratio=hit_ratio
+            # profit_hits=self._total_profit_hits,
+            # loss_misses=self._total_loss_misses,
+            # hit_ratio=hit_ratio
         )
 
         info = self._create_info(info)
@@ -267,8 +268,8 @@ class TradingEnv(gym.Env):
                 key: (self.window_size - 1) * [np.nan] for key in info.keys()
             }
 
-            # There are no positions & actions before s_t.
             self.history['action'] = (self.window_size - 1) * [0]
+            self.history['total_value'] = (self.window_size - 1) * [self._total_value]
 
             # Map indices to their corresponding dates.
             current_date = self.dataset.index_to_datetime(self._tick_t)
@@ -276,6 +277,8 @@ class TradingEnv(gym.Env):
                 current_date - datetime.timedelta(days=day_delta)
                 for day_delta in range(1, self.window_size)
             ]
+
+            self.history = self._initialize_history(self.history)
 
         # For easier processing add a position only when it is changing.
         position = info.pop('position')
@@ -293,6 +296,9 @@ class TradingEnv(gym.Env):
             self.history[key].append(value)
 
         self.history = self._update_history(self.history)
+
+    def _initialize_history(self, history: dict) -> dict:
+        return history
 
     def _update_history(self, history: dict) -> dict:
         return history

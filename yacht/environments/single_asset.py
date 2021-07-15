@@ -37,21 +37,37 @@ class SingleAssetTradingEnvironment(TradingEnv):
             self,
             observation_space: Dict[str, Optional[spaces.Space]]
     ) -> Dict[str, Optional[spaces.Space]]:
-        observation_space['env_features'] = spaces.Box(low=-np.inf, high=np.inf, shape=(2, ))
+        observation_space['env_features'] = spaces.Box(low=-np.inf, high=np.inf, shape=(self.window_size, 2, ))
 
         return observation_space
 
     def _get_next_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
-        observation['env_features'] = np.array([
-            self._total_value, self._total_units
-        ])
+        # The slicing method does not work for window_size == 1, therefore the else branch will create and empty list.
+        if self.is_history_initialized and self.window_size > 1:
+            past_total_values = self.history['total_value'][-(self.window_size - 1):]
+            past_total_units = self.history['total_units'][-(self.window_size - 1):]
+        else:
+            past_total_values = (self.window_size - 1) * [self._initial_cash_position]
+            past_total_units = (self.window_size - 1) * [0]
+        total_values = past_total_values + [self._total_value]
+        total_units = past_total_units + [self._total_units]
+        total_values = np.array(total_values, dtype=np.float32).reshape(-1, 1)
+        total_units = np.array(total_units, dtype=np.float32).reshape(-1, 1)
+
+        observation['env_features'] = np.concatenate([total_values, total_units], axis=-1)
 
         return observation
 
+    def _initialize_history(self, history: dict) -> dict:
+        history['total_units'] = (self.window_size - 1) * [self._total_units]
+        history['total_assets'] = (self.window_size - 1) * [self._initial_cash_position]
+
+        return history
+
     def _create_info(self, info: dict) -> dict:
         info['total_units'] = self._total_units
-        info['total_assets'] = self._s_t['env_features'][0] + \
-            self._s_t['env_features'][1] * self._s_t['1d'][-1, 0, 0]
+        info['total_assets'] = self._s_t['env_features'][-1][0] + \
+            self._s_t['env_features'][-1][1] * self._s_t['1d'][-1, 0, 0]
 
         return info
 
@@ -75,6 +91,9 @@ class SingleAssetTradingEnvironment(TradingEnv):
             self._total_value += sell_amount
             self._total_units -= sell_num_shares
             self._total_loss_commissions += stock_close_price * sell_num_shares * self.sell_commission
+        elif self._total_units == 0:
+            self._total_value = self._total_value * 0.99
+            sell_num_shares = 0
         else:
             sell_num_shares = 0
 
@@ -88,6 +107,10 @@ class SingleAssetTradingEnvironment(TradingEnv):
         if stock_close_price > 0:
             available_amount = self._total_value / stock_close_price
             buy_num_shares = min(available_amount, action)
+            if buy_num_shares == 0:
+                self._total_value = self._total_value * 0.99
+                return 0
+
             buy_amount = stock_close_price * buy_num_shares * (1 + self.buy_commission)
 
             # Update balance.
