@@ -14,6 +14,9 @@ logger = logging.getLogger(__file__)
 
 class WandBContext:
     def __init__(self, config: Config, storage_dir):
+        assert config.meta.experiment_tracker in ('', 'wandb'), \
+            'If you are using the wandb context you should either turn it on or off.'
+
         self.config = config
         self.storage_dir = storage_dir
 

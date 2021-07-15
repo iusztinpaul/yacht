@@ -159,15 +159,19 @@ class TradingEnv(gym.Env):
             return self._s_t, self._r_t, self._done, info
         else:
             self._a_t = self.action_schema.get_value(action)
+
             # Update internal state after (s_t, a_t).
+            self._tick_t += 1
             self.update_internal_state()
+
+            # See if it is done after incrementing the tick & computing the internal state.
+            self._done = self.is_done()
 
             # Log info for s_t.
             info = self.create_info()
             self.update_history(info)
 
             # Get next observation only to compute the reward. Do not update the env state yet.
-            self._tick_t += 1
             next_state = self.get_next_observation()
 
             # For a_t compute r_t.
@@ -177,7 +181,6 @@ class TradingEnv(gym.Env):
                 next_state=next_state
             )
 
-            self._done = self.is_done()
             if self._done is True:
                 episode_metrics = self.on_done()
                 info['episode_metrics'] = episode_metrics
