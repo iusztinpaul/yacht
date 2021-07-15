@@ -31,31 +31,31 @@ class TradingEnv(gym.Env):
 
         self.seed(seed=seed)
 
-        # General
+        # General.
         self.dataset = dataset
         self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
         self.reward_schema = reward_schema
         self.action_schema = action_schema
 
-        # spaces
+        # Spaces.
         self.action_space = self.action_schema.get_action_space()
         self.observation_space = spaces.Dict(self.get_observation_space())
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
 
-        # Ticks
+        # Ticks.
         self._start_tick = self.window_size - 1
         self._end_tick = len(self.prices) - 2  # Another -1 because the reward is calculated with one step further.
         self._tick_t = None
 
-        # State
+        # State.
         self._done = None
         self._s_t = None
         self._a_t = None
         self._position_previous_t = None
         self._r_t = None
 
-        # Global information
+        # Internal state.
         self._total_value = 0
         self._total_hits = 0
         self._total_profit_hits = 0
@@ -64,10 +64,10 @@ class TradingEnv(gym.Env):
         self._num_shorts = 0
         self._num_holds = 0
 
-        # History
+        # History.
         self.history = None
 
-        # Rendering
+        # Rendering.
         self.renderer = TradingRenderer(
             data=self.prices,
             start=dataset.start,
@@ -81,14 +81,14 @@ class TradingEnv(gym.Env):
     def reset(self):
         self._tick_t = self._start_tick
 
-        # State
+        # State.
         self._done = False
         self._s_t = None
         self._a_t = None
         self._position_previous_t = None
         self._r_t = None
 
-        # Global information
+        # Internal state.
         self._total_value = 0
         self._total_hits = 0
         self._total_profit_hits = 0
@@ -97,7 +97,7 @@ class TradingEnv(gym.Env):
         self._num_shorts = 0
         self._num_holds = 0
 
-        # History
+        # History.
         self.history = {}
 
         # Call custom code before computing the next observation.
@@ -107,7 +107,6 @@ class TradingEnv(gym.Env):
 
         return self._s_t
 
-    @abstractmethod
     def _reset(self):
         pass
 
@@ -189,6 +188,32 @@ class TradingEnv(gym.Env):
 
             return self._s_t, self._r_t, self._done, info
 
+    @abstractmethod
+    def update_internal_state(self):
+        pass
+
+    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
+        observation_space = self.dataset.get_external_observation_space()
+        observation_space['env_features'] = None
+        observation_space = self._get_observation_space(observation_space)
+
+        return observation_space
+
+    def _get_observation_space(
+            self,
+            observation_space: Dict[str, Optional[spaces.Space]]
+    ) -> Dict[str, Optional[spaces.Space]]:
+        return observation_space
+
+    def get_next_observation(self) -> Dict[str, np.array]:
+        observation = self.dataset[self._tick_t]
+        observation = self._get_next_observation(observation)
+
+        return observation
+
+    def _get_next_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+        return observation
+
     def create_info(self) -> dict:
         action = self._a_t.item()
         position = Position.build(position=action)
@@ -229,6 +254,11 @@ class TradingEnv(gym.Env):
             hit_ratio=hit_ratio
         )
 
+        info = self._create_info(info)
+
+        return info
+
+    def _create_info(self, info: dict) -> dict:
         return info
 
     def update_history(self, info):
@@ -262,16 +292,10 @@ class TradingEnv(gym.Env):
         for key, value in info.items():
             self.history[key].append(value)
 
-    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
-        observation_space = self.dataset.get_external_observation_space()
-        observation_space['env_features'] = None
+        self.history = self._update_history(self.history)
 
-        return observation_space
-
-    def get_next_observation(self) -> Dict[str, np.array]:
-        observation = self.dataset[self._tick_t]
-
-        return observation
+    def _update_history(self, history: dict) -> dict:
+        return history
 
     def on_done(self) -> dict:
         """
@@ -333,10 +357,6 @@ class TradingEnv(gym.Env):
         )
 
     def close(self):
-        pass
-
-    @abstractmethod
-    def update_internal_state(self):
         pass
 
     @abstractmethod

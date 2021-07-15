@@ -21,7 +21,7 @@ class SingleAssetTradingEnvironment(TradingEnv):
         self.buy_commission = kwargs.get('buy_commission', 0)
         self.sell_commission = kwargs.get('sell_commission', 0)
 
-        # More global information.
+        # Internal state.
         self._initial_cash_position = kwargs['initial_cash_position']
         self._total_value = self._initial_cash_position
         self._total_units = 0
@@ -33,23 +33,22 @@ class SingleAssetTradingEnvironment(TradingEnv):
         self._total_units = 0
         self._total_loss_commissions = 0
 
-    def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
-        observation_space = super().get_observation_space()
+    def _get_observation_space(
+            self,
+            observation_space: Dict[str, Optional[spaces.Space]]
+    ) -> Dict[str, Optional[spaces.Space]]:
         observation_space['env_features'] = spaces.Box(low=-np.inf, high=np.inf, shape=(2, ))
 
         return observation_space
 
-    def get_next_observation(self) -> Dict[str, np.array]:
-        observation = super().get_next_observation()
+    def _get_next_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
         observation['env_features'] = np.array([
             self._total_value, self._total_units
         ])
 
         return observation
 
-    def create_info(self):
-        info = super().create_info()
-
+    def _create_info(self, info: dict) -> dict:
         info['total_units'] = self._total_units
         info['total_assets'] = self._s_t['env_features'][0] + \
             self._s_t['env_features'][1] * self._s_t['1d'][-1, 0, 0]

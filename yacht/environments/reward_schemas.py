@@ -37,7 +37,8 @@ class AssetsPriceChangeRewardSchema(RewardSchema):
         self.reward_scaling = reward_scaling
 
     def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict):
-        # TODO: Fix this method for k-fold setup.
+        # TODO: Fix this method for k-fold setup. Probably on the edge of the folds this wont work.
+
         begin_total_assets = current_state['env_features'][0] + \
             current_state['env_features'][1] * current_state['1d'][-1, 0, 0]
         end_total_assets = next_state['env_features'][0] + \
