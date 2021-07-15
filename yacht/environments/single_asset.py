@@ -21,22 +21,17 @@ class SingleAssetTradingEnvironment(TradingEnv):
         self.buy_commission = kwargs.get('buy_commission', 0)
         self.sell_commission = kwargs.get('sell_commission', 0)
 
-        # More state variables.
+        # More global information.
         self._initial_cash_position = kwargs['initial_cash_position']
         self._total_value = self._initial_cash_position
         self._total_units = 0
         self._total_loss_commissions = 0
 
-    def reset(self):
+    def _reset(self):
+        # Reset global information.
         self._total_value = self._initial_cash_position
         self._total_units = 0
         self._total_loss_commissions = 0
-
-        observation = super().reset()
-
-        self._total_value = self._initial_cash_position
-
-        return observation
 
     def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
         observation_space = super().get_observation_space()

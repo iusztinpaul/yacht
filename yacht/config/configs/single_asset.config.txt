@@ -4,7 +4,7 @@ input: {
     price_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
     other_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
     tickers: ['BTC']
-    intervals: ['1d', '6h', '1h']
+    intervals: ['1d']
     features: ['Close', 'Volume']
     technical_indicators: ['macd','boll_ub','boll_lb','rsi_30', 'cci_30', 'dx_30','close_30_sma','close_60_sma']
     start: '18/8/2017'
@@ -17,7 +17,7 @@ environment: {
     name: 'SingleAssetTradingEnvironment-v0'
     buy_commission: 0.01
     sell_commission: 0.01
-    initial_cash_position: 100000
+    initial_cash_position: 10000
     reward_schemas: [
     {
         name: 'AssetsPriceChangeRewardSchema'
@@ -47,7 +47,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 100
+    collect_n_times: 150
     collecting_n_steps: 739
     learning_rate: 0.0001
     batch_size: 739

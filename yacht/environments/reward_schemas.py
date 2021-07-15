@@ -88,6 +88,7 @@ class PriceChangeRewardSchema(ScoreBasedRewardSchema):
 class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
     def __init__(self, max_score: int, density_thresholds: List[float]):
         self.max_score = max_score
+        # TODO: Get the total_score state from the env.
         self.total_score = 0
 
         self.density_thresholds = density_thresholds

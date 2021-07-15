@@ -100,9 +100,16 @@ class TradingEnv(gym.Env):
         # History
         self.history = {}
 
+        # Call custom code before computing the next observation.
+        self._reset()
+
         self._s_t = self.get_next_observation()
 
         return self._s_t
+
+    @abstractmethod
+    def _reset(self):
+        pass
 
     def set_dataset(self, dataset: TradingDataset):
         # TODO: Find a better way to reinject the dataset.
