@@ -91,9 +91,6 @@ class SingleAssetTradingEnvironment(TradingEnv):
             self._total_value += sell_amount
             self._total_units -= sell_num_shares
             self._total_loss_commissions += stock_close_price * sell_num_shares * self.sell_commission
-        elif self._total_units == 0:
-            self._total_value = self._total_value * 0.99
-            sell_num_shares = 0
         else:
             sell_num_shares = 0
 
@@ -107,10 +104,6 @@ class SingleAssetTradingEnvironment(TradingEnv):
         if stock_close_price > 0:
             available_amount = self._total_value / stock_close_price
             buy_num_shares = min(available_amount, action)
-            if buy_num_shares == 0:
-                self._total_value = self._total_value * 0.99
-                return 0
-
             buy_amount = stock_close_price * buy_num_shares * (1 + self.buy_commission)
 
             # Update balance.
@@ -121,6 +114,10 @@ class SingleAssetTradingEnvironment(TradingEnv):
             buy_num_shares = 0
 
         return buy_num_shares
+
+    def _on_done(self) -> bool:
+        # If the agent has no more assets finish the episode.
+        return self._total_value <= 0 and self._total_units <= 0
 
     def render(self, mode='human', name='trades.png'):
         pass

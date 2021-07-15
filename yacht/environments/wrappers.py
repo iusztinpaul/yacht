@@ -47,6 +47,7 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         flattened_observation = [observation[interval] for interval in intervals]
         flattened_observation = np.concatenate(flattened_observation, axis=1)
 
+        # Concatenate env_features which are features at the window level.
         env_features = observation['env_features']
         window_size, feature_size = env_features.shape
         env_features = env_features.reshape((window_size, 1, feature_size))
