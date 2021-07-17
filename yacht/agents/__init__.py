@@ -27,7 +27,9 @@ policy_registry = {
 }
 
 feature_extractor_registry = {
-    'MultiFrequencyFeatureExtractor': MultiFrequencyFeatureExtractor
+    'MultiFrequencyFeatureExtractor': MultiFrequencyFeatureExtractor,
+    '': None,
+    None: None
 }
 
 activation_fn_registry = {
@@ -67,8 +69,10 @@ def build_agent(
         policy_kwargs = {
             'net_arch': _build_net_arch_dict(policy_config.net_arch, agent_class),
             'activation_fn': activation_fn_class,
-            'features_extractor_class': feature_extractor_class,
-            'features_extractor_kwargs': {
+        }
+        if feature_extractor_class:
+            policy_kwargs['features_extractor_class'] = feature_extractor_class
+            policy_kwargs['features_extractor_kwargs'] = {
                 'features_dim': list(feature_extractor_config.features_dim),
                 'activation_fn': activation_fn_class,
                 'window_size': input_config.window_size,
@@ -77,7 +81,6 @@ def build_agent(
                 'env_features_len': env.observation_env_features_len,
                 'drop_out_p': feature_extractor_config.drop_out_p
             }
-        }
 
         return agent_class(
             policy=policy_class,
