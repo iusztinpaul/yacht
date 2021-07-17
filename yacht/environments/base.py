@@ -2,7 +2,7 @@ import datetime
 import logging
 import random
 from abc import abstractmethod
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import gym
 import pandas as pd
@@ -98,7 +98,7 @@ class TradingEnv(gym.Env):
         self._num_holds = 0
 
         # History.
-        self.history = {}
+        self.history = self.initialize_history()
 
         # Call custom code before computing the next observation.
         self._reset()
@@ -162,14 +162,9 @@ class TradingEnv(gym.Env):
 
             # Update internal state after (s_t, a_t).
             self._tick_t += 1
-            self.update_internal_state()
-
-            # See if it is done after incrementing the tick & computing the internal state.
-            self._done = self.is_done()
-
-            # Log info for s_t.
-            info = self.create_info()
-            self.update_history(info)
+            changes = self.update_internal_state(self._a_t.item())
+            # Update history with the internal changes so the next observation can be computed.
+            self.update_history(changes)
 
             # Get next observation only to compute the reward. Do not update the env state yet.
             next_state = self.get_next_observation()
@@ -181,6 +176,14 @@ class TradingEnv(gym.Env):
                 next_state=next_state
             )
 
+            # See if it is done after incrementing the tick & computing the internal state.
+            self._done = self.is_done()
+
+            # Log info for s_t.
+            info = self.create_info()
+            # Add the rest of the step information to the history.
+            self.update_history(info)
+
             if self._done is True:
                 episode_metrics = self.on_done()
                 info['episode_metrics'] = episode_metrics
@@ -191,7 +194,10 @@ class TradingEnv(gym.Env):
             return self._s_t, self._r_t, self._done, info
 
     @abstractmethod
-    def update_internal_state(self):
+    def update_internal_state(self, action: Union[int, float]) -> dict:
+        """
+            Returns: The internal state variables that were updated.
+        """
         pass
 
     def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
@@ -217,8 +223,12 @@ class TradingEnv(gym.Env):
         return observation
 
     def create_info(self) -> dict:
-        action = self._a_t.item()
-        position = Position.build(position=action)
+        if self._a_t is not None:
+            action = self._a_t.item()
+            position = Position.build(position=action)
+        else:
+            action = None
+            position = None
 
         if position == Position.Long:
             self._num_longs += 1
@@ -228,31 +238,35 @@ class TradingEnv(gym.Env):
             self._num_holds += 1
 
         # TODO: Find a better way to compute the hits ratios.
-        # if self._r_t > 0:
-        #     self._total_profit_hits += abs(action)
-        #     self._total_hits += 1
-        # else:
-        #     self._total_loss_misses += abs(action)
+        if self._r_t is not None:
+            if self._r_t > 0:
+                self._total_profit_hits += abs(action)
+                self._total_hits += 1
+            else:
+                self._total_loss_misses += abs(action)
 
-        # if self._tick_t - self._start_tick != 0:
-        #     hit_ratio = self._total_hits / (self._tick_t - self._start_tick)
-        # else:
-        #     hit_ratio = 0.
+            if self._tick_t - self._start_tick != 0:
+                hit_ratio = self._total_hits / (self._tick_t - self._start_tick)
+            else:
+                hit_ratio = 0.
+        else:
+            hit_ratio = 0.
 
         info = dict(
-            # State info
+            # MDP information.
             step=self._tick_t - 1,  # Already incremented the tick at the start of the step() method.
             done=self._done,
             action=action,
             position=position,
-            # Global information
+            reward=self._r_t,
+            # Interval state information.
             total_value=self._total_value,
             num_longs=self._num_longs,
             num_shorts=self._num_shorts,
             num_holds=self._num_holds,
-            # profit_hits=self._total_profit_hits,
-            # loss_misses=self._total_loss_misses,
-            # hit_ratio=hit_ratio
+            profit_hits=self._total_profit_hits,
+            loss_misses=self._total_loss_misses,
+            hit_ratio=hit_ratio
         )
 
         info = self._create_info(info)
@@ -262,43 +276,61 @@ class TradingEnv(gym.Env):
     def _create_info(self, info: dict) -> dict:
         return info
 
-    def update_history(self, info):
-        if not self.history:
-            self.history = {
-                key: (self.window_size - 1) * [np.nan] for key in info.keys()
-            }
+    def update_history(self, changes: dict):
+        if self._should_update_history(key='position', changes=changes):
+            # For easier processing add a position only when it is changing.
+            position = changes.pop('position')
+            if self._position_previous_t != position:
+                self.history['position'].append(position)
+                self._position_previous_t = position
+            else:
+                self.history['position'].append(np.nan)
 
-            self.history['action'] = (self.window_size - 1) * [0]
-            self.history['total_value'] = (self.window_size - 1) * [self._total_value]
-
-            # Map indices to their corresponding dates.
+        # Update date at any time for the current self._tick_t
+        changes['date'] = None
+        if self._should_update_history(key='date', changes=changes):
+            # Map index_t to its corresponding date.
             current_date = self.dataset.index_to_datetime(self._tick_t)
-            self.history['date'] = [
-                current_date - datetime.timedelta(days=day_delta)
-                for day_delta in range(1, self.window_size)
-            ]
+            self.history['date'].append(current_date)
 
-            self.history = self._initialize_history(self.history)
-
-        # For easier processing add a position only when it is changing.
-        position = info.pop('position')
-        if self._position_previous_t != position:
-            self.history['position'].append(position)
-            self._position_previous_t = position
-        else:
-            self.history['position'].append(np.nan)
-
-        # Map index_t to its corresponding date.
-        current_date = self.dataset.index_to_datetime(self._tick_t)
-        self.history['date'].append(current_date)
-
-        for key, value in info.items():
-            self.history[key].append(value)
+        for key, value in changes.items():
+            if self._should_update_history(key=key, changes=changes):
+                self.history[key].append(value)
 
         self.history = self._update_history(self.history)
 
+    def initialize_history(self):
+        history = dict()
+        history_keys = set(self.create_info().keys())
+        history_keys.add('date')
+        for key in history_keys:
+            if key == 'action':
+                history['action'] = (self.window_size - 1) * [0]
+            elif key == 'total_value':
+                history['total_value'] = (self.window_size - 1) * [self._total_value]
+            elif key == 'date':
+                current_date = self.dataset.index_to_datetime(self._tick_t)
+                history['date'] = [
+                    current_date - datetime.timedelta(days=day_delta)
+                    for day_delta in range(1, self.window_size)
+                ]
+            else:
+                history[key] = (self.window_size - 1) * [np.nan]
+
+        # Initialize custom states.
+        history = self._initialize_history(history)
+
+        return history
+
     def _initialize_history(self, history: dict) -> dict:
         return history
+
+    def _should_update_history(self, key: str, changes: dict):
+        """
+            Because the history can be updated on multiple calls on the step function check if in the changes
+            dictionary there is the desired key & that it was not already added in the current step.
+        """
+        return key in changes and len(self.history.get(key, dict())) < self._tick_t
 
     def _update_history(self, history: dict) -> dict:
         return history

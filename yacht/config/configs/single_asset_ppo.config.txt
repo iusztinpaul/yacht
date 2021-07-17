@@ -35,13 +35,13 @@ agent: {
         activation_fn: 'ReLU',
         feature_extractor: {
             name: 'MultiFrequencyFeatureExtractor'
-            features_dim: [64, 64],
+            features_dim: [32, 64],
             drop_out_p: 0.25
         }
         net_arch: {
             shared: []
-            vf: [64]
-            pi: [64]
+            vf: [8]
+            pi: [8]
         }
     }
 }

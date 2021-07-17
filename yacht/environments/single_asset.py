@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 from gym import spaces
@@ -66,17 +66,24 @@ class SingleAssetTradingEnvironment(TradingEnv):
 
     def _create_info(self, info: dict) -> dict:
         info['total_units'] = self._total_units
-        info['total_assets'] = self._s_t['env_features'][-1][0] + \
-            self._s_t['env_features'][-1][1] * self._s_t['1d'][-1, 0, 0]
+        if self._s_t is not None:
+            info['total_assets'] = self._s_t['env_features'][-1][0] + \
+                self._s_t['env_features'][-1][1] * self._s_t['1d'][-1, 0, 0]
+        else:
+            info['total_assets'] = self._initial_cash_position
 
         return info
 
-    def update_internal_state(self):
-        a_t = self._a_t.item()
-        if a_t > 0:
-            self._buy_asset(a_t)
-        elif a_t < 0:
-            self._sell_asset(a_t)
+    def update_internal_state(self, action: Union[int, float]) -> dict:
+        if action > 0:
+            self._buy_asset(action)
+        elif action < 0:
+            self._sell_asset(action)
+
+        return {
+            'total_value': self._total_value,
+            'total_units': self._total_units
+        }
 
     def _sell_asset(self, action: float):
         # Take the close price from the '1d' frequency & the last window.
