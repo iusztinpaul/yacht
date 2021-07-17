@@ -261,7 +261,7 @@ class TradingRenderer(MplFinanceRenderer):
             self.data,
             addplot=additional_plots,
             title=title,
-            type='candle',
+            type='line',
             ylabel='Prices',
             panel_ratios=(1, 1, 0.5),
             figratio=(2, 1),

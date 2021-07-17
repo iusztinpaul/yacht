@@ -121,7 +121,7 @@ class Binance(Market):
         time_series = pd.date_range(start, end, freq=freq)
         valid_values = time_series[time_series.isin(self.connection[interval].index)]
 
-        return len(valid_values) > 0.5 * len(time_series)
+        return len(valid_values) > 0.95 * len(time_series)
 
     def cache_request(self, interval: str, data: pd.DataFrame):
         if interval in self.connection:

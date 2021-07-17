@@ -321,7 +321,7 @@ class TradingEnv(gym.Env):
 
         backtest_results, _ = compute_backtest_results(
             report,
-            value_col_name='Total Value',
+            value_col_name='total',
         )
 
         backtest_results = dict(
@@ -335,14 +335,19 @@ class TradingEnv(gym.Env):
         return snake_case_backtest_results
 
     def create_report(self) -> pd.DataFrame:
-        report = pd.DataFrame(
-            data={
-                'Date': self.history['date'],
-                'Total Value': self.history['total_value']
+        if 'total_assets' in self.history:
+            data = {
+                'date': self.history['date'],
+                'total': self.history['total_assets']
             }
-        )
-        report['Date'] = pd.to_datetime(report['Date'])
-        report.set_index('Date', inplace=True, drop=True)
+        else:
+            data = {
+                'date': self.history['date'],
+                'total': self.history['total_value']
+            }
+        report = pd.DataFrame(data=data)
+        report['date'] = pd.to_datetime(report['date'])
+        report.set_index('date', inplace=True, drop=True)
 
         return report
 
@@ -352,7 +357,7 @@ class TradingEnv(gym.Env):
         report = pd.DataFrame(
             index=data.index,
             data={
-                'Total Value': data.loc[:, 'Close']
+                'total': data.loc[:, 'Close']
             }
         )
 

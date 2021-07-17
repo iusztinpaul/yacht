@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Union
 
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from torch import nn
@@ -18,7 +18,8 @@ logger = logging.getLogger(__file__)
 
 
 agents_registry = {
-    'PPO': PPO
+    'PPO': PPO,
+    'SAC': SAC
 }
 
 policy_registry = {

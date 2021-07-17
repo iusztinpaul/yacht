@@ -2,7 +2,7 @@ import pandas as pd
 from pyfolio import timeseries
 
 
-def get_daily_return(report: pd.DataFrame, value_col_name='Total Value'):
+def get_daily_return(report: pd.DataFrame, value_col_name='total'):
     df = report.copy(deep=True)
     df[df == 0.] = 1e-2
 
@@ -11,8 +11,9 @@ def get_daily_return(report: pd.DataFrame, value_col_name='Total Value'):
     return pd.Series(df['daily_return'], index=df.index)
 
 
-def compute_backtest_results(report: pd.DataFrame, value_col_name='Total Value'):
+def compute_backtest_results(report: pd.DataFrame, value_col_name='total'):
     daily_return_report = get_daily_return(report, value_col_name=value_col_name)
+    # TODO: See how to use positions & transactions parameters.
     perf_stats_all = timeseries.perf_stats(
         returns=daily_return_report,
         positions=None,

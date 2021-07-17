@@ -30,10 +30,10 @@ def backtest(
         render_all=render_all,
         name=name
     )
-    backtest_results = get_daily_return(report, value_col_name='Total Value')
+    backtest_results = get_daily_return(report, value_col_name='total')
 
     baseline_report = env.create_baseline_report()
-    baseline_results = get_daily_return(baseline_report, value_col_name='Total Value')
+    baseline_results = get_daily_return(baseline_report, value_col_name='total')
 
     backtest_statistics = timeseries.perf_stats(
         returns=backtest_results,

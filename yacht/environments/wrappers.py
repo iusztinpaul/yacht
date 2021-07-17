@@ -87,27 +87,24 @@ class WandBWrapper(gym.Wrapper):
         info_to_log = dict()
         if is_done and episode_metrics:
             info_to_log['total_value'] = info['total_value']
-            info_to_log['num_longs'] = info['num_longs']
-            info_to_log['num_shorts'] = info['num_shorts']
-            info_to_log['num_holds'] = info['num_holds']
+            info_to_log['total_assets'] = info['total_assets']
+            info_to_log['longs_ratio'] = info['num_longs'] / episode_data['l']
+            info_to_log['shorts_ratio'] = info['num_shorts'] / episode_data['l']
+            info_to_log['holds_ratio'] = info['num_holds'] / episode_data['l']
             # info_to_log['profit_hits'] = info['profit_hits']
             # info_to_log['loss_misses'] = info['loss_misses']
             # info_to_log['hit_ratio'] = info['hit_ratio']
-            info_to_log['total_assets'] = info['total_assets']
 
             # TODO: Log more metrics after we understand them.
             info_to_log['episode_metrics'] = {
                 'annual_return': episode_metrics['annual_return'],
                 'cumulative_returns': episode_metrics['cumulative_returns'],
-                'annual_volatility': episode_metrics['annual_volatility'],
                 'sharpe_ratio': episode_metrics['sharpe_ratio']
             }
 
             # Translate the keys for easier understanding
             info_to_log['episode'] = {
                 'reward': episode_data['r'],
-                'length': episode_data['l'],
-                'seconds': episode_data['t']
             }
 
         wandb.log({
