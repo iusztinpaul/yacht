@@ -66,6 +66,7 @@ class TradingEnv(gym.Env):
 
         # History.
         self.history = None
+        self.is_history_initialized = False
 
         # Rendering.
         self.renderer = TradingRenderer(
@@ -99,6 +100,7 @@ class TradingEnv(gym.Env):
 
         # History.
         self.history = self.initialize_history()
+        self.is_history_initialized = True
 
         # Call custom code before computing the next observation.
         self._reset()
@@ -138,10 +140,6 @@ class TradingEnv(gym.Env):
     @property
     def intervals(self) -> List[str]:
         return self.dataset.intervals
-
-    @property
-    def is_history_initialized(self) -> bool:
-        return len(self.history) > 0
 
     @property
     def observation_env_features_len(self) -> int:

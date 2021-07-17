@@ -42,10 +42,14 @@ class SingleAssetTradingEnvironment(TradingEnv):
         return observation_space
 
     def _get_next_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
-        # The slicing method does not work for window_size == 1, therefore the else branch will create and empty list.
-        if self.is_history_initialized and self.window_size > 1:
-            past_total_values = self.history['total_value'][-(self.window_size - 1):]
-            past_total_units = self.history['total_units'][-(self.window_size - 1):]
+        if self.is_history_initialized:
+            # The slicing method does not work for window_size == 1.
+            if self.window_size > 1:
+                past_total_values = self.history['total_value'][-(self.window_size - 1):]
+                past_total_units = self.history['total_units'][-(self.window_size - 1):]
+            else:
+                past_total_values = []
+                past_total_units = []
         else:
             past_total_values = (self.window_size - 1) * [self._initial_cash_position]
             past_total_units = (self.window_size - 1) * [0]
@@ -86,8 +90,8 @@ class SingleAssetTradingEnvironment(TradingEnv):
         }
 
     def _sell_asset(self, action: float):
-        # Take the close price from the '1d' frequency & the last window.
-        stock_close_price = self._s_t['1d'][-1, 0, 0]
+        # Take the close price from the '1d' frequency & at t + 1. '_tick_t' is incremented before state update.
+        stock_close_price = self.prices['Close'].iloc[self._tick_t]
 
         # Sell only if the price is valid and current asset is > 0.
         if stock_close_price > 0 and self._total_units > 0:
@@ -104,8 +108,8 @@ class SingleAssetTradingEnvironment(TradingEnv):
         return sell_num_shares
 
     def _buy_asset(self, action: float):
-        # Take the close price from the '1d' frequency & the last window.
-        stock_close_price = self._s_t['1d'][-1, 0, 0]
+        # Take the close price from the '1d' frequency & at t + 1. '_tick_t' is incremented before state update.
+        stock_close_price = self.prices['Close'].iloc[self._tick_t]
 
         # Buy only if the price is > 0.
         if stock_close_price > 0:
