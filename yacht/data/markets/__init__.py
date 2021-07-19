@@ -2,9 +2,12 @@ import os
 
 from .base import Market
 from .binance import Binance, TechnicalIndicatorBinance
+from .yahoo import Yahoo, TechnicalIndicatorYahoo
 
 market_registry = {
     'Binance': Binance,
+    'Yahoo': Yahoo,
+    'TechnicalIndicatorYahoo': TechnicalIndicatorYahoo,
     'TechnicalIndicatorBinance': TechnicalIndicatorBinance,
 }
 singletones = dict()

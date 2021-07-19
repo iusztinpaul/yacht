@@ -1,7 +1,7 @@
 import logging
 import os
-from abc import ABC
-from datetime import datetime
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
 from typing import Union, List, Any
 
 import pandas as pd
@@ -35,33 +35,47 @@ class Market(ABC):
 
         self.connection = self.open()
 
+    @abstractmethod
     def open(self) -> Any:
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def close(self):
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def persist(self, interval: str):
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
         """
             Returns: data within [start, end)
         """
 
-        raise NotImplementedError()
+        pass
 
-    def request(self, ticker: str, interval: str, start: datetime, end: datetime = None) -> List[List[Any]]:
-        raise NotImplementedError()
+    @abstractmethod
+    def request(
+            self,
+            ticker: str,
+            interval: str,
+            start: datetime,
+            end: datetime = None
+    ) -> Union[List[List[Any]], pd.DataFrame]:
+        pass
 
-    def process_request(self, data: List[List[Any]]) -> pd.DataFrame:
-        raise NotImplementedError()
+    @abstractmethod
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
+        pass
 
+    @abstractmethod
     def is_cached(self, interval: str, start: datetime, end: datetime) -> bool:
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def cache_request(self, interval: str, data: pd.DataFrame):
-        raise NotImplementedError()
+        pass
 
     def download(self, tickers: Union[str, List[str]], interval: str, start: datetime, end: datetime = None):
         if isinstance(tickers, str):
@@ -79,4 +93,82 @@ class Market(ABC):
         data = self.request(ticker, interval, start, end)
         data = self.process_request(data)
 
+        assert self.MANDATORY_FEATURES.intersection(set(data.columns)) == self.MANDATORY_FEATURES, \
+            'Some mandatory features are missing.'
+
         self.cache_request(interval, data)
+
+
+class H5Market(Market, ABC):
+    def __init__(
+            self,
+            features: List[str],
+            api_key,
+            api_secret,
+            storage_dir: str,
+            storage_filename: str
+    ):
+        self.storage_file = os.path.join(storage_dir, storage_filename)
+
+        super().__init__(features, api_key, api_secret, storage_dir)
+
+    def open(self) -> pd.HDFStore:
+        return pd.HDFStore(self.storage_file)
+
+    def close(self):
+        self.connection.close()
+
+    def persist(self, interval: str):
+        self.connection[interval].to_hdf(self.storage_file, interval, mode='w')
+
+    def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
+        """
+            Returns: data within [start, end)
+        """
+
+        if interval not in self.connection:
+            raise RuntimeError(f'Table: "{interval}" not supported')
+        end = end - timedelta(microseconds=1)
+
+        database_to_pandas_freq = {
+            'd': 'd',
+            'h': 'h',
+            'm': 'min'
+        }
+        freq = interval[:-1] + database_to_pandas_freq[interval[-1].lower()]
+        date_time_index = pd.date_range(start=start, end=end, freq=freq)
+        # Create the desired data span because there are missing values. In this way we will know exactly what data is
+        # missing and at what index.
+        final_data = pd.DataFrame(index=date_time_index, columns=self.features)
+
+        piece_of_data = self.connection[interval].loc[start:end]
+        final_data.update(piece_of_data)
+
+        final_data.fillna(method='bfill', inplace=True, axis=0)
+        final_data.fillna(method='ffill', inplace=True, axis=0)
+
+        return final_data
+
+    def is_cached(self, interval: str, start: datetime, end: datetime) -> bool:
+        if interval not in self.connection:
+            return False
+
+        freq_mappings = {
+            'd': 'D',
+            'h': 'H',
+            'm': 'min'
+        }
+        freq = f'{interval[:-1]}{freq_mappings[interval[-1]]}'
+        time_series = pd.date_range(start, end, freq=freq)
+        # Query how much of the requested time series is in the cache.
+        valid_values = time_series[time_series.isin(self.connection[interval].index)]
+
+        # If we find almost all the asked dates we can say that the data is cached. We do not check for a
+        # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
+        return len(valid_values) >= 0.95 * len(time_series)
+
+    def cache_request(self, interval: str, data: pd.DataFrame):
+        if interval in self.connection:
+            self.connection[interval] = self.connection[interval].combine_first(data)
+        else:
+            self.connection[interval] = data

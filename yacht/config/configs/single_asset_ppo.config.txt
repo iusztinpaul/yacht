@@ -1,13 +1,13 @@
 input: {
-    market: 'Binance'
+    market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
     price_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
     other_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
-    tickers: ['BTC']
-    intervals: ['1d', '6h', '30m']
+    tickers: ['BTC-USD']
+    intervals: ['1d']
     features: ['Close', 'High', 'Low', 'Open', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
-    start: '18/8/2017'
+    start: '18/8/2014'
     end: '1/7/2021'
     back_test_split_ratio: 0.27
     back_test_embargo_ratio: 0.03
@@ -33,15 +33,10 @@ agent: {
     policy: {
         name: 'MlpPolicy'
         activation_fn: 'ReLU',
-        feature_extractor: {
-            name: 'MultiFrequencyFeatureExtractor'
-            features_dim: [64, 64],
-            drop_out_p: 0.25
-        }
         net_arch: {
-            shared: [32]
-            vf: [8]
-            pi: [8]
+            shared: []
+            vf: [64, 64]
+            pi: [64, 64]
         }
     }
 }
@@ -67,5 +62,5 @@ train: {
 meta: {
     device: 'gpu'
     backtest: true,
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
 }
