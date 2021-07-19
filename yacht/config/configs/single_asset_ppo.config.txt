@@ -42,10 +42,10 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 150
-    collecting_n_steps: 1024
-    learning_rate: 0.0001
-    batch_size: 256
+    total_timesteps: 80000
+    collecting_n_steps: 2048
+    learning_rate: 0.00025
+    batch_size: 64
     n_epochs: 3
     gamma: 0.9
     gae_lambda: 0.95
@@ -56,11 +56,9 @@ train: {
     k_fold_splits: 3
     k_fold_purge_ratio: 0.03
     k_fold_embargo_ratio: 0.01
-    eval_frequency: 1
-    log_frequency: 1
 }
 meta: {
     device: 'gpu'
     backtest: true,
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

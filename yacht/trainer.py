@@ -63,8 +63,7 @@ class Trainer(ABC):
     def build_callbacks(self) -> List[BaseCallback]:
         callbacks = [
             LoggerCallback(
-                collect_n_times=self.train_config.collect_n_times,
-                collecting_n_steps=self.train_config.collecting_n_steps
+                total_timesteps=self.train_config.total_timesteps,
             )
         ]
 
@@ -77,19 +76,15 @@ class Trainer(ABC):
 
 class NoEvalTrainer(Trainer):
     def train(self) -> BaseAlgorithm:
-        logger.info(f'Starting training for {self.train_config.collect_n_times} times.')
-
-        logger.info(f'Collecting steps per episode: {self.train_config.collecting_n_steps}')
+        logger.info(f'Training for {self.train_config.total_timesteps} timesteps.')
         logger.info(f'Train split length: {len(self.dataset)}')
         logger.info(f'Validation split length: 0\n')
 
-        train_num_time_steps = self.train_config.collect_n_times * self.train_config.collecting_n_steps
-        log_frequency = self.train_config.log_frequency * self.train_config.collecting_n_steps
         self.agent = self.agent.learn(
-            total_timesteps=train_num_time_steps,
+            total_timesteps=self.train_config.total_timesteps,
             callback=self.build_callbacks(),
             tb_log_name=self.name,
-            log_interval=log_frequency,
+            log_interval=self.train_config.collecting_n_steps,
             n_eval_episodes=1,
             eval_log_path=self.dataset.storage_dir,
             reset_num_timesteps=True
@@ -124,17 +119,17 @@ class KFoldTrainer(Trainer):
         self.k_fold = k_fold
 
     def train(self) -> BaseAlgorithm:
-        # TODO: Save logs.
-
         logger.info(
-            f'Starting training for {self.train_config.collect_n_times} '
-            f'episodes with a k_fold {self.k_fold.n_splits} splits.'
+            f'Training for {self.train_config.total_timesteps} timesteps, '
+            f'with a k_fold {self.k_fold.n_splits} splits.'
         )
         progress_bar = tqdm(total=self.train_config.collect_n_times)
         print()
         for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_prices())):
+            k_fold_split_timesteps = self.train_config.total_timesteps // self.k_fold.n_splits
+
+            logger.info(f'Training for {k_fold_split_timesteps} timesteps.')
             logger.info(f'Train split length: {len(train_indices)}')
-            logger.info(f'Collecting steps per episode: {self.train_config.collecting_n_steps}')
             logger.info(f'Validation split length: {len(val_indices)}\n')
 
             self.k_fold.render(self.dataset.storage_dir)
@@ -144,18 +139,13 @@ class KFoldTrainer(Trainer):
             self.train_env.set_dataset(train_dataset)
             self.val_env.set_dataset(val_dataset)
 
-            # For stable baselines3 `freq` is relative to the episode time steps.
-            k_fold_num_episodes = self.train_config.collect_n_times // self.k_fold.n_splits
-            k_fold_split_time_steps = k_fold_num_episodes * self.train_config.collecting_n_steps
-            steps_eval_frequency = self.train_config.eval_frequency * self.train_config.collecting_n_steps
-            log_frequency = self.train_config.log_frequency * self.train_config.collecting_n_steps
             self.agent = self.agent.learn(
-                total_timesteps=k_fold_split_time_steps,
+                total_timesteps=k_fold_split_timesteps,
                 callback=self.build_callbacks(),
                 tb_log_name=self.name,
-                log_interval=log_frequency,
+                log_interval=self.train_config.collecting_n_steps,
                 eval_env=self.val_env,
-                eval_freq=steps_eval_frequency,
+                eval_freq=self.train_config.collecting_n_steps,
                 n_eval_episodes=1,
                 eval_log_path=self.dataset.storage_dir,
                 reset_num_timesteps=True

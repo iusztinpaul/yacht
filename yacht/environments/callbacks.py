@@ -1,4 +1,5 @@
 import logging
+from math import log10
 
 import wandb
 from stable_baselines3.common.callbacks import BaseCallback
@@ -9,19 +10,17 @@ logger = logging.getLogger(__file__)
 class LoggerCallback(BaseCallback):
     def __init__(
             self,
-            collect_n_times: int,
-            collecting_n_steps: int,
+            total_timesteps: int,
             verbose: int = 0
     ):
         super().__init__(verbose)
 
-        self.collect_n_times = collect_n_times
-        self.collecting_n_steps = collecting_n_steps
+        self.total_timesteps = total_timesteps
+        self.log_frequency = total_timesteps // 10
 
     def _on_step(self) -> bool:
-        current_episode = self.num_timesteps / self.collecting_n_steps
-        if current_episode == int(current_episode):
-            logger.info(f'Finished training for collect_n_time: [{current_episode}/{self.collect_n_times}].')
+        if self.num_timesteps % self.log_frequency == 0:
+            logger.info(f'Timestep [{self.num_timesteps} / {self.total_timesteps}]')
 
         return True
 

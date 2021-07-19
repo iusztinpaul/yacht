@@ -10,6 +10,7 @@ market_registry = {
     'TechnicalIndicatorYahoo': TechnicalIndicatorYahoo,
     'TechnicalIndicatorBinance': TechnicalIndicatorBinance,
 }
+# We want only one instance of a specific market during the lifetime of the program.
 singletones = dict()
 
 

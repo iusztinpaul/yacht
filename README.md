@@ -55,3 +55,7 @@ meta: {
   experiment_tracker: 'wandb'
 }
 ```
+
+# Data APIs
+* Currently we have support for `Binance` & `Yahoo Finance`.
+* You should set the `api keys` in the `.env` file for full support.

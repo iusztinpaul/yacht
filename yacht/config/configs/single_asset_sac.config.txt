@@ -47,7 +47,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    collect_n_times: 150
+    total_timesteps: 150
     collecting_n_steps: 847
     learning_rate: 0.0001
     batch_size: 739

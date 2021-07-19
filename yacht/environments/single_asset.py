@@ -93,7 +93,7 @@ class SingleAssetTradingEnvironment(TradingEnv):
         # Take the close price from the '1d' frequency & at t + 1. '_tick_t' is incremented before state update.
         stock_close_price = self.prices['Close'].iloc[self._tick_t]
 
-        # Sell only if the price is valid and current asset is > 0.
+        # Sell only if the price is valid and current units are > 0.
         if stock_close_price > 0 and self._total_units > 0:
             sell_num_shares = min(abs(action), self._total_units)
             sell_amount = stock_close_price * sell_num_shares * (1 - self.sell_commission)
