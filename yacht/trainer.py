@@ -1,4 +1,5 @@
 import logging
+import os
 from abc import ABC, abstractmethod
 from typing import List
 
@@ -47,6 +48,11 @@ class Trainer(ABC):
             self.agent.save(
                 path=save_path
             )
+
+            # TODO: Find a way to add this line to the wandb classes for consistency.
+            latest_checkpoint = utils.build_last_checkpoint_path(self.dataset.storage_dir)
+            if os.path.exists(latest_checkpoint):
+                wandb.save(latest_checkpoint)
 
         self.close()
 

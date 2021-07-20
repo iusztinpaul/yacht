@@ -70,7 +70,3 @@ class WandBCallback(BaseCallback):
             best_model_path = utils.build_best_checkpoint_path(self.storage_dir)
             if os.path.exists(best_model_path):
                 wandb.save(best_model_path)
-
-            latest_checkpoint = utils.build_last_checkpoint_path(self.storage_dir)
-            if os.path.exists(latest_checkpoint):
-                wandb.save(latest_checkpoint)
