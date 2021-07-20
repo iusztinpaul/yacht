@@ -17,6 +17,9 @@ class LoggerCallback(BaseCallback):
 
         self.total_timesteps = total_timesteps
         self.log_frequency = total_timesteps // 10
+        # If total_timesteps < 10 the division + rounding will return 0.
+        if self.log_frequency == 0:
+            self.log_frequency = 1
 
     def _on_step(self) -> bool:
         if self.num_timesteps % self.log_frequency == 0:

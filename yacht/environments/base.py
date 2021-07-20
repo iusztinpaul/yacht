@@ -402,7 +402,8 @@ class TradingEnv(gym.Env):
             title=title,
             save_file_path=utils.build_graphics_path(self.dataset.storage_dir, name),
             positions=self.history['position'],
-            actions=self.history['action']
+            actions=self.history['action'],
+            total_value=self.history['total_value']
         )
 
     def close(self):

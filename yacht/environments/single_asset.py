@@ -3,6 +3,7 @@ from typing import Dict, Optional, Union
 import numpy as np
 from gym import spaces
 
+from yacht import utils
 from yacht.data.datasets import TradingDataset
 from yacht.environments import TradingEnv, RewardSchema, ActionSchema
 
@@ -134,6 +135,16 @@ class SingleAssetTradingEnvironment(TradingEnv):
 
     def render(self, mode='human', name='trades.png'):
         pass
+
+    def render_all(self, title, name='trades.png'):
+        self.renderer.render(
+            title=title,
+            save_file_path=utils.build_graphics_path(self.dataset.storage_dir, name),
+            positions=self.history['position'],
+            actions=self.history['action'],
+            total_value=self.history['total_value'],
+            total_units=self.history['total_units']
+        )
 
     def max_possible_profit(self, stateless: bool = True) -> float:
         pass

@@ -85,6 +85,10 @@ class TradingDataset(Dataset, ABC):
         return self.market.storage_dir
 
     @property
+    def include_weekends(self) -> bool:
+        return self.market.include_weekends
+
+    @property
     def num_price_features(self) -> int:
         return len(self.price_features)
 

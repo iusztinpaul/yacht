@@ -203,45 +203,46 @@ class TradingRenderer(MplFinanceRenderer):
 
         self.start = start
         self.end = end
-        self.num_days = utils.get_num_days(start, end)
 
     def _render(self, title: str, save_file_path: str, **kwargs):
         from yacht.environments import Position
 
         positions: List[Optional[Position]] = kwargs['positions']
         actions: List[int] = kwargs['actions']
+        total_value: List[float] = kwargs.get('total_value', None)
+        total_units: List[float] = kwargs.get('total_units', None)
+
+        # Trim missing values from the end.
+        data = self.data.iloc[:len(positions)]
 
         # Calculate positions.
-        num_missing_positions = self.num_days - len(positions)
-        positions = positions + [np.nan] * num_missing_positions
-        positions: pd.Series = pd.Series(index=self.data.index, data=positions)
+        positions: pd.Series = pd.Series(index=data.index, data=positions)
 
         short_positions_index = positions[positions == Position.Short].index
         short_positions = positions.copy()
-        short_positions[positions == Position.Short] = self.data.loc[short_positions_index, 'High']
+        short_positions[positions == Position.Short] = data.loc[short_positions_index, 'High']
         short_positions[positions == Position.Long] = np.nan
         short_positions[positions == Position.Hold] = np.nan
 
         long_positions_index = positions[positions == Position.Long].index
         long_positions = positions.copy()
-        long_positions[positions == Position.Long] = self.data.loc[long_positions_index, 'Low']
+        long_positions[positions == Position.Long] = data.loc[long_positions_index, 'Low']
         long_positions[positions == Position.Short] = np.nan
         long_positions[positions == Position.Hold] = np.nan
 
         hold_position_index = positions[positions == Position.Hold].index
         hold_positions = positions.copy()
         hold_positions[positions == Position.Hold] = \
-            (self.data.loc[hold_position_index, 'Low'] + self.data.loc[hold_position_index, 'High']) / 2
+            (data.loc[hold_position_index, 'Low'] + data.loc[hold_position_index, 'High']) / 2
         hold_positions[positions == Position.Short] = np.nan
         hold_positions[positions == Position.Long] = np.nan
 
         # Calculate actions.
-        num_missing_actions = self.num_days - len(actions)
-        actions = actions + [0] * num_missing_actions
-        actions: pd.Series = pd.Series(index=self.data.index, data=actions)
+        actions: pd.Series = pd.Series(index=data.index, data=actions)
 
         additional_plots = [
-            mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions')
+            mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions'),
+            mpf.make_addplot(total_value, panel=2, color='b', type='bar', width=1, ylabel='Value')
         ]
         if len(short_positions[short_positions.notna()]) > 0:
             additional_plots.append(
@@ -256,18 +257,25 @@ class TradingRenderer(MplFinanceRenderer):
                 mpf.make_addplot(hold_positions, type='scatter', markersize=25, marker='.', color='y')
             )
 
+        panel_ratios = (1, 0.65, 0.65)
+        if total_units:
+            panel_ratios = (1, 0.65, 0.65, 0.65)
+
+            additional_plots.append(
+                mpf.make_addplot(total_units, panel=3, color='b', type='bar', width=1, ylabel='Units')
+            )
+
         mpf.plot(
-            self.data,
+            data,
             addplot=additional_plots,
             title=title,
             type='line',
             ylabel='Prices',
-            panel_ratios=(1, 1, 0.5),
+            panel_ratios=panel_ratios,
             figratio=(2, 1),
             figscale=1.5,
             savefig=save_file_path,
-            volume=True,
-            volume_panel=2
+            volume=False,
         )
 
 

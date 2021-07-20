@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from functools import reduce
 from typing import Union
 
+import pandas as pd
+
 
 def file_path_to_name(file_path: str) -> str:
     if not file_path:
@@ -29,26 +31,23 @@ def interval_to_timedelta(string: str) -> timedelta:
     return mappings[string]
 
 
-def get_train_val_num_days(
-        start: Union[str, datetime],
-        end: Union[str, datetime],
-        split_ratio: float,
-        offset_ratio: float
-) -> int:
-    train_val_start, train_val_end, _, _ = split_period(start, end, split_ratio, offset_ratio)
+def get_num_days(start: Union[str, datetime], end: Union[str, datetime], include_weekends: bool) -> int:
+    """
+        Returns the number of days between the interval [start, end).
+    """
 
-    return get_num_days(train_val_start, train_val_end)
-
-
-def get_num_days(start: Union[str, datetime], end: Union[str, datetime]) -> int:
     if isinstance(start, str):
         start = string_to_datetime(start)
     if isinstance(end, str):
         end = string_to_datetime(end)
 
-    difference = end - start
+    if include_weekends:
+        days = pd.date_range(start=start, end=end, freq='1d')
+    else:
+        days = pd.date_range(start=start, end=end, freq='B')
 
-    return difference.days
+    # Do not include the last day.
+    return len(days) - 1
 
 
 def split_period(
