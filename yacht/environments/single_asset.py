@@ -91,39 +91,35 @@ class SingleAssetTradingEnvironment(TradingEnv):
         }
 
     def _sell_asset(self, action: float):
-        # Take the close price from the '1d' frequency & at t + 1. '_tick_t' is incremented before state update.
-        # stock_close_price = self.prices['Close'].iloc[self._tick_t]
-        stock_close_price = self._s_t['1d'][-1, 0, 0]
+        asset_close_price = self._s_t['1d'][-1, 0, 0]
 
         # Sell only if the price is valid and current units are > 0.
-        if stock_close_price > 0 and self._total_units > 0:
+        if asset_close_price > 0 and self._total_units > 0:
             sell_num_shares = min(abs(action), self._total_units)
-            sell_amount = stock_close_price * sell_num_shares * (1 - self.sell_commission)
+            sell_amount = asset_close_price * sell_num_shares * (1 - self.sell_commission)
 
             # Update balance.
             self._total_value += sell_amount
             self._total_units -= sell_num_shares
-            self._total_loss_commissions += stock_close_price * sell_num_shares * self.sell_commission
+            self._total_loss_commissions += asset_close_price * sell_num_shares * self.sell_commission
         else:
             sell_num_shares = 0
 
         return sell_num_shares
 
     def _buy_asset(self, action: float):
-        # Take the close price from the '1d' frequency & at t + 1. '_tick_t' is incremented before state update.
-        # stock_close_price = self.prices['Close'].iloc[self._tick_t]
-        stock_close_price = self._s_t['1d'][-1, 0, 0]
+        asset_close_price = self._s_t['1d'][-1, 0, 0]
 
         # Buy only if the price is > 0.
-        if stock_close_price > 0:
-            available_amount = self._total_value / stock_close_price
+        if asset_close_price > 0:
+            available_amount = self._total_value // asset_close_price
             buy_num_shares = min(available_amount, action)
-            buy_amount = stock_close_price * buy_num_shares * (1 + self.buy_commission)
+            buy_amount = asset_close_price * buy_num_shares * (1 + self.buy_commission)
 
             # Update balance.
             self._total_value -= buy_amount
             self._total_units += buy_num_shares
-            self._total_loss_commissions += stock_close_price * buy_num_shares * self.buy_commission
+            self._total_loss_commissions += asset_close_price * buy_num_shares * self.buy_commission
         else:
             buy_num_shares = 0
 

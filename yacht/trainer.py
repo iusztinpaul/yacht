@@ -4,7 +4,7 @@ from typing import List
 
 import wandb
 from stable_baselines3.common.base_class import BaseAlgorithm
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from tqdm import tqdm
 
 from yacht import utils
@@ -48,9 +48,6 @@ class Trainer(ABC):
                 path=save_path
             )
 
-            if utils.get_experiment_tracker_name(self.dataset.storage_dir) == 'wandb':
-                wandb.save(save_path)
-
         self.close()
 
     def close(self):
@@ -68,7 +65,7 @@ class Trainer(ABC):
         ]
 
         if utils.get_experiment_tracker_name(self.dataset.storage_dir) == 'wandb':
-            wandb_callback = WandBCallback()
+            wandb_callback = WandBCallback(storage_dir=self.dataset.storage_dir)
             callbacks.append(wandb_callback)
 
         return callbacks
@@ -85,12 +82,25 @@ class NoEvalTrainer(Trainer):
             callback=self.build_callbacks(),
             tb_log_name=self.name,
             log_interval=self.train_config.collecting_n_steps,
-            # n_eval_episodes=1,
-            # eval_log_path=self.dataset.storage_dir,
-            # reset_num_timesteps=True
         )
 
         return self.agent
+
+    def build_callbacks(self) -> List[BaseCallback]:
+        callbacks = super().build_callbacks()
+        # Save the best model relative to the training environment.
+        callbacks.append(
+            EvalCallback(
+                eval_env=self.train_env,
+                eval_freq=self.train_config.collecting_n_steps * 5,
+                log_path=self.dataset.storage_dir,
+                best_model_save_path=utils.build_best_checkpoint_dir(self.dataset.storage_dir),
+                deterministic=True,
+                verbose=False
+            )
+        )
+
+        return callbacks
 
 
 class KFoldTrainer(Trainer):

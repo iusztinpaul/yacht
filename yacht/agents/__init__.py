@@ -54,8 +54,8 @@ def build_agent(
     agent_class = agents_registry[agent_config.name]
     if resume:
         if agent_path is None:
-            agent_path = utils.build_last_checkpoint_path(env.dataset.storage_dir)
-            logger.info(f'Resuming from the last checkpoint: {agent_path}')
+            agent_path = utils.build_best_checkpoint_path(env.dataset.storage_dir)
+            logger.info(f'Resuming from the best checkpoint: {agent_path}')
 
             assert os.path.exists(agent_path)
 

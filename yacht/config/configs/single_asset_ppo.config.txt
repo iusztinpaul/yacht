@@ -23,9 +23,13 @@ environment: {
     {
         name: 'AssetsPriceChangeRewardSchema'
         reward_scaling: 0.0001
+    },
+    {
+        name: 'ActionMagnitudeRewardSchema',
+        reward_scaling: 0.0001
     }
     ]
-    action_schema: 'ContinuousFloatActionSchema'
+    action_schema: 'ContinuousIntegerActionSchema'
     max_units_per_asset: 100
 }
 agent: {
@@ -43,7 +47,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 1
+    total_timesteps: 80000
     collecting_n_steps: 2048
     learning_rate: 0.00025
     batch_size: 64
@@ -61,5 +65,5 @@ train: {
 meta: {
     device: 'gpu'
     backtest: true,
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

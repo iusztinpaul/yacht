@@ -1,8 +1,11 @@
 import logging
+import os
 from math import log10
 
 import wandb
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+
+from yacht import utils
 
 logger = logging.getLogger(__file__)
 
@@ -29,6 +32,11 @@ class LoggerCallback(BaseCallback):
 
 
 class WandBCallback(BaseCallback):
+    def __init__(self, storage_dir: str, verbose: int = 0):
+        super().__init__(verbose)
+
+        self.storage_dir = storage_dir
+
     def _on_step(self) -> bool:
         return True
 
@@ -57,3 +65,12 @@ class WandBCallback(BaseCallback):
                 policy.action_net
             )
         )
+
+        if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
+            best_model_path = utils.build_best_checkpoint_path(self.storage_dir)
+            if os.path.exists(best_model_path):
+                wandb.save(best_model_path)
+
+            latest_checkpoint = utils.build_last_checkpoint_path(self.storage_dir)
+            if os.path.exists(latest_checkpoint):
+                wandb.save(latest_checkpoint)

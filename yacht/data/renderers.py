@@ -242,7 +242,7 @@ class TradingRenderer(MplFinanceRenderer):
 
         additional_plots = [
             mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions'),
-            mpf.make_addplot(total_value, panel=2, color='b', type='bar', width=1, ylabel='Value')
+            mpf.make_addplot(total_value, panel=2, color='b', type='bar', width=1, ylabel='Value/Cash')
         ]
         if len(short_positions[short_positions.notna()]) > 0:
             additional_plots.append(
@@ -257,14 +257,15 @@ class TradingRenderer(MplFinanceRenderer):
                 mpf.make_addplot(hold_positions, type='scatter', markersize=25, marker='.', color='y')
             )
 
-        panel_ratios = (1, 0.65, 0.65)
+        panel_ratios = (1, 0.75, 0.75)
         if total_units:
-            panel_ratios = (1, 0.65, 0.65, 0.65)
+            panel_ratios = (1, 0.75, 0.75, 0.75)
 
             additional_plots.append(
                 mpf.make_addplot(total_units, panel=3, color='b', type='bar', width=1, ylabel='Units')
             )
 
+        # TODO: See how to make panel y numbers not to overlap on the edges.
         mpf.plot(
             data,
             addplot=additional_plots,
@@ -275,7 +276,7 @@ class TradingRenderer(MplFinanceRenderer):
             figratio=(2, 1),
             figscale=1.5,
             savefig=save_file_path,
-            volume=False,
+            volume=False
         )
 
 

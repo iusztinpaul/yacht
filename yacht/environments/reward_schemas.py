@@ -30,15 +30,16 @@ class RewardSchemaAggregator(RewardSchema):
         return sum(rewards)
 
 
-class AssetsPriceChangeRewardSchema(RewardSchema):
+class ScaledRewardSchema(RewardSchema, ABC):
     def __init__(self, reward_scaling: float):
         assert 0 < reward_scaling <= 1, '"reward_scaling" should be within (0, 1].'
 
         self.reward_scaling = reward_scaling
 
-    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict):
-        # TODO: Fix this method for k-fold setup. Probably on the edge of the folds this wont work.
 
+class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
+    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
+        # TODO: Fix this method for k-fold setup. Probably on the edge of the folds this wont work.
         begin_total_assets = current_state['env_features'][-1][0] + \
             current_state['env_features'][-1][1] * current_state['1d'][-1, 0, 0]
         end_total_assets = next_state['env_features'][-1][0] + \
@@ -46,6 +47,18 @@ class AssetsPriceChangeRewardSchema(RewardSchema):
 
         reward = end_total_assets - begin_total_assets
         reward = reward * self.reward_scaling
+
+        return reward
+
+
+class ActionMagnitudeRewardSchema(ScaledRewardSchema):
+    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
+        # TODO: Make this function to support multiple asset actions
+        assert action.shape[0] == 1 and len(action.shape) == 1
+        action = action.item()
+
+        reward = action ** 2
+        reward = -reward * self.reward_scaling
 
         return reward
 
@@ -154,6 +167,7 @@ class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
 
 reward_schema_registry = {
     'AssetsPriceChangeRewardSchema': AssetsPriceChangeRewardSchema,
+    'ActionMagnitudeRewardSchema': ActionMagnitudeRewardSchema,
     'PriceChangeRewardSchema': PriceChangeRewardSchema,
     'LeaderBoardRewardSchema': LeaderBoardRewardSchema
 }
