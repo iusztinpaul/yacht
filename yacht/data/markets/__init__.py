@@ -19,7 +19,8 @@ def build_market(input_config, storage_path) -> Market:
         'features': list(input_config.features),
         'api_key': os.environ['MARKET_API_KEY'],
         'api_secret': os.environ['MARKET_API_SECRET'],
-        'storage_dir': storage_path
+        'storage_dir': storage_path,
+        'include_weekends': input_config.include_weekends
     }
     market_name = input_config.market
     if len(input_config.technical_indicators) > 0:

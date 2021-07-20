@@ -16,8 +16,9 @@ class Binance(H5Market):
             api_key,
             api_secret,
             storage_dir: str,
+            include_weekends: bool
     ):
-        super().__init__(features, api_key, api_secret, storage_dir, 'binance.h5')
+        super().__init__(features, api_key, api_secret, storage_dir, 'binance.h5', include_weekends)
 
         self.client = Client(api_key, api_secret)
 

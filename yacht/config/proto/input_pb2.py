@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1eyacht/config/proto/input.proto\x12\x12yacht.config.proto\"\xa7\x02\n\x0bInputConfig\x12\x0e\n\x06market\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x61taset\x18\x02 \x01(\t\x12\x18\n\x10price_normalizer\x18\x03 \x01(\t\x12\x18\n\x10other_normalizer\x18\x04 \x01(\t\x12\x0f\n\x07tickers\x18\x05 \x03(\t\x12\x11\n\tintervals\x18\x06 \x03(\t\x12\x10\n\x08\x66\x65\x61tures\x18\x07 \x03(\t\x12\x1c\n\x14technical_indicators\x18\x08 \x03(\t\x12\r\n\x05start\x18\t \x01(\t\x12\x0b\n\x03\x65nd\x18\n \x01(\t\x12\x1d\n\x15\x62\x61\x63k_test_split_ratio\x18\x0b \x01(\x02\x12\x1f\n\x17\x62\x61\x63k_test_embargo_ratio\x18\x0c \x01(\x02\x12\x13\n\x0bwindow_size\x18\r \x01(\x05\x62\x06proto3')
+  serialized_pb=_b('\n\x1eyacht/config/proto/input.proto\x12\x12yacht.config.proto\"\xc1\x02\n\x0bInputConfig\x12\x0e\n\x06market\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x61taset\x18\x02 \x01(\t\x12\x18\n\x10price_normalizer\x18\x03 \x01(\t\x12\x18\n\x10other_normalizer\x18\x04 \x01(\t\x12\x0f\n\x07tickers\x18\x05 \x03(\t\x12\x11\n\tintervals\x18\x06 \x03(\t\x12\x10\n\x08\x66\x65\x61tures\x18\x07 \x03(\t\x12\x1c\n\x14technical_indicators\x18\x08 \x03(\t\x12\r\n\x05start\x18\t \x01(\t\x12\x0b\n\x03\x65nd\x18\n \x01(\t\x12\x1d\n\x15\x62\x61\x63k_test_split_ratio\x18\x0b \x01(\x02\x12\x1f\n\x17\x62\x61\x63k_test_embargo_ratio\x18\x0c \x01(\x02\x12\x13\n\x0bwindow_size\x18\r \x01(\x05\x12\x18\n\x10include_weekends\x18\x0e \x01(\x08\x62\x06proto3')
 )
 
 
@@ -123,6 +123,13 @@ _INPUTCONFIG = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='include_weekends', full_name='yacht.config.proto.InputConfig.include_weekends', index=13,
+      number=14, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -136,7 +143,7 @@ _INPUTCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=55,
-  serialized_end=350,
+  serialized_end=376,
 )
 
 DESCRIPTOR.message_types_by_name['InputConfig'] = _INPUTCONFIG

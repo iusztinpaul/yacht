@@ -15,6 +15,9 @@ dataset_registry = {
 }
 
 
+logger = logging.getLogger(__file__)
+
+
 def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = True) -> TradingDataset:
     assert mode in ('trainval', 'test')
 
@@ -33,6 +36,9 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
         input_config.back_test_split_ratio,
         input_config.back_test_embargo_ratio
     )
+
+    logger.info(f'Trainval split: {train_val_start} - {train_val_end}')
+    logger.info(f'Test split: {back_test_start} - {back_test_end}')
 
     if render_split:
         market.download(

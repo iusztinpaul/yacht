@@ -85,9 +85,9 @@ class NoEvalTrainer(Trainer):
             callback=self.build_callbacks(),
             tb_log_name=self.name,
             log_interval=self.train_config.collecting_n_steps,
-            n_eval_episodes=1,
-            eval_log_path=self.dataset.storage_dir,
-            reset_num_timesteps=True
+            # n_eval_episodes=1,
+            # eval_log_path=self.dataset.storage_dir,
+            # reset_num_timesteps=True
         )
 
         return self.agent

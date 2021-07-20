@@ -14,9 +14,10 @@ class Yahoo(H5Market):
             features: List[str],
             api_key,
             api_secret,
-            storage_dir: str
+            storage_dir: str,
+            include_weekends: bool
     ):
-        super().__init__(features, api_key, api_secret, storage_dir, 'yahoo.h5')
+        super().__init__(features, api_key, api_secret, storage_dir, 'yahoo.h5', include_weekends)
 
     def request(self, ticker: str, interval: str, start: datetime, end: datetime = None) -> List[List[Any]]:
         assert interval == '1d', 'Yahoo Finance supports only interval"1d".'
@@ -29,6 +30,8 @@ class Yahoo(H5Market):
             auto_adjust=True,
             prepost=False
         )
+
+        assert len(ticker_data) > 0
 
         return ticker_data
 

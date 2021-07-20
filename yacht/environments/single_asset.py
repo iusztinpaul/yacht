@@ -91,7 +91,8 @@ class SingleAssetTradingEnvironment(TradingEnv):
 
     def _sell_asset(self, action: float):
         # Take the close price from the '1d' frequency & at t + 1. '_tick_t' is incremented before state update.
-        stock_close_price = self.prices['Close'].iloc[self._tick_t]
+        # stock_close_price = self.prices['Close'].iloc[self._tick_t]
+        stock_close_price = self._s_t['1d'][-1, 0, 0]
 
         # Sell only if the price is valid and current units are > 0.
         if stock_close_price > 0 and self._total_units > 0:
@@ -109,7 +110,8 @@ class SingleAssetTradingEnvironment(TradingEnv):
 
     def _buy_asset(self, action: float):
         # Take the close price from the '1d' frequency & at t + 1. '_tick_t' is incremented before state update.
-        stock_close_price = self.prices['Close'].iloc[self._tick_t]
+        # stock_close_price = self.prices['Close'].iloc[self._tick_t]
+        stock_close_price = self._s_t['1d'][-1, 0, 0]
 
         # Buy only if the price is > 0.
         if stock_close_price > 0:

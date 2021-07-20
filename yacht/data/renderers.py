@@ -168,7 +168,6 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
             start,
             (x_line_left - start) / 2 + start,
             x_line_left,
-            (end - x_line_left) / 2 + x_line_left,
             end
         ])
 

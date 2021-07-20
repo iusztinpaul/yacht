@@ -23,11 +23,13 @@ class Market(ABC):
             features: List[str],
             api_key,
             api_secret,
-            storage_dir: str
+            storage_dir: str,
+            include_weekends: bool
     ):
         self.features = list(set(features).union(self.MANDATORY_FEATURES))
         self.api_key = api_key
         self.api_secret = api_secret
+        self.include_weekends = include_weekends
 
         self.storage_dir = storage_dir
         if not os.path.exists(self.storage_dir):
@@ -106,11 +108,12 @@ class H5Market(Market, ABC):
             api_key,
             api_secret,
             storage_dir: str,
-            storage_filename: str
+            storage_filename: str,
+            include_weekends: bool
     ):
         self.storage_file = os.path.join(storage_dir, storage_filename)
 
-        super().__init__(features, api_key, api_secret, storage_dir)
+        super().__init__(features, api_key, api_secret, storage_dir, include_weekends)
 
     def open(self) -> pd.HDFStore:
         return pd.HDFStore(self.storage_file)
@@ -130,15 +133,21 @@ class H5Market(Market, ABC):
             raise RuntimeError(f'Table: "{interval}" not supported')
         end = end - timedelta(microseconds=1)
 
-        database_to_pandas_freq = {
-            'd': 'd',
-            'h': 'h',
-            'm': 'min'
-        }
-        freq = interval[:-1] + database_to_pandas_freq[interval[-1].lower()]
-        date_time_index = pd.date_range(start=start, end=end, freq=freq)
+        if self.include_weekends:
+            database_to_pandas_freq = {
+                'd': 'd',
+                'h': 'h',
+                'm': 'min'
+            }
+            freq = interval[:-1] + database_to_pandas_freq[interval[-1].lower()]
+        else:
+            # TODO: Adapt the business days logic to other intervals.
+            assert interval == '1d'
+            freq = 'B'
+
         # Create the desired data span because there are missing values. In this way we will know exactly what data is
         # missing and at what index.
+        date_time_index = pd.date_range(start=start, end=end, freq=freq)
         final_data = pd.DataFrame(index=date_time_index, columns=self.features)
 
         piece_of_data = self.connection[interval].loc[start:end]
@@ -165,7 +174,8 @@ class H5Market(Market, ABC):
 
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
-        return len(valid_values) >= 0.95 * len(time_series)
+        # Also stocks have data only in the work days.
+        return len(valid_values) >= 0.68 * len(time_series)
 
     def cache_request(self, interval: str, data: pd.DataFrame):
         if interval in self.connection:
