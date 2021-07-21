@@ -50,9 +50,8 @@ class Trainer(ABC):
             )
 
             # TODO: Find a way to add this line to the wandb classes for consistency.
-            latest_checkpoint = utils.build_last_checkpoint_path(self.dataset.storage_dir)
-            if os.path.exists(latest_checkpoint):
-                wandb.save(latest_checkpoint)
+            if utils.get_experiment_tracker_name(self.dataset.storage_dir) == 'wandb':
+                wandb.save(save_path)
 
         self.close()
 

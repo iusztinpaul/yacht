@@ -29,6 +29,9 @@ class WandBContext:
             self._init_wandb()
 
             logger.info(f'WandB run name: {self.run_name}')
+        else:
+            # This will make the context independent of other runs.
+            cache_experiment_tracker_name(self.storage_dir, '')
 
         return self
 

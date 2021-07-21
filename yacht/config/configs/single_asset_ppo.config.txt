@@ -23,10 +23,6 @@ environment: {
     {
         name: 'AssetsPriceChangeRewardSchema'
         reward_scaling: 0.0001
-    },
-    {
-        name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.0001
     }
     ]
     action_schema: 'ContinuousIntegerActionSchema'
@@ -37,7 +33,7 @@ agent: {
     verbose: true
     policy: {
         name: 'MlpPolicy'
-        activation_fn: 'ReLU',
+        activation_fn: 'Tanh',
         net_arch: {
             shared: []
             vf: [64, 64]
