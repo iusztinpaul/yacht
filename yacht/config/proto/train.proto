@@ -6,16 +6,16 @@ message TrainConfig {
   string trainer_name = 1;
   int32 total_timesteps = 2;
   int32 collecting_n_steps = 3;
-  float learning_rate = 4;
+  double learning_rate = 4;
   int32 batch_size = 5;
   int32 n_epochs = 6;
-  float gamma = 7;
-  float gae_lambda = 8;
-  float clip_range = 9;
-  float entropy_coefficient = 10;
-  float vf_coefficient = 11;
-  float max_grad_norm = 12;
+  double gamma = 7;
+  double gae_lambda = 8;
+  double clip_range = 9;
+  double entropy_coefficient = 10;
+  double vf_coefficient = 11;
+  double max_grad_norm = 12;
   int32 k_fold_splits = 13;
-  float k_fold_purge_ratio = 14;
-  float k_fold_embargo_ratio = 15;
+  double k_fold_purge_ratio = 14;
+  double k_fold_embargo_ratio = 15;
 }

@@ -5,6 +5,6 @@ package yacht.config.proto;
 
 message RewardSchemaConfig {
     string name = 1;
-    float reward_scaling = 2;
-    repeated float density_thresholds = 3;
+    double reward_scaling = 2;
+    repeated double density_thresholds = 3;
 }

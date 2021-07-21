@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1eyacht/config/proto/train.proto\x12\x12yacht.config.proto\"\xe9\x02\n\x0bTrainConfig\x12\x14\n\x0ctrainer_name\x18\x01 \x01(\t\x12\x17\n\x0ftotal_timesteps\x18\x02 \x01(\x05\x12\x1a\n\x12\x63ollecting_n_steps\x18\x03 \x01(\x05\x12\x15\n\rlearning_rate\x18\x04 \x01(\x02\x12\x12\n\nbatch_size\x18\x05 \x01(\x05\x12\x10\n\x08n_epochs\x18\x06 \x01(\x05\x12\r\n\x05gamma\x18\x07 \x01(\x02\x12\x12\n\ngae_lambda\x18\x08 \x01(\x02\x12\x12\n\nclip_range\x18\t \x01(\x02\x12\x1b\n\x13\x65ntropy_coefficient\x18\n \x01(\x02\x12\x16\n\x0evf_coefficient\x18\x0b \x01(\x02\x12\x15\n\rmax_grad_norm\x18\x0c \x01(\x02\x12\x15\n\rk_fold_splits\x18\r \x01(\x05\x12\x1a\n\x12k_fold_purge_ratio\x18\x0e \x01(\x02\x12\x1c\n\x14k_fold_embargo_ratio\x18\x0f \x01(\x02\x62\x06proto3')
+  serialized_pb=_b('\n\x1eyacht/config/proto/train.proto\x12\x12yacht.config.proto\"\xe9\x02\n\x0bTrainConfig\x12\x14\n\x0ctrainer_name\x18\x01 \x01(\t\x12\x17\n\x0ftotal_timesteps\x18\x02 \x01(\x05\x12\x1a\n\x12\x63ollecting_n_steps\x18\x03 \x01(\x05\x12\x15\n\rlearning_rate\x18\x04 \x01(\x01\x12\x12\n\nbatch_size\x18\x05 \x01(\x05\x12\x10\n\x08n_epochs\x18\x06 \x01(\x05\x12\r\n\x05gamma\x18\x07 \x01(\x01\x12\x12\n\ngae_lambda\x18\x08 \x01(\x01\x12\x12\n\nclip_range\x18\t \x01(\x01\x12\x1b\n\x13\x65ntropy_coefficient\x18\n \x01(\x01\x12\x16\n\x0evf_coefficient\x18\x0b \x01(\x01\x12\x15\n\rmax_grad_norm\x18\x0c \x01(\x01\x12\x15\n\rk_fold_splits\x18\r \x01(\x05\x12\x1a\n\x12k_fold_purge_ratio\x18\x0e \x01(\x01\x12\x1c\n\x14k_fold_embargo_ratio\x18\x0f \x01(\x01\x62\x06proto3')
 )
 
 
@@ -55,7 +55,7 @@ _TRAINCONFIG = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='learning_rate', full_name='yacht.config.proto.TrainConfig.learning_rate', index=3,
-      number=4, type=2, cpp_type=6, label=1,
+      number=4, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -76,42 +76,42 @@ _TRAINCONFIG = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='gamma', full_name='yacht.config.proto.TrainConfig.gamma', index=6,
-      number=7, type=2, cpp_type=6, label=1,
+      number=7, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='gae_lambda', full_name='yacht.config.proto.TrainConfig.gae_lambda', index=7,
-      number=8, type=2, cpp_type=6, label=1,
+      number=8, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='clip_range', full_name='yacht.config.proto.TrainConfig.clip_range', index=8,
-      number=9, type=2, cpp_type=6, label=1,
+      number=9, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='entropy_coefficient', full_name='yacht.config.proto.TrainConfig.entropy_coefficient', index=9,
-      number=10, type=2, cpp_type=6, label=1,
+      number=10, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='vf_coefficient', full_name='yacht.config.proto.TrainConfig.vf_coefficient', index=10,
-      number=11, type=2, cpp_type=6, label=1,
+      number=11, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='max_grad_norm', full_name='yacht.config.proto.TrainConfig.max_grad_norm', index=11,
-      number=12, type=2, cpp_type=6, label=1,
+      number=12, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -125,14 +125,14 @@ _TRAINCONFIG = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='k_fold_purge_ratio', full_name='yacht.config.proto.TrainConfig.k_fold_purge_ratio', index=13,
-      number=14, type=2, cpp_type=6, label=1,
+      number=14, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='k_fold_embargo_ratio', full_name='yacht.config.proto.TrainConfig.k_fold_embargo_ratio', index=14,
-      number=15, type=2, cpp_type=6, label=1,
+      number=15, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,

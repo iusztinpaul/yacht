@@ -14,8 +14,8 @@ message InputConfig {
   repeated string technical_indicators = 8;
   string start = 9;
   string end = 10;
-  float back_test_split_ratio = 11;
-  float back_test_embargo_ratio = 12;
+  double back_test_split_ratio = 11;
+  double back_test_embargo_ratio = 12;
   int32 window_size = 13;
   bool include_weekends = 14;
 }

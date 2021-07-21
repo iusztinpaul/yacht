@@ -97,7 +97,7 @@ def build_agent(
             ent_coef=train_config.entropy_coefficient,
             vf_coef=train_config.vf_coefficient,
             max_grad_norm=train_config.max_grad_norm,
-            policy_kwargs=policy_kwargs,
+        #     policy_kwargs=policy_kwargs,
             tensorboard_log=os.path.join(storage_dir, 'tensorboard'),
             device='cuda' if config.meta.device == 'gpu' else config.meta.device
         )

@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n&yacht/config/proto/reward_schema.proto\x12\x12yacht.config.proto\x1a\x19google/protobuf/any.proto\"V\n\x12RewardSchemaConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0ereward_scaling\x18\x02 \x01(\x02\x12\x1a\n\x12\x64\x65nsity_thresholds\x18\x03 \x03(\x02\x62\x06proto3')
+  serialized_pb=_b('\n&yacht/config/proto/reward_schema.proto\x12\x12yacht.config.proto\x1a\x19google/protobuf/any.proto\"V\n\x12RewardSchemaConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0ereward_scaling\x18\x02 \x01(\x01\x12\x1a\n\x12\x64\x65nsity_thresholds\x18\x03 \x03(\x01\x62\x06proto3')
   ,
   dependencies=[google_dot_protobuf_dot_any__pb2.DESCRIPTOR,])
 
@@ -43,14 +43,14 @@ _REWARDSCHEMACONFIG = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='reward_scaling', full_name='yacht.config.proto.RewardSchemaConfig.reward_scaling', index=1,
-      number=2, type=2, cpp_type=6, label=1,
+      number=2, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='density_thresholds', full_name='yacht.config.proto.RewardSchemaConfig.density_thresholds', index=2,
-      number=3, type=2, cpp_type=6, label=3,
+      number=3, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
