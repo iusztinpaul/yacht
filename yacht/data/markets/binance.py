@@ -1,12 +1,17 @@
+import logging
 from datetime import datetime
 from typing import Any, List
 
 import pandas as pd
 
 from binance.client import Client
+from binance.exceptions import BinanceAPIException
 
 from yacht.data.markets.base import H5Market
 from yacht.data.markets.mixins import TechnicalIndicatorMixin
+
+
+logger = logging.getLogger(__file__)
 
 
 class Binance(H5Market):
@@ -38,7 +43,11 @@ class Binance(H5Market):
             end = end.strftime('%d %b, %Y')
             kwargs['end_str'] = end
 
-        return self.client.get_historical_klines(**kwargs)
+        try:
+            return self.client.get_historical_klines(**kwargs)
+        except BinanceAPIException as e:
+            logger.info(f'Binance does not support ticker: {ticker}')
+            raise e
 
     def process_request(self, data: List[List[Any]]) -> pd.DataFrame:
         df = pd.DataFrame(

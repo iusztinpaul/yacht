@@ -72,11 +72,11 @@ class Market(ABC):
         pass
 
     @abstractmethod
-    def is_cached(self, interval: str, start: datetime, end: datetime) -> bool:
+    def is_cached(self, ticker: str, interval: str, start: datetime, end: datetime) -> bool:
         pass
 
     @abstractmethod
-    def cache_request(self, interval: str, data: pd.DataFrame):
+    def cache_request(self, ticker: str, interval: str, data: pd.DataFrame):
         pass
 
     def download(self, tickers: Union[str, List[str]], interval: str, start: datetime, end: datetime = None):
@@ -87,7 +87,7 @@ class Market(ABC):
             self._download(ticker, interval, start, end)
 
     def _download(self, ticker: str, interval: str, start: datetime, end: datetime = None):
-        if self.is_cached(interval, start, end):
+        if self.is_cached(ticker, interval, start, end):
             return
 
         logger.info(f'[{interval}] - {ticker} - Downloading from "{start}" to "{end}"')
@@ -98,7 +98,7 @@ class Market(ABC):
         assert self.MANDATORY_FEATURES.intersection(set(data.columns)) == self.MANDATORY_FEATURES, \
             'Some mandatory features are missing.'
 
-        self.cache_request(interval, data)
+        self.cache_request(ticker, interval, data)
 
 
 class H5Market(Market, ABC):
@@ -124,12 +124,16 @@ class H5Market(Market, ABC):
     def persist(self, interval: str):
         self.connection[interval].to_hdf(self.storage_file, interval, mode='w')
 
+    @classmethod
+    def create_key(cls, ticker: str, interval: str) -> str:
+        return f'/{ticker}/{interval}'
+
     def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
         """
             Returns: data within [start, end)
         """
 
-        if interval not in self.connection:
+        if not self.is_cached(ticker, interval, start, end):
             raise RuntimeError(f'Table: "{interval}" not supported')
         end = end - timedelta(microseconds=1)
 
@@ -150,7 +154,7 @@ class H5Market(Market, ABC):
         date_time_index = pd.date_range(start=start, end=end, freq=freq)
         final_data = pd.DataFrame(index=date_time_index, columns=self.features)
 
-        piece_of_data = self.connection[interval].loc[start:end]
+        piece_of_data = self.connection[self.create_key(ticker, interval)].loc[start:end]
         final_data.update(piece_of_data)
 
         final_data.fillna(method='bfill', inplace=True, axis=0)
@@ -158,8 +162,9 @@ class H5Market(Market, ABC):
 
         return final_data
 
-    def is_cached(self, interval: str, start: datetime, end: datetime) -> bool:
-        if interval not in self.connection:
+    def is_cached(self, ticker: str, interval: str, start: datetime, end: datetime) -> bool:
+        key = self.create_key(ticker, interval)
+        if key not in self.connection:
             return False
 
         freq_mappings = {
@@ -170,15 +175,17 @@ class H5Market(Market, ABC):
         freq = f'{interval[:-1]}{freq_mappings[interval[-1]]}'
         time_series = pd.date_range(start, end, freq=freq)
         # Query how much of the requested time series is in the cache.
-        valid_values = time_series[time_series.isin(self.connection[interval].index)]
+        valid_values = time_series[time_series.isin(self.connection[key].index)]
 
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
         # Also stocks have data only in the work days.
         return len(valid_values) >= 0.68 * len(time_series)
 
-    def cache_request(self, interval: str, data: pd.DataFrame):
-        if interval in self.connection:
-            self.connection[interval] = self.connection[interval].combine_first(data)
+    def cache_request(self, ticker: str, interval: str, data: pd.DataFrame):
+        key = self.create_key(ticker, interval)
+
+        if key in self.connection:
+            self.connection[key] = self.connection[key].combine_first(data)
         else:
-            self.connection[interval] = data
+            self.connection[key] = data

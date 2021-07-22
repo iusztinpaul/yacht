@@ -18,13 +18,14 @@ class TechnicalIndicatorMixin:
         self.data_features = self.features
         self.features = self.technical_indicators + self.features
 
-    def is_cached(self, interval: str, start: datetime, end: datetime) -> bool:
-        value = super().is_cached(interval, start, end)
+    def is_cached(self, ticker: str, interval: str, start: datetime, end: datetime) -> bool:
+        value = super().is_cached(ticker, interval, start, end)
 
-        if interval not in self.connection:
-            return value
+        if value is False:
+            return False
 
-        data_columns = set(self.connection[interval].columns)
+        key = self.create_key(ticker, interval)
+        data_columns = set(self.connection[key].columns)
 
         return set(self.technical_indicators).issubset(data_columns) and value
 
