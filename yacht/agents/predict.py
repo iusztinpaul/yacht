@@ -6,17 +6,16 @@ from stable_baselines3.common.base_class import BaseAlgorithm
 
 from yacht.environments import TradingEnv
 
-
 logger = logging.getLogger(__file__)
 
 
 def run_agent(
         env: TradingEnv,
         agent: BaseAlgorithm,
+        deterministic: bool = False,
         render: bool = True,
         render_all: bool = False,
         name: str = 'backtest',
-        deterministic: bool = False
 ) -> pd.DataFrame:
     assert render is not True or render_all is not True, \
         'Either render on the fly or in the end.'

@@ -27,10 +27,10 @@ def backtest(
     report = run_agent(
         env=env,
         agent=agent,
+        deterministic=deterministic,
         render=render,
         render_all=render_all,
-        name=name,
-        deterministic=deterministic
+        name=name
     )
     backtest_results = get_daily_return(report, value_col_name='total')
 

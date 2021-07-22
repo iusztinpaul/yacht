@@ -3,29 +3,33 @@ input: {
     dataset: 'DayMultiFrequencyDataset'
     price_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
     other_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
-    tickers: ['AAPL']
+    tickers: ['BTC-USD']
     intervals: ['1d']
     features: ['Close']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/10/2014'
-    end: '1/7/2021'
-    back_test_split_ratio: 0.27
+    end: '1/10/2020'
+    back_test_split_ratio: 0.20
     back_test_embargo_ratio: 0.03
     window_size: 1
     include_weekends: false
 }
 environment: {
     name: 'SingleAssetTradingEnvironment-v0'
-    buy_commission: 0.001
-    sell_commission: 0.001
+    buy_commission: 0.00
+    sell_commission: 0.00
     initial_cash_position: 1000000
     reward_schemas: [
     {
         name: 'AssetsPriceChangeRewardSchema'
         reward_scaling: 0.0001
+    },
+    {
+        name: 'ActionMagnitudeRewardSchema',
+        reward_scaling: 0.000001
     }
     ]
-    action_schema: 'ContinuousIntegerActionSchema'
+    action_schema: 'ContinuousFloatActionSchema'
     max_units_per_asset: 100
 }
 agent: {

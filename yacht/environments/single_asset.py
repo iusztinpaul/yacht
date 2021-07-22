@@ -112,7 +112,7 @@ class SingleAssetTradingEnvironment(TradingEnv):
 
         # Buy only if the price is > 0.
         if asset_close_price > 0:
-            available_amount = self._total_value // asset_close_price
+            available_amount = self._total_value / asset_close_price
             buy_num_shares = min(available_amount, action)
             buy_amount = asset_close_price * buy_num_shares * (1 + self.buy_commission)
 
