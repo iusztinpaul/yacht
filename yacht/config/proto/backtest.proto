@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package yacht.config.proto;
+
+message BacktestConfig {
+  bool run = 1;
+  bool deterministic = 2;
+}

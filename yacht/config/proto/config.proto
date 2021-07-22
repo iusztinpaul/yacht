@@ -6,6 +6,7 @@ import "yacht/config/proto/input.proto";
 import "yacht/config/proto/environment.proto";
 import "yacht/config/proto/agent.proto";
 import "yacht/config/proto/train.proto";
+import "yacht/config/proto/backtest.proto";
 import "yacht/config/proto/meta.proto";
 
 message Config {
@@ -13,5 +14,6 @@ message Config {
    EnvironmentConfig environment = 2;
    AgentConfig agent = 3;
    TrainConfig train = 4;
-   MetaConfig meta = 5;
+   BacktestConfig backtest = 5;
+   MetaConfig meta = 6;
 }

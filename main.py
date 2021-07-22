@@ -84,7 +84,7 @@ if __name__ == '__main__':
             with trainer:
                 agent = trainer.train()
 
-                if config.meta.backtest:
+                if config.backtest.run:
                     logger.info('Starting back testing...')
 
                     logger.info('Trainval split:')
@@ -92,6 +92,7 @@ if __name__ == '__main__':
                     evaluation.backtest(
                         train_env,
                         agent,
+                        deterministic=config.backtest.deterministic,
                         render=False,
                         render_all=True,
                         name='trainval_backtest'
@@ -103,6 +104,7 @@ if __name__ == '__main__':
                     evaluation.backtest(
                         test_env,
                         agent,
+                        deterministic=config.backtest.deterministic,
                         render=False,
                         render_all=True,
                         name='test_backtest'
@@ -128,6 +130,7 @@ if __name__ == '__main__':
             evaluation.backtest(
                 trainval_env,
                 agent,
+                deterministic=config.backtest.deterministic,
                 render=False,
                 render_all=True,
                 name='trainval_backtest'
@@ -146,6 +149,7 @@ if __name__ == '__main__':
             evaluation.backtest(
                 test_env,
                 agent,
+                deterministic=config.backtest.deterministic,
                 render=False,
                 render_all=True,
                 name='test_backtest'

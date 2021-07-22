@@ -15,7 +15,9 @@ message TrainConfig {
   double entropy_coefficient = 10;
   double vf_coefficient = 11;
   double max_grad_norm = 12;
-  int32 k_fold_splits = 13;
-  double k_fold_purge_ratio = 14;
-  double k_fold_embargo_ratio = 15;
+  bool use_sde = 13;
+  int32 sde_sample_freq = 14;
+  int32 k_fold_splits = 15;
+  double k_fold_purge_ratio = 16;
+  double k_fold_embargo_ratio = 17;
 }

@@ -17,6 +17,7 @@ logger = logging.getLogger(__file__)
 def backtest(
         env: TradingEnv,
         agent: BaseAlgorithm,
+        deterministic: bool = False,
         render: bool = True,
         render_all: bool = False,
         name: str = 'backtest',
@@ -28,7 +29,8 @@ def backtest(
         agent=agent,
         render=render,
         render_all=render_all,
-        name=name
+        name=name,
+        deterministic=deterministic
     )
     backtest_results = get_daily_return(report, value_col_name='total')
 

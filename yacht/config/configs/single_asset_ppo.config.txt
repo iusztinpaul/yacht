@@ -35,7 +35,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         net_arch: {
-            shared: []
+            shared: [128]
             vf: [64, 64]
             pi: [64, 64]
         }
@@ -54,12 +54,17 @@ train: {
     entropy_coefficient: 0.01,
     vf_coefficient: 0.5
     max_grad_norm: 0.5
+    use_sde: false
+    sde_sample_freq: -1
     k_fold_splits: 3
     k_fold_purge_ratio: 0.03
     k_fold_embargo_ratio: 0.01
 }
+backtest: {
+    run: true
+    deterministic: false
+}
 meta: {
-    device: 'gpu'
-    backtest: true,
+    device: 'auto'
     experiment_tracker: 'wandb'
 }

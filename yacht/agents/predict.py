@@ -15,7 +15,8 @@ def run_agent(
         agent: BaseAlgorithm,
         render: bool = True,
         render_all: bool = False,
-        name: str = 'backtest'
+        name: str = 'backtest',
+        deterministic: bool = False
 ) -> pd.DataFrame:
     assert render is not True or render_all is not True, \
         'Either render on the fly or in the end.'
@@ -24,7 +25,7 @@ def run_agent(
 
     observation = env.reset()
     while True:
-        action, _states = agent.predict(observation, deterministic=True)
+        action, _states = agent.predict(observation, deterministic=deterministic)
         observation, reward, done, info = env.step(action)
 
         if render:
