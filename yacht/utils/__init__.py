@@ -1,3 +1,5 @@
+import colorlog
+
 from .paths import *
 from .cache import *
 from .misc import *
@@ -10,7 +12,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
-from ..config import Config
+from yacht.config import Config
 
 logger_levels = {
     'info': logging.INFO,
@@ -20,25 +22,52 @@ logger_levels = {
 
 
 def setup_logger(level: str, storage_dir: Optional[str] = None):
-    Path(storage_dir).mkdir(parents=True, exist_ok=True)
+    if storage_dir:
+        log_dir = build_log_path(storage_dir)
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+    else:
+        log_dir = None
 
+    # Set logger format & colour.
+    log_format = (
+        '%(asctime)s - '
+        '%(name)s - '
+        '%(funcName)s - '
+        '%(levelname)s - '
+        '%(message)s'
+    )
+    bold_seq = '\033[1m'
+    colorlog_format = (
+        f'{bold_seq} '
+        '%(log_color)s '
+        f'{log_format}'
+    )
+    colorlog.basicConfig(format=colorlog_format)
+
+    # Set logging level.
     root_logger = logging.getLogger()
     root_logger.setLevel(logger_levels[level])
 
-    log_formatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(log_formatter)
-    root_logger.addHandler(console_handler)
-
     if storage_dir:
-        file_handler = logging.FileHandler(os.path.join(storage_dir, 'logger.log'))
-        file_handler.setFormatter(log_formatter)
+        formatter = logging.Formatter(log_format)
+
+        # Set full logger.
+        file_handler = logging.FileHandler(os.path.join(log_dir, 'app.log'))
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
 
-    log_dir = os.path.join(storage_dir, 'log')
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
+        # Set warning logger.
+        file_handler = logging.FileHandler(os.path.join(log_dir, 'app.warning.log'))
+        file_handler.setLevel(logging.WARNING)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+
+        # Set error logger
+        file_handler = logging.FileHandler(os.path.join(log_dir, 'app.error.log'))
+        file_handler.setLevel(logging.ERROR)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
 
     return log_dir
 

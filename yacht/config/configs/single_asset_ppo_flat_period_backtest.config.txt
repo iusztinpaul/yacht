@@ -8,8 +8,8 @@ input: {
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/10/2014'
-    end: '1/7/2021'
-    back_test_split_ratio: 0.27
+    end: '1/10/2020'
+    back_test_split_ratio: 0.20
     back_test_embargo_ratio: 0.03
     window_size: 1
     include_weekends: false
@@ -39,25 +39,25 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         net_arch: {
-            shared: [128, 128]
-            vf: [64, 64]
-            pi: [64, 64]
+            shared: [64]
+            vf: [32, 32]
+            pi: [32, 32]
         }
     }
 }
 train: {
     trainer_name: 'NoEvalTrainer'
     total_timesteps: 80000
-    collecting_n_steps: 2048
+    collecting_n_steps: 10000
     learning_rate: 0.00025
-    batch_size: 64
+    batch_size: 1024
     n_epochs: 10
-    gamma: 0.99
-    gae_lambda: 0.95
-    clip_range: 0.2
+    gamma: 1.
+    gae_lambda: 1.
+    clip_range: 0.3
     entropy_coefficient: 0.01,
-    vf_coefficient: 0.5
-    max_grad_norm: 0.5
+    vf_coefficient: 1.
+    max_grad_norm: 100
     use_sde: false
     sde_sample_freq: -1
     k_fold_splits: 3
