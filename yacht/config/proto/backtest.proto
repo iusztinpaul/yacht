@@ -5,4 +5,5 @@ package yacht.config.proto;
 message BacktestConfig {
   bool run = 1;
   bool deterministic = 2;
+  repeated int32 tickers = 3;
 }

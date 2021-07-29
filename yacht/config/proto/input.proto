@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package yacht.config.proto;
 
+import "yacht/config/proto/backtest.proto";
+
 
 message InputConfig {
   string market = 1;
@@ -14,8 +16,9 @@ message InputConfig {
   repeated string technical_indicators = 8;
   string start = 9;
   string end = 10;
-  double back_test_split_ratio = 11;
-  double back_test_embargo_ratio = 12;
-  int32 window_size = 13;
-  bool include_weekends = 14;
+  int32 window_size = 11;
+  bool include_weekends = 12;
+  double backtest_split_ratio = 13;
+  double backtest_embargo_ratio = 14;
+  BacktestConfig backtest = 15;
 }

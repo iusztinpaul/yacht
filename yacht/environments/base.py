@@ -8,6 +8,7 @@ import gym
 import pandas as pd
 from gym import spaces
 import numpy as np
+import torch
 
 from yacht import utils
 from yacht.data.datasets import TradingDataset
@@ -78,6 +79,7 @@ class TradingEnv(gym.Env):
     def seed(self, seed=None):
         random.seed(seed)
         np.random.seed(seed)
+        torch.manual_seed(seed)
 
     def reset(self):
         self._tick_t = self._start_tick

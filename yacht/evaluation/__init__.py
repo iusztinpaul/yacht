@@ -28,7 +28,6 @@ def backtest(
 ):
     # Reduce the environment to a non-vectorized form.
     if isinstance(env.unwrapped, VecEnv):
-        assert env.num_envs == 1, 'Only one environment is supported for running the agent.'
         env = env.envs[0]
 
     # TODO: Refactor backtest logic with 'stable_baselines.evaluate_policy()': it computes a mean over multiple envs.

@@ -33,8 +33,8 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
     train_val_start, train_val_end, back_test_start, back_test_end = utils.split_period(
         input_config.start,
         input_config.end,
-        input_config.back_test_split_ratio,
-        input_config.back_test_embargo_ratio
+        input_config.backtest_split_ratio,
+        input_config.backtest_embargo_ratio
     )
 
     logger.info(f'Trainval split: {train_val_start} - {train_val_end}')
