@@ -16,6 +16,8 @@ input: {
 }
 environment: {
     name: 'SingleAssetTradingEnvironment-v0'
+    n_envs: 1
+    envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
     initial_cash_position: 1000000
@@ -47,8 +49,8 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 80000
-    collecting_n_steps: 2048
+    total_timesteps: 1000
+    collecting_n_steps: 1000
     learning_rate: 0.00025
     batch_size: 64
     n_epochs: 10
@@ -69,6 +71,6 @@ backtest: {
     deterministic: false
 }
 meta: {
-    device: 'auto'
+    device: 'gpu'
     experiment_tracker: 'wandb'
 }

@@ -163,7 +163,7 @@ if __name__ == '__main__':
             dataset = build_dataset(config, storage_dir, mode='test')
             test_env = build_env(config, dataset, mode=Mode.Baseline)
             test_env.max_possible_profit(stateless=False)
-            test_env.render_all(name='max_possible_profit.png')
+            test_env.render_all(title='Max Possible Profit', name='max_possible_profit.png')
             plt.show()
 
             dataset.close()

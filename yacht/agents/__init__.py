@@ -5,6 +5,7 @@ from typing import Union
 from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
+from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 
 from yacht import utils
@@ -40,7 +41,7 @@ activation_fn_registry = {
 
 def build_agent(
         config,
-        env: TradingEnv,
+        env: Union[TradingEnv, VecEnv],
         storage_dir: str,
         resume: bool = False,
         agent_path: str = None

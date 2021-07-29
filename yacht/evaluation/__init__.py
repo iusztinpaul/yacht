@@ -1,8 +1,10 @@
 import pprint
 
 import logging
+from typing import Union
 
 import pyfolio
+from stable_baselines3.common.vec_env import VecEnv
 
 from .backtest import *
 
@@ -15,7 +17,7 @@ logger = logging.getLogger(__file__)
 
 
 def backtest(
-        env: TradingEnv,
+        env: Union[VecEnv, TradingEnv],
         agent: BaseAlgorithm,
         deterministic: bool = False,
         render: bool = True,
@@ -24,6 +26,12 @@ def backtest(
         verbose: bool = True,
         plot: bool = False
 ):
+    # Reduce the environment to a non-vectorized form.
+    if isinstance(env.unwrapped, VecEnv):
+        assert env.num_envs == 1, 'Only one environment is supported for running the agent.'
+        env = env.envs[0]
+
+    # TODO: Refactor backtest logic with 'stable_baselines.evaluate_policy()': it computes a mean over multiple envs.
     report = run_agent(
         env=env,
         agent=agent,

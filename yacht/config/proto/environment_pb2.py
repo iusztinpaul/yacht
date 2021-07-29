@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$yacht/config/proto/environment.proto\x12\x12yacht.config.proto\x1a&yacht/config/proto/reward_schema.proto\"\xfd\x01\n\x11\x45nvironmentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x16\n\x0e\x62uy_commission\x18\x02 \x01(\x01\x12\x17\n\x0fsell_commission\x18\x03 \x01(\x01\x12\x1d\n\x15initial_cash_position\x18\x04 \x01(\x01\x12>\n\x0ereward_schemas\x18\x05 \x03(\x0b\x32&.yacht.config.proto.RewardSchemaConfig\x12\x16\n\x0ereward_scaling\x18\x06 \x01(\x01\x12\x15\n\raction_schema\x18\x07 \x01(\t\x12\x1b\n\x13max_units_per_asset\x18\x08 \x01(\x05\x62\x06proto3')
+  serialized_pb=_b('\n$yacht/config/proto/environment.proto\x12\x12yacht.config.proto\x1a&yacht/config/proto/reward_schema.proto\"\xb2\x02\n\x11\x45nvironmentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06n_envs\x18\x02 \x01(\x05\x12#\n\x1b\x65nvs_on_different_processes\x18\x03 \x01(\x08\x12\x16\n\x0e\x62uy_commission\x18\x04 \x01(\x01\x12\x17\n\x0fsell_commission\x18\x05 \x01(\x01\x12\x1d\n\x15initial_cash_position\x18\x06 \x01(\x01\x12>\n\x0ereward_schemas\x18\x07 \x03(\x0b\x32&.yacht.config.proto.RewardSchemaConfig\x12\x16\n\x0ereward_scaling\x18\x08 \x01(\x01\x12\x15\n\raction_schema\x18\t \x01(\t\x12\x1b\n\x13max_units_per_asset\x18\n \x01(\x05\x62\x06proto3')
   ,
   dependencies=[yacht_dot_config_dot_proto_dot_reward__schema__pb2.DESCRIPTOR,])
 
@@ -42,50 +42,64 @@ _ENVIRONMENTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='buy_commission', full_name='yacht.config.proto.EnvironmentConfig.buy_commission', index=1,
-      number=2, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      name='n_envs', full_name='yacht.config.proto.EnvironmentConfig.n_envs', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='sell_commission', full_name='yacht.config.proto.EnvironmentConfig.sell_commission', index=2,
-      number=3, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      name='envs_on_different_processes', full_name='yacht.config.proto.EnvironmentConfig.envs_on_different_processes', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='initial_cash_position', full_name='yacht.config.proto.EnvironmentConfig.initial_cash_position', index=3,
+      name='buy_commission', full_name='yacht.config.proto.EnvironmentConfig.buy_commission', index=3,
       number=4, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reward_schemas', full_name='yacht.config.proto.EnvironmentConfig.reward_schemas', index=4,
-      number=5, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
+      name='sell_commission', full_name='yacht.config.proto.EnvironmentConfig.sell_commission', index=4,
+      number=5, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reward_scaling', full_name='yacht.config.proto.EnvironmentConfig.reward_scaling', index=5,
+      name='initial_cash_position', full_name='yacht.config.proto.EnvironmentConfig.initial_cash_position', index=5,
       number=6, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='action_schema', full_name='yacht.config.proto.EnvironmentConfig.action_schema', index=6,
-      number=7, type=9, cpp_type=9, label=1,
+      name='reward_schemas', full_name='yacht.config.proto.EnvironmentConfig.reward_schemas', index=6,
+      number=7, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reward_scaling', full_name='yacht.config.proto.EnvironmentConfig.reward_scaling', index=7,
+      number=8, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='action_schema', full_name='yacht.config.proto.EnvironmentConfig.action_schema', index=8,
+      number=9, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='max_units_per_asset', full_name='yacht.config.proto.EnvironmentConfig.max_units_per_asset', index=7,
-      number=8, type=5, cpp_type=1, label=1,
+      name='max_units_per_asset', full_name='yacht.config.proto.EnvironmentConfig.max_units_per_asset', index=9,
+      number=10, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -103,7 +117,7 @@ _ENVIRONMENTCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=101,
-  serialized_end=354,
+  serialized_end=407,
 )
 
 _ENVIRONMENTCONFIG.fields_by_name['reward_schemas'].message_type = yacht_dot_config_dot_proto_dot_reward__schema__pb2._REWARDSCHEMACONFIG

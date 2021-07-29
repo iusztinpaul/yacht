@@ -1,3 +1,7 @@
+from gym.wrappers import Monitor
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv, DummyVecEnv
+
 from .enums import *
 from .base import *
 from .day import *
@@ -21,7 +25,29 @@ environment_registry = {
 }
 
 
-def build_env(config: Config, dataset: TradingDataset, mode: Mode):
+def build_env(
+        config: Config,
+        dataset: TradingDataset,
+        mode: Mode,
+) -> Union[VecEnv, TradingEnv]:
+    def _wrappers(env_to_wrap: Union[Monitor, TradingEnv]) -> gym.Env:
+        if isinstance(env_to_wrap, Monitor):
+            assert isinstance(env_to_wrap.env, TradingEnv), f'Wrong env type: {type(env_to_wrap.env)}.'
+
+        wrapped_env = MultiFrequencyDictToBoxWrapper(env_to_wrap)
+        wrapped_env = RewardRendererMonitor(
+            final_step=config.train.total_timesteps,
+            storage_dir=dataset.storage_dir,
+            env=wrapped_env,
+        )
+        if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
+            wrapped_env = WandBWrapper(
+                env=wrapped_env,
+                mode=mode
+            )
+
+        return wrapped_env
+
     env_config: EnvironmentConfig = config.environment
 
     action_schema = build_action_schema(config)
@@ -31,7 +57,6 @@ def build_env(config: Config, dataset: TradingDataset, mode: Mode):
             action_max_score=action_schema.max_units_per_asset
         )
     )
-
     env_kwargs = {
         'dataset': dataset,
         'reward_schema': reward_schema,
@@ -44,21 +69,19 @@ def build_env(config: Config, dataset: TradingDataset, mode: Mode):
             'initial_cash_position': env_config.initial_cash_position
         })
 
-    env = gym.make(
-        env_config.name,
-        **env_kwargs
+    env = make_vec_env(
+        env_id=env_config.name,
+        n_envs=env_config.n_envs,
+        seed=0,
+        start_index=0,
+        monitor_dir=utils.build_log_path(dataset.storage_dir),
+        wrapper_class=_wrappers,
+        env_kwargs=env_kwargs,
+        vec_env_cls=SubprocVecEnv if env_config.envs_on_different_processes else DummyVecEnv,
+        vec_env_kwargs=None,
+        monitor_kwargs=None,
+        wrapper_kwargs=None
     )
-    env = MultiFrequencyDictToBoxWrapper(env)
-    env = RewardRendererMonitor(
-        final_step=config.train.total_timesteps,
-        storage_dir=dataset.storage_dir,
-        env=env,
-    )
-    if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
-        env = WandBWrapper(
-            env=env,
-            mode=mode
-        )
 
     return env
 
@@ -81,12 +104,12 @@ def register_gym_envs():
 
     for env_id, parameters in to_register_envs.items():
         # TODO: Find a better way to fix multiple 'register' attempts
-        if env_id in gym_env_dict:
+        if env_id not in gym_env_dict:
             logger.info('Remove {} from registry'.format(env_id))
-            del gym.envs.registration.registry.env_specs[env_id]
+            # del gym.envs.registration.registry.env_specs[env_id]
 
-        register(
-            id=env_id,
-            entry_point=parameters['entry_point'],
-            kwargs=parameters['kwargs']
-        )
+            register(
+                id=env_id,
+                entry_point=parameters['entry_point'],
+                kwargs=parameters['kwargs']
+            )

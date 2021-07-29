@@ -1,11 +1,12 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Union
 
 import wandb
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+from stable_baselines3.common.vec_env import VecEnv
 from tqdm import tqdm
 
 from yacht import utils
@@ -189,8 +190,8 @@ def build_trainer(
         config,
         agent: BaseAlgorithm,
         dataset: TradingDataset,
-        train_env: TradingEnv,
-        val_env: TradingEnv,
+        train_env: Union[TradingEnv, VecEnv],
+        val_env: Union[TradingEnv, VecEnv],
         save: bool
 ) -> Trainer:
     trainer_class = trainer_registry[config.train.trainer_name]
