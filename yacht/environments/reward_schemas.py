@@ -8,7 +8,7 @@ from scipy.stats import norm
 from yacht import utils
 from yacht.config import Config
 from yacht.config.proto.environment_pb2 import EnvironmentConfig
-from yacht.data.datasets import TradingDataset
+from yacht.data.datasets import AssetDataset
 
 
 class RewardSchema(ABC):
@@ -64,7 +64,7 @@ class ActionMagnitudeRewardSchema(ScaledRewardSchema):
 
 
 class ScoreBasedRewardSchema(RewardSchema, ABC):
-    def calculate_reward(self, action: Union[int, float], dataset: TradingDataset, current_index: int) -> float:
+    def calculate_reward(self, action: Union[int, float], dataset: AssetDataset, current_index: int) -> float:
         # TODO: Make this function to support multiple asset actions
         assert action.shape[0] == 1 and len(action.shape) == 1
         action = action.item()
@@ -92,7 +92,7 @@ class PriceChangeRewardSchema(ScoreBasedRewardSchema):
 
         self.reward_scaling = reward_scaling
 
-    def calculate_reward(self, action: Union[int, float], dataset: TradingDataset, current_index: int) -> float:
+    def calculate_reward(self, action: Union[int, float], dataset: AssetDataset, current_index: int) -> float:
         reward = super().calculate_reward(action, dataset, current_index)
         reward *= self.reward_scaling
 
@@ -120,7 +120,7 @@ class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
     def reset(self):
         self.total_score = 0
 
-    def calculate_reward(self, action: Union[int, float], dataset: TradingDataset, current_index: int) -> float:
+    def calculate_reward(self, action: Union[int, float], dataset: AssetDataset, current_index: int) -> float:
         score = super().calculate_reward(action, dataset, current_index)
         self.total_score += score
 

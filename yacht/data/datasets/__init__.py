@@ -1,7 +1,7 @@
 from typing import Union
 
 from .base import *
-from .multi_asset import MultiAssetTradingDataset
+from .aggregators import ChooseAssetDataset
 from .multi_frequency import *
 
 import yacht.utils as utils
@@ -19,7 +19,7 @@ dataset_registry = {
 logger = logging.getLogger(__file__)
 
 
-def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = True) -> TradingDataset:
+def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = True) -> AssetDataset:
     assert mode in ('trainval', 'test')
 
     input_config = config.input
@@ -103,7 +103,7 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
             )
         )
 
-    return MultiAssetTradingDataset(
+    return ChooseAssetDataset(
         datasets=datasets,
         market=market,
         intervals=input_config.intervals,
@@ -115,7 +115,7 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
     )
 
 
-def build_dataset_wrapper(dataset: TradingDataset, indices: List[int]) -> Union[IndexedDatasetMixin, TradingDataset]:
+def build_dataset_wrapper(dataset: AssetDataset, indices: List[int]) -> Union[IndexedDatasetMixin, AssetDataset]:
     dataset_class_name = dataset.__class__.__name__
     dataset_class_name = f'Indexed{dataset_class_name}'
     dataset_class = dataset_registry[dataset_class_name]

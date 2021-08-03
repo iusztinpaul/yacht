@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from yacht import utils
 from yacht.config import Config
-from yacht.data.datasets import TradingDataset, build_dataset_wrapper
+from yacht.data.datasets import AssetDataset, build_dataset_wrapper
 from yacht.data.k_fold import build_k_fold, PurgedKFold
 from yacht.environments import TradingEnv
 from yacht.environments.callbacks import LoggerCallback, WandBCallback
@@ -25,7 +25,7 @@ class Trainer(ABC):
             config: Config,
             name: str,
             agent: BaseAlgorithm,
-            dataset: TradingDataset,
+            dataset: AssetDataset,
             train_env: TradingEnv,
             save: bool = True
     ):
@@ -115,7 +115,7 @@ class KFoldTrainer(Trainer):
             config: Config,
             name: str,
             agent: BaseAlgorithm,
-            dataset: TradingDataset,
+            dataset: AssetDataset,
             train_env: TradingEnv,
             val_env: TradingEnv,
             k_fold: PurgedKFold,
@@ -189,7 +189,7 @@ trainer_registry = {
 def build_trainer(
         config,
         agent: BaseAlgorithm,
-        dataset: TradingDataset,
+        dataset: AssetDataset,
         train_env: Union[TradingEnv, VecEnv],
         val_env: Union[TradingEnv, VecEnv],
         save: bool

@@ -4,14 +4,14 @@ import numpy as np
 from gym import spaces
 
 from yacht import utils
-from yacht.data.datasets import TradingDataset
+from yacht.data.datasets import AssetDataset
 from yacht.environments import TradingEnv, RewardSchema, ActionSchema
 
 
-class SingleAssetTradingEnvironment(TradingEnv):
+class SingleAssetEnvironment(TradingEnv):
     def __init__(
             self,
-            dataset: TradingDataset,
+            dataset: AssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
             seed: int = 0,

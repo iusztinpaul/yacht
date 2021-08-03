@@ -15,7 +15,7 @@ from yacht.data.normalizers import Normalizer
 logger = logging.getLogger(__file__)
 
 
-class TradingDataset(Dataset, ABC):
+class AssetDataset(Dataset, ABC):
     PRICE_FEATURES = (
         'Close',
         'Open',
@@ -123,7 +123,7 @@ class TradingDataset(Dataset, ABC):
         pass
 
 
-class SingleAssetTradingDataset(TradingDataset, ABC):
+class SingleAssetTradingDataset(AssetDataset, ABC):
     def __init__(
             self,
             ticker: str,
@@ -191,7 +191,7 @@ class IndexedDatasetMixin:
             Mixin wrapper that is used with k_folding techniques to map indices within the data.
         """
 
-        assert TradingDataset in type(self).mro(), \
+        assert AssetDataset in type(self).mro(), \
             'IndexedMixin should be coupled with a TradingDataset class or subclass'
         assert len(indices.shape) == 1
 

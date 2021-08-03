@@ -12,7 +12,7 @@ import numpy as np
 import torch
 
 from yacht import utils
-from yacht.data.datasets import MultiAssetTradingDataset
+from yacht.data.datasets import ChooseAssetDataset
 from yacht.environments.action_schemas import ActionSchema
 from yacht.environments.enums import Position
 from yacht.environments.reward_schemas import RewardSchema
@@ -24,7 +24,7 @@ logger = logging.getLogger(__file__)
 class TradingEnv(gym.Env):
     def __init__(
             self,
-            dataset: MultiAssetTradingDataset,
+            dataset: ChooseAssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
             seed: int = 0
@@ -118,7 +118,7 @@ class TradingEnv(gym.Env):
     def _reset(self):
         pass
 
-    def set_dataset(self, dataset: MultiAssetTradingDataset):
+    def set_dataset(self, dataset: ChooseAssetDataset):
         # TODO: Find a better way to reinject the dataset.
         from yacht.data.renderers import TradingRenderer
 

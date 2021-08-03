@@ -27,7 +27,7 @@ environment_registry = {
 
 def build_env(
         config: Config,
-        dataset: MultiAssetTradingDataset,
+        dataset: ChooseAssetDataset,
         mode: Mode,
 ) -> Union[VecEnv, TradingEnv]:
     def _wrappers(env_to_wrap: Union[Monitor, TradingEnv]) -> gym.Env:
@@ -62,7 +62,7 @@ def build_env(
         'reward_schema': reward_schema,
         'action_schema': action_schema
     }
-    if env_config.name == 'SingleAssetTradingEnvironment-v0':
+    if env_config.name == 'SingleAssetEnvironment-v0':
         env_kwargs.update({
             'buy_commission': env_config.buy_commission,
             'sell_commission': env_config.sell_commission,
@@ -93,8 +93,8 @@ def register_gym_envs():
             'kwargs': {
             }
         },
-        'SingleAssetTradingEnvironment-v0': {
-            'entry_point': 'yacht.environments.single_asset:SingleAssetTradingEnvironment',
+        'SingleAssetEnvironment-v0': {
+            'entry_point': 'yacht.environments.single_asset:SingleAssetEnvironment',
             'kwargs': {
             }
         }

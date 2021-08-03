@@ -20,7 +20,7 @@ input: {
     }
 }
 environment: {
-    name: 'SingleAssetTradingEnvironment-v0'
+    name: 'SingleAssetEnvironment-v0'
     n_envs: 8
     envs_on_different_processes: false
     buy_commission: 0.00
