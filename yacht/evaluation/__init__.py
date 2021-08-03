@@ -11,14 +11,14 @@ from .backtest import *
 from stable_baselines3.common.base_class import BaseAlgorithm
 
 from yacht.agents.predict import run_agent
-from yacht.environments import TradingEnv
+from yacht.environments import BaseAssetEnv
 from ..utils.sequence import get_daily_return
 
 logger = logging.getLogger(__file__)
 
 
 def backtest(
-        env: Union[VecEnv, TradingEnv],
+        env: Union[VecEnv, BaseAssetEnv],
         agent: BaseAlgorithm,
         deterministic: bool = False,
         render: bool = True,

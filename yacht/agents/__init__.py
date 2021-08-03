@@ -12,7 +12,7 @@ from yacht import utils
 from yacht.agents.modules.multi_frequency import MultiFrequencyFeatureExtractor
 from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
-from yacht.environments import TradingEnv
+from yacht.environments import BaseAssetEnv
 
 
 logger = logging.getLogger(__file__)
@@ -41,7 +41,7 @@ activation_fn_registry = {
 
 def build_agent(
         config,
-        env: Union[TradingEnv, VecEnv],
+        env: Union[BaseAssetEnv, VecEnv],
         storage_dir: str,
         resume: bool = False,
         agent_path: str = None

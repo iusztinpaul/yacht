@@ -20,19 +20,15 @@ from ..config.proto.environment_pb2 import EnvironmentConfig
 
 logger = logging.getLogger(__file__)
 
-environment_registry = {
-    'DayForecastEnv': DayForecastEnv
-}
-
 
 def build_env(
         config: Config,
         dataset: ChooseAssetDataset,
         mode: Mode,
-) -> Union[VecEnv, TradingEnv]:
-    def _wrappers(env_to_wrap: Union[Monitor, TradingEnv]) -> gym.Env:
+) -> Union[VecEnv, BaseAssetEnv]:
+    def _wrappers(env_to_wrap: Union[Monitor, BaseAssetEnv]) -> gym.Env:
         if isinstance(env_to_wrap, Monitor):
-            assert isinstance(env_to_wrap.env, TradingEnv), f'Wrong env type: {type(env_to_wrap.env)}.'
+            assert isinstance(env_to_wrap.env, BaseAssetEnv), f'Wrong env type: {type(env_to_wrap.env)}.'
 
         wrapped_env = MultiFrequencyDictToBoxWrapper(env_to_wrap)
         wrapped_env = RewardRendererMonitor(
@@ -88,8 +84,8 @@ def build_env(
 
 def register_gym_envs():
     to_register_envs = {
-        'DayForecastEnv-v0': {
-            'entry_point': 'yacht.environments.day:DayForecastEnv',
+        'DayForecastEnvironment-v0': {
+            'entry_point': 'yacht.environments.day:DayForecastEnvironment',
             'kwargs': {
             }
         },

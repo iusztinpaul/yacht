@@ -84,7 +84,7 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
         start = back_test_start
         end = back_test_end
 
-    datasets: List[SingleAssetTradingDataset] = []
+    datasets: List[SingleAssetDataset] = []
     for ticker in input_config.tickers:
         price_normalizer = build_normalizer(input_config.price_normalizer)
         other_normalizer = build_normalizer(input_config.other_normalizer)

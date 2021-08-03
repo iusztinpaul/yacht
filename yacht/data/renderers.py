@@ -10,7 +10,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 from yacht import utils
-from yacht.data.datasets import AssetDataset, SingleAssetTradingDataset
+from yacht.data.datasets import AssetDataset, SingleAssetDataset
 from yacht.utils.wandb import WandBContext
 
 

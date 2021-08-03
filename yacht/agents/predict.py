@@ -4,13 +4,13 @@ import pprint
 import pandas as pd
 from stable_baselines3.common.base_class import BaseAlgorithm
 
-from yacht.environments import TradingEnv
+from yacht.environments import BaseAssetEnv
 
 logger = logging.getLogger(__file__)
 
 
 def run_agent(
-        env: TradingEnv,
+        env: BaseAssetEnv,
         agent: BaseAlgorithm,
         deterministic: bool = False,
         render: bool = True,

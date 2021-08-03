@@ -123,7 +123,7 @@ class AssetDataset(Dataset, ABC):
         pass
 
 
-class SingleAssetTradingDataset(AssetDataset, ABC):
+class SingleAssetDataset(AssetDataset, ABC):
     def __init__(
             self,
             ticker: str,

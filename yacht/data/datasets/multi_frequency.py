@@ -7,14 +7,14 @@ import numpy as np
 import pandas as pd
 from gym import spaces
 
-from yacht.data.datasets import IndexedDatasetMixin, SingleAssetTradingDataset
+from yacht.data.datasets import IndexedDatasetMixin, SingleAssetDataset
 from yacht.data.markets import Market
 from yacht.data.normalizers import Normalizer
 
 logger = logging.getLogger(__file__)
 
 
-class DayMultiFrequencyDataset(SingleAssetTradingDataset):
+class DayMultiFrequencyDataset(SingleAssetDataset):
     INTERVAL_TO_DAY_BAR_UNITS = {
         '1d': 1,
         '12h': 2,

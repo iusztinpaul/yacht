@@ -5,10 +5,10 @@ from gym import spaces
 
 from yacht import utils
 from yacht.data.datasets import AssetDataset
-from yacht.environments import TradingEnv, RewardSchema, ActionSchema
+from yacht.environments import BaseAssetEnv, RewardSchema, ActionSchema
 
 
-class SingleAssetEnvironment(TradingEnv):
+class SingleAssetEnvironment(BaseAssetEnv):
     def __init__(
             self,
             dataset: AssetDataset,

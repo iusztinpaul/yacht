@@ -5,14 +5,14 @@ import numpy as np
 import pandas as pd
 from gym import Space
 
-from yacht.data.datasets import AssetDataset, SingleAssetTradingDataset
+from yacht.data.datasets import AssetDataset, SingleAssetDataset
 from yacht.data.markets import Market
 
 
 class ChooseAssetDataset(AssetDataset):
     def __init__(
             self,
-            datasets: List[SingleAssetTradingDataset],
+            datasets: List[SingleAssetDataset],
             market: Market,
             intervals: List[str],
             features: List[str],
