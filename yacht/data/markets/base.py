@@ -10,6 +10,13 @@ logger = logging.getLogger(__file__)
 
 
 class Market(ABC):
+    """
+        The role of the market is
+            to provide data from some source,
+            to cache that data for faster accessibility &
+            to check the data correctness &
+            to fill missing values
+    """
     MANDATORY_FEATURES = {
         'Close',
         'Open',

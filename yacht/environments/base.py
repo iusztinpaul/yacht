@@ -2,6 +2,7 @@ import datetime
 import logging
 import random
 from abc import abstractmethod
+from copy import copy
 from typing import Dict, List, Optional, Union
 
 import gym
@@ -11,7 +12,7 @@ import numpy as np
 import torch
 
 from yacht import utils
-from yacht.data.datasets import TradingDataset
+from yacht.data.datasets import MultiAssetTradingDataset
 from yacht.environments.action_schemas import ActionSchema
 from yacht.environments.enums import Position
 from yacht.environments.reward_schemas import RewardSchema
@@ -23,7 +24,7 @@ logger = logging.getLogger(__file__)
 class TradingEnv(gym.Env):
     def __init__(
             self,
-            dataset: TradingDataset,
+            dataset: MultiAssetTradingDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
             seed: int = 0
@@ -33,7 +34,7 @@ class TradingEnv(gym.Env):
         self.seed(seed=seed)
 
         # General.
-        self.dataset = dataset
+        self.dataset = copy(dataset)
         self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
         self.reward_schema = reward_schema
@@ -82,6 +83,9 @@ class TradingEnv(gym.Env):
         torch.manual_seed(seed)
 
     def reset(self):
+        # Choose a random ticker for every instance of the environment.
+        self.dataset.choose_ticker()
+
         self._tick_t = self._start_tick
 
         # State.
@@ -114,7 +118,7 @@ class TradingEnv(gym.Env):
     def _reset(self):
         pass
 
-    def set_dataset(self, dataset: TradingDataset):
+    def set_dataset(self, dataset: MultiAssetTradingDataset):
         # TODO: Find a better way to reinject the dataset.
         from yacht.data.renderers import TradingRenderer
 

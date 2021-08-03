@@ -1,20 +1,20 @@
 import logging
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 import numpy as np
 import pandas as pd
 from gym import spaces
 
-from yacht.data.datasets import TradingDataset, IndexedDatasetMixin
+from yacht.data.datasets import IndexedDatasetMixin, SingleAssetTradingDataset
 from yacht.data.markets import Market
 from yacht.data.normalizers import Normalizer
 
 logger = logging.getLogger(__file__)
 
 
-class DayMultiFrequencyDataset(TradingDataset):
+class DayMultiFrequencyDataset(SingleAssetTradingDataset):
     INTERVAL_TO_DAY_BAR_UNITS = {
         '1d': 1,
         '12h': 2,
@@ -26,8 +26,8 @@ class DayMultiFrequencyDataset(TradingDataset):
 
     def __init__(
             self,
-            market: Market,
             ticker: str,
+            market: Market,
             intervals: List[str],
             features: List[str],
             start: datetime,
@@ -40,8 +40,8 @@ class DayMultiFrequencyDataset(TradingDataset):
         assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
 
         super().__init__(
-            market,
             ticker,
+            market,
             intervals,
             features,
             start,

@@ -1,13 +1,16 @@
 import datetime
+import sys
 from abc import ABC, abstractmethod
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict
 
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
 from yacht import utils
+from yacht.data.datasets import TradingDataset, SingleAssetTradingDataset
 from yacht.utils.wandb import WandBContext
 
 
@@ -135,25 +138,52 @@ class KFoldRenderer(MatPlotLibRenderer):
 class TrainTestSplitRenderer(MatPlotLibRenderer):
     def __init__(
             self,
-            data: pd.DataFrame,
+            data: Dict[str, pd.DataFrame],
             train_interval: Tuple[datetime.datetime, datetime.datetime],
-            test_interval: Tuple[datetime.datetime, datetime.datetime]
+            test_interval: Tuple[datetime.datetime, datetime.datetime],
+            rescale: bool = True
     ):
         super().__init__(data)
-        self.prices = self.data.loc[:, 'Close']
 
         assert len(train_interval) == 2 and len(test_interval) == 2
         assert train_interval[0] < train_interval[1] and test_interval[0] < test_interval[1]
 
+        self.prices = self._get_prices(rescale)
         self.train_interval = train_interval
         self.test_interval = test_interval
+        
+    def _get_prices(self, rescale) -> Dict[str, pd.Series]:
+        prices = dict()
+        
+        for ticker, values in self.data.items():
+            if rescale:
+                scaler = MinMaxScaler()
+
+                indices = values.index
+                values = values.loc[:, 'Close'].values.reshape(-1, 1)
+                scaler.fit(values)
+
+                values = scaler.transform(values)
+                values = values.reshape(-1)
+                prices[ticker] = pd.Series(index=indices, data=values)
+            else:
+                prices[ticker] = values
+                
+        return prices
 
     def _render(self):
         self.fig, self.ax = plt.subplots()
-        self.ax.plot(self.prices)
 
-        y_min = np.min(self.prices) * 0.9
-        y_max = np.max(self.prices) * 1.1
+        y_min = sys.float_info.max
+        y_max = sys.float_info.min
+        for ticker, prices in self.prices.items():
+            self.ax.plot(prices, label=ticker)
+
+            y_min = np.min(prices) if np.min(prices) < y_min else y_min
+            y_max = np.max(prices) if np.max(prices) > y_max else y_max
+
+        y_min *= 0.9
+        y_max *= 1.1
 
         if self.train_interval[1] < self.test_interval[0]:
             x_line_left = self.train_interval[1]
@@ -195,6 +225,7 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
             linestyles='dashed',
             colors='gray'
         )
+        self.ax.legend()
 
 
 class TradingRenderer(MplFinanceRenderer):

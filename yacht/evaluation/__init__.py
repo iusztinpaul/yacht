@@ -12,6 +12,7 @@ from stable_baselines3.common.base_class import BaseAlgorithm
 
 from yacht.agents.predict import run_agent
 from yacht.environments import TradingEnv
+from ..utils.sequence import get_daily_return
 
 logger = logging.getLogger(__file__)
 

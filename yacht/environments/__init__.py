@@ -27,7 +27,7 @@ environment_registry = {
 
 def build_env(
         config: Config,
-        dataset: TradingDataset,
+        dataset: MultiAssetTradingDataset,
         mode: Mode,
 ) -> Union[VecEnv, TradingEnv]:
     def _wrappers(env_to_wrap: Union[Monitor, TradingEnv]) -> gym.Env:

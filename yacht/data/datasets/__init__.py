@@ -1,6 +1,7 @@
 from typing import Union
 
 from .base import *
+from .multi_asset import MultiAssetTradingDataset
 from .multi_frequency import *
 
 import yacht.utils as utils
@@ -22,14 +23,11 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
     assert mode in ('trainval', 'test')
 
     input_config = config.input
+    assert len(input_config.tickers) > 0
 
     market = build_market(input_config, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]
-    price_normalizer = build_normalizer(input_config.price_normalizer)
-    other_normalizer = build_normalizer(input_config.other_normalizer)
 
-    # TODO: Add multiple ticker support starting from here
-    ticker = input_config.tickers[0]
     train_val_start, train_val_end, back_test_start, back_test_end = utils.split_period(
         input_config.start,
         input_config.end,
@@ -37,30 +35,33 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
         input_config.backtest_embargo_ratio
     )
 
-    logger.info(f'Trainval split: {train_val_start} - {train_val_end}')
-    logger.info(f'Test split: {back_test_start} - {back_test_end}')
-
+    # Download the whole requested interval in one shot for further processing & rendering.
+    market.download(
+        input_config.tickers,
+        interval='1d',
+        start=utils.string_to_datetime(input_config.start),
+        end=utils.string_to_datetime(input_config.end)
+    )
     if render_split:
-        market.download(
-            tickers=ticker,
-            interval='1d',
-            start=min(train_val_start, back_test_start),
-            end=max(train_val_end, back_test_end)
-        )
-        daily_prices = market.get(
-            ticker=ticker,
-            interval='1d',
-            start=min(train_val_start, back_test_start),
-            end=max(train_val_end, back_test_end)
-        )
+        data = dict()
+        for ticker in input_config.tickers:
+            data[ticker] = market.get(
+                ticker,
+                '1d',
+                utils.string_to_datetime(input_config.start),
+                utils.string_to_datetime(input_config.end)
+            )
         renderer = TrainTestSplitRenderer(
-            data=daily_prices,
+            data=data,
             train_interval=(train_val_start, train_val_end),
             test_interval=(back_test_start, back_test_end)
         )
         renderer.render()
         renderer.save(utils.build_graphics_path(storage_dir, 'trainval_test_split.png'))
         renderer.close()
+
+    logger.info(f'Trainval split: {train_val_start} - {train_val_end}')
+    logger.info(f'Test split: {back_test_start} - {back_test_end}')
 
     if mode == 'trainval':
         start = train_val_start
@@ -69,16 +70,34 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
         start = back_test_start
         end = back_test_end
 
-    return dataset_cls(
+    datasets: List[SingleAssetTradingDataset] = []
+    for ticker in input_config.tickers:
+        price_normalizer = build_normalizer(input_config.price_normalizer)
+        other_normalizer = build_normalizer(input_config.other_normalizer)
+
+        datasets.append(
+            dataset_cls(
+                ticker=ticker,
+                market=market,
+                intervals=input_config.intervals,
+                features=list(input_config.features) + list(input_config.technical_indicators),
+                start=start,
+                end=end,
+                price_normalizer=price_normalizer,
+                other_normalizer=other_normalizer,
+                window_size=input_config.window_size
+            )
+        )
+
+    return MultiAssetTradingDataset(
+        datasets=datasets,
         market=market,
-        ticker=ticker,
         intervals=input_config.intervals,
         features=list(input_config.features) + list(input_config.technical_indicators),
         start=start,
         end=end,
-        price_normalizer=price_normalizer,
-        other_normalizer=other_normalizer,
-        window_size=input_config.window_size
+        window_size=input_config.window_size,
+        default_ticker=input_config.tickers[0]
     )
 
 

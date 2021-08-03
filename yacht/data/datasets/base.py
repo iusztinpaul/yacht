@@ -26,15 +26,11 @@ class TradingDataset(Dataset, ABC):
     def __init__(
             self,
             market: Market,
-            ticker: str,
             intervals: List[str],
             features: List[str],
             start: datetime,
             end: datetime,
-            price_normalizer: Normalizer,
-            other_normalizer: Normalizer,
             window_size: int = 1,
-            data: Dict[str, pd.DataFrame] = None
     ):
         """
             market:
@@ -53,29 +49,14 @@ class TradingDataset(Dataset, ABC):
         assert window_size >= 1
 
         self.market = market
-        self.ticker = ticker
         self.intervals = intervals
         self.features, self.price_features, self.other_features = self.split_features(features)
         self.start = start
         self.end = end
-        self.price_normalizer = price_normalizer
-        self.other_normalizer = other_normalizer
         self.window_size = window_size
 
         assert set(self.features) == set(self.price_features).union(set(self.other_features)), \
             '"self.features" should be all the supported features.'
-
-        if data is not None:
-            self.data = data
-        else:
-            logger.info(
-                f'Downloading & loading data in memory for ticker - {ticker} - '
-                f'from {start} to {end} - for intervals: {intervals}'
-            )
-            self.data = dict()
-            for interval in self.intervals:
-                self.market.download(ticker, interval, start, end)
-                self.data[interval] = self.market.get(ticker, interval, start, end)
 
     def close(self):
         self.market.close()
@@ -96,13 +77,6 @@ class TradingDataset(Dataset, ABC):
     def num_other_features(self) -> int:
         return len(self.other_features)
 
-    @property
-    def num_days(self) -> int:
-        return len(self.data['1d'])
-
-    def index_to_datetime(self, integer_index: int) -> datetime:
-        return self.data['1d'].index[integer_index].to_pydatetime()
-
     @classmethod
     def split_features(cls, features: List[str]) -> Tuple[List[str], List[str], List[str]]:
         price_features = []
@@ -120,12 +94,26 @@ class TradingDataset(Dataset, ABC):
 
         return features, price_features, other_features
 
+    @property
+    @abstractmethod
+    def num_days(self) -> int:
+        pass
+
+    @abstractmethod
+    def index_to_datetime(self, integer_index: int) -> datetime:
+        pass
+
     @abstractmethod
     def __getitem__(self, current_index: int) -> Dict[str, np.array]:
         pass
 
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    @abstractmethod
     def get_prices(self) -> pd.DataFrame:
-        return self.data['1d']
+        pass
 
     @abstractmethod
     def get_external_observation_space(self) -> Dict[str, Space]:
@@ -133,6 +121,55 @@ class TradingDataset(Dataset, ABC):
             Returns the gym spaces observation space in the format that the dataset gives the data.
         """
         pass
+
+
+class SingleAssetTradingDataset(TradingDataset, ABC):
+    def __init__(
+            self,
+            ticker: str,
+            market: Market,
+            intervals: List[str],
+            features: List[str],
+            start: datetime,
+            end: datetime,
+            price_normalizer: Normalizer,
+            other_normalizer: Normalizer,
+            window_size: int = 1,
+            data: Dict[str, pd.DataFrame] = None
+    ):
+        super().__init__(
+            market=market,
+            intervals=intervals,
+            features=features,
+            start=start,
+            end=end,
+            window_size=window_size,
+        )
+
+        self.ticker = ticker
+        self.price_normalizer = price_normalizer
+        self.other_normalizer = other_normalizer
+        if data is not None:
+            self.data = data
+        else:
+            logger.info(
+                f'Downloading & loading data in memory for ticker - {ticker} - '
+                f'from {start} to {end} - for intervals: {intervals}'
+            )
+            self.data = dict()
+            for interval in self.intervals:
+                self.market.download(ticker, interval, start, end)
+                self.data[interval] = self.market.get(ticker, interval, start, end)
+
+    @property
+    def num_days(self) -> int:
+        return len(self.data['1d'])
+
+    def index_to_datetime(self, integer_index: int) -> datetime:
+        return self.data['1d'].index[integer_index].to_pydatetime()
+
+    def get_prices(self) -> pd.DataFrame:
+        return self.data['1d']
 
 
 class IndexedDatasetMixin:
