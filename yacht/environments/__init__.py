@@ -7,7 +7,6 @@ from .base import *
 from .day import *
 
 from .action_schemas import build_action_schema
-from .monitors import RewardRendererMonitor
 from .reward_schemas import build_reward_schema
 
 import gym
@@ -31,11 +30,6 @@ def build_env(
             assert isinstance(env_to_wrap.env, BaseAssetEnv), f'Wrong env type: {type(env_to_wrap.env)}.'
 
         wrapped_env = MultiFrequencyDictToBoxWrapper(env_to_wrap)
-        wrapped_env = RewardRendererMonitor(
-            final_step=config.train.total_timesteps,
-            storage_dir=dataset.storage_dir,
-            env=wrapped_env,
-        )
         if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
             wrapped_env = WandBWrapper(
                 env=wrapped_env,
@@ -45,6 +39,7 @@ def build_env(
         return wrapped_env
 
     env_config: EnvironmentConfig = config.environment
+    backtest_config = config.input.backtest
 
     action_schema = build_action_schema(config)
     reward_schema = build_reward_schema(
@@ -67,13 +62,13 @@ def build_env(
             'initial_cash_position': env_config.initial_cash_position
         })
 
-    n_envs = env_config.n_envs if mode.is_trainable() else len(config.input.backtest.tickers)
+    n_envs = env_config.n_envs if mode.is_trainable() else len(backtest_config.tickers) * backtest_config.n_runs
     env = make_vec_env(
         env_id=env_config.name,
         n_envs=n_envs,
         seed=0,
         start_index=0,
-        monitor_dir=utils.build_log_path(dataset.storage_dir),
+        monitor_dir=utils.build_monitor_dir(dataset.storage_dir, mode),
         wrapper_class=_wrappers,
         env_kwargs=env_kwargs,
         vec_env_cls=SubprocVecEnv if env_config.envs_on_different_processes else DummyVecEnv,

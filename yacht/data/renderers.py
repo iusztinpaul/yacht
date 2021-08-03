@@ -8,8 +8,9 @@ import mplfinance as mpf
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from stable_baselines3.common import results_plotter
 
-from yacht import utils
+from yacht import utils, Mode
 from yacht.data.datasets import AssetDataset, SingleAssetDataset
 from yacht.utils.wandb import WandBContext
 
@@ -312,18 +313,34 @@ class TradingRenderer(MplFinanceRenderer):
 
 
 class RewardsRenderer(MatPlotLibRenderer):
-    def __init__(self, data: pd.DataFrame, rolling_window: int = 50):
-        super().__init__(data)
+    def __init__(self, total_timesteps: int, storage_dir: str, mode: Mode):
+        super().__init__(None)
 
-        self.rewards = data.loc[:, 'Rewards']
-        self.rolling_window = rolling_window
+        self.total_timesteps = total_timesteps
+        self.storage_dir = storage_dir
+        self.mode = mode
 
     def _render(self):
-        ma_rewards = self.rewards.rolling(self.rolling_window, min_periods=1).mean()
+        log_dir = utils.build_monitor_dir(self.storage_dir, mode=self.mode)
+        results_plotter.plot_results(
+            dirs=[log_dir],
+            num_timesteps=self.total_timesteps,
+            x_axis=results_plotter.X_TIMESTEPS,
+            task_name=f'rewards_{self.mode.value}'
+        )
 
-        self.fig, self.ax = plt.subplots(ncols=2, figsize=(12, 6))
-        self.ax[0].plot(ma_rewards)
-        self.ax[0].set_title('Moving Average Rewards')
+    def show(self):
+        super().show()
 
-        self.ax[1].plot(self.rewards)
-        self.ax[1].set_title('Rewards')
+        plt.show()
+
+    def close(self):
+        super().close()
+
+        plt.close()
+
+    def save(self, file_path: str):
+        super().save(file_path)
+
+        plt.savefig(file_path)
+        WandBContext.log_image_from(file_path)

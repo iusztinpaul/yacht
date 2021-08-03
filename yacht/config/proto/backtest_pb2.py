@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n!yacht/config/proto/backtest.proto\x12\x12yacht.config.proto\"E\n\x0e\x42\x61\x63ktestConfig\x12\x0b\n\x03run\x18\x01 \x01(\x08\x12\x15\n\rdeterministic\x18\x02 \x01(\x08\x12\x0f\n\x07tickers\x18\x03 \x03(\tb\x06proto3')
+  serialized_pb=_b('\n!yacht/config/proto/backtest.proto\x12\x12yacht.config.proto\"U\n\x0e\x42\x61\x63ktestConfig\x12\x0b\n\x03run\x18\x01 \x01(\x08\x12\x15\n\rdeterministic\x18\x02 \x01(\x08\x12\x0f\n\x07tickers\x18\x03 \x03(\t\x12\x0e\n\x06n_runs\x18\x04 \x01(\x05\x62\x06proto3')
 )
 
 
@@ -53,6 +53,13 @@ _BACKTESTCONFIG = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='n_runs', full_name='yacht.config.proto.BacktestConfig.n_runs', index=3,
+      number=4, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -66,7 +73,7 @@ _BACKTESTCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=57,
-  serialized_end=126,
+  serialized_end=142,
 )
 
 DESCRIPTOR.message_types_by_name['BacktestConfig'] = _BACKTESTCONFIG

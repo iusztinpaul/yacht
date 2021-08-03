@@ -17,11 +17,12 @@ input: {
         run: true
         deterministic: false
         tickers: ['BTC-USD']
+        n_runs: 4
     }
 }
 environment: {
     name: 'SingleAssetEnvironment-v0'
-    n_envs: 2
+    n_envs: 4
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -54,10 +55,10 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 40
-    collecting_n_steps: 5
+    total_timesteps: 10000
+    collecting_n_steps: 2500
     learning_rate: 0.00025
-    batch_size: 2
+    batch_size: 2500
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95
@@ -73,5 +74,5 @@ train: {
 }
 meta: {
     device: 'gpu'
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

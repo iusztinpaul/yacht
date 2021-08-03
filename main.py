@@ -92,6 +92,8 @@ if __name__ == '__main__':
                     evaluation.backtest(
                         train_env,
                         agent,
+                        storage_dir=storage_dir,
+                        mode=Mode.BacktestTrain,
                         deterministic=config.input.backtest.deterministic,
                         name='backtest_on_train'
                     )
@@ -101,6 +103,8 @@ if __name__ == '__main__':
                     evaluation.backtest(
                         test_env,
                         agent,
+                        storage_dir=storage_dir,
+                        mode=Mode.Backtest,
                         deterministic=config.input.backtest.deterministic,
                         name='backtest_on_test'
                     )
@@ -124,6 +128,8 @@ if __name__ == '__main__':
             evaluation.backtest(
                 trainval_env,
                 agent,
+                storage_dir=storage_dir,
+                mode=Mode.BacktestTrain,
                 deterministic=config.backtest.deterministic,
                 name='backtest_on_train'
             )
@@ -140,6 +146,8 @@ if __name__ == '__main__':
             evaluation.backtest(
                 test_env,
                 agent,
+                storage_dir=storage_dir,
+                mode=Mode.Backtest,
                 deterministic=config.backtest.deterministic,
                 name='backtest_on_test'
             )

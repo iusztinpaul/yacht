@@ -24,7 +24,7 @@ logger_levels = {
 
 def setup_logger(level: str, storage_dir: Optional[str] = None):
     if storage_dir:
-        log_dir = build_log_path(storage_dir)
+        log_dir = build_log_dir(storage_dir)
         Path(log_dir).mkdir(parents=True, exist_ok=True)
     else:
         log_dir = None

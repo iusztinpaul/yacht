@@ -4,17 +4,18 @@ from abc import ABC, abstractmethod
 from typing import List, Union
 
 import wandb
+from stable_baselines3.common import results_plotter
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.vec_env import VecEnv
 from tqdm import tqdm
 
-from yacht import utils
+from yacht import utils, Mode
 from yacht.config import Config
 from yacht.data.datasets import AssetDataset, build_dataset_wrapper
 from yacht.data.k_fold import build_k_fold, PurgedKFold
 from yacht.environments import BaseAssetEnv
-from yacht.environments.callbacks import LoggerCallback, WandBCallback
+from yacht.environments.callbacks import LoggerCallback, WandBCallback, RewardsRenderCallback
 
 logger = logging.getLogger(__file__)
 
@@ -67,6 +68,11 @@ class Trainer(ABC):
         callbacks = [
             LoggerCallback(
                 total_timesteps=self.train_config.total_timesteps,
+            ),
+            RewardsRenderCallback(
+                total_timesteps=self.train_config.total_timesteps,
+                storage_dir=self.dataset.storage_dir,
+                mode=Mode.Train
             )
         ]
 

@@ -10,6 +10,7 @@ import pandas as pd
 from gym import spaces
 import numpy as np
 import torch
+from stable_baselines3.common.utils import set_random_seed
 
 from yacht import utils
 from yacht.data.datasets import ChooseAssetDataset
@@ -83,9 +84,7 @@ class BaseAssetEnv(gym.Env, ABC):
         self.render_on_done = render_on_done
 
     def seed(self, seed=None):
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
+        set_random_seed(seed=seed, using_cuda=True)
 
     def reset(self):
         # Choose a random ticker for every instance of the environment.

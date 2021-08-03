@@ -1,5 +1,7 @@
 import os
 
+from yacht import Mode
+
 
 def build_config_path(project_root_dir: str, config_name: str) -> str:
     return os.path.join(project_root_dir, 'yacht', 'config', 'configs', config_name)
@@ -25,6 +27,10 @@ def build_checkpoints_path(storage_dir: str, file_name: str) -> str:
     return os.path.join(checkpoint_dir, file_name)
 
 
+def build_rewards_path(storage_dir: str, mode: Mode) -> str:
+    return build_graphics_path(storage_dir, f'rewards_{mode.value}.png')
+
+
 def build_graphics_path(storage_dir: str, file_name: str) -> str:
     graphics_dir = os.path.join(storage_dir, 'graphics')
     if not os.path.exists(graphics_dir):
@@ -37,5 +43,9 @@ def build_cache_path(storage_dir: str) -> str:
     return os.path.join(storage_dir, '.cache.json')
 
 
-def build_log_path(storage_dir: str) -> str:
+def build_monitor_dir(storage_dir: str, mode: Mode) -> str:
+    return os.path.join(build_log_dir(storage_dir), mode.value)
+
+
+def build_log_dir(storage_dir: str) -> str:
     return os.path.join(storage_dir, 'log')

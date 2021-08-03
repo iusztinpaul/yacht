@@ -6,4 +6,5 @@ message BacktestConfig {
   bool run = 1;
   bool deterministic = 2;
   repeated string tickers = 3;
+  int32 n_runs = 4;
 }
