@@ -62,7 +62,7 @@ if __name__ == '__main__':
     with WandBContext(config, storage_dir):
         mode = Mode.from_string(args.mode)
         if mode == Mode.Train:
-            dataset = build_dataset(config, storage_dir, mode='trainval')
+            dataset = build_dataset(config, storage_dir, mode=Mode.Train)
             train_env = build_env(config, dataset, mode=Mode.Train)
             val_env = build_env(config, dataset, mode=Mode.Validation)
             agent = build_agent(
@@ -93,20 +93,16 @@ if __name__ == '__main__':
                         train_env,
                         agent,
                         deterministic=config.input.backtest.deterministic,
-                        render=False,
-                        render_all=True,
                         name='trainval_backtest'
                     )
 
                     logger.info('Test split:')
-                    dataset = build_dataset(config, storage_dir, mode='test')
+                    dataset = build_dataset(config, storage_dir, mode=Mode.Backtest)
                     test_env = build_env(config, dataset, mode=Mode.Backtest)
                     evaluation.backtest(
                         test_env,
                         agent,
                         deterministic=config.input.backtest.deterministic,
-                        render=False,
-                        render_all=True,
                         name='test_backtest'
                     )
                     test_env.close()
@@ -118,7 +114,7 @@ if __name__ == '__main__':
             logger.info('Starting back testing...')
 
             logger.info('Trainval split:')
-            trainval_dataset = build_dataset(config, storage_dir, mode='trainval')
+            trainval_dataset = build_dataset(config, storage_dir, mode=mode.Backtest)
             trainval_env = build_env(config, trainval_dataset, mode=Mode.BacktestTrain)
             agent = build_agent(
                 config,
@@ -131,13 +127,11 @@ if __name__ == '__main__':
                 trainval_env,
                 agent,
                 deterministic=config.backtest.deterministic,
-                render=False,
-                render_all=True,
                 name='trainval_backtest'
             )
 
             logger.info('Test split:')
-            test_dataset = build_dataset(config, storage_dir, mode='test')
+            test_dataset = build_dataset(config, storage_dir, mode=Mode.Backtest)
             test_env = build_env(config, test_dataset, mode=Mode.Backtest)
             agent = build_agent(
                 config,
@@ -150,8 +144,6 @@ if __name__ == '__main__':
                 test_env,
                 agent,
                 deterministic=config.backtest.deterministic,
-                render=False,
-                render_all=True,
                 name='test_backtest'
             )
 
@@ -160,11 +152,4 @@ if __name__ == '__main__':
             test_dataset.close()
             test_env.close()
         elif mode == Mode.Baseline:
-            dataset = build_dataset(config, storage_dir, mode='test')
-            test_env = build_env(config, dataset, mode=Mode.Baseline)
-            test_env.max_possible_profit(stateless=False)
-            test_env.render_all(title='Max Possible Profit', name='max_possible_profit.png')
-            plt.show()
-
-            dataset.close()
-            test_env.close()
+            raise NotImplementedError()

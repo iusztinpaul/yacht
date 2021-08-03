@@ -16,12 +16,12 @@ input: {
     backtest: {
         run: true
         deterministic: false
-        tickers: [0]
+        tickers: ['BTC-USD']
     }
 }
 environment: {
     name: 'SingleAssetEnvironment-v0'
-    n_envs: 8
+    n_envs: 2
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -54,10 +54,10 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 640000
-    collecting_n_steps: 2048
+    total_timesteps: 40
+    collecting_n_steps: 5
     learning_rate: 0.00025
-    batch_size: 64
+    batch_size: 2
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95

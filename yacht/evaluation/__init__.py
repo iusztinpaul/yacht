@@ -1,64 +1,69 @@
 import pprint
 
 import logging
-from typing import Union
 
+import numpy as np
 import pyfolio
+from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import VecEnv
 
 from .backtest import *
 
 from stable_baselines3.common.base_class import BaseAlgorithm
 
-from yacht.agents.predict import run_agent
-from yacht.environments import BaseAssetEnv
 from ..utils.sequence import get_daily_return
 
 logger = logging.getLogger(__file__)
 
 
 def backtest(
-        env: Union[VecEnv, BaseAssetEnv],
+        env: VecEnv,
         agent: BaseAlgorithm,
         deterministic: bool = False,
-        render: bool = True,
-        render_all: bool = False,
         name: str = 'backtest',
         verbose: bool = True,
         plot: bool = False
 ):
-    # Reduce the environment to a non-vectorized form.
-    if isinstance(env.unwrapped, VecEnv):
-        env = env.envs[0]
-
-    # TODO: Refactor backtest logic with 'stable_baselines.evaluate_policy()': it computes a mean over multiple envs.
-    report = run_agent(
+    evaluate_policy(
+        model=agent,
         env=env,
-        agent=agent,
+        n_eval_episodes=env.num_envs,
         deterministic=deterministic,
-        render=render,
-        render_all=render_all,
-        name=name
-    )
-    backtest_results = get_daily_return(report, value_col_name='total')
-
-    baseline_report = env.create_baseline_report()
-    baseline_results = get_daily_return(baseline_report, value_col_name='total')
-
-    backtest_statistics = timeseries.perf_stats(
-        returns=backtest_results,
-        factor_returns=baseline_results,
+        render=False,
+        callback=None,
+        reward_threshold=None,
+        return_episode_rewards=False,
+        warn=False
     )
 
-    if verbose is True:
-        logger.info(f'Backtest statistics [{name}] in report to the baseline: ')
-        logger.info(pprint.pformat(backtest_statistics, indent=4))
+    assert np.all(env.buf_dones)
 
-    if plot:
-        # This function works only in a jupyter notebook.
-        with pyfolio.plotting.plotting_context(font_scale=1.1):
-            pyfolio.create_full_tear_sheet(
-                returns=backtest_results,
-                benchmark_rets=baseline_results,
-                set_context=False
-            )
+    statistics = dict()
+    for buf_info in env.buf_infos:
+        report = buf_info['report']
+        backtest_results = get_daily_return(report, value_col_name='total')
+
+        # baseline_report = env.create_baseline_report()
+        # baseline_results = get_daily_return(baseline_report, value_col_name='total')
+
+        backtest_statistics = timeseries.perf_stats(
+            returns=backtest_results,
+            # factor_returns=baseline_results,
+        )
+
+        if verbose is True:
+            logger.info(f'Backtest statistics [{buf_info["ticker"]} - {name}]: ')
+            logger.info(pprint.pformat(backtest_statistics, indent=4))
+
+        if plot:
+            # This function works only in a jupyter notebook.
+            with pyfolio.plotting.plotting_context(font_scale=1.1):
+                pyfolio.create_full_tear_sheet(
+                    returns=backtest_results,
+                    # benchmark_rets=baseline_results,
+                    set_context=False
+                )
+
+        statistics[buf_info['ticker']] = backtest_statistics
+
+    return statistics

@@ -1,6 +1,5 @@
 import logging
 import os
-from math import log10
 
 import wandb
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback

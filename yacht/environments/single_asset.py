@@ -11,13 +11,15 @@ from yacht.environments import BaseAssetEnv, RewardSchema, ActionSchema
 class SingleAssetEnvironment(BaseAssetEnv):
     def __init__(
             self,
+            name: str,
             dataset: AssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
             seed: int = 0,
+            render_on_done: bool = False,
             **kwargs
     ):
-        super().__init__(dataset, reward_schema, action_schema, seed)
+        super().__init__(name, dataset, reward_schema, action_schema, seed, render_on_done)
 
         self.buy_commission = kwargs.get('buy_commission', 0)
         self.sell_commission = kwargs.get('sell_commission', 0)
@@ -133,6 +135,10 @@ class SingleAssetEnvironment(BaseAssetEnv):
         pass
 
     def render_all(self, title, name='trades.png'):
+        name = f'{self.current_ticker}_{name}'
+        if not name.endswith('.png'):
+            name = f'{name}.png'
+
         self.renderer.render(
             title=title,
             save_file_path=utils.build_graphics_path(self.dataset.storage_dir, name),

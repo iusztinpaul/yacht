@@ -9,6 +9,7 @@ from yacht.data.markets import build_market
 from yacht.data.normalizers import build_normalizer
 from yacht.config import Config
 from ..renderers import TrainTestSplitRenderer
+from ...environments import Mode
 
 dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
@@ -19,11 +20,10 @@ dataset_registry = {
 logger = logging.getLogger(__file__)
 
 
-def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = True) -> AssetDataset:
-    assert mode in ('trainval', 'test')
-
+def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = True) -> AssetDataset:
     input_config = config.input
-    assert len(input_config.tickers) > 0
+    tickers = input_config.tickers if mode.is_trainval() else input_config.backtest.tickers
+    assert len(tickers) > 0
 
     market = build_market(input_config, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]
@@ -37,14 +37,14 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
 
     # Download the whole requested interval in one shot for further processing & rendering.
     market.download(
-        input_config.tickers,
+        tickers,
         interval='1d',
         start=utils.string_to_datetime(input_config.start),
         end=utils.string_to_datetime(input_config.end)
     )
-    if render_split:
+    if mode == 'trainval' and render_split:
         data = dict()
-        for ticker in input_config.tickers:
+        for ticker in tickers:
             data[ticker] = market.get(
                 ticker,
                 '1d',
@@ -85,7 +85,7 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
         end = back_test_end
 
     datasets: List[SingleAssetDataset] = []
-    for ticker in input_config.tickers:
+    for ticker in tickers:
         price_normalizer = build_normalizer(input_config.price_normalizer)
         other_normalizer = build_normalizer(input_config.other_normalizer)
 
@@ -111,7 +111,7 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
         start=start,
         end=end,
         window_size=input_config.window_size,
-        default_ticker=input_config.tickers[0]
+        default_ticker=tickers[0]
     )
 
 

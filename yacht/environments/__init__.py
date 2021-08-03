@@ -54,9 +54,11 @@ def build_env(
         )
     )
     env_kwargs = {
+        'name': mode.value,
         'dataset': dataset,
         'reward_schema': reward_schema,
-        'action_schema': action_schema
+        'action_schema': action_schema,
+        'render_on_done': not mode.is_trainval()
     }
     if env_config.name == 'SingleAssetEnvironment-v0':
         env_kwargs.update({

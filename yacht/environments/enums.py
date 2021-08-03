@@ -30,3 +30,6 @@ class Mode(Enum):
     @classmethod
     def from_string(cls, value: str) -> 'Mode':
         return cls(value.lower())
+
+    def is_trainval(self) -> bool:
+        return self in (self.Train, self.Validation, self.TrainVal)

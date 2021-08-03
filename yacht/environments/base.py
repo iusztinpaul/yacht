@@ -3,7 +3,7 @@ import logging
 import random
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple
 
 import gym
 import pandas as pd
@@ -17,23 +17,27 @@ from yacht.environments.action_schemas import ActionSchema
 from yacht.environments.enums import Position
 from yacht.environments.reward_schemas import RewardSchema
 
-
 logger = logging.getLogger(__file__)
 
 
 class BaseAssetEnv(gym.Env, ABC):
     def __init__(
             self,
+            name: str,
             dataset: ChooseAssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
-            seed: int = 0
+            seed: int = 0,
+            render_on_done: bool = False
     ):
         from yacht.data.renderers import TradingRenderer
 
+        # Environment name
+        self.name = name
+
         self.seed(seed=seed)
 
-        # General.
+        # Environment general requirements.
         self.dataset = copy(dataset)
         self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
@@ -76,6 +80,7 @@ class BaseAssetEnv(gym.Env, ABC):
             start=dataset.start,
             end=dataset.end
         )
+        self.render_on_done = render_on_done
 
     def seed(self, seed=None):
         random.seed(seed)
@@ -140,6 +145,10 @@ class BaseAssetEnv(gym.Env, ABC):
         )
 
     @property
+    def current_ticker(self) -> str:
+        return self.dataset.current_ticker
+
+    @property
     def current_profit(self):
         return self._total_value
 
@@ -155,9 +164,11 @@ class BaseAssetEnv(gym.Env, ABC):
 
     def step(self, action: np.array):
         if self._done is True:
-            episode_metrics = self.on_done()
+            episode_metrics, report = self.on_done()
             info = {
-                'episode_metrics': episode_metrics
+                'episode_metrics': episode_metrics,
+                'report': report,
+                'ticker': self.current_ticker
             }
 
             return self._s_t, self._r_t, self._done, info
@@ -189,8 +200,10 @@ class BaseAssetEnv(gym.Env, ABC):
             self.update_history(info)
 
             if self._done is True:
-                episode_metrics = self.on_done()
+                episode_metrics, report = self.on_done()
                 info['episode_metrics'] = episode_metrics
+                info['report'] = report
+                info['ticker'] = self.current_ticker
 
             # Only at the end of the step update the env state.
             self._s_t = next_state
@@ -347,7 +360,7 @@ class BaseAssetEnv(gym.Env, ABC):
     def _is_done(self) -> bool:
         return False
 
-    def on_done(self) -> dict:
+    def on_done(self) -> Tuple[dict, pd.DataFrame]:
         """
             Returns episode metrics in a dictionary format.
         """
@@ -368,7 +381,19 @@ class BaseAssetEnv(gym.Env, ABC):
         for k, v in backtest_results.items():
             snake_case_backtest_results[utils.english_title_to_snake_case(k)] = v
 
-        return snake_case_backtest_results
+        if self.render_on_done:
+            episode_metrics = snake_case_backtest_results
+
+            sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
+            total_assets = round(self.history['total_assets'][-1], 4)
+            annual_return = round(episode_metrics['annual_return'], 4)
+
+            title = f'SR={sharpe_ratio};' \
+                    f'Total Assets={total_assets};' \
+                    f'Annual Return={annual_return}'
+            self.render_all(title=title, name=f'{self.name}.png')
+
+        return snake_case_backtest_results, report
 
     def create_report(self) -> pd.DataFrame:
         if 'total_assets' in self.history:
@@ -404,6 +429,10 @@ class BaseAssetEnv(gym.Env, ABC):
         pass
 
     def render_all(self, title, name='trades.png'):
+        name = f'{self.current_ticker}_{name}'
+        if not name.endswith('.png'):
+            name = f'{name}.png'
+
         self.renderer.render(
             title=title,
             save_file_path=utils.build_graphics_path(self.dataset.storage_dir, name),
