@@ -51,10 +51,24 @@ def build_dataset(config: Config, storage_dir, mode: str, render_split: bool = T
                 utils.string_to_datetime(input_config.start),
                 utils.string_to_datetime(input_config.end)
             )
+
+        # Render de train-test split in rescaled mode.
         renderer = TrainTestSplitRenderer(
             data=data,
             train_interval=(train_val_start, train_val_end),
-            test_interval=(back_test_start, back_test_end)
+            test_interval=(back_test_start, back_test_end),
+            rescale=True
+        )
+        renderer.render()
+        renderer.save(utils.build_graphics_path(storage_dir, 'trainval_test_split_rescaled.png'))
+        renderer.close()
+
+        # Render de train-test split with original values.
+        renderer = TrainTestSplitRenderer(
+            data=data,
+            train_interval=(train_val_start, train_val_end),
+            test_interval=(back_test_start, back_test_end),
+            rescale=False
         )
         renderer.render()
         renderer.save(utils.build_graphics_path(storage_dir, 'trainval_test_split.png'))

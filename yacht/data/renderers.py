@@ -167,7 +167,7 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
                 values = values.reshape(-1)
                 prices[ticker] = pd.Series(index=indices, data=values)
             else:
-                prices[ticker] = values
+                prices[ticker] = values.loc[:, 'Close']
                 
         return prices
 
