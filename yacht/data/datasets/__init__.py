@@ -9,20 +9,23 @@ from yacht.data.markets import build_market
 from yacht.data.normalizers import build_normalizer
 from yacht.config import Config
 from ..renderers import TrainTestSplitRenderer
-from ...environments import Mode
+from ... import Mode
 
 dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
     'IndexedDayMultiFrequencyDataset': IndexedDayMultiFrequencyDataset
 }
+split_rendered = False
 
 
 logger = logging.getLogger(__file__)
 
 
-def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = True) -> AssetDataset:
+def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = True) -> ChooseAssetDataset:
+    global split_rendered
+
     input_config = config.input
-    tickers = input_config.tickers if mode.is_trainval() else input_config.backtest.tickers
+    tickers = input_config.tickers if mode.is_trainable() else input_config.backtest.tickers
     assert len(tickers) > 0
 
     market = build_market(input_config, storage_dir)
@@ -42,7 +45,8 @@ def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = 
         start=utils.string_to_datetime(input_config.start),
         end=utils.string_to_datetime(input_config.end)
     )
-    if mode == 'trainval' and render_split:
+    # Render the split only once. It is computationally useless to rendered it multiple times.
+    if not split_rendered and render_split:
         data = dict()
         for ticker in tickers:
             data[ticker] = market.get(

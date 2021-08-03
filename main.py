@@ -8,8 +8,8 @@ import wandb
 
 from yacht.config import load_config, export_config
 from yacht.data.datasets import build_dataset
-from yacht.environments import build_env, Mode
-from yacht import utils, evaluation
+from yacht.environments import build_env
+from yacht import utils, evaluation, Mode
 from yacht import environments
 from yacht.agents import build_agent
 from yacht.trainer import build_trainer
@@ -88,12 +88,13 @@ if __name__ == '__main__':
                     logger.info('Starting back testing...')
 
                     logger.info('Trainval split:')
+                    dataset = build_dataset(config, storage_dir, mode=Mode.BacktestTrain)
                     train_env = build_env(config, dataset, mode=Mode.BacktestTrain)
                     evaluation.backtest(
                         train_env,
                         agent,
                         deterministic=config.input.backtest.deterministic,
-                        name='trainval_backtest'
+                        name='backtest_on_train'
                     )
 
                     logger.info('Test split:')
@@ -103,7 +104,7 @@ if __name__ == '__main__':
                         test_env,
                         agent,
                         deterministic=config.input.backtest.deterministic,
-                        name='test_backtest'
+                        name='backtest_on_test'
                     )
                     test_env.close()
 
@@ -114,7 +115,7 @@ if __name__ == '__main__':
             logger.info('Starting back testing...')
 
             logger.info('Trainval split:')
-            trainval_dataset = build_dataset(config, storage_dir, mode=mode.Backtest)
+            trainval_dataset = build_dataset(config, storage_dir, mode=mode.BacktestTrain)
             trainval_env = build_env(config, trainval_dataset, mode=Mode.BacktestTrain)
             agent = build_agent(
                 config,
@@ -127,7 +128,7 @@ if __name__ == '__main__':
                 trainval_env,
                 agent,
                 deterministic=config.backtest.deterministic,
-                name='trainval_backtest'
+                name='backtest_on_train'
             )
 
             logger.info('Test split:')
@@ -144,7 +145,7 @@ if __name__ == '__main__':
                 test_env,
                 agent,
                 deterministic=config.backtest.deterministic,
-                name='test_backtest'
+                name='backtest_on_test'
             )
 
             trainval_dataset.close()

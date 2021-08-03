@@ -7,7 +7,8 @@ import wandb
 from gym import spaces
 
 from yacht.agents.misc import unflatten_observations
-from yacht.environments import BaseAssetEnv, Mode
+from yacht.environments import BaseAssetEnv
+from yacht import Mode
 
 
 class MultiFrequencyDictToBoxWrapper(gym.Wrapper):

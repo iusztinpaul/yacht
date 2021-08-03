@@ -14,7 +14,7 @@ import gym
 from gym.envs.registration import register
 
 from .wrappers import MultiFrequencyDictToBoxWrapper, WandBWrapper
-from .. import utils
+from .. import utils, Mode
 from ..config import Config
 from ..config.proto.environment_pb2 import EnvironmentConfig
 
@@ -58,7 +58,7 @@ def build_env(
         'dataset': dataset,
         'reward_schema': reward_schema,
         'action_schema': action_schema,
-        'render_on_done': not mode.is_trainval()
+        'render_on_done': not mode.is_trainable()
     }
     if env_config.name == 'SingleAssetEnvironment-v0':
         env_kwargs.update({
@@ -67,9 +67,10 @@ def build_env(
             'initial_cash_position': env_config.initial_cash_position
         })
 
+    n_envs = env_config.n_envs if mode.is_trainable() else len(config.input.backtest.tickers)
     env = make_vec_env(
         env_id=env_config.name,
-        n_envs=env_config.n_envs,
+        n_envs=n_envs,
         seed=0,
         start_index=0,
         monitor_dir=utils.build_log_path(dataset.storage_dir),
