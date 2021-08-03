@@ -1,6 +1,10 @@
 import os
 
 
+def build_config_path(project_root_dir: str, config_name: str) -> str:
+    return os.path.join(project_root_dir, 'yacht', 'config', 'configs', config_name)
+
+
 def build_last_checkpoint_path(storage_dir: str) -> str:
     return build_checkpoints_path(storage_dir, 'last_checkpoint.zip')
 

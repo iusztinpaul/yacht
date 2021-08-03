@@ -55,7 +55,7 @@ if __name__ == '__main__':
         storage_dir=storage_dir
     )
     environments.register_gym_envs()
-    config = load_config(os.path.join(ROOT_DIR, 'yacht', 'config', 'configs', args.config_file_name))
+    config = load_config(utils.build_config_path(ROOT_DIR, args.config_file_name))
     export_config(config, storage_dir)
     logger.info(f'Config:\n{config}')
 
@@ -85,9 +85,8 @@ if __name__ == '__main__':
                 agent = trainer.train()
 
                 if config.input.backtest.run:
-                    logger.info('Starting back testing...')
+                    logger.info('Starting backtesting...')
 
-                    logger.info('Trainval split:')
                     dataset = build_dataset(config, storage_dir, mode=Mode.BacktestTrain)
                     train_env = build_env(config, dataset, mode=Mode.BacktestTrain)
                     evaluation.backtest(
@@ -97,7 +96,6 @@ if __name__ == '__main__':
                         name='backtest_on_train'
                     )
 
-                    logger.info('Test split:')
                     dataset = build_dataset(config, storage_dir, mode=Mode.Backtest)
                     test_env = build_env(config, dataset, mode=Mode.Backtest)
                     evaluation.backtest(
@@ -112,9 +110,8 @@ if __name__ == '__main__':
                 train_env.close()
                 val_env.close()
         elif mode == Mode.Backtest:
-            logger.info('Starting back testing...')
+            logger.info('Starting backtesting...')
 
-            logger.info('Trainval split:')
             trainval_dataset = build_dataset(config, storage_dir, mode=mode.BacktestTrain)
             trainval_env = build_env(config, trainval_dataset, mode=Mode.BacktestTrain)
             agent = build_agent(
@@ -131,7 +128,6 @@ if __name__ == '__main__':
                 name='backtest_on_train'
             )
 
-            logger.info('Test split:')
             test_dataset = build_dataset(config, storage_dir, mode=Mode.Backtest)
             test_env = build_env(config, test_dataset, mode=Mode.Backtest)
             agent = build_agent(

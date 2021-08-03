@@ -102,10 +102,8 @@ def register_gym_envs():
     gym_env_dict = gym.envs.registration.registry.env_specs
 
     for env_id, parameters in to_register_envs.items():
-        # TODO: Find a better way to fix multiple 'register' attempts
         if env_id not in gym_env_dict:
             logger.info('Remove {} from registry'.format(env_id))
-            # del gym.envs.registration.registry.env_specs[env_id]
 
             register(
                 id=env_id,
