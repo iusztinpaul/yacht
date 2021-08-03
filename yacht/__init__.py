@@ -14,3 +14,12 @@ class Mode(Enum):
 
     def is_trainable(self) -> bool:
         return self == self.Train
+
+    def is_backtest_on_train(self) -> bool:
+        return self == self.BacktestTrain
+
+    def is_validation(self) -> bool:
+        return self == self.Validation
+
+    def is_trainval(self) -> bool:
+        return any([self.is_trainable(), self.is_backtest_on_train(), self.is_validation()])

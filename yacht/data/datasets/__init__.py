@@ -47,6 +47,8 @@ def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = 
     )
     # Render the split only once. It is computationally useless to rendered it multiple times.
     if not split_rendered and render_split:
+        split_rendered = True
+
         data = dict()
         for ticker in tickers:
             data[ticker] = market.get(
@@ -81,7 +83,7 @@ def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = 
     logger.info(f'Trainval split: {train_val_start} - {train_val_end}')
     logger.info(f'Test split: {back_test_start} - {back_test_end}')
 
-    if mode == 'trainval':
+    if mode.is_trainval():
         start = train_val_start
         end = train_val_end
     else:
