@@ -1,6 +1,7 @@
 import pprint
 
 import logging
+from collections import defaultdict
 
 import numpy as np
 import pyfolio
@@ -54,32 +55,39 @@ def backtest(
     assert np.all(env.buf_dones)
 
     # Compute backtest statistics.
-    statistics = dict()
+    statistics = defaultdict(list)
     for buf_info in env.buf_infos:
         report = buf_info['report']
-        backtest_results = get_daily_return(report, value_col_name='total')
+        daily_returns = get_daily_return(report, value_col_name='total')
 
         # baseline_report = env.create_baseline_report()
         # baseline_results = get_daily_return(baseline_report, value_col_name='total')
 
         backtest_statistics = timeseries.perf_stats(
-            returns=backtest_results,
+            returns=daily_returns,
             # factor_returns=baseline_results,
         )
-
-        if verbose is True:
-            logger.info(f'Backtest statistics [{buf_info["ticker"]} - {name}]: ')
-            logger.info(pprint.pformat(backtest_statistics, indent=4))
 
         if plot:
             # This function works only in a jupyter notebook.
             with pyfolio.plotting.plotting_context(font_scale=1.1):
                 pyfolio.create_full_tear_sheet(
-                    returns=backtest_results,
+                    returns=daily_returns,
                     # benchmark_rets=baseline_results,
                     set_context=False
                 )
 
-        statistics[buf_info['ticker']] = backtest_statistics
+        for k, v in backtest_statistics.items():
+            statistics[k].append(v)
+
+    mean_statistics = dict()
+    for k, v in statistics.items():
+        if utils.is_number(v[0]):
+            mean_statistics[f'{k}_mean_std'] = (np.mean(v), np.std(v))
+    statistics.update(mean_statistics)
+
+    if verbose is True:
+        logger.info(f'Backtest statistics [{name}]: ')
+        logger.info(pprint.pformat(statistics, indent=4))
 
     return statistics

@@ -22,7 +22,7 @@ input: {
 }
 environment: {
     name: 'SingleAssetEnvironment-v0'
-    n_envs: 4
+    n_envs: 8
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -55,10 +55,10 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 10000
-    collecting_n_steps: 2500
+    total_timesteps: 16192
+    collecting_n_steps: 1024
     learning_rate: 0.00025
-    batch_size: 2500
+    batch_size: 1024
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95

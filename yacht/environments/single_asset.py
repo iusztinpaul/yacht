@@ -135,7 +135,7 @@ class SingleAssetEnvironment(BaseAssetEnv):
         pass
 
     def render_all(self, title, name='trades.png'):
-        name = f'{self.current_ticker}_{name}'
+        name = f'{self.current_ticker}_{self.given_seed}_{name}'
         if not name.endswith('.png'):
             name = f'{name}.png'
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 
 
 def compute_max_score(num_days: int, action_max_score: int):
@@ -19,3 +19,7 @@ def fib_sequence(n: int) -> List[int]:
         values.append(_sequence(_n))
 
     return values
+
+
+def is_number(obj: Any) -> bool:
+    return isinstance(obj, (int, float, complex)) and not isinstance(obj, bool)

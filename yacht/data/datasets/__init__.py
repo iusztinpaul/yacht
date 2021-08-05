@@ -83,7 +83,7 @@ def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = 
     logger.info(f'Trainval split: {train_val_start} - {train_val_end}')
     logger.info(f'Test split: {back_test_start} - {back_test_end}')
 
-    if mode.is_trainval():
+    if mode.is_trainval() or mode.is_backtest_on_train():
         start = train_val_start
         end = train_val_end
     else:

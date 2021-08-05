@@ -1,6 +1,5 @@
 import datetime
 import logging
-import random
 from abc import abstractmethod, ABC
 from copy import copy
 from typing import Dict, List, Optional, Union, Tuple
@@ -9,7 +8,6 @@ import gym
 import pandas as pd
 from gym import spaces
 import numpy as np
-import torch
 from stable_baselines3.common.utils import set_random_seed
 
 from yacht import utils
@@ -35,8 +33,7 @@ class BaseAssetEnv(gym.Env, ABC):
 
         # Environment name
         self.name = name
-
-        self.seed(seed=seed)
+        self.given_seed = seed
 
         # Environment general requirements.
         self.dataset = copy(dataset)
@@ -84,6 +81,8 @@ class BaseAssetEnv(gym.Env, ABC):
         self.render_on_done = render_on_done
 
     def seed(self, seed=None):
+        self.given_seed = seed
+
         set_random_seed(seed=seed, using_cuda=True)
 
     def reset(self):
@@ -428,7 +427,7 @@ class BaseAssetEnv(gym.Env, ABC):
         pass
 
     def render_all(self, title, name='trades.png'):
-        name = f'{self.current_ticker}_{name}'
+        name = f'{self.current_ticker}_{self.given_seed}_{name}'
         if not name.endswith('.png'):
             name = f'{name}.png'
 

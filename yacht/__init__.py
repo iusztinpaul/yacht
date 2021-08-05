@@ -22,4 +22,4 @@ class Mode(Enum):
         return self == self.Validation
 
     def is_trainval(self) -> bool:
-        return any([self.is_trainable(), self.is_backtest_on_train(), self.is_validation()])
+        return any([self.is_trainable(), self.is_validation()])
