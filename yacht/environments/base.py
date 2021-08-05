@@ -19,7 +19,7 @@ from yacht.environments.reward_schemas import RewardSchema
 logger = logging.getLogger(__file__)
 
 
-class BaseAssetEnv(gym.Env, ABC):
+class BaseAssetEnvironment(gym.Env, ABC):
     def __init__(
             self,
             name: str,
@@ -217,7 +217,9 @@ class BaseAssetEnv(gym.Env, ABC):
 
     def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
         observation_space = self.dataset.get_external_observation_space()
-        observation_space['env_features'] = None
+        # Add 'env_features' observation space for custom data
+        # observation_space['env_features'] = spaces.Box(low=-np.inf, high=np.inf, shape=(0, ), dtype=np.float32)
+
         observation_space = self._get_observation_space(observation_space)
 
         return observation_space
@@ -230,6 +232,9 @@ class BaseAssetEnv(gym.Env, ABC):
 
     def get_next_observation(self) -> Dict[str, np.array]:
         observation = self.dataset[self._tick_t]
+        # Replace the value of 'env_features' if you want to add custom data.
+        # observation['env_features'] = ...
+
         observation = self._get_next_observation(observation)
 
         return observation

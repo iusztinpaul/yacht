@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1eyacht/config/proto/agent.proto\x12\x12yacht.config.proto\x1a\x1fyacht/config/proto/policy.proto\"^\n\x0b\x41gentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\x12\x30\n\x06policy\x18\x03 \x01(\x0b\x32 .yacht.config.proto.PolicyConfigb\x06proto3')
+  serialized_pb=_b('\n\x1eyacht/config/proto/agent.proto\x12\x12yacht.config.proto\x1a\x1fyacht/config/proto/policy.proto\"y\n\x0b\x41gentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x11is_classic_method\x18\x02 \x01(\x08\x12\x0f\n\x07verbose\x18\x03 \x01(\x08\x12\x30\n\x06policy\x18\x04 \x01(\x0b\x32 .yacht.config.proto.PolicyConfigb\x06proto3')
   ,
   dependencies=[yacht_dot_config_dot_proto_dot_policy__pb2.DESCRIPTOR,])
 
@@ -42,15 +42,22 @@ _AGENTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='verbose', full_name='yacht.config.proto.AgentConfig.verbose', index=1,
+      name='is_classic_method', full_name='yacht.config.proto.AgentConfig.is_classic_method', index=1,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='policy', full_name='yacht.config.proto.AgentConfig.policy', index=2,
-      number=3, type=11, cpp_type=10, label=1,
+      name='verbose', full_name='yacht.config.proto.AgentConfig.verbose', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='policy', full_name='yacht.config.proto.AgentConfig.policy', index=3,
+      number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -68,7 +75,7 @@ _AGENTCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=87,
-  serialized_end=181,
+  serialized_end=208,
 )
 
 _AGENTCONFIG.fields_by_name['policy'].message_type = yacht_dot_config_dot_proto_dot_policy__pb2._POLICYCONFIG

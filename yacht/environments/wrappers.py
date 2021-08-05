@@ -7,12 +7,12 @@ import wandb
 from gym import spaces
 
 from yacht.agents.misc import unflatten_observations
-from yacht.environments import BaseAssetEnv
+from yacht.environments import BaseAssetEnvironment
 from yacht import Mode
 
 
 class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
-    def __init__(self, env: BaseAssetEnv):
+    def __init__(self, env: BaseAssetEnvironment):
         super().__init__(env)
 
         self.observation_space = self._compute_flattened_observation_space()

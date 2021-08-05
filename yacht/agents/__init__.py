@@ -9,19 +9,24 @@ from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 
 from yacht import utils
+from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent
 from yacht.agents.modules.multi_frequency import MultiFrequencyFeatureExtractor
 from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
-from yacht.environments import BaseAssetEnv
+from yacht.environments import BaseAssetEnvironment
 
 
 logger = logging.getLogger(__file__)
 
 
-agents_registry = {
+reinforcement_learning_agents = {
     'PPO': PPO,
     'SAC': SAC
 }
+classic_agents = {
+    'BuyAndHold': BuyAndHoldAgent
+}
+agents_registry = {**reinforcement_learning_agents, **classic_agents}
 
 policy_registry = {
     'MlpPolicy': 'MlpPolicy'
@@ -41,7 +46,7 @@ activation_fn_registry = {
 
 def build_agent(
         config,
-        env: Union[BaseAssetEnv, VecEnv],
+        env: Union[BaseAssetEnvironment, VecEnv],
         storage_dir: str,
         resume: bool = False,
         agent_path: str = None
@@ -54,6 +59,11 @@ def build_agent(
 
     # The agent is the main wrapper over all the logic.
     agent_class = agents_registry[agent_config.name]
+    if agent_config.is_classic_method:
+        return agent_class(
+            env=env
+        )
+
     if resume:
         if agent_path is None:
             agent_path = utils.build_best_checkpoint_path(env.dataset.storage_dir)

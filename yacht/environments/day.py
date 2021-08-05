@@ -5,13 +5,13 @@ import numpy as np
 import pandas as pd
 
 from gym import spaces
-from yacht.environments import BaseAssetEnv, Position
+from yacht.environments import BaseAssetEnvironment, Position
 from yacht.environments.reward_schemas import LeaderBoardRewardSchema
 
 logger = logging.getLogger(__file__)
 
 
-class DayForecastEnvironment(BaseAssetEnv):
+class DayForecastEnvironment(BaseAssetEnvironment):
     def update_internal_state(self):
         # TODO: Find a better way to calculate total_value & not duplicate code.
         leader_board_reward_schema = [

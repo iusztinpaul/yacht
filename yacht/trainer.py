@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from typing import List, Union
 
 import wandb
-from stable_baselines3.common import results_plotter
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.vec_env import VecEnv
@@ -14,7 +13,7 @@ from yacht import utils, Mode
 from yacht.config import Config
 from yacht.data.datasets import AssetDataset, build_dataset_wrapper
 from yacht.data.k_fold import build_k_fold, PurgedKFold
-from yacht.environments import BaseAssetEnv
+from yacht.environments import BaseAssetEnvironment
 from yacht.environments.callbacks import LoggerCallback, WandBCallback, RewardsRenderCallback
 
 logger = logging.getLogger(__file__)
@@ -27,7 +26,7 @@ class Trainer(ABC):
             name: str,
             agent: BaseAlgorithm,
             dataset: AssetDataset,
-            train_env: BaseAssetEnv,
+            train_env: BaseAssetEnvironment,
             save: bool = True
     ):
         self.config = config
@@ -122,8 +121,8 @@ class KFoldTrainer(Trainer):
             name: str,
             agent: BaseAlgorithm,
             dataset: AssetDataset,
-            train_env: BaseAssetEnv,
-            val_env: BaseAssetEnv,
+            train_env: BaseAssetEnvironment,
+            val_env: BaseAssetEnvironment,
             k_fold: PurgedKFold,
     ):
         train_config = config.train
@@ -196,8 +195,8 @@ def build_trainer(
         config,
         agent: BaseAlgorithm,
         dataset: AssetDataset,
-        train_env: Union[BaseAssetEnv, VecEnv],
-        val_env: Union[BaseAssetEnv, VecEnv],
+        train_env: Union[BaseAssetEnvironment, VecEnv],
+        val_env: Union[BaseAssetEnvironment, VecEnv],
         save: bool
 ) -> Trainer:
     trainer_class = trainer_registry[config.train.trainer_name]

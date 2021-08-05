@@ -24,19 +24,22 @@ def build_env(
         config: Config,
         dataset: ChooseAssetDataset,
         mode: Mode,
-) -> Union[VecEnv, BaseAssetEnv]:
-    def _wrappers(env_to_wrap: Union[Monitor, BaseAssetEnv]) -> gym.Env:
-        if isinstance(env_to_wrap, Monitor):
-            assert isinstance(env_to_wrap.env, BaseAssetEnv), f'Wrong env type: {type(env_to_wrap.env)}.'
+) -> Union[VecEnv, BaseAssetEnvironment]:
+    def _wrappers(env: Union[Monitor, BaseAssetEnvironment]) -> gym.Env:
+        if isinstance(env, Monitor):
+            assert isinstance(env.env, BaseAssetEnvironment), f'Wrong env type: {type(env.env)}.'
 
-        wrapped_env = MultiFrequencyDictToBoxWrapper(env_to_wrap)
+        # Classic methods can handle directly a dict for simplicity.
+        if not config.agent.is_classic_method:
+            env = MultiFrequencyDictToBoxWrapper(env)
+
         if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
-            wrapped_env = WandBWrapper(
-                env=wrapped_env,
+            env = WandBWrapper(
+                env=env,
                 mode=mode
             )
 
-        return wrapped_env
+        return env
 
     env_config: EnvironmentConfig = config.environment
     backtest_config = config.input.backtest

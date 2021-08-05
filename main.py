@@ -130,7 +130,7 @@ if __name__ == '__main__':
                 agent,
                 storage_dir=storage_dir,
                 mode=Mode.BacktestTrain,
-                deterministic=config.backtest.deterministic,
+                deterministic=config.input.backtest.deterministic,
                 name='backtest_on_train'
             )
 
@@ -148,7 +148,7 @@ if __name__ == '__main__':
                 agent,
                 storage_dir=storage_dir,
                 mode=Mode.Backtest,
-                deterministic=config.backtest.deterministic,
+                deterministic=config.input.backtest.deterministic,
                 name='backtest_on_test'
             )
 
@@ -156,5 +156,3 @@ if __name__ == '__main__':
             trainval_env.close()
             test_dataset.close()
             test_env.close()
-        elif mode == Mode.Baseline:
-            raise NotImplementedError()

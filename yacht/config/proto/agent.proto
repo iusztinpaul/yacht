@@ -7,6 +7,7 @@ import "yacht/config/proto/policy.proto";
 
 message AgentConfig {
   string name = 1;
-  bool verbose = 2;
-  PolicyConfig policy = 3;
+  bool is_classic_method = 2;
+  bool verbose = 3;
+  PolicyConfig policy = 4;
 }

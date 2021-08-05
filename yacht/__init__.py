@@ -6,10 +6,12 @@ class Mode(Enum):
     Validation = 'validation'
     Backtest = 'backtest_on_test'
     BacktestTrain = 'backtest_on_train'
-    Baseline = 'baseline'
 
     @classmethod
     def from_string(cls, value: str) -> 'Mode':
+        if value == 'backtest':
+            value = 'backtest_on_test'
+
         return cls(value.lower())
 
     def is_trainable(self) -> bool:
