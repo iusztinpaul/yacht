@@ -363,26 +363,16 @@ class BaseAssetEnvironment(gym.Env, ABC):
         """
             Returns episode metrics in a dictionary format.
         """
-        from yacht.evaluation import compute_backtest_results
+        from yacht.evaluation import compute_backtest_metrics
 
         report = self.create_report()
 
-        backtest_results, _ = compute_backtest_results(
+        episode_metrics, _ = compute_backtest_metrics(
             report,
             value_col_name='total',
         )
 
-        backtest_results = dict(
-            zip(backtest_results.index, backtest_results.values)
-        )
-        # Map all indices from plain english title to snake case for consistency.
-        snake_case_backtest_results = dict()
-        for k, v in backtest_results.items():
-            snake_case_backtest_results[utils.english_title_to_snake_case(k)] = v
-
         if self.render_on_done:
-            episode_metrics = snake_case_backtest_results
-
             sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
             total_assets = round(self.history['total_assets'][-1], 4)
             annual_return = round(episode_metrics['annual_return'], 4)
@@ -392,19 +382,19 @@ class BaseAssetEnvironment(gym.Env, ABC):
                     f'Annual Return={annual_return}'
             self.render_all(title=title, name=f'{self.name}.png')
 
-        return snake_case_backtest_results, report
+        return episode_metrics, report
 
     def create_report(self) -> pd.DataFrame:
+        data = {
+            'date': self.history['date'],
+            'action': self.history['action'],
+            'price': self.prices.loc[:, 'Close'][:self.end_tick]
+        }
         if 'total_assets' in self.history:
-            data = {
-                'date': self.history['date'],
-                'total': self.history['total_assets']
-            }
+            data['total'] = self.history['total_assets']
         else:
-            data = {
-                'date': self.history['date'],
-                'total': self.history['total_value']
-            }
+            data['total'] = self.history['total_value']
+
         report = pd.DataFrame(data=data)
         report['date'] = pd.to_datetime(report['date'])
         report.set_index('date', inplace=True, drop=True)

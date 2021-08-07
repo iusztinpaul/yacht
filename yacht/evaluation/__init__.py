@@ -8,7 +8,7 @@ import pyfolio
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import VecEnv
 
-from .backtest import *
+from .metrics import *
 
 from stable_baselines3.common.base_class import BaseAlgorithm
 
@@ -57,27 +57,26 @@ def backtest(
     # Compute backtest statistics.
     statistics = defaultdict(list)
     for buf_info in env.buf_infos:
-        report = buf_info['report']
-        daily_returns = get_daily_return(report, value_col_name='total')
+        backtest_metrics = buf_info['episode_metrics']
 
         # baseline_report = env.create_baseline_report()
         # baseline_results = get_daily_return(baseline_report, value_col_name='total')
 
-        backtest_statistics = timeseries.perf_stats(
-            returns=daily_returns,
-            # factor_returns=baseline_results,
-        )
+        # backtest_statistics = timeseries.perf_stats(
+        #     returns=daily_returns,
+        #     # factor_returns=baseline_results,
+        # )
+        #
+        # if plot:
+        #     # This function works only in a jupyter notebook.
+        #     with pyfolio.plotting.plotting_context(font_scale=1.1):
+        #         pyfolio.create_full_tear_sheet(
+        #             returns=daily_returns,
+        #             # benchmark_rets=baseline_results,
+        #             set_context=False
+        #         )
 
-        if plot:
-            # This function works only in a jupyter notebook.
-            with pyfolio.plotting.plotting_context(font_scale=1.1):
-                pyfolio.create_full_tear_sheet(
-                    returns=daily_returns,
-                    # benchmark_rets=baseline_results,
-                    set_context=False
-                )
-
-        for k, v in backtest_statistics.items():
+        for k, v in backtest_metrics.items():
             statistics[k].append(v)
 
     mean_statistics = dict()
@@ -87,7 +86,7 @@ def backtest(
     statistics.update(mean_statistics)
 
     if verbose is True:
-        logger.info(f'Backtest statistics [{name}]: ')
+        logger.info(f'Backtest metrics [{name}]: ')
         logger.info(pprint.pformat(statistics, indent=4))
 
     return statistics
