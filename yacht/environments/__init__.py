@@ -48,7 +48,7 @@ def build_env(
     reward_schema = build_reward_schema(
         config, max_score=utils.compute_max_score(
             num_days=dataset.num_days,
-            action_max_score=action_schema.max_units_per_asset
+            action_max_score=action_schema.action_scaling_factor
         )
     )
     env_kwargs = {

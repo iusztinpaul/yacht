@@ -31,14 +31,10 @@ environment: {
     {
         name: 'AssetsPriceChangeRewardSchema'
         reward_scaling: 0.0001
-    },
-    {
-        name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.0001
     }
     ]
     action_schema: 'ContinuousFloatActionSchema'
-    max_units_per_asset: 100
+    action_scaling_factor: 1
 }
 agent: {
     name: 'BuyAndHold'

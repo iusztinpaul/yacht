@@ -64,7 +64,7 @@ if __name__ == '__main__':
         if mode == Mode.Train:
             dataset = build_dataset(config, storage_dir, mode=Mode.Train)
             train_env = build_env(config, dataset, mode=Mode.Train)
-            val_env = build_env(config, dataset, mode=Mode.Validation)
+            val_env = build_env(config, dataset, mode=Mode.BacktestValidation)
             agent = build_agent(
                 config=config,
                 env=train_env,

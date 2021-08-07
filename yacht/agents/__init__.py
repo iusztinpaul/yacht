@@ -9,7 +9,7 @@ from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 
 from yacht import utils
-from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent
+from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
 from yacht.agents.modules.multi_frequency import MultiFrequencyFeatureExtractor
 from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
@@ -24,7 +24,8 @@ reinforcement_learning_agents = {
     'SAC': SAC
 }
 classic_agents = {
-    'BuyAndHold': BuyAndHoldAgent
+    'BuyAndHold': BuyAndHoldAgent,
+    'DCF': DCFAgent
 }
 agents_registry = {**reinforcement_learning_agents, **classic_agents}
 

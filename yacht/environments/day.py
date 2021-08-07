@@ -36,7 +36,7 @@ class DayForecastEnvironment(BaseAssetEnvironment):
     def create_info(self) -> dict:
         info = super().create_info()
 
-        info['max_possible_value'] = (self._tick_t - self._start_tick) * self.action_schema.max_units_per_asset
+        info['max_possible_value'] = (self.t_tick - self.start_tick) * self.action_schema.action_scaling_factor
         info['total_assets'] = round(self._total_value / self.max_possible_profit(stateless=True), 2)
 
         return info
@@ -52,10 +52,10 @@ class DayForecastEnvironment(BaseAssetEnvironment):
 
     def max_possible_profit(self, stateless=True):
         if stateless:
-            return self.action_schema.max_units_per_asset * (self._end_tick - self._start_tick)
+            return self.action_schema.action_scaling_factor * (self.end_tick - self.start_tick)
         else:
-            current_tick = self._start_tick
-            total_num_ticks = self._end_tick - current_tick
+            current_tick = self.start_tick
+            total_num_ticks = self.end_tick - current_tick
             total_value = 0.
 
             prices = self.prices['Close'].values
@@ -66,44 +66,44 @@ class DayForecastEnvironment(BaseAssetEnvironment):
             self.history['date'] = []
 
             logger.info(f'A total of {total_num_ticks} ticks.')
-            while current_tick + 1 <= self._end_tick:
+            while current_tick + 1 <= self.end_tick:
                 if prices[current_tick] <= prices[current_tick + 1]:
-                    total_value += self.action_schema.max_units_per_asset
+                    total_value += self.action_schema.action_scaling_factor
 
                     self.history['position'].append(Position.Long)
-                    self.history['action'].append(self.action_schema.max_units_per_asset)
+                    self.history['action'].append(self.action_schema.action_scaling_factor)
                     self.history['total_value'].append(total_value)
                     self.history['date'].append(self.dataset.index_to_datetime(current_tick))
 
                     current_tick += 1
 
-                    while current_tick + 1 <= self._end_tick and \
+                    while current_tick + 1 <= self.end_tick and \
                             prices[current_tick] <= prices[current_tick + 1]:
-                        total_value += self.action_schema.max_units_per_asset
+                        total_value += self.action_schema.action_scaling_factor
 
                         self.history['position'].append(None)
-                        self.history['action'].append(self.action_schema.max_units_per_asset)
+                        self.history['action'].append(self.action_schema.action_scaling_factor)
                         self.history['total_value'].append(total_value)
                         self.history['date'].append(self.dataset.index_to_datetime(current_tick))
 
                         current_tick += 1
 
                 else:
-                    total_value += self.action_schema.max_units_per_asset
+                    total_value += self.action_schema.action_scaling_factor
 
                     self.history['position'].append(Position.Short)
-                    self.history['action'].append(-self.action_schema.max_units_per_asset)
+                    self.history['action'].append(-self.action_schema.action_scaling_factor)
                     self.history['total_value'].append(total_value)
                     self.history['date'].append(self.dataset.index_to_datetime(current_tick))
 
                     current_tick += 1
 
-                    while current_tick + 1 <= self._end_tick and \
+                    while current_tick + 1 <= self.end_tick and \
                             prices[current_tick] > prices[current_tick + 1]:
-                        total_value += self.action_schema.max_units_per_asset
+                        total_value += self.action_schema.action_scaling_factor
 
                         self.history['position'].append(None)
-                        self.history['action'].append(-self.action_schema.max_units_per_asset)
+                        self.history['action'].append(-self.action_schema.action_scaling_factor)
                         self.history['total_value'].append(total_value)
                         self.history['date'].append(self.dataset.index_to_datetime(current_tick))
 

@@ -26,7 +26,6 @@ class BuyAndHoldAgent(BaseClassicAgent):
         super().__init__(env=env)
 
         self.bought = False
-        self.total_units = -1
 
     def predict(
             self,
@@ -37,11 +36,7 @@ class BuyAndHoldAgent(BaseClassicAgent):
         if self.bought is False:
             total_close_prices = observation['1d'][:, -1, 0, 0]
             total_cash_positions = observation['env_features'][:, -1, 0]
-
-            action_schema = self.env.envs[0].unwrapped.action_schema
-
-            self.total_units = total_cash_positions / total_close_prices
-            actions = self.total_units / action_schema.max_units_per_asset
+            actions = total_cash_positions / total_close_prices
 
             self.bought = True
         else:
@@ -49,6 +44,32 @@ class BuyAndHoldAgent(BaseClassicAgent):
 
             actions = np.zeros(shape=(batch_size, ))
 
+        actions = np.expand_dims(actions, axis=1)
+
+        return actions, None
+
+
+class DCFAgent(BaseClassicAgent):
+    def __init__(self, env: VecEnv):
+        super().__init__(env=env)
+
+        start_tick = self.env.envs[0].unwrapped.start_tick
+        end_tick = self.env.envs[0].unwrapped.end_tick
+        self.time_horizon = end_tick - start_tick
+        self.cash_distribution_per_tick = None
+
+    def predict(
+            self,
+            observation: Union[Dict[str, np.ndarray], np.ndarray],
+            state: Optional[np.ndarray] = None,
+            deterministic: bool = False,
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+        if self.cash_distribution_per_tick is None:
+            total_cash_positions = observation['env_features'][:, -1, 0]
+            self.cash_distribution_per_tick = total_cash_positions / self.time_horizon
+
+        total_close_prices = observation['1d'][:, -1, 0, 0]
+        actions = self.cash_distribution_per_tick / total_close_prices
         actions = np.expand_dims(actions, axis=1)
 
         return actions, None

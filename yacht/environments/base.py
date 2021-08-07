@@ -48,9 +48,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 2
 
         # Ticks.
-        self._start_tick = self.window_size - 1
-        self._end_tick = len(self.prices) - 2  # Another -1 because the reward is calculated with one step further.
-        self._tick_t = None
+        self.start_tick = self.window_size - 1
+        self.end_tick = len(self.prices) - 2  # Another -1 because the reward is calculated with one step further.
+        self.t_tick = None
 
         # State.
         self._done = None
@@ -60,7 +60,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self._r_t = None
 
         # Internal state.
-        self._total_value = 0
+        self.total_value = 0
         self._total_hits = 0
         self._total_profit_hits = 0
         self._total_loss_misses = 0
@@ -89,7 +89,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # Choose a random ticker for every instance of the environment.
         self.dataset.choose_ticker()
 
-        self._tick_t = self._start_tick
+        self.t_tick = self.start_tick
 
         # State.
         self._done = False
@@ -99,7 +99,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self._r_t = None
 
         # Internal state.
-        self._total_value = 0
+        self.total_value = 0
         self._total_hits = 0
         self._total_profit_hits = 0
         self._total_loss_misses = 0
@@ -133,7 +133,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
 
         # episode
-        self._end_tick = len(self.prices) - 2
+        self.end_tick = len(self.prices) - 2
 
         # Rendering
         self.renderer = TradingRenderer(
@@ -145,10 +145,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
     @property
     def current_ticker(self) -> str:
         return self.dataset.current_ticker
-
-    @property
-    def current_profit(self):
-        return self._total_value
 
     @property
     def intervals(self) -> List[str]:
@@ -174,7 +170,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             self._a_t = self.action_schema.get_value(action)
 
             # Update internal state after (s_t, a_t).
-            self._tick_t += 1
+            self.t_tick += 1
             changes = self.update_internal_state(self._a_t.item())
             # Update history with the internal changes so the next observation can be computed.
             self.update_history(changes)
@@ -231,7 +227,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return observation_space
 
     def get_next_observation(self) -> Dict[str, np.array]:
-        observation = self.dataset[self._tick_t]
+        observation = self.dataset[self.t_tick]
         # Replace the value of 'env_features' if you want to add custom data.
         # observation['env_features'] = ...
 
@@ -265,8 +261,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
             else:
                 self._total_loss_misses += abs(action)
 
-            if self._tick_t - self._start_tick != 0:
-                hit_ratio = self._total_hits / (self._tick_t - self._start_tick)
+            if self.t_tick - self.start_tick != 0:
+                hit_ratio = self._total_hits / (self.t_tick - self.start_tick)
             else:
                 hit_ratio = 0.
         else:
@@ -274,13 +270,13 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         info = dict(
             # MDP information.
-            step=self._tick_t - 1,  # Already incremented the tick at the start of the step() method.
+            step=self.t_tick - 1,  # Already incremented the tick at the start of the step() method.
             done=self._done,
             action=action,
             position=position,
             reward=self._r_t,
             # Interval state information.
-            total_value=self._total_value,
+            total_value=self.total_value,
             num_longs=self._num_longs,
             num_shorts=self._num_shorts,
             num_holds=self._num_holds,
@@ -310,7 +306,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         changes['date'] = None
         if self._should_update_history(key='date', changes=changes):
             # Map index_t to its corresponding date.
-            current_date = self.dataset.index_to_datetime(self._tick_t)
+            current_date = self.dataset.index_to_datetime(self.t_tick)
             self.history['date'].append(current_date)
 
         for key, value in changes.items():
@@ -327,9 +323,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
             if key == 'action':
                 history['action'] = (self.window_size - 1) * [0]
             elif key == 'total_value':
-                history['total_value'] = (self.window_size - 1) * [self._total_value]
+                history['total_value'] = (self.window_size - 1) * [self.total_value]
             elif key == 'date':
-                current_date = self.dataset.index_to_datetime(self._tick_t)
+                current_date = self.dataset.index_to_datetime(self.t_tick)
                 history['date'] = [
                     current_date - datetime.timedelta(days=day_delta)
                     for day_delta in range(1, self.window_size)
@@ -350,13 +346,13 @@ class BaseAssetEnvironment(gym.Env, ABC):
             Because the history can be updated on multiple calls on the step function check if in the changes
             dictionary there is the desired key & that it was not already added in the current step.
         """
-        return key in changes and len(self.history.get(key, dict())) < self._tick_t
+        return key in changes and len(self.history.get(key, dict())) < self.t_tick
 
     def _update_history(self, history: dict) -> dict:
         return history
 
     def is_done(self) -> bool:
-        is_end_sequence = self._tick_t == self._end_tick
+        is_end_sequence = self.t_tick == self.end_tick
 
         return is_end_sequence or self._is_done()
 

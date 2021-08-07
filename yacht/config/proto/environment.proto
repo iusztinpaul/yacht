@@ -16,5 +16,5 @@ message EnvironmentConfig {
   repeated RewardSchemaConfig reward_schemas = 7;
   double reward_scaling = 8;
   string action_schema = 9;
-  int32 max_units_per_asset = 10;
+  int32 action_scaling_factor = 10;
 }
