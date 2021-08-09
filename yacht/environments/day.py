@@ -13,7 +13,7 @@ logger = logging.getLogger(__file__)
 
 class DayForecastEnvironment(BaseAssetEnvironment):
     def update_internal_state(self):
-        # TODO: Find a better way to calculate total_value & not duplicate code.
+        # TODO: Find a better way to calculate total_cash & not duplicate code.
         leader_board_reward_schema = [
             reward_schema for reward_schema in self.reward_schema.reward_schemas
             if isinstance(reward_schema, LeaderBoardRewardSchema)

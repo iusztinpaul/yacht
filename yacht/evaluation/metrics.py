@@ -3,11 +3,10 @@ import numpy as np
 from pyfolio import timeseries
 
 from yacht import utils
-from yacht.utils.sequence import get_daily_return
 
 
-def compute_backtest_metrics(report: pd.DataFrame, value_col_name='total'):
-    daily_return_report = get_daily_return(report, value_col_name=value_col_name)
+def compute_backtest_metrics(report: pd.DataFrame, total_assets_col_name='total'):
+    daily_return_report = get_daily_return(report, total_assets_col_name=total_assets_col_name)
     # TODO: See how to use positions & transactions parameters.
     strategy_metrics = timeseries.perf_stats(
         returns=daily_return_report,
@@ -32,20 +31,37 @@ def compute_backtest_metrics(report: pd.DataFrame, value_col_name='total'):
     return strategy_metrics, final_report
 
 
+def get_daily_return(report: pd.DataFrame, total_assets_col_name='total'):
+    df = report.copy(deep=True)
+    df[df == 0.] = 1e-2
+
+    df['daily_return'] = df[total_assets_col_name].pct_change(1)
+
+    return pd.Series(df['daily_return'], index=df.index)
+
+
 def compute_price_advantage(report: pd.DataFrame) -> dict:
     actions = report.action.values
     prices = report.price.values
 
     # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
-    positive_positions = actions[actions > 0]
-    negative_positions = actions[actions < 0]
+    positive_positions_mask = actions > 0
+    negative_positions_mask = actions < 0
 
     statistics = dict()
-    if len(positive_positions) > 0:
-        statistics['buy_pa'] = _compute_price_advantage(positive_positions, prices, buy=True)
+    if positive_positions_mask.any():
+        statistics['buy_pa'] = _compute_price_advantage(
+            actions[positive_positions_mask],
+            prices[positive_positions_mask],
+            buy=True
+        )
 
-    if len(negative_positions) > 0:
-        statistics['sell_pa'] = _compute_price_advantage(negative_positions, prices, buy=False)
+    if negative_positions_mask.any():
+        statistics['sell_pa'] = _compute_price_advantage(
+            actions[negative_positions_mask],
+            prices[negative_positions_mask],
+            buy=False
+        )
 
     return statistics
 
@@ -62,4 +78,3 @@ def _compute_price_advantage(actions: np.ndarray, prices: np.ndarray, buy: bool 
     pa *= 1e4
 
     return pa
-

@@ -52,7 +52,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.end_tick = len(self.prices) - 2  # Another -1 because the reward is calculated with one step further.
         self.t_tick = None
 
-        # State.
+        # MDP state.
         self._done = None
         self._s_t = None
         self._a_t = None
@@ -60,7 +60,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self._r_t = None
 
         # Internal state.
-        self.total_value = 0
+        self._total_cash = 0
         self._total_hits = 0
         self._total_profit_hits = 0
         self._total_loss_misses = 0
@@ -91,7 +91,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         self.t_tick = self.start_tick
 
-        # State.
+        # MDP state.
         self._done = False
         self._s_t = None
         self._a_t = None
@@ -99,7 +99,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self._r_t = None
 
         # Internal state.
-        self.total_value = 0
+        self._total_cash = 0
         self._total_hits = 0
         self._total_profit_hits = 0
         self._total_loss_misses = 0
@@ -207,7 +207,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
     @abstractmethod
     def update_internal_state(self, action: Union[int, float]) -> dict:
         """
-            Returns: The internal state variables that were updated.
+            Returns: The internal state variables that has to be updated.
         """
         pass
 
@@ -253,21 +253,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         else:
             self._num_holds += 1
 
-        # TODO: Find a better way to compute the hits ratios.
-        if self._r_t is not None:
-            if self._r_t > 0:
-                self._total_profit_hits += abs(action)
-                self._total_hits += 1
-            else:
-                self._total_loss_misses += abs(action)
-
-            if self.t_tick - self.start_tick != 0:
-                hit_ratio = self._total_hits / (self.t_tick - self.start_tick)
-            else:
-                hit_ratio = 0.
-        else:
-            hit_ratio = 0.
-
         info = dict(
             # MDP information.
             step=self.t_tick - 1,  # Already incremented the tick at the start of the step() method.
@@ -276,13 +261,10 @@ class BaseAssetEnvironment(gym.Env, ABC):
             position=position,
             reward=self._r_t,
             # Interval state information.
-            total_value=self.total_value,
+            total_cash=self._total_cash,
             num_longs=self._num_longs,
             num_shorts=self._num_shorts,
             num_holds=self._num_holds,
-            profit_hits=self._total_profit_hits,
-            loss_misses=self._total_loss_misses,
-            hit_ratio=hit_ratio
         )
 
         info = self._create_info(info)
@@ -322,8 +304,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         for key in history_keys:
             if key == 'action':
                 history['action'] = (self.window_size - 1) * [0]
-            elif key == 'total_value':
-                history['total_value'] = (self.window_size - 1) * [self.total_value]
+            elif key == 'total_cash':
+                history['total_cash'] = (self.window_size - 1) * [self._total_cash]
             elif key == 'date':
                 current_date = self.dataset.index_to_datetime(self.t_tick)
                 history['date'] = [
@@ -369,7 +351,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         episode_metrics, _ = compute_backtest_metrics(
             report,
-            value_col_name='total',
+            total_assets_col_name='total',
         )
 
         if self.render_on_done:
@@ -393,7 +375,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         if 'total_assets' in self.history:
             data['total'] = self.history['total_assets']
         else:
-            data['total'] = self.history['total_value']
+            data['total'] = self.history['total_cash']
 
         report = pd.DataFrame(data=data)
         report['date'] = pd.to_datetime(report['date'])
@@ -418,25 +400,20 @@ class BaseAssetEnvironment(gym.Env, ABC):
         pass
 
     def render_all(self, title, name='trades.png'):
+        self.renderer.render(
+            title=title,
+            save_file_path=self._adjust_save_file_name(name),
+            positions=self.history['position'],
+            actions=self.history['action'],
+            total_cash=self.history['total_cash']
+        )
+        
+    def _adjust_save_file_name(self, name: str) -> str:
         name = f'{self.current_ticker}_{self.given_seed}_{name}'
         if not name.endswith('.png'):
             name = f'{name}.png'
-
-        self.renderer.render(
-            title=title,
-            save_file_path=utils.build_graphics_path(self.dataset.storage_dir, name),
-            positions=self.history['position'],
-            actions=self.history['action'],
-            total_value=self.history['total_value']
-        )
+            
+        return utils.build_graphics_path(self.dataset.storage_dir, name)
 
     def close(self):
-        pass
-
-    @abstractmethod
-    def max_possible_profit(self, stateless: bool = True) -> float:
-        """
-            @param stateless: If true will directly return the value, otherwise it will fill the 'history' for
-                rendering and other observations.
-        """
         pass

@@ -4,7 +4,6 @@ from .paths import *
 from .cache import *
 from .misc import *
 from .parsers import *
-from .sequence import *
 
 import logging
 import os

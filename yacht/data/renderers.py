@@ -241,7 +241,7 @@ class TradingRenderer(MplFinanceRenderer):
 
         positions: List[Optional[Position]] = kwargs['positions']
         actions: List[int] = kwargs['actions']
-        total_value: List[float] = kwargs.get('total_value', None)
+        total_cash: List[float] = kwargs.get('total_cash', None)
         total_units: List[float] = kwargs.get('total_units', None)
 
         # Trim missing values from the end.
@@ -274,7 +274,7 @@ class TradingRenderer(MplFinanceRenderer):
 
         additional_plots = [
             mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions'),
-            mpf.make_addplot(total_value, panel=2, color='b', type='bar', width=1, ylabel='Value/Cash')
+            mpf.make_addplot(total_cash, panel=2, color='b', type='bar', width=1, ylabel='Cash')
         ]
         if len(short_positions[short_positions.notna()]) > 0:
             additional_plots.append(

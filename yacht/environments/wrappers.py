@@ -85,31 +85,27 @@ class WandBWrapper(gym.Wrapper):
         episode_metrics = info.get('episode_metrics', False)
         episode_data = info.get('episode', False)
 
-        info_to_log = dict()
-        if is_done and episode_metrics:
-            info_to_log['total_value'] = info['total_value']
-            info_to_log['total_assets'] = info['total_assets']
-            info_to_log['longs_ratio'] = info['num_longs'] / episode_data['l']
-            info_to_log['shorts_ratio'] = info['num_shorts'] / episode_data['l']
-            info_to_log['holds_ratio'] = info['num_holds'] / episode_data['l']
-            # info_to_log['profit_hits'] = info['profit_hits']
-            # info_to_log['loss_misses'] = info['loss_misses']
-            # info_to_log['hit_ratio'] = info['hit_ratio']
+        if not self.mode.is_trainable():
+            if is_done and episode_metrics:
+                long_short_ratio = episode_metrics['num_longs'] / episode_metrics['num_shorts'] \
+                    if episode_metrics['num_shorts'] != 0 \
+                    else 1.
 
-            # TODO: Log more metrics after we understand them.
-            info_to_log['episode_metrics'] = {
-                'annual_return': episode_metrics['annual_return'],
-                'cumulative_returns': episode_metrics['cumulative_returns'],
-                'sharpe_ratio': episode_metrics['sharpe_ratio']
-            }
+                info_to_log = {
+                        'reward': episode_data['r'],
+                        'annual_return': episode_metrics['annual_return'],
+                        'cumulative_returns': episode_metrics['cumulative_returns'],
+                        'sharpe_ratio': episode_metrics['sharpe_ratio'],
+                        'max_drawdown': episode_metrics['max_drawdown'],
+                        'LSR': long_short_ratio
+                    }
+                if episode_metrics.get('buy_pa'):
+                    info_to_log['buy_pa'] = episode_metrics['buy_pa']
+                if episode_metrics.get('sell_pa'):
+                    info_to_log['sell_pa'] = episode_metrics['sell_pa']
 
-            # Translate the keys for easier understanding
-            info_to_log['episode'] = {
-                'reward': episode_data['r'],
-            }
-
-        wandb.log({
-            self.mode.value: info_to_log
-        })
+                wandb.log({
+                    self.mode.value: info_to_log
+                })
 
         return obs, reward, terminal, info

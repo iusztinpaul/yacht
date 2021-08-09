@@ -22,7 +22,7 @@ input: {
 }
 environment: {
     name: 'SingleAssetEnvironment-v0'
-    n_envs: 8
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -75,5 +75,5 @@ train: {
 }
 meta: {
     device: 'gpu'
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
 }

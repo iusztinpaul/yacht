@@ -14,7 +14,6 @@ from stable_baselines3.common.base_class import BaseAlgorithm
 
 from .. import Mode, utils
 from ..data.renderers import RewardsRenderer
-from ..utils.sequence import get_daily_return
 
 logger = logging.getLogger(__file__)
 
