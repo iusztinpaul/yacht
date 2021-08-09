@@ -2,6 +2,7 @@ import pprint
 
 import logging
 from collections import defaultdict
+from typing import List
 
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import VecEnv
@@ -73,8 +74,7 @@ def backtest(
         mode: Mode,
         deterministic: bool = False,
         name: str = 'backtest',
-        verbose: bool = True,
-        plot: bool = False
+        verbose: bool = True
 ):
     # Run the agent with the given policy.
     evaluate_policy(
@@ -101,39 +101,28 @@ def backtest(
 
     assert np.all(env.buf_dones)
 
-    # Compute backtest statistics.
+    statistics = aggregate_metrics(infos=env.buf_infos)
+    if verbose is True:
+        logger.info(f'Backtest metrics [{name}]: ')
+        logger.info(pprint.pformat(statistics, indent=4))
+
+    return statistics
+
+
+def aggregate_metrics(infos: List[dict]) -> dict:
+    # Aggregate every specific metric to a list.
     statistics = defaultdict(list)
-    for buf_info in env.buf_infos:
+    for buf_info in infos:
         backtest_metrics = buf_info['episode_metrics']
-
-        # baseline_report = env.create_baseline_report()
-        # baseline_results = get_daily_return(baseline_report, value_col_name='total')
-
-        # backtest_statistics = timeseries.perf_stats(
-        #     returns=daily_returns,
-        #     # factor_returns=baseline_results,
-        # )
-
-        # if plot:
-        #     # This function works only in a jupyter notebook.
-        #     with pyfolio.plotting.plotting_context(font_scale=1.1):
-        #         pyfolio.create_full_tear_sheet(
-        #             returns=daily_returns,
-        #             # benchmark_rets=baseline_results,
-        #             set_context=False
-        #         )
 
         for k, v in backtest_metrics.items():
             statistics[k].append(v)
 
+    # Compute the mean & std.
     mean_statistics = dict()
     for k, v in statistics.items():
         if utils.is_number(v[0]):
             mean_statistics[f'{k}_mean_std'] = (np.mean(v), np.std(v))
     statistics.update(mean_statistics)
 
-    if verbose is True:
-        logger.info(f'Backtest metrics [{name}]: ')
-        logger.info(pprint.pformat(statistics, indent=4))
-
-    return statistics
+    return mean_statistics

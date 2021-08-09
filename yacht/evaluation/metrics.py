@@ -48,6 +48,7 @@ def get_daily_return(report: pd.DataFrame, total_assets_col_name='total'):
 def compute_price_advantage(report: pd.DataFrame) -> dict:
     actions = report.action.values
     prices = report.price.values
+    mean_price = np.mean(prices)
 
     # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
     positive_positions_mask = actions > 0
@@ -58,6 +59,7 @@ def compute_price_advantage(report: pd.DataFrame) -> dict:
         statistics['buy_pa'] = _compute_price_advantage(
             actions[positive_positions_mask],
             prices[positive_positions_mask],
+            mean_price=mean_price,
             buy=True
         )
 
@@ -65,21 +67,26 @@ def compute_price_advantage(report: pd.DataFrame) -> dict:
         statistics['sell_pa'] = _compute_price_advantage(
             actions[negative_positions_mask],
             prices[negative_positions_mask],
+            mean_price=mean_price,
             buy=False
         )
 
     return statistics
 
 
-def _compute_price_advantage(actions: np.ndarray, prices: np.ndarray, buy: bool = True) -> float:
+def _compute_price_advantage(
+        actions: np.ndarray,
+        prices: np.ndarray,
+        mean_price: np.ndarray,
+        buy: bool = True
+) -> float:
     average_execution_price = (actions * prices).sum() / actions.sum()
-    average_price = np.mean(prices)
 
     # If you buy, you want a lower AEP, else if you sell, you want a higher AEP.
     if buy:
-        pa = 1 - average_execution_price / average_price
+        pa = 1 - average_execution_price / mean_price
     else:
-        pa = average_execution_price / average_price - 1
+        pa = average_execution_price / mean_price - 1
     pa *= 1e4
 
     return pa
