@@ -1,10 +1,13 @@
-from typing import Dict, List
+from collections import defaultdict
+from typing import Dict, List, Optional
 
 import gym
 import numpy as np
 import torch
 import wandb
 from gym import spaces
+from stable_baselines3.common.vec_env import VecEnvWrapper, VecEnv
+from stable_baselines3.common.vec_env.base_vec_env import VecEnvStepReturn
 
 from yacht.agents.misc import unflatten_observations
 from yacht.environments import BaseAssetEnvironment
@@ -72,36 +75,73 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         return observations
 
 
-class WandBWrapper(gym.Wrapper):
-    def __init__(self, env: gym.Env, mode: Mode):
+class VecEnvWandBWrapper(VecEnvWrapper):
+    def __init__(self, env: VecEnv, mode: Mode):
         super().__init__(env)
 
         self.mode = mode
 
-    def step(self, action):
-        obs, reward, terminal, info = self.env.step(action)
+        self.dones = np.array([False] * env.num_envs)
+        self.metrics: List[Optional[dict]] = [None] * env.num_envs
 
-        is_done = info['done']
-        episode_metrics = info.get('episode_metrics', False)
-        episode_data = info.get('episode', False)
+    def reset(self) -> np.ndarray:
+        return self.venv.reset()
+
+    def step_async(self, actions: np.ndarray) -> None:
+        self.venv.step_async(actions)
+
+    def step_wait(self) -> VecEnvStepReturn:
+        obs, reward, done, info = self.venv.step_wait()
 
         if not self.mode.is_trainable():
-            if is_done and episode_metrics:
-                info_to_log = {
-                        'reward': episode_data['r'],
-                        'annual_return': episode_metrics['annual_return'],
-                        'cumulative_returns': episode_metrics['cumulative_returns'],
-                        'sharpe_ratio': episode_metrics['sharpe_ratio'],
-                        'max_drawdown': episode_metrics['max_drawdown'],
-                        'LSR': episode_metrics['LSR']
-                    }
-                if episode_metrics.get('buy_pa'):
-                    info_to_log['buy_pa'] = episode_metrics['buy_pa']
-                if episode_metrics.get('sell_pa'):
-                    info_to_log['sell_pa'] = episode_metrics['sell_pa']
+            if done.any():
+                done_indices = np.where(done)[0]
+                for idx in done_indices:
+                    assert self.dones[idx].item() is False
+                    self.dones[idx] = True
 
+                    self.metrics[idx] = self._extract_metrics(info=info[idx])
+
+            if self.dones.all():
+                metrics_to_log = self._compute_mean(infos=self.metrics)
                 wandb.log({
-                    self.mode.value: info_to_log
+                    self.mode.value: metrics_to_log
                 })
 
-        return obs, reward, terminal, info
+                self.dones = np.array([False] * self.venv.num_envs)
+                self.metrics = [None] * self.venv.num_envs
+
+        return obs, reward, done, info
+
+    @classmethod
+    def _extract_metrics(cls, info: dict) -> dict:
+        episode_metrics = info['episode_metrics']
+        episode_data = info['episode']
+
+        metrics_to_log = {
+            'reward': episode_data['r'],
+            'annual_return': episode_metrics['annual_return'],
+            'cumulative_returns': episode_metrics['cumulative_returns'],
+            'sharpe_ratio': episode_metrics['sharpe_ratio'],
+            'max_drawdown': episode_metrics['max_drawdown'],
+            'LSR': episode_metrics['LSR']
+        }
+        if episode_metrics.get('buy_pa'):
+            metrics_to_log['buy_pa'] = episode_metrics['buy_pa']
+        if episode_metrics.get('sell_pa'):
+            metrics_to_log['sell_pa'] = episode_metrics['sell_pa']
+
+        return metrics_to_log
+
+    @classmethod
+    def _compute_mean(cls, infos: List[dict]) -> dict:
+        aggregated_metrics: Dict[str, list] = defaultdict(list)
+        for env_metrics in infos:
+            for metric_name, metric_value in env_metrics.items():
+                aggregated_metrics[metric_name].append(metric_value)
+
+        mean_metrics: Dict[str, np.ndarray] = dict()
+        for metric_name, metric_values in aggregated_metrics.items():
+            mean_metrics[metric_name] = np.mean(np.array(metric_values, dtype=np.float32))
+
+        return mean_metrics

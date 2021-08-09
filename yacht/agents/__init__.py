@@ -67,7 +67,7 @@ def build_agent(
 
     if resume:
         if agent_path is None:
-            agent_path = utils.build_best_checkpoint_path(env.dataset.storage_dir)
+            agent_path = utils.build_best_checkpoint_path(storage_dir)
             logger.info(f'Resuming from the best checkpoint: {agent_path}')
 
             assert os.path.exists(agent_path)

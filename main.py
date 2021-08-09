@@ -3,15 +3,15 @@ import logging
 import os
 
 import matplotlib
-import matplotlib.pyplot as plt
 import wandb
 
 from yacht.config import load_config, export_config
 from yacht.data.datasets import build_dataset
 from yacht.environments import build_env
-from yacht import utils, evaluation, Mode
+from yacht import utils, Mode
 from yacht import environments
 from yacht.agents import build_agent
+from yacht.evaluation import run_backtest
 from yacht.trainer import build_trainer
 from yacht.utils.wandb import WandBContext
 
@@ -85,74 +85,14 @@ if __name__ == '__main__':
                 agent = trainer.train()
 
                 if config.input.backtest.run:
-                    logger.info('Starting backtesting...')
-
-                    dataset = build_dataset(config, storage_dir, mode=Mode.BacktestTrain)
-                    train_env = build_env(config, dataset, mode=Mode.BacktestTrain)
-                    evaluation.backtest(
-                        train_env,
-                        agent,
+                    run_backtest(
+                        config=config,
                         storage_dir=storage_dir,
-                        mode=Mode.BacktestTrain,
-                        deterministic=config.input.backtest.deterministic,
-                        name='backtest_on_train'
+                        agent_path=args.agent_path
                     )
-
-                    dataset = build_dataset(config, storage_dir, mode=Mode.Backtest)
-                    test_env = build_env(config, dataset, mode=Mode.Backtest)
-                    evaluation.backtest(
-                        test_env,
-                        agent,
-                        storage_dir=storage_dir,
-                        mode=Mode.Backtest,
-                        deterministic=config.input.backtest.deterministic,
-                        name='backtest_on_test'
-                    )
-                    test_env.close()
-
-                dataset.close()
-                train_env.close()
-                val_env.close()
         elif mode == Mode.Backtest:
-            logger.info('Starting backtesting...')
-
-            trainval_dataset = build_dataset(config, storage_dir, mode=mode.BacktestTrain)
-            trainval_env = build_env(config, trainval_dataset, mode=Mode.BacktestTrain)
-            agent = build_agent(
-                config,
-                trainval_env,
-                storage_dir,
-                resume=True,
+            run_backtest(
+                config=config,
+                storage_dir=storage_dir,
                 agent_path=args.agent_path
             )
-            evaluation.backtest(
-                trainval_env,
-                agent,
-                storage_dir=storage_dir,
-                mode=Mode.BacktestTrain,
-                deterministic=config.input.backtest.deterministic,
-                name='backtest_on_train'
-            )
-
-            test_dataset = build_dataset(config, storage_dir, mode=Mode.Backtest)
-            test_env = build_env(config, test_dataset, mode=Mode.Backtest)
-            agent = build_agent(
-                config,
-                test_env,
-                storage_dir,
-                resume=True,
-                agent_path=args.agent_path
-            )
-            evaluation.backtest(
-                test_env,
-                agent,
-                storage_dir=storage_dir,
-                mode=Mode.Backtest,
-                deterministic=config.input.backtest.deterministic,
-                name='backtest_on_test'
-            )
-
-            trainval_dataset.close()
-            trainval_env.close()
-            test_dataset.close()
-            test_env.close()

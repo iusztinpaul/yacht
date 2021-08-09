@@ -12,7 +12,7 @@ from .reward_schemas import build_reward_schema
 import gym
 from gym.envs.registration import register
 
-from .wrappers import MultiFrequencyDictToBoxWrapper, WandBWrapper
+from .wrappers import MultiFrequencyDictToBoxWrapper, VecEnvWandBWrapper
 from .. import utils, Mode
 from ..config import Config
 from ..config.proto.environment_pb2 import EnvironmentConfig
@@ -32,12 +32,6 @@ def build_env(
         # Classic methods can handle directly a dict for simplicity.
         if not config.agent.is_classic_method:
             env = MultiFrequencyDictToBoxWrapper(env)
-
-        if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
-            env = WandBWrapper(
-                env=env,
-                mode=mode
-            )
 
         return env
 
@@ -79,6 +73,12 @@ def build_env(
         monitor_kwargs=None,
         wrapper_kwargs=None
     )
+
+    if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
+        env = VecEnvWandBWrapper(
+            env=env,
+            mode=mode
+        )
 
     return env
 

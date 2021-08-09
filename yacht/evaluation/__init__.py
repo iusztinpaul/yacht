@@ -11,9 +11,59 @@ from .metrics import *
 from stable_baselines3.common.base_class import BaseAlgorithm
 
 from .. import Mode, utils
+from ..agents import build_agent
+from ..config import Config
+from ..data.datasets import build_dataset
 from ..data.renderers import RewardsRenderer
+from ..environments import build_env
 
 logger = logging.getLogger(__file__)
+
+
+# TODO: Mode this logic to a class 'Backtester'
+def run_backtest(config: Config, storage_dir: str, agent_path: str):
+    logger.info('Starting backtesting...')
+
+    trainval_dataset = build_dataset(config, storage_dir, mode=Mode.BacktestTrain)
+    trainval_env = build_env(config, trainval_dataset, mode=Mode.BacktestTrain)
+    agent = build_agent(
+        config,
+        trainval_env,
+        storage_dir,
+        resume=True,
+        agent_path=agent_path
+    )
+    backtest(
+        trainval_env,
+        agent,
+        storage_dir=storage_dir,
+        mode=Mode.BacktestTrain,
+        deterministic=config.input.backtest.deterministic,
+        name=Mode.BacktestTrain.value
+    )
+
+    test_dataset = build_dataset(config, storage_dir, mode=Mode.Backtest)
+    test_env = build_env(config, test_dataset, mode=Mode.Backtest)
+    agent = build_agent(
+        config,
+        test_env,
+        storage_dir,
+        resume=True,
+        agent_path=agent_path
+    )
+    backtest(
+        test_env,
+        agent,
+        storage_dir=storage_dir,
+        mode=Mode.Backtest,
+        deterministic=config.input.backtest.deterministic,
+        name=Mode.Backtest.value
+    )
+
+    trainval_dataset.close()
+    trainval_env.close()
+    test_dataset.close()
+    test_env.close()
 
 
 def backtest(

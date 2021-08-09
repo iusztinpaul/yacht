@@ -256,7 +256,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         info = dict(
             # MDP information.
             step=self.t_tick - 1,  # Already incremented the tick at the start of the step() method.
-            done=self._done,
             action=action,
             position=position,
             reward=self._r_t,
