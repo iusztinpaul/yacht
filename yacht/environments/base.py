@@ -321,6 +321,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return history
 
     def _initialize_history(self, history: dict) -> dict:
+        # The total quantity of your assets.
+        history['total_units'] = []
+        # Parameter where to store the total value of your assets = units * price.
+        history['total_assets'] = []
+
         return history
 
     def _should_update_history(self, key: str, changes: dict):
@@ -343,7 +348,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
     def on_done(self) -> Tuple[dict, pd.DataFrame]:
         """
-            Returns episode metrics in a dictionary format.
+            Returns episode metrics in a dictionary format &
+                The history report in a DataFrame
         """
         from yacht.evaluation import compute_backtest_metrics
 
@@ -355,13 +361,15 @@ class BaseAssetEnvironment(gym.Env, ABC):
         )
 
         if self.render_on_done:
-            sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
-            total_assets = round(self.history['total_assets'][-1], 4)
             annual_return = round(episode_metrics['annual_return'], 4)
+            cumulative_returns = round(episode_metrics['cumulative_returns'], 4)
+            sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
+            max_drawdown = round(episode_metrics['max_drawdown'], 4)
 
             title = f'SR={sharpe_ratio};' \
-                    f'Total Assets={total_assets};' \
-                    f'Annual Return={annual_return}'
+                    f'Cumulative Returns={cumulative_returns};' \
+                    f'Annual Return={annual_return};' \
+                    f'Max Drawdown={max_drawdown}'
             self.render_all(title=title, name=f'{self.name}.png')
 
         return episode_metrics, report
@@ -370,9 +378,13 @@ class BaseAssetEnvironment(gym.Env, ABC):
         data = {
             'date': self.history['date'],
             'action': self.history['action'],
-            'price': self.prices.loc[:, 'Close'][:self.end_tick]
+            # The items are padded in the beginning, but in the end.
+            'price': self.prices.loc[:, 'Close'][:self.end_tick],
+            'longs': self.history['num_longs'],
+            'shorts': self.history['num_shorts'],
+            'holds': self.history['num_holds']
         }
-        if 'total_assets' in self.history:
+        if 'total_assets' in self.history and len(self.history['total_assets']) > 0:
             data['total'] = self.history['total_assets']
         else:
             data['total'] = self.history['total_cash']
@@ -380,18 +392,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         report = pd.DataFrame(data=data)
         report['date'] = pd.to_datetime(report['date'])
         report.set_index('date', inplace=True, drop=True)
-
-        return report
-
-    def create_baseline_report(self) -> pd.DataFrame:
-        data = self.dataset.get_prices()
-
-        report = pd.DataFrame(
-            index=data.index,
-            data={
-                'total': data.loc[:, 'Close']
-            }
-        )
 
         return report
 

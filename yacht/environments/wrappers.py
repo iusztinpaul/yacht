@@ -87,17 +87,13 @@ class WandBWrapper(gym.Wrapper):
 
         if not self.mode.is_trainable():
             if is_done and episode_metrics:
-                long_short_ratio = episode_metrics['num_longs'] / episode_metrics['num_shorts'] \
-                    if episode_metrics['num_shorts'] != 0 \
-                    else 1.
-
                 info_to_log = {
                         'reward': episode_data['r'],
                         'annual_return': episode_metrics['annual_return'],
                         'cumulative_returns': episode_metrics['cumulative_returns'],
                         'sharpe_ratio': episode_metrics['sharpe_ratio'],
                         'max_drawdown': episode_metrics['max_drawdown'],
-                        'LSR': long_short_ratio
+                        'LSR': episode_metrics['LSR']
                     }
                 if episode_metrics.get('buy_pa'):
                     info_to_log['buy_pa'] = episode_metrics['buy_pa']

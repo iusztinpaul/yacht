@@ -3,8 +3,6 @@ import pprint
 import logging
 from collections import defaultdict
 
-import numpy as np
-import pyfolio
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import VecEnv
 
@@ -65,7 +63,7 @@ def backtest(
         #     returns=daily_returns,
         #     # factor_returns=baseline_results,
         # )
-        #
+
         # if plot:
         #     # This function works only in a jupyter notebook.
         #     with pyfolio.plotting.plotting_context(font_scale=1.1):

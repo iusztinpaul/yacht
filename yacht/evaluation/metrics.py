@@ -7,6 +7,7 @@ from yacht import utils
 
 def compute_backtest_metrics(report: pd.DataFrame, total_assets_col_name='total'):
     daily_return_report = get_daily_return(report, total_assets_col_name=total_assets_col_name)
+
     # TODO: See how to use positions & transactions parameters.
     strategy_metrics = timeseries.perf_stats(
         returns=daily_return_report,
@@ -17,6 +18,7 @@ def compute_backtest_metrics(report: pd.DataFrame, total_assets_col_name='total'
     strategy_metrics = dict(
         zip(strategy_metrics.index, strategy_metrics.values)
     )
+
     # Map all indices from plain english title to snake case for consistency.
     snake_case_strategy_metrics = dict()
     for k, v in strategy_metrics.items():
@@ -25,6 +27,9 @@ def compute_backtest_metrics(report: pd.DataFrame, total_assets_col_name='total'
 
     price_advantage_metrics = compute_price_advantage(report)
     strategy_metrics.update(price_advantage_metrics)
+
+    longs_shorts_ratio = compute_longs_shorts_ratio(report)
+    strategy_metrics['LSR'] = longs_shorts_ratio
 
     final_report = pd.concat([report, daily_return_report], axis=1)
 
@@ -78,3 +83,12 @@ def _compute_price_advantage(actions: np.ndarray, prices: np.ndarray, buy: bool 
     pa *= 1e4
 
     return pa
+
+
+def compute_longs_shorts_ratio(report: pd.DataFrame) -> float:
+    final_num_longs = report.longs.values[-1]
+    final_num_shorts = report.shorts.values[-1]
+
+    longs_shorts_ratio = final_num_longs / final_num_shorts if final_num_shorts != 0 else np.array(1.)
+
+    return longs_shorts_ratio.item()
