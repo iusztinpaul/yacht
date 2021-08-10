@@ -1,5 +1,3 @@
-import logging
-import os
 from abc import ABC, abstractmethod
 from typing import List, Union
 
@@ -13,11 +11,11 @@ from yacht import utils, Mode
 from yacht.agents import build_agent
 from yacht.config import Config
 from yacht.data.datasets import AssetDataset, build_dataset_wrapper, build_dataset
-from yacht.data.k_fold import build_k_fold, PurgedKFold
+from yacht.data.k_fold import PurgedKFold
 from yacht.environments import BaseAssetEnvironment, build_env
-from yacht.environments.callbacks import LoggerCallback, WandBCallback, RewardsRenderCallback
-
-logger = logging.getLogger(__file__)
+from yacht.environments.callbacks import LoggerCallback, RewardsRenderCallback
+from yacht.logger import Logger
+from yacht.utils.wandb import WandBCallback
 
 
 class Trainer(ABC):
@@ -27,15 +25,16 @@ class Trainer(ABC):
             name: str,
             agent: BaseAlgorithm,
             dataset: AssetDataset,
-            train_env: BaseAssetEnvironment,
+            train_env: VecEnv,
+            logger: Logger,
             save: bool = True
     ):
         self.config = config
-        self.train_config = config.train
         self.name = name
         self.agent = agent
         self.dataset = dataset
         self.train_env = train_env
+        self.logger = logger
         self.save = save
 
         self.agent.policy.train()
@@ -60,10 +59,11 @@ class Trainer(ABC):
     def build_callbacks(self) -> List[BaseCallback]:
         callbacks = [
             LoggerCallback(
-                total_timesteps=self.train_config.total_timesteps,
+                logger=self.logger,
+                total_timesteps=self.config.train.total_timesteps,
             ),
             RewardsRenderCallback(
-                total_timesteps=self.train_config.total_timesteps,
+                total_timesteps=self.config.train.total_timesteps,
                 storage_dir=self.dataset.storage_dir,
                 mode=Mode.Train
             )
@@ -78,15 +78,15 @@ class Trainer(ABC):
 
 class NoEvalTrainer(Trainer):
     def train(self) -> BaseAlgorithm:
-        logger.info(f'Training for {self.train_config.total_timesteps} timesteps.')
-        logger.info(f'Train split length: {len(self.dataset)}')
-        logger.info(f'Validation split length: 0\n')
+        self.logger.info(f'Training for {self.config.train.total_timesteps} timesteps.')
+        self.logger.info(f'Train split length: {len(self.dataset)}')
+        self.logger.info(f'Validation split length: 0\n')
 
         self.agent = self.agent.learn(
-            total_timesteps=self.train_config.total_timesteps,
+            total_timesteps=self.config.train.total_timesteps,
             callback=self.build_callbacks(),
             tb_log_name=self.name,
-            log_interval=self.train_config.collecting_n_steps,
+            log_interval=self.config.train.collecting_n_steps,
         )
 
         return self.agent
@@ -97,10 +97,11 @@ class NoEvalTrainer(Trainer):
         callbacks.append(
             EvalCallback(
                 eval_env=self.train_env,
-                eval_freq=self.train_config.collecting_n_steps * 5,
-                log_path=self.dataset.storage_dir,
+                n_eval_episodes=self.train_env.num_envs,
+                eval_freq=self.config.train.collecting_n_steps,
+                log_path=utils.build_log_dir(self.dataset.storage_dir),
                 best_model_save_path=utils.build_best_checkpoint_dir(self.dataset.storage_dir),
-                deterministic=True,
+                deterministic=self.config.input.backtest.deterministic,
                 verbose=False
             )
         )
@@ -134,18 +135,18 @@ class KFoldTrainer(Trainer):
         self.k_fold = k_fold
 
     def train(self) -> BaseAlgorithm:
-        logger.info(
-            f'Training for {self.train_config.total_timesteps} timesteps, '
+        self.logger.info(
+            f'Training for {self.config.train.total_timesteps} timesteps, '
             f'with a k_fold {self.k_fold.n_splits} splits.'
         )
-        progress_bar = tqdm(total=self.train_config.collect_n_times)
+        progress_bar = tqdm(total=self.config.train.collect_n_times)
         print()
         for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_prices())):
-            k_fold_split_timesteps = self.train_config.total_timesteps // self.k_fold.n_splits
+            k_fold_split_timesteps = self.config.train.total_timesteps // self.k_fold.n_splits
 
-            logger.info(f'Training for {k_fold_split_timesteps} timesteps.')
-            logger.info(f'Train split length: {len(train_indices)}')
-            logger.info(f'Validation split length: {len(val_indices)}\n')
+            self.logger.info(f'Training for {k_fold_split_timesteps} timesteps.')
+            self.logger.info(f'Train split length: {len(train_indices)}')
+            self.logger.info(f'Validation split length: {len(val_indices)}\n')
 
             self.k_fold.render(self.dataset.storage_dir)
 
@@ -158,15 +159,15 @@ class KFoldTrainer(Trainer):
                 total_timesteps=k_fold_split_timesteps,
                 callback=self.build_callbacks(),
                 tb_log_name=self.name,
-                log_interval=self.train_config.collecting_n_steps,
+                log_interval=self.config.train.collecting_n_steps,
                 eval_env=self.val_env,
-                eval_freq=self.train_config.collecting_n_steps,
+                eval_freq=self.config.train.collecting_n_steps,
                 n_eval_episodes=1,
                 eval_log_path=self.dataset.storage_dir,
                 reset_num_timesteps=True
             )
 
-            progress_bar.update(n=self.train_config.collect_n_times // self.k_fold.n_splits)
+            progress_bar.update(n=self.config.train.collect_n_times // self.k_fold.n_splits)
             print()
 
         progress_bar.close()
@@ -177,12 +178,21 @@ class KFoldTrainer(Trainer):
         self.k_fold.close()
 
 
-def run_train(config: Config, storage_dir: str, resume_training: bool):
-    dataset = build_dataset(config, storage_dir, mode=Mode.Train)
-    train_env = build_env(config, dataset, mode=Mode.Train)
+#######################################################################################################################
+
+trainer_registry = {
+    'NoEvalTrainer': NoEvalTrainer,
+    'KFoldTrainer': KFoldTrainer
+}
+
+
+def run_train(config: Config, logger: Logger, storage_dir: str, resume_training: bool):
+    dataset = build_dataset(config, logger, storage_dir, mode=Mode.Train)
+    train_env = build_env(config, dataset, logger, mode=Mode.Train)
     agent = build_agent(
         config=config,
         env=train_env,
+        logger=logger,
         storage_dir=storage_dir,
         resume=resume_training,
         agent_from='latest'
@@ -193,18 +203,11 @@ def run_train(config: Config, storage_dir: str, resume_training: bool):
         agent=agent,
         dataset=dataset,
         train_env=train_env,
+        logger=logger,
         save=True
     )
     trainer.train()
     trainer.close()
-
-
-#######################################################################################################################
-
-trainer_registry = {
-    'NoEvalTrainer': NoEvalTrainer,
-    'KFoldTrainer': KFoldTrainer
-}
 
 
 def build_trainer(
@@ -212,6 +215,7 @@ def build_trainer(
         agent: BaseAlgorithm,
         dataset: AssetDataset,
         train_env: Union[BaseAssetEnvironment, VecEnv],
+        logger: Logger,
         save: bool
 ) -> Trainer:
     trainer_class = trainer_registry[config.train.trainer_name]
@@ -221,6 +225,7 @@ def build_trainer(
         'name': f'{agent.__class__.__name__}_{config.environment.name}',
         'dataset': dataset,
         'train_env': train_env,
+        'logger': logger,
         'save': save
     }
 

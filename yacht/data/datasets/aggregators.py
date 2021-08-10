@@ -7,6 +7,7 @@ from gym import Space
 
 from yacht.data.datasets import AssetDataset, SingleAssetDataset
 from yacht.data.markets import Market
+from yacht.logger import Logger
 
 
 class ChooseAssetDataset(AssetDataset):
@@ -18,6 +19,7 @@ class ChooseAssetDataset(AssetDataset):
             features: List[str],
             start: datetime,
             end: datetime,
+            logger: Logger,
             window_size: int = 1,
             default_ticker: str = None,
     ):
@@ -27,6 +29,7 @@ class ChooseAssetDataset(AssetDataset):
             features=features,
             start=start,
             end=end,
+            logger=logger,
             window_size=window_size,
         )
 

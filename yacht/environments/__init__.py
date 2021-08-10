@@ -12,17 +12,17 @@ from .reward_schemas import build_reward_schema
 import gym
 from gym.envs.registration import register
 
-from .wrappers import MultiFrequencyDictToBoxWrapper, VecEnvWandBWrapper
+from yacht.logger import Logger
+from .wrappers import MultiFrequencyDictToBoxWrapper, VecEnvLogMetricsWrapper
 from .. import utils, Mode
 from ..config import Config
 from ..config.proto.environment_pb2 import EnvironmentConfig
-
-logger = logging.getLogger(__file__)
 
 
 def build_env(
         config: Config,
         dataset: ChooseAssetDataset,
+        logger: Logger,
         mode: Mode,
 ) -> Union[VecEnv, BaseAssetEnvironment]:
     def _wrappers(env: Union[Monitor, BaseAssetEnvironment]) -> gym.Env:
@@ -75,8 +75,9 @@ def build_env(
     )
 
     if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
-        env = VecEnvWandBWrapper(
+        env = VecEnvLogMetricsWrapper(
             env=env,
+            logger=logger,
             mode=mode
         )
 
@@ -101,8 +102,6 @@ def register_gym_envs():
 
     for env_id, parameters in to_register_envs.items():
         if env_id not in gym_env_dict:
-            logger.info('Remove {} from registry'.format(env_id))
-
             register(
                 id=env_id,
                 entry_point=parameters['entry_point'],

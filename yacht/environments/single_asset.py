@@ -3,7 +3,6 @@ from typing import Dict, Optional, Union
 import numpy as np
 from gym import spaces
 
-from yacht import utils
 from yacht.data.datasets import AssetDataset
 from yacht.environments import BaseAssetEnvironment, RewardSchema, ActionSchema
 

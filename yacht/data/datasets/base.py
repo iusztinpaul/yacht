@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List, Tuple, Dict
@@ -10,9 +9,7 @@ from torch.utils.data import Dataset
 
 from yacht.data.markets import Market
 from yacht.data.normalizers import Normalizer
-
-
-logger = logging.getLogger(__file__)
+from yacht.logger import Logger
 
 
 class AssetDataset(Dataset, ABC):
@@ -30,6 +27,7 @@ class AssetDataset(Dataset, ABC):
             features: List[str],
             start: datetime,
             end: datetime,
+            logger: Logger,
             window_size: int = 1,
     ):
         """
@@ -53,6 +51,7 @@ class AssetDataset(Dataset, ABC):
         self.features, self.price_features, self.other_features = self.split_features(features)
         self.start = start
         self.end = end
+        self.logger = logger
         self.window_size = window_size
 
         assert set(self.features) == set(self.price_features).union(set(self.other_features)), \
@@ -132,6 +131,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             features: List[str],
             start: datetime,
             end: datetime,
+            logger: Logger,
             price_normalizer: Normalizer,
             other_normalizer: Normalizer,
             window_size: int = 1,
@@ -143,6 +143,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             features=features,
             start=start,
             end=end,
+            logger=logger,
             window_size=window_size,
         )
 
@@ -152,7 +153,7 @@ class SingleAssetDataset(AssetDataset, ABC):
         if data is not None:
             self.data = data
         else:
-            logger.info(
+            self.logger.info(
                 f'Downloading & loading data in memory for ticker - {ticker} - '
                 f'from {start} to {end} - for intervals: {intervals}'
             )

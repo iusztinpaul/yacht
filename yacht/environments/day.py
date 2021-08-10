@@ -1,4 +1,3 @@
-import logging
 from typing import Dict
 
 import numpy as np
@@ -7,8 +6,6 @@ import pandas as pd
 from gym import spaces
 from yacht.environments import BaseAssetEnvironment, Position
 from yacht.environments.reward_schemas import LeaderBoardRewardSchema
-
-logger = logging.getLogger(__file__)
 
 
 class DayForecastEnvironment(BaseAssetEnvironment):
@@ -65,7 +62,7 @@ class DayForecastEnvironment(BaseAssetEnvironment):
             self.history['total_value'] = []
             self.history['date'] = []
 
-            logger.info(f'A total of {total_num_ticks} ticks.')
+            # logger.info(f'A total of {total_num_ticks} ticks.')
             while current_tick + 1 <= self.end_tick:
                 if prices[current_tick] <= prices[current_tick + 1]:
                     total_value += self.action_schema.action_scaling_factor
@@ -109,6 +106,6 @@ class DayForecastEnvironment(BaseAssetEnvironment):
 
                         current_tick += 1
 
-            logger.info(f'{total_value}/{total_num_ticks} accuracy.')
+            # logger.info(f'{total_value}/{total_num_ticks} accuracy.')
 
             return total_value

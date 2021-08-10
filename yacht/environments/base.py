@@ -1,5 +1,4 @@
 import datetime
-import logging
 from abc import abstractmethod, ABC
 from copy import copy
 from typing import Dict, List, Optional, Union, Tuple
@@ -15,8 +14,6 @@ from yacht.data.datasets import ChooseAssetDataset
 from yacht.environments.action_schemas import ActionSchema
 from yacht.environments.enums import Position
 from yacht.environments.reward_schemas import RewardSchema
-
-logger = logging.getLogger(__file__)
 
 
 class BaseAssetEnvironment(gym.Env, ABC):

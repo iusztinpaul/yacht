@@ -1,4 +1,3 @@
-import logging
 from collections import defaultdict
 from datetime import datetime
 from typing import List, Dict
@@ -10,8 +9,7 @@ from gym import spaces
 from yacht.data.datasets import IndexedDatasetMixin, SingleAssetDataset
 from yacht.data.markets import Market
 from yacht.data.normalizers import Normalizer
-
-logger = logging.getLogger(__file__)
+from yacht.logger import Logger
 
 
 class DayMultiFrequencyDataset(SingleAssetDataset):
@@ -32,6 +30,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             features: List[str],
             start: datetime,
             end: datetime,
+            logger: Logger,
             price_normalizer: Normalizer,
             other_normalizer: Normalizer,
             window_size: int = 1,
@@ -46,6 +45,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             features,
             start,
             end,
+            logger,
             price_normalizer,
             other_normalizer,
             window_size,

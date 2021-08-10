@@ -1,4 +1,3 @@
-import logging
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
@@ -6,7 +5,7 @@ from typing import Union, List, Any
 
 import pandas as pd
 
-logger = logging.getLogger(__file__)
+from yacht.logger import Logger
 
 
 class Market(ABC):
@@ -28,12 +27,14 @@ class Market(ABC):
     def __init__(
             self,
             features: List[str],
+            logger: Logger,
             api_key,
             api_secret,
             storage_dir: str,
             include_weekends: bool
     ):
         self.features = list(set(features).union(self.MANDATORY_FEATURES))
+        self.logger = logger
         self.api_key = api_key
         self.api_secret = api_secret
         self.include_weekends = include_weekends
@@ -97,7 +98,7 @@ class Market(ABC):
         if self.is_cached(ticker, interval, start, end):
             return
 
-        logger.info(f'[{interval}] - {ticker} - Downloading from "{start}" to "{end}"')
+        self.logger.info(f'[{interval}] - {ticker} - Downloading from "{start}" to "{end}"')
 
         data = self.request(ticker, interval, start, end)
         data = self.process_request(data)
@@ -112,6 +113,7 @@ class H5Market(Market, ABC):
     def __init__(
             self,
             features: List[str],
+            logger: Logger,
             api_key,
             api_secret,
             storage_dir: str,
@@ -120,7 +122,7 @@ class H5Market(Market, ABC):
     ):
         self.storage_file = os.path.join(storage_dir, storage_filename)
 
-        super().__init__(features, api_key, api_secret, storage_dir, include_weekends)
+        super().__init__(features, logger, api_key, api_secret, storage_dir, include_weekends)
 
     def open(self) -> pd.HDFStore:
         return pd.HDFStore(self.storage_file)

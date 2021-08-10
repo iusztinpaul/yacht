@@ -18,17 +18,20 @@ dataset_registry = {
 split_rendered = False
 
 
-logger = logging.getLogger(__file__)
-
-
-def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = True) -> ChooseAssetDataset:
+def build_dataset(
+        config: Config,
+        logger: Logger,
+        storage_dir,
+        mode: Mode,
+        render_split: bool = True
+) -> ChooseAssetDataset:
     global split_rendered
 
     input_config = config.input
     tickers = input_config.tickers if mode.is_trainable() else input_config.backtest.tickers
     assert len(tickers) > 0
 
-    market = build_market(input_config, storage_dir)
+    market = build_market(config, logger, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]
 
     train_val_start, train_val_end, back_test_start, back_test_end = utils.split_period(
@@ -103,6 +106,7 @@ def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = 
                 features=list(input_config.features) + list(input_config.technical_indicators),
                 start=start,
                 end=end,
+                logger=logger,
                 price_normalizer=price_normalizer,
                 other_normalizer=other_normalizer,
                 window_size=input_config.window_size
@@ -116,6 +120,7 @@ def build_dataset(config: Config, storage_dir, mode: Mode, render_split: bool = 
         features=list(input_config.features) + list(input_config.technical_indicators),
         start=start,
         end=end,
+        logger=logger,
         window_size=input_config.window_size,
         default_ticker=tickers[0]
     )

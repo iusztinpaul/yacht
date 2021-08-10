@@ -1,23 +1,22 @@
-import logging
+from .agents import *
+
 import os
 from typing import Union
 
-from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 
 from yacht import utils
+from yacht.logger import Logger
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
 from yacht.agents.modules.multi_frequency import MultiFrequencyFeatureExtractor
 from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
 from yacht.environments import BaseAssetEnvironment
-
-
-logger = logging.getLogger(__file__)
+from yacht.utils.wandb import WandBLogger
 
 
 reinforcement_learning_agents = {
@@ -49,6 +48,7 @@ activation_fn_registry = {
 def build_agent(
         config: Config,
         env: Union[BaseAssetEnvironment, VecEnv],
+        logger: Logger,
         storage_dir: str,
         resume: bool = False,
         agent_from: str = None
@@ -112,7 +112,7 @@ def build_agent(
                 'drop_out_p': feature_extractor_config.drop_out_p
             }
 
-        return agent_class(
+        agent = agent_class(
             policy=policy_class,
             env=env,
             verbose=1 if agent_config.verbose else 0,
@@ -129,9 +129,11 @@ def build_agent(
             use_sde=train_config.use_sde,
             sde_sample_freq=train_config.sde_sample_freq,
             policy_kwargs=policy_kwargs,
-            tensorboard_log=os.path.join(storage_dir, 'tensorboard'),
             device='cuda' if config.meta.device == 'gpu' else config.meta.device
         )
+        agent.set_logger(logger)
+
+        return agent
 
 
 def _build_net_arch_dict(net_arch: NetArchitectureConfig, agent_class: type) -> Union[list, dict]:

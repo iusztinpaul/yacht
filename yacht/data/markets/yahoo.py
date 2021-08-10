@@ -6,18 +6,20 @@ import yfinance
 
 from yacht.data.markets.base import H5Market
 from yacht.data.markets.mixins import TechnicalIndicatorMixin
+from yacht.logger import Logger
 
 
 class Yahoo(H5Market):
     def __init__(
             self,
             features: List[str],
+            logger: Logger,
             api_key,
             api_secret,
             storage_dir: str,
             include_weekends: bool
     ):
-        super().__init__(features, api_key, api_secret, storage_dir, 'yahoo.h5', include_weekends)
+        super().__init__(features, logger, api_key, api_secret, storage_dir, 'yahoo.h5', include_weekends)
 
     def request(self, ticker: str, interval: str, start: datetime, end: datetime = None) -> List[List[Any]]:
         assert interval == '1d', 'Yahoo Finance supports only interval"1d".'

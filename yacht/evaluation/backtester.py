@@ -1,4 +1,3 @@
-import logging
 import pprint
 from collections import defaultdict
 from typing import List
@@ -14,9 +13,7 @@ from yacht.config import Config
 from yacht.data.datasets import build_dataset, ChooseAssetDataset
 from yacht.data.renderers import RewardsRenderer
 from yacht.environments import build_env
-
-
-logger = logging.getLogger(__file__)
+from yacht.logger import Logger
 
 
 class BackTester:
@@ -26,6 +23,7 @@ class BackTester:
             dataset: ChooseAssetDataset,
             env: VecEnv,
             agent: BaseAlgorithm,
+            logger: Logger,
             mode: Mode,
             name: str = None
     ):
@@ -33,6 +31,7 @@ class BackTester:
         self.dataset = dataset
         self.env = env
         self.agent = agent
+        self.logger = logger
         self.mode = mode
         self.name = name if name is not None else self.mode.value
 
@@ -50,9 +49,8 @@ class BackTester:
         self.env.close()
         self.dataset.close()
 
-    @classmethod
     def backtest(
-            cls,
+            self,
             env: VecEnv,
             agent: BaseAlgorithm,
             storage_dir: str,
@@ -84,12 +82,13 @@ class BackTester:
         renderer.render()
         renderer.save(utils.build_rewards_path(storage_dir, mode))
 
-        assert np.all(env.buf_dones)
+        assert np.all(env.buf_dones), 'Cannot compute metrics on undone environments.'
 
-        statistics = cls.aggregate_metrics(infos=env.buf_infos)
+        # Compute mean & std on all the experiments.
+        statistics = self.aggregate_metrics(infos=env.buf_infos)
         if verbose is True:
-            logger.info(f'Backtest metrics [{name}]: ')
-            logger.info(pprint.pformat(statistics, indent=4))
+            self.logger.info(f'Backtest metrics [{name}]: ')
+            self.logger.info(pprint.pformat(statistics, indent=4))
 
         return statistics
 
@@ -116,13 +115,14 @@ class BackTester:
 #######################################################################################################################
 
 
-def build_backtester(config: Config, storage_dir: str, mode: Mode, agent_from: str) -> BackTester:
-    dataset = build_dataset(config, storage_dir, mode=mode)
-    env = build_env(config, dataset, mode=mode)
+def build_backtester(config: Config, logger: Logger, storage_dir: str, mode: Mode, agent_from: str) -> BackTester:
+    dataset = build_dataset(config, logger, storage_dir, mode=mode)
+    env = build_env(config, dataset, logger, mode=mode)
     agent = build_agent(
         config,
         env,
-        storage_dir,
+        logger=logger,
+        storage_dir=storage_dir,
         resume=True,
         agent_from=agent_from
     )
@@ -132,5 +132,6 @@ def build_backtester(config: Config, storage_dir: str, mode: Mode, agent_from: s
         dataset=dataset,
         env=env,
         agent=agent,
+        logger=logger,
         mode=mode,
     )

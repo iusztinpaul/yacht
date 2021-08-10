@@ -1,3 +1,4 @@
+from abc import ABC
 from collections import defaultdict
 from typing import Dict, List, Optional
 
@@ -6,6 +7,7 @@ import numpy as np
 import torch
 import wandb
 from gym import spaces
+from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.vec_env import VecEnvWrapper, VecEnv
 from stable_baselines3.common.vec_env.base_vec_env import VecEnvStepReturn
 
@@ -75,10 +77,11 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         return observations
 
 
-class VecEnvWandBWrapper(VecEnvWrapper):
-    def __init__(self, env: VecEnv, mode: Mode):
+class VecEnvLogMetricsWrapper(VecEnvWrapper, ABC):
+    def __init__(self, env: VecEnv, logger: Logger, mode: Mode):
         super().__init__(env)
 
+        self.logger = logger
         self.mode = mode
 
         self.dones = np.array([False] * env.num_envs)
@@ -107,14 +110,21 @@ class VecEnvWandBWrapper(VecEnvWrapper):
             # Log the mean when all environments are done.
             if self.dones.all():
                 metrics_to_log = self._compute_mean(infos=self.metrics)
-                wandb.log({
-                    self.mode.value: metrics_to_log
-                })
+                metrics_to_log = self._flatten_keys(metrics_to_log)
+
+                self.logger.log(metrics_to_log)
 
                 self.dones = np.array([False] * self.venv.num_envs)
                 self.metrics = [None] * self.venv.num_envs
 
         return obs, reward, done, info
+
+    def _flatten_keys(self, metrics_to_log: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        flattened_dict = dict()
+        for metric_name, metric_value in metrics_to_log.items():
+            flattened_dict[f'{self.mode.value}/{metric_name}'] = metric_value
+
+        return flattened_dict
 
     @classmethod
     def _extract_metrics(cls, info: dict) -> dict:

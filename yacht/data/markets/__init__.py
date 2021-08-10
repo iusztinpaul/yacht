@@ -3,6 +3,8 @@ import os
 from .base import Market
 from .binance import Binance, TechnicalIndicatorBinance
 from .yahoo import Yahoo, TechnicalIndicatorYahoo
+from ...config import Config
+from ...logger import Logger
 
 market_registry = {
     'Binance': Binance,
@@ -14,9 +16,12 @@ market_registry = {
 singletones = dict()
 
 
-def build_market(input_config, storage_path) -> Market:
+def build_market(config: Config, logger: Logger, storage_path: str) -> Market:
+    input_config = config.input
+
     market_kwargs = {
         'features': list(input_config.features),
+        'logger': logger,
         'api_key': os.environ['MARKET_API_KEY'],
         'api_secret': os.environ['MARKET_API_SECRET'],
         'storage_dir': storage_path,
