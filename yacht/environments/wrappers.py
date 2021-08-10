@@ -94,14 +94,17 @@ class VecEnvWandBWrapper(VecEnvWrapper):
         obs, reward, done, info = self.venv.step_wait()
 
         if not self.mode.is_trainable():
+            # Persist the metrics from the finished environments.
             if done.any():
                 done_indices = np.where(done)[0]
                 for idx in done_indices:
-                    assert self.dones[idx].item() is False
+                    assert self.dones[idx].item() is False, \
+                        'An environment cannot by done twice until the other environments are also finished.'
                     self.dones[idx] = True
 
                     self.metrics[idx] = self._extract_metrics(info=info[idx])
 
+            # Log the mean when all environments are done.
             if self.dones.all():
                 metrics_to_log = self._compute_mean(infos=self.metrics)
                 wandb.log({

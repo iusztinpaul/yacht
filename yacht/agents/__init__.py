@@ -12,6 +12,7 @@ from yacht import utils
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
 from yacht.agents.modules.multi_frequency import MultiFrequencyFeatureExtractor
 from yacht.agents.policies.generic import GenericActorCriticPolicy
+from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
 from yacht.environments import BaseAssetEnvironment
 
@@ -46,12 +47,25 @@ activation_fn_registry = {
 
 
 def build_agent(
-        config,
+        config: Config,
         env: Union[BaseAssetEnvironment, VecEnv],
         storage_dir: str,
         resume: bool = False,
-        agent_path: str = None
+        agent_from: str = None
 ) -> BaseAlgorithm:
+    """
+
+    Args:
+        config:
+        env:
+        storage_dir:
+        resume:
+        agent_from: choose from (latest checkpoint, best checkpoint, absolute_path to the checkpoint)
+
+    Returns:
+
+    """
+
     agent_config = config.agent
     policy_config = config.agent.policy
     feature_extractor_config = policy_config.feature_extractor
@@ -66,13 +80,16 @@ def build_agent(
         )
 
     if resume:
-        if agent_path is None:
-            agent_path = utils.build_best_checkpoint_path(storage_dir)
-            logger.info(f'Resuming from the best checkpoint: {agent_path}')
+        if agent_from == 'best':
+            agent_from = utils.build_best_checkpoint_path(storage_dir)
+            logger.info(f'Resuming from the best checkpoint: {agent_from}')
+        elif agent_from == 'latest':
+            agent_from = utils.build_last_checkpoint_path(storage_dir)
+            logger.info(f'Resuming from the latest checkpoint: {agent_from}')
 
-            assert os.path.exists(agent_path)
+        assert os.path.exists(agent_from)
 
-        return agent_class.load(agent_path)
+        return agent_class.load(agent_from)
     else:
         # The agent has a policy.
         policy_class = policy_registry[policy_config.name]

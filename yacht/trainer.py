@@ -10,10 +10,11 @@ from stable_baselines3.common.vec_env import VecEnv
 from tqdm import tqdm
 
 from yacht import utils, Mode
+from yacht.agents import build_agent
 from yacht.config import Config
-from yacht.data.datasets import AssetDataset, build_dataset_wrapper
+from yacht.data.datasets import AssetDataset, build_dataset_wrapper, build_dataset
 from yacht.data.k_fold import build_k_fold, PurgedKFold
-from yacht.environments import BaseAssetEnvironment
+from yacht.environments import BaseAssetEnvironment, build_env
 from yacht.environments.callbacks import LoggerCallback, WandBCallback, RewardsRenderCallback
 
 logger = logging.getLogger(__file__)
@@ -35,15 +36,13 @@ class Trainer(ABC):
         self.agent = agent
         self.dataset = dataset
         self.train_env = train_env
-
         self.save = save
 
-    def __enter__(self):
         self.agent.policy.train()
 
-        return self
+    def close(self):
+        self.agent.policy.eval()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
         if self.save is True:
             save_path = utils.build_last_checkpoint_path(self.dataset.storage_dir)
             self.agent.save(
@@ -53,11 +52,6 @@ class Trainer(ABC):
             # TODO: Find a way to add this line to the wandb classes for consistency.
             if utils.get_experiment_tracker_name(self.dataset.storage_dir) == 'wandb':
                 wandb.save(save_path)
-
-        self.close()
-
-    def close(self):
-        pass
 
     @abstractmethod
     def train(self) -> BaseAlgorithm:
@@ -183,6 +177,28 @@ class KFoldTrainer(Trainer):
         self.k_fold.close()
 
 
+def run_train(config: Config, storage_dir: str, resume_training: bool):
+    dataset = build_dataset(config, storage_dir, mode=Mode.Train)
+    train_env = build_env(config, dataset, mode=Mode.Train)
+    agent = build_agent(
+        config=config,
+        env=train_env,
+        storage_dir=storage_dir,
+        resume=resume_training,
+        agent_from='latest'
+    )
+
+    trainer = build_trainer(
+        config=config,
+        agent=agent,
+        dataset=dataset,
+        train_env=train_env,
+        save=True
+    )
+    trainer.train()
+    trainer.close()
+
+
 #######################################################################################################################
 
 trainer_registry = {
@@ -196,7 +212,6 @@ def build_trainer(
         agent: BaseAlgorithm,
         dataset: AssetDataset,
         train_env: Union[BaseAssetEnvironment, VecEnv],
-        val_env: Union[BaseAssetEnvironment, VecEnv],
         save: bool
 ) -> Trainer:
     trainer_class = trainer_registry[config.train.trainer_name]
@@ -208,12 +223,5 @@ def build_trainer(
         'train_env': train_env,
         'save': save
     }
-    if trainer_class == KFoldTrainer:
-        k_fold = build_k_fold(config)
-
-        trainer_kwargs.update({
-            'val_env': val_env,
-            'k_fold': k_fold
-        })
 
     return trainer_class(**trainer_kwargs)
