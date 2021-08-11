@@ -97,6 +97,6 @@ def compute_longs_shorts_ratio(report: pd.DataFrame) -> float:
     final_num_longs = report.longs.values[-1]
     final_num_shorts = report.shorts.values[-1]
 
-    longs_shorts_ratio = final_num_longs / final_num_shorts if final_num_shorts != 0 else np.array(1.)
+    longs_shorts_ratio = final_num_longs / (final_num_shorts + 1e-17)
 
     return longs_shorts_ratio.item()
