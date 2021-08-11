@@ -11,7 +11,6 @@ from sklearn.preprocessing import MinMaxScaler
 from stable_baselines3.common import results_plotter
 
 from yacht import utils, Mode
-from yacht.data.datasets import AssetDataset, SingleAssetDataset
 from yacht.utils.wandb import WandBContext
 
 

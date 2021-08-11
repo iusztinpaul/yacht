@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1eyacht/config/proto/input.proto\x12\x12yacht.config.proto\x1a!yacht/config/proto/backtest.proto\"\xf5\x02\n\x0bInputConfig\x12\x0e\n\x06market\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x61taset\x18\x02 \x01(\t\x12\x18\n\x10price_normalizer\x18\x03 \x01(\t\x12\x18\n\x10other_normalizer\x18\x04 \x01(\t\x12\x0f\n\x07tickers\x18\x05 \x03(\t\x12\x11\n\tintervals\x18\x06 \x03(\t\x12\x10\n\x08\x66\x65\x61tures\x18\x07 \x03(\t\x12\x1c\n\x14technical_indicators\x18\x08 \x03(\t\x12\r\n\x05start\x18\t \x01(\t\x12\x0b\n\x03\x65nd\x18\n \x01(\t\x12\x13\n\x0bwindow_size\x18\x0b \x01(\x05\x12\x18\n\x10include_weekends\x18\x0c \x01(\x08\x12\x1c\n\x14\x62\x61\x63ktest_split_ratio\x18\r \x01(\x01\x12\x1e\n\x16\x62\x61\x63ktest_embargo_ratio\x18\x0e \x01(\x01\x12\x34\n\x08\x62\x61\x63ktest\x18\x0f \x01(\x0b\x32\".yacht.config.proto.BacktestConfigb\x06proto3')
+  serialized_pb=_b('\n\x1eyacht/config/proto/input.proto\x12\x12yacht.config.proto\x1a!yacht/config/proto/backtest.proto\"\xec\x02\n\x0bInputConfig\x12\x0e\n\x06market\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x61taset\x18\x02 \x01(\t\x12\x0e\n\x06scaler\x18\x03 \x01(\t\x12\x19\n\x11scale_on_interval\x18\x04 \x01(\t\x12\x0f\n\x07tickers\x18\x05 \x03(\t\x12\x11\n\tintervals\x18\x06 \x03(\t\x12\x10\n\x08\x66\x65\x61tures\x18\x07 \x03(\t\x12\x1c\n\x14technical_indicators\x18\x08 \x03(\t\x12\r\n\x05start\x18\t \x01(\t\x12\x0b\n\x03\x65nd\x18\n \x01(\t\x12\x13\n\x0bwindow_size\x18\x0b \x01(\x05\x12\x18\n\x10include_weekends\x18\x0c \x01(\x08\x12\x1c\n\x14\x62\x61\x63ktest_split_ratio\x18\r \x01(\x01\x12\x1e\n\x16\x62\x61\x63ktest_embargo_ratio\x18\x0e \x01(\x01\x12\x34\n\x08\x62\x61\x63ktest\x18\x0f \x01(\x0b\x32\".yacht.config.proto.BacktestConfigb\x06proto3')
   ,
   dependencies=[yacht_dot_config_dot_proto_dot_backtest__pb2.DESCRIPTOR,])
 
@@ -49,14 +49,14 @@ _INPUTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='price_normalizer', full_name='yacht.config.proto.InputConfig.price_normalizer', index=2,
+      name='scaler', full_name='yacht.config.proto.InputConfig.scaler', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='other_normalizer', full_name='yacht.config.proto.InputConfig.other_normalizer', index=3,
+      name='scale_on_interval', full_name='yacht.config.proto.InputConfig.scale_on_interval', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -152,7 +152,7 @@ _INPUTCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=90,
-  serialized_end=463,
+  serialized_end=454,
 )
 
 _INPUTCONFIG.fields_by_name['backtest'].message_type = yacht_dot_config_dot_proto_dot_backtest__pb2._BACKTESTCONFIG

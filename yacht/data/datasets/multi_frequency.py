@@ -1,14 +1,15 @@
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Union
 
 import numpy as np
 import pandas as pd
 from gym import spaces
 
+from yacht import Mode
 from yacht.data.datasets import IndexedDatasetMixin, SingleAssetDataset
 from yacht.data.markets import Market
-from yacht.data.normalizers import Normalizer
+from yacht.data.scalers import Scaler
 from yacht.logger import Logger
 
 
@@ -30,9 +31,9 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             features: List[str],
             start: datetime,
             end: datetime,
+            mode: Mode,
             logger: Logger,
-            price_normalizer: Normalizer,
-            other_normalizer: Normalizer,
+            scaler: Scaler,
             window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
@@ -45,9 +46,9 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             features,
             start,
             end,
+            mode,
             logger,
-            price_normalizer,
-            other_normalizer,
+            scaler,
             window_size,
             data
         )
@@ -77,7 +78,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
         return list(self.INTERVAL_TO_DAY_BAR_UNITS.keys())
 
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
-        window_item = defaultdict(list)
+        window_item: Dict[str, Union[list, np.ndarray]] = defaultdict(list)
         for i in reversed(range(self.window_size)):
             for interval in self.intervals:
                 bars_per_day = self.INTERVAL_TO_DAY_BAR_UNITS[interval]
@@ -85,13 +86,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
                 end_index = (day_index - i + 1) * bars_per_day
 
                 features = self.data[interval][self.features].iloc[start_index: end_index].values
-                # Normalize data at window level.
-                features[..., :self.num_price_features] = self.price_normalizer(
-                    features[..., :self.num_price_features]
-                )
-                features[..., self.num_price_features:] = self.other_normalizer(
-                    features[..., self.num_price_features:]
-                )
+                features = self.scaler.transform(features)
 
                 window_item[interval].append(features)
         else:

@@ -30,8 +30,6 @@ class Logger(SB3Logger):
         # Set logger format & colour.
         log_format = (
             '%(asctime)s - '
-            '%(name)s - '
-            '%(funcName)s - '
             '%(levelname)s - '
             '%(message)s'
         )

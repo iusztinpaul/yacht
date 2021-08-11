@@ -1,8 +1,7 @@
 input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
-    price_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
-    other_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
+    scaler: 'IdentityScaler'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']

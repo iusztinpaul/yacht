@@ -1,6 +1,6 @@
 from gym.wrappers import Monitor
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv, DummyVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv, DummyVecEnv, VecNormalize
 
 from .enums import *
 from .base import *

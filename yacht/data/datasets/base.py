@@ -7,8 +7,9 @@ import pandas as pd
 from gym import Space
 from torch.utils.data import Dataset
 
+from yacht import Mode
 from yacht.data.markets import Market
-from yacht.data.normalizers import Normalizer
+from yacht.data.scalers import Scaler
 from yacht.logger import Logger
 
 
@@ -27,6 +28,7 @@ class AssetDataset(Dataset, ABC):
             features: List[str],
             start: datetime,
             end: datetime,
+            mode: Mode,
             logger: Logger,
             window_size: int = 1,
     ):
@@ -51,6 +53,7 @@ class AssetDataset(Dataset, ABC):
         self.features, self.price_features, self.other_features = self.split_features(features)
         self.start = start
         self.end = end
+        self.mode = mode
         self.logger = logger
         self.window_size = window_size
 
@@ -131,9 +134,9 @@ class SingleAssetDataset(AssetDataset, ABC):
             features: List[str],
             start: datetime,
             end: datetime,
+            mode: Mode,
             logger: Logger,
-            price_normalizer: Normalizer,
-            other_normalizer: Normalizer,
+            scaler: Scaler,
             window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
@@ -143,13 +146,13 @@ class SingleAssetDataset(AssetDataset, ABC):
             features=features,
             start=start,
             end=end,
+            mode=mode,
             logger=logger,
             window_size=window_size,
         )
 
         self.ticker = ticker
-        self.price_normalizer = price_normalizer
-        self.other_normalizer = other_normalizer
+        self.scaler = scaler
         if data is not None:
             self.data = data
         else:
@@ -182,8 +185,8 @@ class IndexedDatasetMixin:
             features: List[str],
             start: datetime,
             end: datetime,
-            price_normalizer: Normalizer,
-            other_normalizer: Normalizer,
+            price_normalizer: Scaler,
+            other_normalizer: Scaler,
             window_size: int,
             data: Dict[str, pd.DataFrame],
             indices: np.array

@@ -6,7 +6,7 @@ from .multi_frequency import *
 
 import yacht.utils as utils
 from yacht.data.markets import build_market
-from yacht.data.normalizers import build_normalizer
+from yacht.data.scalers import build_scaler
 from yacht.config import Config
 from ..renderers import TrainTestSplitRenderer
 from ... import Mode
@@ -34,7 +34,7 @@ def build_dataset(
     market = build_market(config, logger, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]
 
-    train_val_start, train_val_end, back_test_start, back_test_end = utils.split_period(
+    train_start, train_end, backtest_start, backtest_end = utils.split_period(
         input_config.start,
         input_config.end,
         input_config.backtest_split_ratio,
@@ -64,39 +64,48 @@ def build_dataset(
         # Render de train-test split in rescaled mode.
         renderer = TrainTestSplitRenderer(
             data=data,
-            train_interval=(train_val_start, train_val_end),
-            test_interval=(back_test_start, back_test_end),
+            train_interval=(train_start, train_end),
+            test_interval=(backtest_start, backtest_end),
             rescale=True
         )
         renderer.render()
-        renderer.save(utils.build_graphics_path(storage_dir, 'trainval_test_split_rescaled.png'))
+        renderer.save(utils.build_graphics_path(storage_dir, 'train_test_split_rescaled.png'))
         renderer.close()
 
         # Render de train-test split with original values.
         renderer = TrainTestSplitRenderer(
             data=data,
-            train_interval=(train_val_start, train_val_end),
-            test_interval=(back_test_start, back_test_end),
+            train_interval=(train_start, train_end),
+            test_interval=(backtest_start, backtest_end),
             rescale=False
         )
         renderer.render()
-        renderer.save(utils.build_graphics_path(storage_dir, 'trainval_test_split.png'))
+        renderer.save(utils.build_graphics_path(storage_dir, 'train_test_split.png'))
         renderer.close()
 
-    logger.info(f'Trainval split: {train_val_start} - {train_val_end}')
-    logger.info(f'Test split: {back_test_start} - {back_test_end}')
+    logger.info(f'Train split: {train_start} - {train_end}')
+    logger.info(f'Test split: {backtest_start} - {backtest_end}')
 
-    if mode.is_trainval() or mode.is_backtest_on_train():
-        start = train_val_start
-        end = train_val_end
+    if mode.is_trainable() or mode.is_backtest_on_train():
+        start = train_start
+        end = train_end
     else:
-        start = back_test_start
-        end = back_test_end
+        start = backtest_start
+        end = backtest_end
 
     datasets: List[SingleAssetDataset] = []
     for ticker in tickers:
-        price_normalizer = build_normalizer(input_config.price_normalizer)
-        other_normalizer = build_normalizer(input_config.other_normalizer)
+        scaler = build_scaler(
+            config=config,
+            ticker=ticker
+        )
+        Scaler.fit_on(
+            scaler=scaler,
+            market=market,
+            train_start=train_start,
+            train_end=train_end,
+            interval=config.input.scale_on_interval
+        )
 
         datasets.append(
             dataset_cls(
@@ -106,9 +115,9 @@ def build_dataset(
                 features=list(input_config.features) + list(input_config.technical_indicators),
                 start=start,
                 end=end,
+                mode=mode,
                 logger=logger,
-                price_normalizer=price_normalizer,
-                other_normalizer=other_normalizer,
+                scaler=scaler,
                 window_size=input_config.window_size
             )
         )
@@ -120,6 +129,7 @@ def build_dataset(
         features=list(input_config.features) + list(input_config.technical_indicators),
         start=start,
         end=end,
+        mode=mode,
         logger=logger,
         window_size=input_config.window_size,
         default_ticker=tickers[0]

@@ -1,8 +1,8 @@
 input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
-    price_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
-    other_normalizer: 'IdentityNormalizer' # Broken. Don't use until fix.
+    scaler: 'MinMaxScaler'
+    scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
@@ -56,7 +56,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 20000
+    total_timesteps: 10000
     collecting_n_steps: 2048
     learning_rate: 0.00025
     batch_size: 1024

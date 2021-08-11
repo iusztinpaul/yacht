@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from gym import Space
 
+from yacht import Mode
 from yacht.data.datasets import AssetDataset, SingleAssetDataset
 from yacht.data.markets import Market
 from yacht.logger import Logger
@@ -19,6 +20,7 @@ class ChooseAssetDataset(AssetDataset):
             features: List[str],
             start: datetime,
             end: datetime,
+            mode: Mode,
             logger: Logger,
             window_size: int = 1,
             default_ticker: str = None,
@@ -29,6 +31,7 @@ class ChooseAssetDataset(AssetDataset):
             features=features,
             start=start,
             end=end,
+            mode=mode,
             logger=logger,
             window_size=window_size,
         )

@@ -5,7 +5,6 @@ from typing import Dict, List, Optional, Tuple
 import gym
 import numpy as np
 import torch
-import wandb
 from gym import spaces
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.vec_env import VecEnvWrapper, VecEnv

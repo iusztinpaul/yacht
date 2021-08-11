@@ -8,8 +8,8 @@ import "yacht/config/proto/backtest.proto";
 message InputConfig {
   string market = 1;
   string dataset = 2;
-  string price_normalizer = 3;
-  string other_normalizer = 4;
+  string scaler = 3;
+  string scale_on_interval = 4;
   repeated string tickers = 5;
   repeated string intervals = 6;
   repeated string features = 7;
