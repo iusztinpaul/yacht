@@ -13,7 +13,7 @@ import gym
 from gym.envs.registration import register
 
 from yacht.logger import Logger
-from .wrappers import MultiFrequencyDictToBoxWrapper, VecEnvLogMetricsWrapper
+from .wrappers import MultiFrequencyDictToBoxWrapper, MetricsVecEnvWrapper
 from .. import utils, Mode
 from ..config import Config
 from ..config.proto.environment_pb2 import EnvironmentConfig
@@ -24,7 +24,7 @@ def build_env(
         dataset: ChooseAssetDataset,
         logger: Logger,
         mode: Mode,
-) -> Union[VecEnv, BaseAssetEnvironment]:
+) -> MetricsVecEnvWrapper:
     def _wrappers(env: Union[Monitor, BaseAssetEnvironment]) -> gym.Env:
         if isinstance(env, Monitor):
             assert isinstance(env.env, BaseAssetEnvironment), f'Wrong env type: {type(env.env)}.'
@@ -75,7 +75,7 @@ def build_env(
     )
 
     if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
-        env = VecEnvLogMetricsWrapper(
+        env = MetricsVecEnvWrapper(
             env=env,
             logger=logger,
             mode=mode

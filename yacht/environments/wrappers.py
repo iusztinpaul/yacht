@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import gym
 import numpy as np
@@ -77,15 +77,27 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         return observations
 
 
-class VecEnvLogMetricsWrapper(VecEnvWrapper, ABC):
-    def __init__(self, env: VecEnv, logger: Logger, mode: Mode):
+class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
+    def __init__(self, env: VecEnv, logger: Logger, mode: Mode, log_std: bool = False):
         super().__init__(env)
 
         self.logger = logger
         self.mode = mode
+        self.log_std = log_std
 
         self.dones = np.array([False] * env.num_envs)
         self.metrics: List[Optional[dict]] = [None] * env.num_envs
+
+        self._mean_metrics = dict()
+        self._std_metrics = dict()
+
+    @property
+    def mean_metrics(self) -> dict:
+        return self._mean_metrics
+
+    @property
+    def std_metrics(self) -> dict:
+        return self._std_metrics
 
     def reset(self) -> np.ndarray:
         return self.venv.reset()
@@ -107,12 +119,15 @@ class VecEnvLogMetricsWrapper(VecEnvWrapper, ABC):
 
                     self.metrics[idx] = self._extract_metrics(info=info[idx])
 
-            # Log the mean when all environments are done.
+            # Log the mean & std when all environments are done.
             if self.dones.all():
-                metrics_to_log = self._compute_mean(infos=self.metrics)
-                metrics_to_log = self._flatten_keys(metrics_to_log)
+                mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(infos=self.metrics)
+                self._mean_metrics = self._flatten_keys(mean_metrics_over_envs)
+                self._std_metrics = self._flatten_keys(std_metrics_over_envs)
 
-                self.logger.log(metrics_to_log)
+                self.logger.log(self._mean_metrics)
+                if self.log_std:
+                    self.logger.log(self._std_metrics)
 
                 self.dones = np.array([False] * self.venv.num_envs)
                 self.metrics = [None] * self.venv.num_envs
@@ -147,14 +162,18 @@ class VecEnvLogMetricsWrapper(VecEnvWrapper, ABC):
         return metrics_to_log
 
     @classmethod
-    def _compute_mean(cls, infos: List[dict]) -> dict:
+    def _compute_mean_std(cls, infos: List[dict]) -> Tuple[dict, dict]:
         aggregated_metrics: Dict[str, list] = defaultdict(list)
         for env_metrics in infos:
             for metric_name, metric_value in env_metrics.items():
                 aggregated_metrics[metric_name].append(metric_value)
 
         mean_metrics: Dict[str, np.ndarray] = dict()
+        std_metrics: Dict[str, np.ndarray] = dict()
         for metric_name, metric_values in aggregated_metrics.items():
-            mean_metrics[metric_name] = np.mean(np.array(metric_values, dtype=np.float32))
+            metric_values = np.array(metric_values, dtype=np.float32)
 
-        return mean_metrics
+            mean_metrics[metric_name] = np.mean(metric_values)
+            std_metrics[metric_name] = np.std(metric_values)
+
+        return mean_metrics, std_metrics

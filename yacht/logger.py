@@ -1,5 +1,6 @@
 import logging
 import os
+import pprint
 from pathlib import Path
 from typing import Optional
 
@@ -82,6 +83,9 @@ class Logger(SB3Logger):
 
     def _do_log(self, args) -> None:
         for arg in args:
+            if isinstance(arg, dict):
+                arg = pprint.pformat(arg, indent=4)
+
             getattr(self.logger, self.level_name)(arg)
 
 

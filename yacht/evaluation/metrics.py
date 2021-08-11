@@ -8,9 +8,10 @@ from yacht import utils
 def compute_backtest_metrics(report: pd.DataFrame, total_assets_col_name='total'):
     daily_return_report = get_daily_return(report, total_assets_col_name=total_assets_col_name)
 
-    # TODO: See how to use positions & transactions parameters.
+    # TODO: Add the rest of the arguments for more statistics.
     strategy_metrics = timeseries.perf_stats(
         returns=daily_return_report,
+        factor_returns=None,
         positions=None,
         transactions=None,
         turnover_denom='AGB',
