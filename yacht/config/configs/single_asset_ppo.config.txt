@@ -4,7 +4,8 @@ input: {
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
-    intervals: ['1d', '6h']
+    # tickers: ['BTC-USD']
+    intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/1/2015'

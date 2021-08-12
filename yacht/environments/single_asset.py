@@ -39,7 +39,7 @@ class SingleAssetEnvironment(BaseAssetEnvironment):
             self,
             observation_space: Dict[str, Optional[spaces.Space]]
     ) -> Dict[str, Optional[spaces.Space]]:
-        observation_space['env_features'] = spaces.Box(low=-np.inf, high=np.inf, shape=(self.window_size, 2, ))
+        observation_space['env_features'] = spaces.Box(low=-np.inf, high=np.inf, shape=(self.window_size, 2))
 
         return observation_space
 
@@ -71,13 +71,11 @@ class SingleAssetEnvironment(BaseAssetEnvironment):
         return history
 
     def _create_info(self, info: dict) -> dict:
+        asset_open_price = self.prices.loc[:, 'Open'][self.t_tick]
+
         info['total_loss_commissions'] = self._total_loss_commissions
         info['total_units'] = self._total_units
-        if self._s_t is not None:
-            info['total_assets'] = self._s_t['env_features'][-1][0] + \
-                self._s_t['env_features'][-1][1] * self._s_t['1d'][-1, 0, 0]
-        else:
-            info['total_assets'] = self._initial_cash_position
+        info['total_assets'] = asset_open_price * self._total_units + self._total_cash
 
         return info
 
@@ -93,35 +91,35 @@ class SingleAssetEnvironment(BaseAssetEnvironment):
         }
 
     def _sell_asset(self, action: float):
-        asset_close_price = self._s_t['1d'][-1, 0, 0]
+        asset_open_price = self.prices.loc[:, 'Open'][self.t_tick]
 
         # Sell only if the price is valid and current units are > 0.
-        if asset_close_price > 0 and self._total_units > 0:
+        if asset_open_price > 0 and self._total_units > 0:
             sell_num_shares = min(abs(action), self._total_units)
-            sell_amount = asset_close_price * sell_num_shares * (1 - self.sell_commission)
+            sell_amount = asset_open_price * sell_num_shares * (1 - self.sell_commission)
 
             # Update balance.
             self._total_cash += sell_amount
             self._total_units -= sell_num_shares
-            self._total_loss_commissions += asset_close_price * sell_num_shares * self.sell_commission
+            self._total_loss_commissions += asset_open_price * sell_num_shares * self.sell_commission
         else:
             sell_num_shares = 0
 
         return sell_num_shares
 
     def _buy_asset(self, action: float):
-        asset_close_price = self._s_t['1d'][-1, 0, 0]
+        asset_open_price = self.prices.loc[:, 'Open'][self.t_tick]
 
         # Buy only if the price is > 0.
-        if asset_close_price > 0:
-            available_amount = self._total_cash / asset_close_price
+        if asset_open_price > 0:
+            available_amount = self._total_cash / asset_open_price
             buy_num_shares = min(available_amount, action)
-            buy_amount = asset_close_price * buy_num_shares * (1 + self.buy_commission)
+            buy_amount = asset_open_price * buy_num_shares * (1 + self.buy_commission)
 
             # Update balance.
             self._total_cash -= buy_amount
             self._total_units += buy_num_shares
-            self._total_loss_commissions += asset_close_price * buy_num_shares * self.buy_commission
+            self._total_loss_commissions += asset_open_price * buy_num_shares * self.buy_commission
         else:
             buy_num_shares = 0
 

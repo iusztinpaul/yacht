@@ -1,11 +1,6 @@
-import pprint
-from collections import defaultdict
-from typing import List
-
 import numpy as np
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.vec_env import VecEnv
 
 from yacht import Mode, utils
 from yacht.agents import build_agent
