@@ -27,12 +27,38 @@ class Scaler(ABC):
     def _fit(self, data: Union[pd.DataFrame, np.ndarray]):
         pass
 
-    @abstractmethod
     def transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
-        pass
+        shape = None
+        if isinstance(data, np.ndarray):
+            shape = data.shape
+            data = data.reshape(-1, shape[-1])
+
+        data = self._transform(data)
+
+        if shape is not None:
+            data = data.reshape(shape)
+
+        return data
 
     @abstractmethod
+    def _transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        pass
+
     def inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        shape = None
+        if isinstance(data, np.ndarray):
+            shape = data.shape
+            data = data.reshape(-1, shape[-1])
+
+        data = self._inverse_transform(data)
+
+        if shape is not None:
+            data = data.reshape(shape)
+
+        return data
+
+    @abstractmethod
+    def _inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
         pass
 
     @classmethod
@@ -57,10 +83,10 @@ class IdentityScaler(Scaler):
     def _fit(self, data: Union[pd.DataFrame, np.ndarray]):
         pass
 
-    def transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+    def _transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
         return data
 
-    def inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+    def _inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
         return data
 
 
@@ -73,10 +99,10 @@ class MinMaxScaler(Scaler):
     def _fit(self, data: Union[pd.DataFrame, np.ndarray]):
         self.scaler.fit(data)
 
-    def transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+    def _transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
         return self.scaler.transform(data)
 
-    def inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+    def _inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
         return self.scaler.inverse_transform(data)
 
 

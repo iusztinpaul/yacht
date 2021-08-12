@@ -97,12 +97,12 @@ class NoEvalTrainer(Trainer):
         callbacks.append(
             EvalCallback(
                 eval_env=self.train_env,
-                n_eval_episodes=self.train_env.num_envs,
+                n_eval_episodes=self.config.input.backtest.n_runs,
                 eval_freq=self.config.train.collecting_n_steps,
                 log_path=utils.build_log_dir(self.dataset.storage_dir),
                 best_model_save_path=utils.build_best_checkpoint_dir(self.dataset.storage_dir),
                 deterministic=self.config.input.backtest.deterministic,
-                verbose=False
+                verbose=True
             )
         )
 

@@ -16,7 +16,6 @@ from yacht.agents.policies.generic import GenericActorCriticPolicy
 from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
 from yacht.environments import BaseAssetEnvironment
-from yacht.utils.wandb import WandBLogger
 
 
 reinforcement_learning_agents = {

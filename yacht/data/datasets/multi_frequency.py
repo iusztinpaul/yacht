@@ -84,14 +84,13 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
                 bars_per_day = self.INTERVAL_TO_DAY_BAR_UNITS[interval]
                 start_index = (day_index - i) * bars_per_day
                 end_index = (day_index - i + 1) * bars_per_day
-
                 features = self.data[interval][self.features].iloc[start_index: end_index].values
-                features = self.scaler.transform(features)
 
                 window_item[interval].append(features)
         else:
             for interval in self.intervals:
                 window_item[interval] = np.stack(window_item[interval])
+                window_item[interval] = self.scaler.transform(window_item[interval])
 
         return window_item
 

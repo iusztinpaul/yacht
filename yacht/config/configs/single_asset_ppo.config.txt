@@ -4,12 +4,12 @@ input: {
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
-    intervals: ['1d']
+    intervals: ['1d', '6h']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/1/2015'
     end: '1/8/2021'
-    window_size: 1
+    window_size: 2
     include_weekends: true
     backtest_split_ratio: 0.27
     backtest_embargo_ratio: 0.03
@@ -26,7 +26,7 @@ environment: {
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
-    initial_cash_position: 1000000
+    initial_cash_position: 30000
     reward_schemas: [
     {
         name: 'AssetsPriceChangeRewardSchema'
@@ -48,7 +48,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         net_arch: {
-            shared: [128]
+            shared: [128, 128, 128]
             vf: [64, 64]
             pi: [64, 64]
         }
@@ -56,7 +56,7 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 10000
+    total_timesteps: 80000
     collecting_n_steps: 2048
     learning_rate: 0.00025
     batch_size: 1024

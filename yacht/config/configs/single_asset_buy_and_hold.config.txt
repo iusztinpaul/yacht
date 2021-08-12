@@ -2,6 +2,7 @@ input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
     scaler: 'IdentityScaler'
+    scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
