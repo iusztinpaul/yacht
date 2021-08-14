@@ -84,7 +84,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
     def reset(self):
         # Choose a random ticker for every instance of the environment.
-        self.dataset.choose_ticker()
+        self.dataset.choose()
 
         self.t_tick = self.start_tick
 
@@ -405,7 +405,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         )
         
     def _adjust_save_file_name(self, name: str) -> str:
-        name = f'{self.current_ticker}_{self.given_seed}_{name}'
+        name = f'{self.dataset}_{self.given_seed}_{name}'
         if not name.endswith('.png'):
             name = f'{name}.png'
             

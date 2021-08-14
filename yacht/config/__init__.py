@@ -16,6 +16,9 @@ def load_config(config_path: str):
 
 
 def export_config(config: Config, storage_dir: str):
+    if not os.path.exists(storage_dir):
+        os.mkdir(storage_dir)
+
     with open(os.path.join(storage_dir, 'config.txt'), 'w') as f:
         config_txt = MessageToString(config)
         f.write(config_txt)

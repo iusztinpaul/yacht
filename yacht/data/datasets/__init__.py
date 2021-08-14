@@ -1,7 +1,3 @@
-from typing import Union
-
-from torch.utils.data import ConcatDataset
-
 from .base import *
 from .aggregators import ChooseAssetDataset
 from .multi_frequency import *
@@ -95,11 +91,15 @@ def build_dataset(
         start = backtest_start
         end = backtest_end
 
-    single_asset = False
-    if single_asset:
-        datasets: List[SingleAssetDataset] = []
+    datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
+    n_envs = config.environment.n_envs if mode.is_trainable() else config.input.backtest.n_runs
+    num_datasets = n_envs if config.input.is_multi_asset else len(tickers)
+    num_assets_per_dataset = config.input.num_assets_per_dataset if config.input.is_multi_asset else 1
+    for _ in range(num_datasets):
+        dataset_tickers = np.random.choice(tickers, num_assets_per_dataset, replace=False)
+        single_asset_datasets: List[SingleAssetDataset] = []
 
-        for ticker in tickers:
+        for ticker in dataset_tickers:
             scaler = build_scaler(
                 config=config,
                 ticker=ticker
@@ -112,7 +112,7 @@ def build_dataset(
                 interval=config.input.scale_on_interval
             )
 
-            datasets.append(
+            single_asset_datasets.append(
                 dataset_cls(
                     ticker=ticker,
                     market=market,
@@ -127,44 +127,24 @@ def build_dataset(
                 )
             )
 
-    else:
-        num_datasets = config.environment.n_envs
-        num_assets = 4
-        datasets: List[ConcatDataset] = []
-        for _ in range(num_datasets):
-            dataset_tickers = np.random.choice(tickers, num_assets)
-            single_asset_datasets: List[SingleAssetDataset] = []
+        if config.input.is_multi_asset:
+            dataset = MultiAssetDataset(
+                datasets=single_asset_datasets,
+                market=market,
+                intervals=input_config.intervals,
+                features=list(input_config.features) + list(input_config.technical_indicators),
+                start=start,
+                end=end,
+                mode=mode,
+                logger=logger,
+                window_size=input_config.window_size
+            )
+        else:
+            assert len(single_asset_datasets) == 1
+            dataset = single_asset_datasets[0]
 
-            for ticker in dataset_tickers:
-                scaler = build_scaler(
-                    config=config,
-                    ticker=ticker
-                )
-                Scaler.fit_on(
-                    scaler=scaler,
-                    market=market,
-                    train_start=train_start,
-                    train_end=train_end,
-                    interval=config.input.scale_on_interval
-                )
-
-                single_asset_datasets.append(
-                    dataset_cls(
-                        ticker=ticker,
-                        market=market,
-                        intervals=input_config.intervals,
-                        features=list(input_config.features) + list(input_config.technical_indicators),
-                        start=start,
-                        end=end,
-                        mode=mode,
-                        logger=logger,
-                        scaler=scaler,
-                        window_size=input_config.window_size
-                    )
-                )
-
-            concatenated_dataset = ConcatDataset(single_asset_datasets)
-            datasets.append(concatenated_dataset)
+        a = dataset.get_prices()
+        datasets.append(dataset)
 
     return ChooseAssetDataset(
         datasets=datasets,
@@ -176,7 +156,7 @@ def build_dataset(
         mode=mode,
         logger=logger,
         window_size=input_config.window_size,
-        default_ticker=tickers[0]
+        default_index=0
     )
 
 

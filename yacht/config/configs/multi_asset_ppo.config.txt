@@ -1,7 +1,8 @@
 input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
-    is_multi_asset: false
+    is_multi_asset: true
+    num_assets_per_dataset: 7
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']

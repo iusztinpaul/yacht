@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from datetime import datetime
+from functools import lru_cache
 from typing import List, Tuple, Dict
 
 import numpy as np
 import pandas as pd
-from gym import Space
+from gym import Space, spaces
 from torch.utils.data import Dataset
 
 from yacht import Mode
@@ -114,6 +116,10 @@ class AssetDataset(Dataset, ABC):
         pass
 
     @abstractmethod
+    def __str__(self):
+        pass
+
+    @abstractmethod
     def get_prices(self) -> pd.DataFrame:
         pass
 
@@ -165,6 +171,9 @@ class SingleAssetDataset(AssetDataset, ABC):
                 self.market.download(ticker, interval, start, end)
                 self.data[interval] = self.market.get(ticker, interval, start, end)
 
+    def __str__(self):
+        return self.ticker
+
     @property
     def num_days(self) -> int:
         return len(self.data['1d'])
@@ -174,6 +183,98 @@ class SingleAssetDataset(AssetDataset, ABC):
 
     def get_prices(self) -> pd.DataFrame:
         return self.data['1d']
+
+
+class MultiAssetDataset(AssetDataset):
+    def __init__(
+            self,
+            datasets: List[SingleAssetDataset],
+            market: Market,
+            intervals: List[str],
+            features: List[str],
+            start: datetime,
+            end: datetime,
+            mode: Mode,
+            logger: Logger,
+            window_size: int = 1
+    ):
+        super().__init__(
+            market=market,
+            intervals=intervals,
+            features=features,
+            start=start,
+            end=end,
+            mode=mode,
+            logger=logger,
+            window_size=window_size,
+        )
+
+        self.datasets = datasets
+        self.tickers = [dataset.ticker for dataset in self.datasets]
+
+        assert self.datasets[0].num_days * len(self.datasets) == sum([dataset.num_days for dataset in self.datasets]), \
+            'All the datasets should have the same length.'
+
+    @property
+    def num_days(self) -> int:
+        # All the datasets have the same number of days.
+        return self.datasets[0].num_days
+
+    def index_to_datetime(self, integer_index: int) -> datetime:
+        # All the datasets have the same indices to dates mappings.
+        return self.datasets[0].index_to_datetime(integer_index)
+
+    def __len__(self):
+        # All the datasets have the same length.
+        return len(self.datasets[0])
+
+    def __getitem__(self, current_index: int) -> Dict[str, np.array]:
+        items = [dataset[current_index] for dataset in self.datasets]
+        stacked_items: Dict[str, list] = defaultdict(list)
+        for item in items:
+            for key, value in item.items():
+                stacked_items[key].append(value)
+
+        for key, value in stacked_items.items():
+            stacked_items[key] = np.stack(stacked_items[key])
+
+        return stacked_items
+
+    def __str__(self):
+        asset_tickers = [ticker.split('-')[0] for ticker in self.tickers]
+
+        return '/'.join(asset_tickers)
+
+    @lru_cache
+    def get_prices(self) -> pd.DataFrame:
+        prices = []
+        for dataset in self.datasets:
+            dataset_prices = dataset.get_prices()
+            dataset_prices = dataset_prices.assign(ticker=dataset.ticker)
+            dataset_prices = dataset_prices.set_index(keys=['ticker'], drop=True, append=True)
+
+            prices.append(dataset_prices)
+
+        prices = pd.concat(prices)
+
+        return prices
+
+    def get_external_observation_space(self) -> Dict[str, Space]:
+        """
+            Returns the gym spaces observation space in the format that the dataset gives the data.
+        """
+        observation_space = dict()
+        # All the single asset observation spaces should have the same shapes.
+        single_asset_observation_space = self.datasets[0].get_external_observation_space()
+        for key, value in single_asset_observation_space.items():
+            observation_space[key] = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(len(self.datasets), *value.shape),
+                dtype=value.dtype
+            )
+
+        return observation_space
 
 
 class IndexedDatasetMixin:

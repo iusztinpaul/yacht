@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from gym import Space
 
 from yacht import Mode
-from yacht.data.datasets import AssetDataset, SingleAssetDataset
+from yacht.data.datasets import AssetDataset, SingleAssetDataset, MultiAssetDataset
 from yacht.data.markets import Market
 from yacht.logger import Logger
 
@@ -14,7 +14,7 @@ from yacht.logger import Logger
 class ChooseAssetDataset(AssetDataset):
     def __init__(
             self,
-            datasets: List[SingleAssetDataset],
+            datasets: List[Union[SingleAssetDataset, MultiAssetDataset]],
             market: Market,
             intervals: List[str],
             features: List[str],
@@ -23,7 +23,7 @@ class ChooseAssetDataset(AssetDataset):
             mode: Mode,
             logger: Logger,
             window_size: int = 1,
-            default_ticker: str = None,
+            default_index: int = 0,
     ):
         super().__init__(
             market=market,
@@ -37,37 +37,35 @@ class ChooseAssetDataset(AssetDataset):
         )
 
         self.datasets = datasets
-        self.tickers = [dataset.ticker for dataset in self.datasets]
-        self.default_ticker = default_ticker
-        self.current_ticker, self.current_ticker_index = self.choose_ticker(default_ticker)
+        self.default_index = default_index
+        self.current_dataset_index = self.choose(default_index)
 
-    def choose_ticker(self, ticker: Optional[str] = None) -> Tuple[str, int]:
-        if ticker is None:
-            ticker = np.random.choice(self.tickers)
+    def choose(self, idx: Optional[int] = None) -> int:
+        if idx is None:
+            idx = np.random.randint(0, len(self.datasets))
 
-        idx = self.tickers.index(ticker)
-        assert idx != -1, f'Ticker not supported: {ticker}'
+        self.current_dataset_index = idx
 
-        self.current_ticker = ticker
-        self.current_ticker_index = idx
-
-        return ticker, idx
+        return idx
 
     @property
     def num_days(self) -> int:
-        return self.datasets[self.current_ticker_index].num_days
+        return self.datasets[self.current_dataset_index].num_days
 
     def index_to_datetime(self, integer_index: int) -> datetime:
-        return self.datasets[self.current_ticker_index].index_to_datetime(integer_index)
+        return self.datasets[self.current_dataset_index].index_to_datetime(integer_index)
 
     def get_prices(self) -> pd.DataFrame:
-        return self.datasets[self.current_ticker_index].get_prices()
+        return self.datasets[self.current_dataset_index].get_prices()
 
     def get_external_observation_space(self) -> Dict[str, Space]:
-        return self.datasets[self.current_ticker_index].get_external_observation_space()
+        return self.datasets[self.current_dataset_index].get_external_observation_space()
 
     def __len__(self):
-        return len(self.datasets[self.current_ticker_index])
+        return len(self.datasets[self.current_dataset_index])
 
     def __getitem__(self, item):
-        return self.datasets[self.current_ticker_index][item]
+        return self.datasets[self.current_dataset_index][item]
+
+    def __str__(self) -> str:
+        return self.datasets[self.current_dataset_index].__str__()
