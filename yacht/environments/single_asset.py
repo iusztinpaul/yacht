@@ -3,7 +3,7 @@ from typing import Dict, Optional, Union
 import numpy as np
 from gym import spaces
 
-from yacht.data.datasets import AssetDataset
+from yacht.data.datasets import ChooseAssetDataset
 from yacht.environments import BaseAssetEnvironment, RewardSchema, ActionSchema
 
 
@@ -11,7 +11,7 @@ class SingleAssetEnvironment(BaseAssetEnvironment):
     def __init__(
             self,
             name: str,
-            dataset: AssetDataset,
+            dataset: ChooseAssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
             seed: int = 0,

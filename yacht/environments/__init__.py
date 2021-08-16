@@ -38,7 +38,7 @@ def build_env(
     env_config: EnvironmentConfig = config.environment
     backtest_config = config.input.backtest
 
-    action_schema = build_action_schema(config)
+    action_schema = build_action_schema(config, dataset)
     reward_schema = build_reward_schema(
         config, max_score=utils.compute_max_score(
             num_days=dataset.num_days,
@@ -50,14 +50,11 @@ def build_env(
         'dataset': dataset,
         'reward_schema': reward_schema,
         'action_schema': action_schema,
-        'render_on_done': not mode.is_trainable()
+        'render_on_done': not mode.is_trainable(),
+        'buy_commission': env_config.buy_commission,
+        'sell_commission': env_config.sell_commission,
+        'initial_cash_position': env_config.initial_cash_position
     }
-    if env_config.name == 'SingleAssetEnvironment-v0':
-        env_kwargs.update({
-            'buy_commission': env_config.buy_commission,
-            'sell_commission': env_config.sell_commission,
-            'initial_cash_position': env_config.initial_cash_position
-        })
 
     n_envs = env_config.n_envs if mode.is_trainable() else len(backtest_config.tickers) * backtest_config.n_runs
     env = make_vec_env(
@@ -93,6 +90,11 @@ def register_gym_envs():
         },
         'SingleAssetEnvironment-v0': {
             'entry_point': 'yacht.environments.single_asset:SingleAssetEnvironment',
+            'kwargs': {
+            }
+        },
+        'MultiAssetEnvironment-v0': {
+            'entry_point': 'yacht.environments.multi_asset:MultiAssetEnvironment',
             'kwargs': {
             }
         }

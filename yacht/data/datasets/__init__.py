@@ -143,7 +143,6 @@ def build_dataset(
             assert len(single_asset_datasets) == 1
             dataset = single_asset_datasets[0]
 
-        a = dataset.get_prices()
         datasets.append(dataset)
 
     return ChooseAssetDataset(

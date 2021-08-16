@@ -41,9 +41,9 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
     def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
         # TODO: Fix this method for k-fold setup. Probably on the edge of the folds this wont work.
         begin_total_assets = current_state['env_features'][-1][0] + \
-            current_state['env_features'][-1][1] * current_state['1d'][-1, 0, 0]
+            (current_state['env_features'][-1][1:] * current_state['1d'][-1, 0, :, 0]).sum()
         end_total_assets = next_state['env_features'][-1][0] + \
-            next_state['env_features'][-1][1] * next_state['1d'][-1, 0, 0]
+            (next_state['env_features'][-1][1:] * next_state['1d'][-1, 0, :, 0]).sum()
 
         reward = end_total_assets - begin_total_assets
         reward = reward * self.reward_scaling
@@ -53,11 +53,8 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
 
 class ActionMagnitudeRewardSchema(ScaledRewardSchema):
     def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
-        # TODO: Make this function to support multiple asset actions
-        assert action.shape[0] == 1 and len(action.shape) == 1
-        action = action.item()
-
         reward = action ** 2
+        reward = reward.sum()
         reward = -reward * self.reward_scaling
 
         return reward
@@ -160,7 +157,8 @@ class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
             if p <= thresholds[i]:
                 return rewards[i]
         else:
-            return rewards[i+1]
+            return rewards[i + 1]
+
 
 #######################################################################################################################
 
@@ -193,7 +191,7 @@ def build_reward_schema(config: Config, max_score: int):
                 class_kwargs[k] = v
 
         reward_schemas.append(
-          reward_schema_class(**class_kwargs)
+            reward_schema_class(**class_kwargs)
         )
 
     return RewardSchemaAggregator(

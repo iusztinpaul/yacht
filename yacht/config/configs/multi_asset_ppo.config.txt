@@ -2,7 +2,7 @@ input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
     is_multi_asset: true
-    num_assets_per_dataset: 7
+    num_assets_per_dataset: 2
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
@@ -19,13 +19,13 @@ input: {
     backtest: {
         run: true
         deterministic: false
-        tickers: ['BTC-USD']
+        tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
         n_runs: 4
     }
 }
 environment: {
-    name: 'SingleAssetEnvironment-v0'
-    n_envs: 8
+    name: 'MultiAssetEnvironment-v0'
+    n_envs: 2
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -59,10 +59,10 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 80000
-    collecting_n_steps: 2048
+    total_timesteps: 2000
+    collecting_n_steps: 1000
     learning_rate: 0.00025
-    batch_size: 1024
+    batch_size: 100
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95

@@ -5,6 +5,7 @@ import numpy as np
 
 from yacht.config import Config
 from yacht.config.proto.environment_pb2 import EnvironmentConfig
+from yacht.data.datasets import ChooseAssetDataset
 
 
 class ActionSchema(ABC):
@@ -48,16 +49,15 @@ action_schema_registry = {
 }
 
 
-def build_action_schema(config: Config):
+def build_action_schema(config: Config, dataset: ChooseAssetDataset):
     env_config: EnvironmentConfig = config.environment
     action_schema_class = action_schema_registry[env_config.action_schema]
 
     if action_schema_class in (ContinuousIntegerActionSchema, ContinuousFloatActionSchema):
         assert env_config.action_scaling_factor > 0
 
-        # TODO: Support multiple assets for action schema.
         return action_schema_class(
-            num_assets=1,
+            num_assets=dataset.num_assets,
             action_scaling_factor=env_config.action_scaling_factor
         )
     else:

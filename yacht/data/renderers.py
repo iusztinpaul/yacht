@@ -228,7 +228,7 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         self.ax.legend()
 
 
-class TradingRenderer(MplFinanceRenderer):
+class AssetEnvironmentRenderer(MplFinanceRenderer):
     def __init__(self, data: pd.DataFrame, start: datetime, end: datetime):
         super().__init__(data)
 
@@ -238,35 +238,17 @@ class TradingRenderer(MplFinanceRenderer):
     def _render(self, title: str, save_file_path: str, **kwargs):
         from yacht.environments import Position
 
-        positions: List[Optional[Position]] = kwargs['positions']
-        actions: List[int] = kwargs['actions']
+        positions: List[List[Optional[Position]]] = kwargs['positions']
+        actions: List[List[int]] = kwargs['actions']
         total_cash: List[float] = kwargs.get('total_cash', None)
-        total_units: List[float] = kwargs.get('total_units', None)
+        total_units: List[List[float]] = kwargs.get('total_units', None)
 
         # Trim missing values from the end.
         data = self.data.iloc[:len(positions)]
+        for asset_positions in positions:
+            trading_renderer = TradingPositionRenderer(data)
 
-        # Calculate positions.
-        positions: pd.Series = pd.Series(index=data.index, data=positions)
 
-        short_positions_index = positions[positions == Position.Short].index
-        short_positions = positions.copy()
-        short_positions[positions == Position.Short] = data.loc[short_positions_index, 'High']
-        short_positions[positions == Position.Long] = np.nan
-        short_positions[positions == Position.Hold] = np.nan
-
-        long_positions_index = positions[positions == Position.Long].index
-        long_positions = positions.copy()
-        long_positions[positions == Position.Long] = data.loc[long_positions_index, 'Low']
-        long_positions[positions == Position.Short] = np.nan
-        long_positions[positions == Position.Hold] = np.nan
-
-        hold_position_index = positions[positions == Position.Hold].index
-        hold_positions = positions.copy()
-        hold_positions[positions == Position.Hold] = \
-            (data.loc[hold_position_index, 'Low'] + data.loc[hold_position_index, 'High']) / 2
-        hold_positions[positions == Position.Short] = np.nan
-        hold_positions[positions == Position.Long] = np.nan
 
         # Calculate actions.
         actions: pd.Series = pd.Series(index=data.index, data=actions)
@@ -275,18 +257,6 @@ class TradingRenderer(MplFinanceRenderer):
             mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions'),
             mpf.make_addplot(total_cash, panel=2, color='b', type='bar', width=1, ylabel='Cash')
         ]
-        if len(short_positions[short_positions.notna()]) > 0:
-            additional_plots.append(
-                mpf.make_addplot(short_positions, type='scatter', markersize=25, marker='v', color='r')
-            )
-        if len(long_positions[long_positions.notna()]) > 0:
-            additional_plots.append(
-                mpf.make_addplot(long_positions, type='scatter', markersize=25, marker='^', color='g')
-            )
-        if len(hold_positions[hold_positions.notna()]) > 0:
-            additional_plots.append(
-                mpf.make_addplot(hold_positions, type='scatter', markersize=25, marker='.', color='y')
-            )
 
         panel_ratios = (1, 0.75, 0.75)
         if total_units:
@@ -308,6 +278,61 @@ class TradingRenderer(MplFinanceRenderer):
             figscale=1.5,
             savefig=save_file_path,
             volume=False
+        )
+
+
+class TradingPositionRenderer(MplFinanceRenderer):
+    def _render(self, title: str, save_file_path: str, **kwargs):
+        from yacht.environments import Position
+
+        positions: List[Optional[Position]] = kwargs['positions']
+
+        # Calculate positions.
+        positions: pd.Series = pd.Series(index=self.data.index, data=positions)
+
+        short_positions_index = positions[positions == Position.Short].index
+        short_positions = positions.copy()
+        short_positions[positions == Position.Short] = self.data.loc[short_positions_index, 'High']
+        short_positions[positions == Position.Long] = np.nan
+        short_positions[positions == Position.Hold] = np.nan
+
+        long_positions_index = positions[positions == Position.Long].index
+        long_positions = positions.copy()
+        long_positions[positions == Position.Long] = self.data.loc[long_positions_index, 'Low']
+        long_positions[positions == Position.Short] = np.nan
+        long_positions[positions == Position.Hold] = np.nan
+
+        hold_position_index = positions[positions == Position.Hold].index
+        hold_positions = positions.copy()
+        hold_positions[positions == Position.Hold] = \
+            (self.data.loc[hold_position_index, 'Low'] + self.data.loc[hold_position_index, 'High']) / 2
+        hold_positions[positions == Position.Short] = np.nan
+        hold_positions[positions == Position.Long] = np.nan
+
+        additional_plots = []
+        if len(short_positions[short_positions.notna()]) > 0:
+            additional_plots.append(
+                mpf.make_addplot(short_positions, type='scatter', markersize=25, marker='v', color='r')
+            )
+        if len(long_positions[long_positions.notna()]) > 0:
+            additional_plots.append(
+                mpf.make_addplot(long_positions, type='scatter', markersize=25, marker='^', color='g')
+            )
+        if len(hold_positions[hold_positions.notna()]) > 0:
+            additional_plots.append(
+                mpf.make_addplot(hold_positions, type='scatter', markersize=25, marker='.', color='y')
+            )
+
+        mpf.plot(
+            self.data,
+            addplot=additional_plots,
+            title=title,
+            type='line',
+            ylabel='Prices',
+            figratio=(2, 1),
+            figscale=1.5,
+            savefig=save_file_path,
+            volume=True
         )
 
 

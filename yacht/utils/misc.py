@@ -22,4 +22,4 @@ def fib_sequence(n: int) -> List[int]:
 
 
 def is_number(obj: Any) -> bool:
-    return isinstance(obj, (int, float, complex)) and not isinstance(obj, bool)
+    return isinstance(obj, (int, float, complex))

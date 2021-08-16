@@ -52,6 +52,14 @@ class ChooseAssetDataset(AssetDataset):
     def num_days(self) -> int:
         return self.datasets[self.current_dataset_index].num_days
 
+    @property
+    def num_assets(self) -> int:
+        return self.datasets[self.current_dataset_index].num_assets
+
+    @property
+    def asset_tickers(self) -> List[str]:
+        return self.datasets[self.current_dataset_index].asset_tickers
+
     def index_to_datetime(self, integer_index: int) -> datetime:
         return self.datasets[self.current_dataset_index].index_to_datetime(integer_index)
 
@@ -66,6 +74,9 @@ class ChooseAssetDataset(AssetDataset):
 
     def __getitem__(self, item):
         return self.datasets[self.current_dataset_index][item]
+
+    def inverse_scaling(self, observation: dict, **kwargs) -> dict:
+        return self.datasets[self.current_dataset_index].inverse_scaling(observation, **kwargs)
 
     def __str__(self) -> str:
         return self.datasets[self.current_dataset_index].__str__()

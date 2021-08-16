@@ -26,14 +26,14 @@ class BaseAssetEnvironment(gym.Env, ABC):
             seed: int = 0,
             render_on_done: bool = False
     ):
-        from yacht.data.renderers import TradingRenderer
+        from yacht.data.renderers import AssetEnvironmentRenderer
 
         # Environment name
         self.name = name
         self.given_seed = seed
 
         # Environment general requirements.
-        self.dataset = copy(dataset)
+        self.dataset = copy(dataset)  # Copy the dataset, so every instance of the environment will choose different.
         self.window_size = dataset.window_size
         self.prices = dataset.get_prices()
         self.reward_schema = reward_schema
@@ -46,7 +46,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         # Ticks.
         self.start_tick = self.window_size - 1
-        self.end_tick = len(self.prices) - 2  # Another -1 because the reward is calculated with one step further.
+        self.end_tick = self.dataset.num_days - 2  # Another -1 because the reward is calculated with one step further.
         self.t_tick = None
 
         # MDP state.
@@ -70,7 +70,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.is_history_initialized = False
 
         # Rendering.
-        self.renderer = TradingRenderer(
+        self.renderer = AssetEnvironmentRenderer(
             data=self.prices,
             start=dataset.start,
             end=dataset.end
@@ -85,6 +85,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def reset(self):
         # Choose a random ticker for every instance of the environment.
         self.dataset.choose()
+        # Get the prices for the new chosen assets.
+        self.prices = self.dataset.get_prices()
 
         self.t_tick = self.start_tick
 
@@ -106,7 +108,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         # History.
         self.history = self.initialize_history()
-        self.is_history_initialized = True
 
         # Call custom code before computing the next observation.
         self._reset()
@@ -120,7 +121,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
     def set_dataset(self, dataset: ChooseAssetDataset):
         # TODO: Find a better way to reinject the dataset.
-        from yacht.data.renderers import TradingRenderer
+        from yacht.data.renderers import AssetEnvironmentRenderer
 
         self.dataset = dataset
         self.prices = self.dataset.get_prices()
@@ -133,15 +134,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.end_tick = len(self.prices) - 2
 
         # Rendering
-        self.renderer = TradingRenderer(
+        self.renderer = AssetEnvironmentRenderer(
             data=self.prices,
             start=dataset.start,
             end=dataset.end
         )
-
-    @property
-    def current_ticker(self) -> str:
-        return self.dataset.current_ticker
 
     @property
     def intervals(self) -> List[str]:
@@ -159,7 +156,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             info = {
                 'episode_metrics': episode_metrics,
                 'report': report,
-                'ticker': self.current_ticker
+                'ticker': self.dataset.asset_tickers
             }
 
             return self._s_t, self._r_t, self._done, info
@@ -168,7 +165,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
             # Update internal state after (s_t, a_t).
             self.t_tick += 1
-            changes = self.update_internal_state(self._a_t.item())
+            changes = self.update_internal_state(self._a_t)
             # Update history with the internal changes so the next observation can be computed.
             self.update_history(changes)
 
@@ -178,8 +175,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
             # For a_t compute r_t.
             self._r_t = self.reward_schema.calculate_reward(
                 action=self._a_t,
-                current_state=self._s_t,
-                next_state=next_state
+                current_state=self.inverse_scaling(self._s_t),
+                next_state=self.inverse_scaling(next_state)
             )
 
             # See if it is done after incrementing the tick & computing the internal state.
@@ -194,7 +191,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
                 episode_metrics, report = self.on_done()
                 info['episode_metrics'] = episode_metrics
                 info['report'] = report
-                info['ticker'] = self.current_ticker
+                info['ticker'] = self.dataset.asset_tickers
 
             # Only at the end of the step update the env state.
             self._s_t = next_state
@@ -235,20 +232,33 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def _get_next_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
         return observation
 
+    def inverse_scaling(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+        observation = self.dataset.inverse_scaling(observation)
+        observation = self._inverse_scaling(observation)
+
+        return observation
+
+    def _inverse_scaling(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+        return observation
+
     def create_info(self) -> dict:
         if self._a_t is not None:
-            action = self._a_t.item()
+            action = self._a_t
             position = Position.build(position=action)
-        else:
-            action = None
-            position = None
 
-        if position == Position.Long:
-            self._num_longs += 1
-        elif position == Position.Short:
-            self._num_shorts += 1
+            if not isinstance(position, list):
+                position = [position]
         else:
-            self._num_holds += 1
+            action = []
+            position = []
+
+        for p in position:
+            if p == Position.Long:
+                self._num_longs += 1
+            elif p == Position.Short:
+                self._num_shorts += 1
+            else:
+                self._num_holds += 1
 
         info = dict(
             # MDP information.
@@ -314,6 +324,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # Initialize custom states.
         history = self._initialize_history(history)
 
+        self.is_history_initialized = True
+
         return history
 
     def _initialize_history(self, history: dict) -> dict:
@@ -342,7 +354,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def _is_done(self) -> bool:
         return False
 
-    def on_done(self) -> Tuple[dict, pd.DataFrame]:
+    def on_done(self) -> Tuple[dict, dict]:
         """
             Returns episode metrics in a dictionary format &
                 The history report in a DataFrame
@@ -370,39 +382,46 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         return episode_metrics, report
 
-    def create_report(self) -> pd.DataFrame:
+    def create_report(self) -> Dict[str, Union[np.ndarray, list]]:
+        prices = self.prices.loc[:, 'Open']
+        prices = prices.values.reshape(self.dataset.num_assets, -1)
+        prices = np.transpose(prices, axes=(1, 0))
+        # The items are padded in the beginning, but not in the end.
+        prices = prices[:self.end_tick, :]
+
         data = {
             'date': self.history['date'],
-            'action': self.history['action'],
-            # The items are padded in the beginning, but in the end.
-            'price': self.prices.loc[:, 'Close'][:self.end_tick],
+            'action': np.array(self.history['action'], dtype=np.float32),
+            'price': prices,
             'longs': self.history['num_longs'],
             'shorts': self.history['num_shorts'],
             'holds': self.history['num_holds']
         }
         if 'total_assets' in self.history and len(self.history['total_assets']) > 0:
-            data['total'] = self.history['total_assets']
+            data['total'] = np.array(self.history['total_assets'], dtype=np.float64)
         else:
-            data['total'] = self.history['total_cash']
+            data['total'] = np.array(self.history['total_cash'], dtype=np.float64)
 
-        report = pd.DataFrame(data=data)
-        report['date'] = pd.to_datetime(report['date'])
-        report.set_index('date', inplace=True, drop=True)
-
-        return report
+        return data
 
     @abstractmethod
     def render(self, mode='human', name='trades.png'):
         pass
 
     def render_all(self, title, name='trades.png'):
-        self.renderer.render(
-            title=title,
-            save_file_path=self._adjust_save_file_name(name),
-            positions=self.history['position'],
-            actions=self.history['action'],
-            total_cash=self.history['total_cash']
-        )
+        renderer_kwargs = {
+            'title': title,
+            'save_file_path': self._adjust_save_file_name(name),
+            'positions': self.history['position'],
+            'actions': np.array(self.history['action'], dtype=np.float32),
+            'total_cash': np.array(self.history['total_cash'], dtype=np.float32)
+        }
+        if 'total_assets' in self.history:
+            renderer_kwargs['total_assets'] = np.array(self.history['total_assets'], dtype=np.float32)
+        if 'total_units' in self.history:
+            renderer_kwargs['total_units'] = np.array(self.history['total_units'], dtype=np.float32)
+
+        self.renderer.render(**renderer_kwargs)
         
     def _adjust_save_file_name(self, name: str) -> str:
         name = f'{self.dataset}_{self.given_seed}_{name}'

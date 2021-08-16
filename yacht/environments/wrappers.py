@@ -23,8 +23,9 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
 
     def _compute_flattened_observation_space(self) -> spaces.Box:
         current_observation_space = self.env.observation_space
+        num_assets = current_observation_space['1d'].shape[2]
         window_size = current_observation_space['1d'].shape[0]
-        feature_size = current_observation_space['1d'].shape[2]
+        feature_size = current_observation_space['1d'].shape[3]
         bars_size = sum([v.shape[1] for k, v in current_observation_space.spaces.items() if k != 'env_features'])
 
         env_features_space = current_observation_space['env_features']
@@ -33,7 +34,7 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         return spaces.Box(
             low=-np.inf,
             high=np.inf,
-            shape=(window_size, bars_size, feature_size + env_features_size),
+            shape=(window_size, bars_size, feature_size * num_assets + env_features_size),
             dtype=np.float32
         )
 
@@ -51,8 +52,10 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         intervals = self.env.intervals
         flattened_observation = [observation[interval] for interval in intervals]
         flattened_observation = np.concatenate(flattened_observation, axis=1)
+        window_size, bars_size, _, _ = flattened_observation.shape
+        flattened_observation = flattened_observation.reshape((window_size, bars_size, -1))
 
-        # Concatenate env_features which are features at the window level.
+        # Concatenate env_features, which are features at the window level.
         env_features = observation['env_features']
         window_size, feature_size = env_features.shape
         env_features = env_features.reshape((window_size, 1, feature_size))
@@ -69,6 +72,7 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
 
     @classmethod
     def unflatten_observation(cls, intervals: List[str], observations: np.array) -> np.array:
+        # FIXME: Adapt function for multi_asset, most probably will crash.
         observations = torch.from_numpy(observations)
         observations = unflatten_observations(observations, intervals)
         observations = observations.numpy()

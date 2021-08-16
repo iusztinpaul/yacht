@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from functools import lru_cache
 from typing import List, Tuple, Dict
 
 import numpy as np
@@ -103,8 +102,22 @@ class AssetDataset(Dataset, ABC):
     def num_days(self) -> int:
         pass
 
+    @property
+    @abstractmethod
+    def num_assets(self) -> int:
+        pass
+
+    @property
+    @abstractmethod
+    def asset_tickers(self) -> List[str]:
+        pass
+
     @abstractmethod
     def index_to_datetime(self, integer_index: int) -> datetime:
+        pass
+
+    @abstractmethod
+    def inverse_scaling(self, observation: dict, **kwargs) -> dict:
         pass
 
     @abstractmethod
@@ -178,11 +191,30 @@ class SingleAssetDataset(AssetDataset, ABC):
     def num_days(self) -> int:
         return len(self.data['1d'])
 
+    @property
+    def num_assets(self) -> int:
+        return 1
+
+    @property
+    def asset_tickers(self) -> List[str]:
+        return [self.ticker]
+
     def index_to_datetime(self, integer_index: int) -> datetime:
         return self.data['1d'].index[integer_index].to_pydatetime()
 
     def get_prices(self) -> pd.DataFrame:
         return self.data['1d']
+
+    def inverse_scaling(self, observation: dict, asset_idx: int = -1) -> dict:
+        for interval in self.intervals:
+            if asset_idx == -1:
+                observation[interval] = self.scaler.inverse_transform(observation[interval])
+            else:
+                observation[interval][:, :, asset_idx, :] = self.scaler.inverse_transform(
+                    observation[interval][:, :, asset_idx, :]
+                )
+
+        return observation
 
 
 class MultiAssetDataset(AssetDataset):
@@ -210,7 +242,6 @@ class MultiAssetDataset(AssetDataset):
         )
 
         self.datasets = datasets
-        self.tickers = [dataset.ticker for dataset in self.datasets]
 
         assert self.datasets[0].num_days * len(self.datasets) == sum([dataset.num_days for dataset in self.datasets]), \
             'All the datasets should have the same length.'
@@ -219,6 +250,14 @@ class MultiAssetDataset(AssetDataset):
     def num_days(self) -> int:
         # All the datasets have the same number of days.
         return self.datasets[0].num_days
+
+    @property
+    def num_assets(self) -> int:
+        return len(self.datasets)
+
+    @property
+    def asset_tickers(self) -> List[str]:
+        return [dataset.ticker for dataset in self.datasets]
 
     def index_to_datetime(self, integer_index: int) -> datetime:
         # All the datasets have the same indices to dates mappings.
@@ -236,16 +275,22 @@ class MultiAssetDataset(AssetDataset):
                 stacked_items[key].append(value)
 
         for key, value in stacked_items.items():
-            stacked_items[key] = np.stack(stacked_items[key])
+            stacked_items[key] = np.stack(stacked_items[key], axis=2)
 
         return stacked_items
 
+    def inverse_scaling(self, observation: dict, **kwargs) -> dict:
+        for asset_idx in range(self.num_assets):
+            dataset = self.datasets[asset_idx]
+            observation = dataset.inverse_scaling(observation, asset_idx)
+
+        return observation
+
     def __str__(self):
-        asset_tickers = [ticker.split('-')[0] for ticker in self.tickers]
+        asset_tickers = [ticker.split('-')[0] for ticker in self.asset_tickers]
 
         return '/'.join(asset_tickers)
 
-    @lru_cache
     def get_prices(self) -> pd.DataFrame:
         prices = []
         for dataset in self.datasets:
@@ -270,7 +315,7 @@ class MultiAssetDataset(AssetDataset):
             observation_space[key] = spaces.Box(
                 low=-np.inf,
                 high=np.inf,
-                shape=(len(self.datasets), *value.shape),
+                shape=(*value.shape[:-1], len(self.datasets), value.shape[-1]),
                 dtype=value.dtype
             )
 

@@ -1,3 +1,6 @@
+from collections import defaultdict
+from typing import Union, Dict
+
 import pandas as pd
 import numpy as np
 from pyfolio import timeseries
@@ -5,8 +8,8 @@ from pyfolio import timeseries
 from yacht import utils
 
 
-def compute_backtest_metrics(report: pd.DataFrame, total_assets_col_name='total'):
-    daily_return_report = get_daily_return(report, total_assets_col_name=total_assets_col_name)
+def compute_backtest_metrics(report: dict, total_assets_col_name='total'):
+    daily_return_report = get_daily_return(report[total_assets_col_name])
 
     # TODO: Add the rest of the arguments for more statistics.
     strategy_metrics = timeseries.perf_stats(
@@ -26,6 +29,7 @@ def compute_backtest_metrics(report: pd.DataFrame, total_assets_col_name='total'
         snake_case_strategy_metrics[utils.english_title_to_snake_case(k)] = v
     strategy_metrics = snake_case_strategy_metrics
 
+    # TODO: Adapt metrics for multiple actions / prices
     price_advantage_metrics = compute_price_advantage(report)
     strategy_metrics.update(price_advantage_metrics)
 
@@ -37,40 +41,54 @@ def compute_backtest_metrics(report: pd.DataFrame, total_assets_col_name='total'
     return strategy_metrics, final_report
 
 
-def get_daily_return(report: pd.DataFrame, total_assets_col_name='total'):
-    df = report.copy(deep=True)
-    df[df == 0.] = 1e-2
+def get_daily_return(total_assets_over_time: Union[np.ndarray, pd.Series]) -> pd.Series:
+    if isinstance(total_assets_over_time, np.ndarray):
+        total_assets_over_time = pd.Series(data=total_assets_over_time)
+    total_assets_over_time[total_assets_over_time == 0.] = 1e-2
 
-    df['daily_return'] = df[total_assets_col_name].pct_change(1)
-
-    return pd.Series(df['daily_return'], index=df.index)
+    return total_assets_over_time.pct_change(1)
 
 
-def compute_price_advantage(report: pd.DataFrame) -> dict:
-    actions = report.action.values
-    prices = report.price.values
-    mean_price = np.mean(prices)
+def compute_price_advantage(report: dict) -> dict:
+    actions = report['action']
+    prices = report['price']
+    mean_price = np.mean(prices, axis=0)
 
-    # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
-    positive_positions_mask = actions > 0
-    negative_positions_mask = actions < 0
+    statistics: Dict[str, Union[list, np.ndarray]] = defaultdict(list)
+    for asset_idx in range(actions.shape[1]):
+        # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
+        positive_positions_mask = actions[:, asset_idx] > 0
+        negative_positions_mask = actions[:, asset_idx] < 0
+        buy_actions = actions[positive_positions_mask, asset_idx]
+        sell_actions = actions[negative_positions_mask, asset_idx]
 
-    statistics = dict()
-    if positive_positions_mask.any():
-        statistics['buy_pa'] = _compute_price_advantage(
-            actions[positive_positions_mask],
-            prices[positive_positions_mask],
-            mean_price=mean_price,
-            buy=True
-        )
+        if positive_positions_mask.any():
+            statistics['buy_pa'].append(_compute_price_advantage(
+                buy_actions,
+                prices[positive_positions_mask, asset_idx],
+                mean_price=mean_price[asset_idx],
+                buy=True
+            ))
+            statistics['buy_weights'].append(buy_actions.sum())
 
-    if negative_positions_mask.any():
-        statistics['sell_pa'] = _compute_price_advantage(
-            actions[negative_positions_mask],
-            prices[negative_positions_mask],
-            mean_price=mean_price,
-            buy=False
-        )
+        if negative_positions_mask.any():
+            statistics['sell_pa'].append(_compute_price_advantage(
+                sell_actions,
+                prices[negative_positions_mask, asset_idx],
+                mean_price=mean_price[asset_idx],
+                buy=False
+            ))
+            statistics['sell_weights'].append(buy_actions.sum())
+
+    statistics['buy_weights'] = np.array(statistics['buy_weights'], dtype=np.float32)
+    statistics['buy_weights'] /= statistics['buy_weights'].sum()
+    statistics['sell_weights'] = np.array(statistics['sell_weights'], dtype=np.float32)
+    statistics['sell_weights'] /= statistics['sell_weights'].sum()
+
+    statistics['buy_pa'] = np.array(statistics['buy_pa'], dtype=np.float32) * statistics['buy_weights']
+    statistics['buy_pa'] = statistics['buy_pa'].sum()
+    statistics['sell_pa'] = np.array(statistics['sell_pa'], dtype=np.float32) * statistics['sell_weights']
+    statistics['sell_pa'] = statistics['sell_pa'].sum()
 
     return statistics
 
@@ -88,14 +106,15 @@ def _compute_price_advantage(
         pa = 1 - average_execution_price / mean_price
     else:
         pa = average_execution_price / mean_price - 1
+
     pa *= 1e4
 
     return pa
 
 
-def compute_longs_shorts_ratio(report: pd.DataFrame) -> float:
-    final_num_longs = report.longs.values[-1]
-    final_num_shorts = report.shorts.values[-1]
+def compute_longs_shorts_ratio(report: dict) -> float:
+    final_num_longs = report['longs'].values[-1]
+    final_num_shorts = report['short'].values[-1]
 
     longs_shorts_ratio = final_num_longs / (final_num_shorts + 1e-17)
 
