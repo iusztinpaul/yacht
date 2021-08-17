@@ -42,7 +42,8 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         total_units = pd.Series(
             data=total_units,
             index=dataset.asset_tickers,
-            name='Total Units'
+            name='Total Units',
+            dtype=np.float32
         )
 
         return total_units
@@ -75,13 +76,14 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         total_cash_positions = np.array(total_cash_positions, dtype=np.float32).reshape(-1, 1)
         total_units = np.array(total_units, dtype=np.float32).reshape(-1, self.dataset.num_assets)
 
-        # TODO: Normalize env_features
         observation['env_features'] = np.concatenate([total_cash_positions, total_units], axis=-1)
 
         return observation
 
+    def scale(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        return observation
+
     def _inverse_scaling(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
-        # TODO: Unnormalize env observation
         return observation
 
     def _initialize_history(self, history: dict) -> dict:
@@ -98,7 +100,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         total_units_cash_value = (total_units_cash_value[:, 0] * total_units_cash_value[:, 1]).sum()
 
         info['total_loss_commissions'] = self._total_loss_commissions
-        info['total_units'] = self._total_units
+        info['total_units'] = np.copy(self._total_units.values)
         info['total_assets'] = total_units_cash_value + self._total_cash
 
         return info
@@ -124,7 +126,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
 
         return {
             'total_cash': self._total_cash,
-            'total_units': self._total_units
+            'total_units': np.copy(self._total_units.values)
         }
 
     def _sell_asset(self, ticker: str, num_units_to_sell: float):

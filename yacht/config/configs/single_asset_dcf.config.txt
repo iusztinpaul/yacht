@@ -1,6 +1,7 @@
 input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
+    num_assets_per_dataset: 1
     scaler: 'IdentityScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
@@ -21,7 +22,7 @@ input: {
     }
 }
 environment: {
-    name: 'SingleAssetEnvironment-v0'
+    name: 'MultiAssetEnvironment-v0'
     n_envs: 8
     envs_on_different_processes: false
     buy_commission: 0.00

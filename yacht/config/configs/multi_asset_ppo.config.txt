@@ -1,12 +1,10 @@
 input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
-    is_multi_asset: true
-    num_assets_per_dataset: 2
+    num_assets_per_dataset: 3
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
-    # tickers: ['BTC-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
@@ -19,7 +17,7 @@ input: {
     backtest: {
         run: true
         deterministic: false
-        tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
+        tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD']
         n_runs: 4
     }
 }
@@ -59,8 +57,8 @@ agent: {
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 2000
-    collecting_n_steps: 1000
+    total_timesteps: 80000
+    collecting_n_steps: 2024
     learning_rate: 0.00025
     batch_size: 100
     n_epochs: 10

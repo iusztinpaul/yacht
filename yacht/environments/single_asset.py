@@ -135,7 +135,7 @@ class SingleAssetEnvironment(BaseAssetEnvironment):
     def render_all(self, title, name='trades.png'):
         self.renderer.render(
             title=title,
-            save_file_path=self._adjust_save_file_name(name),
+            save_file_path=self._build_render_path(name),
             positions=self.history['position'],
             actions=self.history['action'],
             total_cash=self.history['total_cash'],

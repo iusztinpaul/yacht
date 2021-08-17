@@ -289,7 +289,7 @@ class MultiAssetDataset(AssetDataset):
     def __str__(self):
         asset_tickers = [ticker.split('-')[0] for ticker in self.asset_tickers]
 
-        return '/'.join(asset_tickers)
+        return '-'.join(asset_tickers)
 
     def get_prices(self) -> pd.DataFrame:
         prices = []

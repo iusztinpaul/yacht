@@ -92,11 +92,17 @@ def build_dataset(
         end = backtest_end
 
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
-    n_envs = config.environment.n_envs if mode.is_trainable() else config.input.backtest.n_runs
-    num_datasets = n_envs if config.input.is_multi_asset else len(tickers)
-    num_assets_per_dataset = config.input.num_assets_per_dataset if config.input.is_multi_asset else 1
+    num_datasets = len(tickers) / config.input.num_assets_per_dataset
+    if num_datasets != int(num_datasets):
+        num_datasets = int(num_datasets) + 1
+    num_datasets = int(num_datasets)
     for _ in range(num_datasets):
-        dataset_tickers = np.random.choice(tickers, num_assets_per_dataset, replace=False)
+        # TODO: Create e better mechanism so that it takes all the tickers.
+        dataset_tickers = np.random.choice(
+            tickers,
+            config.input.num_assets_per_dataset,
+            replace=False
+        )
         single_asset_datasets: List[SingleAssetDataset] = []
 
         for ticker in dataset_tickers:
@@ -127,22 +133,17 @@ def build_dataset(
                 )
             )
 
-        if config.input.is_multi_asset:
-            dataset = MultiAssetDataset(
-                datasets=single_asset_datasets,
-                market=market,
-                intervals=input_config.intervals,
-                features=list(input_config.features) + list(input_config.technical_indicators),
-                start=start,
-                end=end,
-                mode=mode,
-                logger=logger,
-                window_size=input_config.window_size
-            )
-        else:
-            assert len(single_asset_datasets) == 1
-            dataset = single_asset_datasets[0]
-
+        dataset = MultiAssetDataset(
+            datasets=single_asset_datasets,
+            market=market,
+            intervals=input_config.intervals,
+            features=list(input_config.features) + list(input_config.technical_indicators),
+            start=start,
+            end=end,
+            mode=mode,
+            logger=logger,
+            window_size=input_config.window_size
+        )
         datasets.append(dataset)
 
     return ChooseAssetDataset(

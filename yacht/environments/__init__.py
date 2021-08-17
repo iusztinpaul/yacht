@@ -1,8 +1,7 @@
 from gym.wrappers import Monitor
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnv, DummyVecEnv, VecNormalize
+from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 
-from .enums import *
 from .base import *
 from .day import *
 
@@ -56,7 +55,7 @@ def build_env(
         'initial_cash_position': env_config.initial_cash_position
     }
 
-    n_envs = env_config.n_envs if mode.is_trainable() else len(backtest_config.tickers) * backtest_config.n_runs
+    n_envs = env_config.n_envs if mode.is_trainable() else backtest_config.n_runs
     env = make_vec_env(
         env_id=env_config.name,
         n_envs=n_envs,
@@ -70,13 +69,11 @@ def build_env(
         monitor_kwargs=None,
         wrapper_kwargs=None
     )
-
-    if utils.get_experiment_tracker_name(dataset.storage_dir) == 'wandb':
-        env = MetricsVecEnvWrapper(
-            env=env,
-            logger=logger,
-            mode=mode
-        )
+    env = MetricsVecEnvWrapper(
+        env=env,
+        logger=logger,
+        mode=mode
+    )
 
     return env
 

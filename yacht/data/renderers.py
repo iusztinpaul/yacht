@@ -1,4 +1,5 @@
 import datetime
+import os
 import sys
 from abc import ABC, abstractmethod
 from typing import Tuple, List, Optional, Dict
@@ -236,44 +237,61 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         self.end = end
 
     def _render(self, title: str, save_file_path: str, **kwargs):
-        from yacht.environments import Position
+        tickers: List[str] = kwargs['tickers']
+        actions = kwargs['actions']
+        total_cash = kwargs.get('total_cash')
+        total_units = kwargs.get('total_units')
+        total_assets = kwargs.get('total_assets')
 
-        positions: List[List[Optional[Position]]] = kwargs['positions']
-        actions: List[List[int]] = kwargs['actions']
-        total_cash: List[float] = kwargs.get('total_cash', None)
-        total_units: List[List[float]] = kwargs.get('total_units', None)
+        if len(tickers) == 0:
+            return
 
         # Trim missing values from the end.
-        data = self.data.iloc[:len(positions)]
-        for asset_positions in positions:
+        additional_plots = []
+        dummy_data = None
+        for ticker_idx, ticker in enumerate(tickers):
+            ticker_actions = actions[:, ticker_idx]
+            data = self.data.loc[(slice(None), ticker), ][:len(ticker_actions)]
+            data = data.reset_index(level=1, drop=True)
+            # Keep a reference only for the indices.
+            dummy_data = data
+
             trading_renderer = TradingPositionRenderer(data)
-
-
-
-        # Calculate actions.
-        actions: pd.Series = pd.Series(index=data.index, data=actions)
-
-        additional_plots = [
-            mpf.make_addplot(actions, panel=1, color='b', type='bar', width=1, ylabel='Actions'),
-            mpf.make_addplot(total_cash, panel=2, color='b', type='bar', width=1, ylabel='Cash')
-        ]
-
-        panel_ratios = (1, 0.75, 0.75)
-        if total_units:
-            panel_ratios = (1, 0.75, 0.75, 0.75)
-
-            additional_plots.append(
-                mpf.make_addplot(total_units, panel=3, color='b', type='bar', width=1, ylabel='Units')
+            filename, file_extension = os.path.splitext(save_file_path)
+            trading_renderer.render(
+                title=f'{ticker}',
+                save_file_path=f'{filename}_{ticker}{file_extension}',
+                actions=ticker_actions
             )
+
+            # Calculate actions.
+            ticker_actions: pd.Series = pd.Series(index=data.index, data=ticker_actions)
+            additional_plots.append(
+                mpf.make_addplot(ticker_actions, panel=1, color='b', type='bar', width=1, ylabel='Actions'),
+            )
+
+            # Calculate units.
+            ticker_units = total_units[:, ticker_idx]
+            ticker_units: pd.Series = pd.Series(index=data.index, data=ticker_units)
+            additional_plots.append(
+                mpf.make_addplot(ticker_units, panel=2, color='b', type='bar', width=1, ylabel='Units'),
+            )
+
+        total_cash = pd.Series(index=dummy_data.index, data=total_cash)
+        total_assets = pd.Series(index=dummy_data.index, data=total_assets)
+        additional_plots.extend([
+            mpf.make_addplot(total_cash, panel=3, color='b', type='bar', width=1, ylabel='Cash'),
+            mpf.make_addplot(total_assets, panel=4, color='b', type='bar', width=1, ylabel='Assets')
+        ])
 
         # TODO: See how to make panel y numbers not to overlap on the edges.
         mpf.plot(
-            data,
+            dummy_data,
             addplot=additional_plots,
             title=title,
             type='line',
             ylabel='Prices',
-            panel_ratios=panel_ratios,
+            panel_ratios=(1, 0.75, 0.75, 0.75, 0.75),
             figratio=(2, 1),
             figscale=1.5,
             savefig=save_file_path,
@@ -283,31 +301,32 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
 
 class TradingPositionRenderer(MplFinanceRenderer):
     def _render(self, title: str, save_file_path: str, **kwargs):
-        from yacht.environments import Position
-
-        positions: List[Optional[Position]] = kwargs['positions']
+        actions = kwargs['actions']
+        positions = np.sign(actions)
+        # first_item = positions[0].reshape(1)
+        # positions = np.diff(positions, axis=0)
+        # positions = np.concatenate([first_item, positions], axis=0)
+        self.data = self.data.iloc[:len(positions)]
 
         # Calculate positions.
-        positions: pd.Series = pd.Series(index=self.data.index, data=positions)
+        positions = pd.Series(index=self.data.index, data=positions)
 
-        short_positions_index = positions[positions == Position.Short].index
+        short_positions_index = positions[positions < 0].index
         short_positions = positions.copy()
-        short_positions[positions == Position.Short] = self.data.loc[short_positions_index, 'High']
-        short_positions[positions == Position.Long] = np.nan
-        short_positions[positions == Position.Hold] = np.nan
+        short_positions[positions < 0] = self.data.loc[short_positions_index, 'High']
+        short_positions[positions >= 0] = np.nan
 
-        long_positions_index = positions[positions == Position.Long].index
+        long_positions_index = positions[positions > 0].index
         long_positions = positions.copy()
-        long_positions[positions == Position.Long] = self.data.loc[long_positions_index, 'Low']
-        long_positions[positions == Position.Short] = np.nan
-        long_positions[positions == Position.Hold] = np.nan
+        long_positions[positions > 0] = self.data.loc[long_positions_index, 'Low']
+        long_positions[positions <= 0] = np.nan
 
-        hold_position_index = positions[positions == Position.Hold].index
+        hold_position_index = positions[positions == 0].index
         hold_positions = positions.copy()
-        hold_positions[positions == Position.Hold] = \
+        hold_positions[positions == 0] = \
             (self.data.loc[hold_position_index, 'Low'] + self.data.loc[hold_position_index, 'High']) / 2
-        hold_positions[positions == Position.Short] = np.nan
-        hold_positions[positions == Position.Long] = np.nan
+        hold_positions[positions < 0] = np.nan
+        hold_positions[positions > 0] = np.nan
 
         additional_plots = []
         if len(short_positions[short_positions.notna()]) > 0:

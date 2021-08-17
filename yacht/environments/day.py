@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from gym import spaces
-from yacht.environments import BaseAssetEnvironment, Position
+from yacht.environments import BaseAssetEnvironment
 from yacht.environments.reward_schemas import LeaderBoardRewardSchema
 
 

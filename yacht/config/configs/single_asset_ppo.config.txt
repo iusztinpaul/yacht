@@ -1,11 +1,10 @@
 input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
-    is_multi_asset: false
+    num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
-    # tickers: ['BTC-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
@@ -23,7 +22,7 @@ input: {
     }
 }
 environment: {
-    name: 'SingleAssetEnvironment-v0'
+    name: 'MultiAssetEnvironment-v0'
     n_envs: 8
     envs_on_different_processes: false
     buy_commission: 0.00
@@ -77,5 +76,5 @@ train: {
 }
 meta: {
     device: 'gpu'
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

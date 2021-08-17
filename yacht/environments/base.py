@@ -4,7 +4,6 @@ from copy import copy
 from typing import Dict, List, Optional, Union, Tuple
 
 import gym
-import pandas as pd
 from gym import spaces
 import numpy as np
 from stable_baselines3.common.utils import set_random_seed
@@ -12,7 +11,6 @@ from stable_baselines3.common.utils import set_random_seed
 from yacht import utils
 from yacht.data.datasets import ChooseAssetDataset
 from yacht.environments.action_schemas import ActionSchema
-from yacht.environments.enums import Position
 from yacht.environments.reward_schemas import RewardSchema
 
 
@@ -53,7 +51,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self._done = None
         self._s_t = None
         self._a_t = None
-        self._position_previous_t = None
         self._r_t = None
 
         # Internal state.
@@ -83,10 +80,19 @@ class BaseAssetEnvironment(gym.Env, ABC):
         set_random_seed(seed=seed, using_cuda=True)
 
     def reset(self):
+        from yacht.data.renderers import AssetEnvironmentRenderer
+
         # Choose a random ticker for every instance of the environment.
         self.dataset.choose()
         # Get the prices for the new chosen assets.
         self.prices = self.dataset.get_prices()
+
+        # Rendering.
+        self.renderer = AssetEnvironmentRenderer(
+            data=self.prices,
+            start=self.dataset.start,
+            end=self.dataset.end
+        )
 
         self.t_tick = self.start_tick
 
@@ -94,7 +100,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self._done = False
         self._s_t = None
         self._a_t = None
-        self._position_previous_t = None
         self._r_t = None
 
         # Internal state.
@@ -106,11 +111,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self._num_shorts = 0
         self._num_holds = 0
 
-        # History.
-        self.history = self.initialize_history()
-
         # Call custom code before computing the next observation.
         self._reset()
+
+        # History.
+        self.history = self.initialize_history()
 
         self._s_t = self.get_next_observation()
 
@@ -220,42 +225,43 @@ class BaseAssetEnvironment(gym.Env, ABC):
     ) -> Dict[str, Optional[spaces.Space]]:
         return observation_space
 
-    def get_next_observation(self) -> Dict[str, np.array]:
+    def get_next_observation(self) -> Dict[str, np.ndarray]:
         observation = self.dataset[self.t_tick]
         # Replace the value of 'env_features' if you want to add custom data.
         # observation['env_features'] = ...
 
         observation = self._get_next_observation(observation)
+        observation = self.scale(observation)
 
         return observation
 
-    def _get_next_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+    def _get_next_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         return observation
 
-    def inverse_scaling(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+    def scale(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        return observation
+
+    def inverse_scaling(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         observation = self.dataset.inverse_scaling(observation)
         observation = self._inverse_scaling(observation)
 
         return observation
 
-    def _inverse_scaling(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+    def _inverse_scaling(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         return observation
 
     def create_info(self) -> dict:
         if self._a_t is not None:
             action = self._a_t
-            position = Position.build(position=action)
-
-            if not isinstance(position, list):
-                position = [position]
+            position = self.map_to_position(action)
         else:
-            action = []
-            position = []
+            action = np.array([])
+            position = np.array([])
 
         for p in position:
-            if p == Position.Long:
+            if p == 1:
                 self._num_longs += 1
-            elif p == Position.Short:
+            elif p == -1:
                 self._num_shorts += 1
             else:
                 self._num_holds += 1
@@ -264,7 +270,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
             # MDP information.
             step=self.t_tick - 1,  # Already incremented the tick at the start of the step() method.
             action=action,
-            position=position,
             reward=self._r_t,
             # Interval state information.
             total_cash=self._total_cash,
@@ -280,16 +285,10 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def _create_info(self, info: dict) -> dict:
         return info
 
-    def update_history(self, changes: dict):
-        if self._should_update_history(key='position', changes=changes):
-            # For easier processing add a position only when it is changing.
-            position = changes.pop('position')
-            if self._position_previous_t != position:
-                self.history['position'].append(position)
-                self._position_previous_t = position
-            else:
-                self.history['position'].append(np.nan)
+    def map_to_position(self, action: np.ndarray) -> np.ndarray:
+        return np.sign(action)
 
+    def update_history(self, changes: dict):
         # Update date at any time for the current self._tick_t
         changes['date'] = None
         if self._should_update_history(key='date', changes=changes):
@@ -411,20 +410,19 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def render_all(self, title, name='trades.png'):
         renderer_kwargs = {
             'title': title,
-            'save_file_path': self._adjust_save_file_name(name),
-            'positions': self.history['position'],
+            'save_file_path': self._build_render_path(name),
+            'tickers': self.dataset.asset_tickers,
             'actions': np.array(self.history['action'], dtype=np.float32),
             'total_cash': np.array(self.history['total_cash'], dtype=np.float32)
         }
-        if 'total_assets' in self.history:
+        if 'total_assets' in self.history and len(self.history['total_assets']) > 0:
             renderer_kwargs['total_assets'] = np.array(self.history['total_assets'], dtype=np.float32)
-        if 'total_units' in self.history:
+        if 'total_units' in self.history and len(self.history['total_units']) > 0:
             renderer_kwargs['total_units'] = np.array(self.history['total_units'], dtype=np.float32)
 
         self.renderer.render(**renderer_kwargs)
         
-    def _adjust_save_file_name(self, name: str) -> str:
-        name = f'{self.dataset}_{self.given_seed}_{name}'
+    def _build_render_path(self, name: str) -> str:
         if not name.endswith('.png'):
             name = f'{name}.png'
             

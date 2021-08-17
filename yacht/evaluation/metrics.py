@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Union, Dict
+from typing import Union, Dict, Tuple
 
 import pandas as pd
 import numpy as np
@@ -8,12 +8,16 @@ from pyfolio import timeseries
 from yacht import utils
 
 
-def compute_backtest_metrics(report: dict, total_assets_col_name='total'):
-    daily_return_report = get_daily_return(report[total_assets_col_name])
+def compute_backtest_metrics(
+        report: Dict[str, Union[list, np.ndarray]],
+        total_assets_col_name='total'
+) -> Tuple[dict, dict]:
+    daily_returns = get_daily_return(report[total_assets_col_name])
+    report['daily_returns'] = daily_returns.values
 
     # TODO: Add the rest of the arguments for more statistics.
     strategy_metrics = timeseries.perf_stats(
-        returns=daily_return_report,
+        returns=daily_returns,
         factor_returns=None,
         positions=None,
         transactions=None,
@@ -36,9 +40,7 @@ def compute_backtest_metrics(report: dict, total_assets_col_name='total'):
     longs_shorts_ratio = compute_longs_shorts_ratio(report)
     strategy_metrics['LSR'] = longs_shorts_ratio
 
-    final_report = pd.concat([report, daily_return_report], axis=1)
-
-    return strategy_metrics, final_report
+    return strategy_metrics, report
 
 
 def get_daily_return(total_assets_over_time: Union[np.ndarray, pd.Series]) -> pd.Series:
@@ -113,9 +115,9 @@ def _compute_price_advantage(
 
 
 def compute_longs_shorts_ratio(report: dict) -> float:
-    final_num_longs = report['longs'].values[-1]
-    final_num_shorts = report['short'].values[-1]
+    final_num_longs = report['longs'][-1]
+    final_num_shorts = report['shorts'][-1]
 
     longs_shorts_ratio = final_num_longs / (final_num_shorts + 1e-17)
 
-    return longs_shorts_ratio.item()
+    return longs_shorts_ratio
