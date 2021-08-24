@@ -1,4 +1,4 @@
-from typing import Tuple, List, Type
+from typing import List
 
 import gym
 import torch
@@ -50,7 +50,7 @@ class MultiFrequencyFeatureExtractor(BaseFeaturesExtractor):
         )
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        observations = unflatten_observations(observations, self.intervals)
+        observations = unflatten_observations(observations, self.intervals, self.env_features_len)
         batch_size, window_size, channel_size, _ = observations['1d'].shape
 
         features = []

@@ -72,7 +72,6 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
 
     @classmethod
     def unflatten_observation(cls, intervals: List[str], observations: np.array) -> np.array:
-        # FIXME: Adapt function for multi_asset, most probably will crash.
         observations = torch.from_numpy(observations)
         observations = unflatten_observations(observations, intervals)
         observations = observations.numpy()

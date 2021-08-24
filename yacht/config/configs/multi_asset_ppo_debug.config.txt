@@ -47,7 +47,12 @@ agent: {
     verbose: true
     policy: {
         name: 'MlpPolicy'
-        activation_fn: 'Tanh',
+        activation_fn: 'Tanh'
+        feature_extractor: {
+            name: 'MultiFrequencyFeatureExtractor'
+            features_dim: [64, 128]
+            drop_out_p: 0.5
+        }
         net_arch: {
             shared: [128]
             vf: [64]
