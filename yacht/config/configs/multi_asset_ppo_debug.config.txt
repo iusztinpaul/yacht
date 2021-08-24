@@ -18,12 +18,12 @@ input: {
         run: true
         deterministic: false
         tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD']
-        n_runs: 4
+        n_runs: 1
     }
 }
 environment: {
     name: 'MultiAssetEnvironment-v0'
-    n_envs: 4
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -49,18 +49,18 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         net_arch: {
-            shared: [128, 128, 128]
-            vf: [64, 64]
-            pi: [64, 64]
+            shared: [128]
+            vf: [64]
+            pi: [64]
         }
     }
 }
 train: {
     trainer_name: 'NoEvalTrainer'
-    total_timesteps: 80000
-    collecting_n_steps: 2048
+    total_timesteps: 1000
+    collecting_n_steps: 1000
     learning_rate: 0.00025
-    batch_size: 2048
+    batch_size: 1000
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95
@@ -76,5 +76,5 @@ train: {
 }
 meta: {
     device: 'gpu'
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
 }

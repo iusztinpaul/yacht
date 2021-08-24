@@ -2,7 +2,7 @@ input: {
     market: 'Yahoo'
     dataset: 'DayMultiFrequencyDataset'
     num_assets_per_dataset: 3
-    scaler: 'MinMaxScaler'
+    scaler: 'IdentityScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
     intervals: ['1d']
@@ -18,61 +18,29 @@ input: {
         run: true
         deterministic: false
         tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD']
-        n_runs: 4
+        n_runs: 1
     }
 }
 environment: {
     name: 'MultiAssetEnvironment-v0'
-    n_envs: 4
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
-    initial_cash_position: 30000
+    initial_cash_position: 1000000
     reward_schemas: [
     {
         name: 'AssetsPriceChangeRewardSchema'
         reward_scaling: 0.0001
-    },
-    {
-        name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.0001
     }
     ]
     action_schema: 'ContinuousFloatActionSchema'
-    action_scaling_factor: 100
+    action_scaling_factor: 1
 }
 agent: {
-    name: 'PPO'
-    is_classic_method: false
+    name: 'DCF'
+    is_classic_method: true
     verbose: true
-    policy: {
-        name: 'MlpPolicy'
-        activation_fn: 'Tanh',
-        net_arch: {
-            shared: [128, 128, 128]
-            vf: [64, 64]
-            pi: [64, 64]
-        }
-    }
-}
-train: {
-    trainer_name: 'NoEvalTrainer'
-    total_timesteps: 80000
-    collecting_n_steps: 2048
-    learning_rate: 0.00025
-    batch_size: 2048
-    n_epochs: 10
-    gamma: 0.99
-    gae_lambda: 0.95
-    clip_range: 0.2
-    entropy_coefficient: 0.01,
-    vf_coefficient: 0.5
-    max_grad_norm: 0.5
-    use_sde: false
-    sde_sample_freq: -1
-    k_fold_splits: 3
-    k_fold_purge_ratio: 0.03
-    k_fold_embargo_ratio: 0.01
 }
 meta: {
     device: 'gpu'

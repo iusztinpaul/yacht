@@ -2,9 +2,10 @@ import datetime
 import os
 import sys
 from abc import ABC, abstractmethod
-from typing import Tuple, List, Optional, Dict
+from typing import Tuple, List, Dict
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import mplfinance as mpf
 import numpy as np
 import pandas as pd
@@ -44,7 +45,7 @@ class MatPlotLibRenderer(BaseRenderer, ABC):
             self.fig.savefig(file_path)
 
             WandBContext.log_image_from(file_path)
-        
+
 
 class MplFinanceRenderer(BaseRenderer, ABC):
     def render(self, title: str, save_file_path: str, **kwargs):
@@ -152,10 +153,10 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         self.prices = self._get_prices(rescale)
         self.train_interval = train_interval
         self.test_interval = test_interval
-        
+
     def _get_prices(self, rescale) -> Dict[str, pd.Series]:
         prices = dict()
-        
+
         for ticker, values in self.data.items():
             if rescale:
                 scaler = MinMaxScaler()
@@ -169,7 +170,7 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
                 prices[ticker] = pd.Series(index=indices, data=values)
             else:
                 prices[ticker] = values.loc[:, 'Close']
-                
+
         return prices
 
     def _render(self):
@@ -230,6 +231,11 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
 
 
 class AssetEnvironmentRenderer(MplFinanceRenderer):
+    COLOURS = (
+        'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
+        'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan'
+    )
+
     def __init__(self, data: pd.DataFrame, start: datetime, end: datetime):
         super().__init__(data)
 
@@ -241,20 +247,37 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         actions = kwargs['actions']
         total_cash = kwargs.get('total_cash')
         total_units = kwargs.get('total_units')
+        total_units = np.cumsum(total_units, axis=1)
         total_assets = kwargs.get('total_assets')
+
+        assert len(tickers) <= len(self.COLOURS), 'Not enough supported colours.'
 
         if len(tickers) == 0:
             return
 
-        # Trim missing values from the end.
-        additional_plots = []
+        extra_plots = []
+        legend_patches = []
         dummy_data = None
-        for ticker_idx, ticker in enumerate(tickers):
+        for ticker_idx in range(len(tickers) - 1, -1, -1):
+            ticker = tickers[ticker_idx]
+            legend_patches.append(
+                mpatches.Patch(color=self.COLOURS[ticker_idx], label=ticker)
+            )
+
             ticker_actions = actions[:, ticker_idx]
-            data = self.data.loc[(slice(None), ticker), ][:len(ticker_actions)]
+            # Trim extra data from the end.
+            data = self.data.loc[(slice(None), ticker),][:len(ticker_actions)]
             data = data.reset_index(level=1, drop=True)
-            # Keep a reference only for the indices.
+            # Keep a reference only for the indices for the main plot.
             dummy_data = data
+            extra_plots.append(
+                mpf.make_addplot(
+                    data['Close'],
+                    panel=0,
+                    color=self.COLOURS[ticker_idx],
+                    secondary_y=False
+                )
+            )
 
             trading_renderer = TradingPositionRenderer(data)
             filename, file_extension = os.path.splitext(save_file_path)
@@ -266,80 +289,111 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
 
             # Calculate actions.
             ticker_actions: pd.Series = pd.Series(index=data.index, data=ticker_actions)
-            additional_plots.append(
-                mpf.make_addplot(ticker_actions, panel=1, color='b', type='bar', width=1, ylabel='Actions'),
+            extra_plots.append(
+                mpf.make_addplot(
+                    ticker_actions,
+                    panel=1,
+                    type='bar',
+                    width=1,
+                    ylabel='Actions',
+                    color=self.COLOURS[ticker_idx],
+                    secondary_y=False
+                ),
             )
 
             # Calculate units.
             ticker_units = total_units[:, ticker_idx]
             ticker_units: pd.Series = pd.Series(index=data.index, data=ticker_units)
-            additional_plots.append(
-                mpf.make_addplot(ticker_units, panel=2, color='b', type='bar', width=1, ylabel='Units'),
+            extra_plots.append(
+                mpf.make_addplot(
+                    ticker_units,
+                    panel=2,
+                    type='bar',
+                    width=1,
+                    ylabel='Units',
+                    color=self.COLOURS[ticker_idx],
+                    secondary_y=False
+                ),
             )
 
         total_cash = pd.Series(index=dummy_data.index, data=total_cash)
         total_assets = pd.Series(index=dummy_data.index, data=total_assets)
-        additional_plots.extend([
-            mpf.make_addplot(total_cash, panel=3, color='b', type='bar', width=1, ylabel='Cash'),
-            mpf.make_addplot(total_assets, panel=4, color='b', type='bar', width=1, ylabel='Assets')
+        extra_plots.extend([
+            mpf.make_addplot(total_cash, panel=3, color='tab:gray', type='bar', width=1, ylabel='Cash'),
+            mpf.make_addplot(total_assets, panel=4, color='tab:gray', type='bar', width=1, ylabel='Assets')
         ])
 
-        # TODO: See how to make panel y numbers not to overlap on the edges.
-        mpf.plot(
-            dummy_data,
-            addplot=additional_plots,
+        fig, axes = mpf.plot(
+            data=dummy_data,
+            addplot=extra_plots,
             title=title,
             type='line',
-            ylabel='Prices',
+            ylabel=f'Prices',
             panel_ratios=(1, 0.75, 0.75, 0.75, 0.75),
             figratio=(2, 1),
             figscale=1.5,
             savefig=save_file_path,
-            volume=False
+            volume=False,
+            axisoff=False,
+            returnfig=True
         )
+
+        # Configure chart legend and title
+        fig.legend(handles=legend_patches)
+        # Save figure to file
+        fig.savefig(save_file_path)
 
 
 class TradingPositionRenderer(MplFinanceRenderer):
     def _render(self, title: str, save_file_path: str, **kwargs):
         actions = kwargs['actions']
+        # We are interested only in the direction of the action.
         positions = np.sign(actions)
-        # first_item = positions[0].reshape(1)
-        # positions = np.diff(positions, axis=0)
-        # positions = np.concatenate([first_item, positions], axis=0)
+
+        # Replace with nan adjacent values that are equal.
+        adjacent_equal_values_mask = np.zeros(positions.shape[0], dtype=bool)
+        adjacent_equal_values_mask[1:] = positions[1:] == positions[:-1]
+        positions[adjacent_equal_values_mask] = np.nan
+
+        # Remove extra data.
         self.data = self.data.iloc[:len(positions)]
 
         # Calculate positions.
         positions = pd.Series(index=self.data.index, data=positions)
+        # Precompute masks.
+        positive_positions_mask = positions > 0
+        hold_positions_mask = positions == 0
+        negative_positions_mask = positions < 0
 
-        short_positions_index = positions[positions < 0].index
-        short_positions = positions.copy()
-        short_positions[positions < 0] = self.data.loc[short_positions_index, 'High']
+        short_positions_index = positions[negative_positions_mask].index
+        short_positions = pd.Series(index=positions.index)
+        short_positions[negative_positions_mask] = self.data.loc[short_positions_index, 'High']
         short_positions[positions >= 0] = np.nan
 
-        long_positions_index = positions[positions > 0].index
-        long_positions = positions.copy()
-        long_positions[positions > 0] = self.data.loc[long_positions_index, 'Low']
+        long_positions_index = positions[positive_positions_mask].index
+        long_positions = pd.Series(index=positions.index)
+        long_positions[positive_positions_mask] = self.data.loc[long_positions_index, 'Low']
         long_positions[positions <= 0] = np.nan
 
-        hold_position_index = positions[positions == 0].index
-        hold_positions = positions.copy()
-        hold_positions[positions == 0] = \
+        hold_position_index = positions[hold_positions_mask].index
+        hold_positions = pd.Series(index=positions.index)
+        hold_positions[hold_positions_mask] = \
             (self.data.loc[hold_position_index, 'Low'] + self.data.loc[hold_position_index, 'High']) / 2
-        hold_positions[positions < 0] = np.nan
-        hold_positions[positions > 0] = np.nan
+        hold_positions[negative_positions_mask] = np.nan
+        hold_positions[positive_positions_mask] = np.nan
 
         additional_plots = []
         if len(short_positions[short_positions.notna()]) > 0:
             additional_plots.append(
-                mpf.make_addplot(short_positions, type='scatter', markersize=25, marker='v', color='r')
+                mpf.make_addplot(short_positions, type='scatter', markersize=20, marker='v', color='r')
             )
         if len(long_positions[long_positions.notna()]) > 0:
             additional_plots.append(
-                mpf.make_addplot(long_positions, type='scatter', markersize=25, marker='^', color='g')
+                mpf.make_addplot(long_positions, type='scatter', markersize=20, marker='^', color='g')
             )
         if len(hold_positions[hold_positions.notna()]) > 0:
             additional_plots.append(
-                mpf.make_addplot(hold_positions, type='scatter', markersize=25, marker='.', color='y')
+                mpf.make_addplot(hold_positions, type='scatter', markersize=20, marker='.', color='y')
             )
 
         mpf.plot(
