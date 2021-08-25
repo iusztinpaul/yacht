@@ -268,9 +268,10 @@ class MultiAssetDataset(AssetDataset):
         return len(self.datasets[0])
 
     def __getitem__(self, current_index: int) -> Dict[str, np.array]:
-        items = [dataset[current_index] for dataset in self.datasets]
         stacked_items: Dict[str, list] = defaultdict(list)
-        for item in items:
+        for dataset in self.datasets:
+            item = dataset[current_index]
+
             for key, value in item.items():
                 stacked_items[key].append(value)
 

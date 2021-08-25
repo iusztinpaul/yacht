@@ -231,14 +231,15 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # observation['env_features'] = ...
 
         observation = self._get_next_observation(observation)
-        observation = self.scale(observation)
+        observation = self.scale_env_observation(observation)
 
         return observation
 
     def _get_next_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         return observation
 
-    def scale(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def scale_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        # External / Dataset observations are already scaled. Here you should scale only env dependent data.
         return observation
 
     def inverse_scaling(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
@@ -285,7 +286,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def _create_info(self, info: dict) -> dict:
         return info
 
-    def map_to_position(self, action: np.ndarray) -> np.ndarray:
+    @classmethod
+    def map_to_position(cls, action: np.ndarray) -> np.ndarray:
         return np.sign(action)
 
     def update_history(self, changes: dict):
@@ -304,18 +306,19 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
     def initialize_history(self):
         history = dict()
+
         history_keys = set(self.create_info().keys())
         history_keys.add('date')
         for key in history_keys:
             if key == 'action':
-                history['action'] = (self.window_size - 1) * [0]
+                history['action'] = (self.window_size - 1) * [[0] * self.dataset.num_assets]
             elif key == 'total_cash':
                 history['total_cash'] = (self.window_size - 1) * [self._total_cash]
             elif key == 'date':
                 current_date = self.dataset.index_to_datetime(self.t_tick)
                 history['date'] = [
                     current_date - datetime.timedelta(days=day_delta)
-                    for day_delta in range(1, self.window_size)
+                    for day_delta in range(self.window_size - 1, 0, -1)
                 ]
             else:
                 history[key] = (self.window_size - 1) * [np.nan]

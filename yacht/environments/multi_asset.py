@@ -79,7 +79,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
 
         return observation
 
-    def scale(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def scale_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         return observation
 
     def _inverse_scaling(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
@@ -167,7 +167,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
 
         return buy_num_shares
 
-    def _on_done(self) -> bool:
+    def _is_done(self) -> bool:
         # If the agent has no more assets finish the episode.
         return self._total_cash <= 0 and (self._total_units <= 0).all()
 
