@@ -38,9 +38,8 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
 
     @classmethod
     def _initialize_total_units(cls, dataset: ChooseAssetDataset) -> pd.Series:
-        total_units = [0] * dataset.num_assets
         total_units = pd.Series(
-            data=total_units,
+            data=[0] * dataset.num_assets,
             index=dataset.asset_tickers,
             name='Total Units',
             dtype=np.float32
@@ -96,12 +95,12 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         data_datetime = self.dataset.index_to_datetime(self.t_tick)
         asset_open_prices = self.prices.loc[(data_datetime, slice(None)), 'Open']
         asset_open_prices = asset_open_prices.unstack(level=0)
-        total_units_cash_value = asset_open_prices.join(self._total_units).values
-        total_units_cash_value = (total_units_cash_value[:, 0] * total_units_cash_value[:, 1]).sum()
+        total_units_and_prices = asset_open_prices.join(self._total_units).values
+        total_units_and_prices = (total_units_and_prices[:, 0] * total_units_and_prices[:, 1]).sum()
 
         info['total_loss_commissions'] = self._total_loss_commissions
         info['total_units'] = np.copy(self._total_units.values)
-        info['total_assets'] = total_units_cash_value + self._total_cash
+        info['total_assets'] = total_units_and_prices + self._total_cash
 
         return info
 
@@ -110,6 +109,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         action = action.sort_values()
 
         buy_asset_actions = action[action > 0]
+        # Buy from the most conviction items to the least.
         buy_asset_actions = buy_asset_actions.iloc[::-1]
         for ticker, num_units in buy_asset_actions.iteritems():
             self._buy_asset(
@@ -117,6 +117,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
                 num_units
             )
 
+        # Sell from the most conviction items to the least.
         sell_asset_actions = action[action < 0]
         for ticker, num_units in sell_asset_actions.iteritems():
             self._sell_asset(

@@ -247,13 +247,24 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         actions = kwargs['actions']
         total_cash = kwargs.get('total_cash')
         total_units = kwargs.get('total_units')
-        total_units = np.cumsum(total_units, axis=1)
         total_assets = kwargs.get('total_assets')
 
         assert len(tickers) <= len(self.COLOURS), 'Not enough supported colours.'
 
         if len(tickers) == 0:
             return
+
+        # Cumsum actions & units for a better gradual visualization.
+        # Split positive & negative actions for the cumsum operation.
+        positive_actions = actions.copy()
+        positive_actions[positive_actions < 0] = 0
+        positive_actions = np.cumsum(positive_actions, axis=1)
+        negative_actions = actions.copy()
+        negative_actions[negative_actions > 0] = 0
+        negative_actions = np.cumsum(negative_actions, axis=1)
+        # Bring together all the actions.
+        actions = positive_actions + negative_actions
+        total_units = np.cumsum(total_units, axis=1)
 
         extra_plots = []
         legend_patches = []
