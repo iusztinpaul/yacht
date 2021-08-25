@@ -59,6 +59,7 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         env_features = observation['env_features']
         window_size, feature_size = env_features.shape
         env_features = env_features.reshape((window_size, 1, feature_size))
+        # Env features are the same at the bar level.
         env_features = np.tile(
             env_features,
             (1, flattened_observation.shape[1], 1)
@@ -71,9 +72,15 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         return flattened_observation
 
     @classmethod
-    def unflatten_observation(cls, intervals: List[str], observations: np.array) -> np.array:
+    def unflatten_observation(
+            cls,
+            intervals: List[str],
+            observations: np.ndarray,
+            num_env_features: int,
+            num_assets: int
+    ) -> np.ndarray:
         observations = torch.from_numpy(observations)
-        observations = unflatten_observations(observations, intervals)
+        observations = unflatten_observations(observations, intervals, num_env_features, num_assets)
         observations = observations.numpy()
 
         return observations

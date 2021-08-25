@@ -17,6 +17,7 @@ class MultiFrequencyFeatureExtractor(BaseFeaturesExtractor):
             window_size: int,
             intervals: List[str],
             features: List[str],
+            num_assets: int,
             env_features_len: int,
             activation_fn: nn.Module,
             drop_out_p: float = 0.5
@@ -28,6 +29,7 @@ class MultiFrequencyFeatureExtractor(BaseFeaturesExtractor):
         self.window_size = window_size
         self.intervals = intervals
         self.features = features
+        self.num_assets = num_assets
         self.env_features_len = env_features_len
 
         self.interval_encoders = dict()
@@ -50,7 +52,7 @@ class MultiFrequencyFeatureExtractor(BaseFeaturesExtractor):
         )
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        observations = unflatten_observations(observations, self.intervals, self.env_features_len)
+        observations = unflatten_observations(observations, self.intervals, self.env_features_len, self.num_assets)
         batch_size, window_size, channel_size, _ = observations['1d'].shape
 
         features = []
