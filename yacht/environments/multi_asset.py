@@ -131,8 +131,8 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         }
 
     def _sell_asset(self, ticker: str, num_units_to_sell: float):
-        data_datetime = self.dataset.index_to_datetime(self.t_tick)
-        asset_open_price = self.prices.loc[(data_datetime, ticker), 'Open']
+        t_datetime = self.dataset.index_to_datetime(self.t_tick)
+        asset_open_price = self.prices.loc[(t_datetime, ticker), 'Open']
 
         # Sell only if the price is valid and current units are > 0.
         if asset_open_price > 0 and self._total_units[ticker] > 0:
@@ -149,8 +149,8 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         return sell_num_shares
 
     def _buy_asset(self, ticker: str, num_units_to_buy: float):
-        data_datetime = self.dataset.index_to_datetime(self.t_tick)
-        asset_open_price = self.prices.loc[(data_datetime, ticker), 'Open']
+        t_datetime = self.dataset.index_to_datetime(self.t_tick)
+        asset_open_price = self.prices.loc[(t_datetime, ticker), 'Open']
 
         # Buy only if the price is > 0.
         if asset_open_price > 0:

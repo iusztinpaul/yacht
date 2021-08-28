@@ -13,7 +13,7 @@ from yacht.data.datasets import AssetDataset
 
 class RewardSchema(ABC):
     @abstractmethod
-    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
+    def calculate_reward(self, action: np.ndarray, current_state: dict, next_state: dict) -> float:
         pass
 
 
@@ -21,7 +21,7 @@ class RewardSchemaAggregator(RewardSchema):
     def __init__(self, reward_schemas: List[RewardSchema]):
         self.reward_schemas = reward_schemas
 
-    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
+    def calculate_reward(self, action: np.ndarray, current_state: dict, next_state: dict) -> float:
         rewards = [
             reward_schema.calculate_reward(action, current_state, next_state)
             for reward_schema in self.reward_schemas
@@ -170,7 +170,7 @@ reward_schema_registry = {
 }
 
 
-def build_reward_schema(config: Config, max_score: int):
+def build_reward_schema(config: Config):
     env_config: EnvironmentConfig = config.environment
     reward_schemas = []
     for reward_schema_config in env_config.reward_schemas:
@@ -178,7 +178,6 @@ def build_reward_schema(config: Config, max_score: int):
 
         # Create kwargs for specific class.
         possible_class_kwargs = {
-            'max_score': max_score,
             'reward_scaling': reward_schema_config.reward_scaling,
             'density_thresholds': list(reward_schema_config.density_thresholds)
         }

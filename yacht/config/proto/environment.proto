@@ -17,4 +17,5 @@ message EnvironmentConfig {
   double reward_scaling = 8;
   string action_schema = 9;
   int32 action_scaling_factor = 10;
+  repeated double possibilities = 11;
 }

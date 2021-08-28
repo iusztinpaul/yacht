@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from yacht.data.datasets import ChooseAssetDataset
@@ -35,3 +36,32 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             self.month_intervals.append(
                 pd.Interval(left=self.month_intervals[-1].right, right=self.end)
             )
+
+        # Add more internal state variables.
+        self.current_month_interval_index = 0
+        self.monthly_cash_used = 0
+
+    def _reset(self):
+        super()._reset()
+
+        self.current_month_interval_index = 0
+        self.monthly_cash_used = 0
+
+    def update_internal_state(self, action: np.ndarray) -> dict:
+        if self.is_end_of_month_interval():
+            self.current_month_interval_index += 1
+            # This represents the monthly cash to be invested.
+            self._total_cash = self._initial_cash_position
+
+            # TODO: Buy with the remaining cash position.
+
+        return {}
+
+    def is_end_of_month_interval(self) -> bool:
+        t_datetime = self.dataset.index_to_datetime(self.t_tick)
+        t_month_interval = self.month_intervals[self.current_month_interval_index]
+
+        return t_datetime == t_month_interval.right
+
+    def _is_done(self) -> bool:
+        return super()._is_done() or len(self.month_intervals) - 1 == self.current_month_interval_index

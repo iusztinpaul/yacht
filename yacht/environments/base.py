@@ -155,7 +155,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             if self.observation_space['env_features'] is not None \
             else 0
 
-    def step(self, action: np.array):
+    def step(self, action: np.ndarray):
         if self._done is True:
             episode_metrics, report = self.on_done()
             info = {
@@ -204,7 +204,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             return self._s_t, self._r_t, self._done, info
 
     @abstractmethod
-    def update_internal_state(self, action: Union[int, float]) -> dict:
+    def update_internal_state(self, action: np.ndarray) -> dict:
         """
             Returns: The internal state variables that has to be updated.
         """

@@ -37,12 +37,7 @@ def build_env(
     backtest_config = config.input.backtest
 
     action_schema = build_action_schema(config, dataset)
-    reward_schema = build_reward_schema(
-        config, max_score=utils.compute_max_score(
-            num_days=dataset.num_days,
-            action_max_score=action_schema.action_scaling_factor
-        )
-    )
+    reward_schema = build_reward_schema(config)
     env_kwargs = {
         'name': mode.value,
         'dataset': dataset,
