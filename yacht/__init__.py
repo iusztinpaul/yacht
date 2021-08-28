@@ -4,9 +4,8 @@ from enum import Enum
 class Mode(Enum):
     Train = 'train'
     BacktestTrain = 'backtest_on_train'
-    BacktestValidation = 'validation_on_validation'
+    BacktestValidation = 'backtest_on_validation'
     Backtest = 'backtest_on_test'
-
 
     @classmethod
     def from_string(cls, value: str) -> 'Mode':

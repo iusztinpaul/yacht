@@ -2,7 +2,7 @@ import datetime
 import os
 import sys
 from abc import ABC, abstractmethod
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Union
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -17,7 +17,7 @@ from yacht.utils.wandb import WandBContext
 
 
 class BaseRenderer(ABC):
-    def __init__(self, data: pd.DataFrame):
+    def __init__(self, data: Union[pd.DataFrame, Dict[str, pd.DataFrame]]):
         self.data = data
 
         self.fig = None
@@ -141,18 +141,22 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
     def __init__(
             self,
             data: Dict[str, pd.DataFrame],
-            train_interval: Tuple[datetime.datetime, datetime.datetime],
-            test_interval: Tuple[datetime.datetime, datetime.datetime],
+            train_split: Tuple[datetime.datetime, datetime.datetime],
+            validation_split: Tuple[datetime.datetime, datetime.datetime],
+            backtest_split: Tuple[datetime.datetime, datetime.datetime],
             rescale: bool = True
     ):
         super().__init__(data)
 
-        assert len(train_interval) == 2 and len(test_interval) == 2
-        assert train_interval[0] < train_interval[1] and test_interval[0] < test_interval[1]
+        assert len(train_split) == 2 and len(validation_split) == 2 and len(backtest_split) == 2
+        assert train_split[0] < train_split[1] \
+               < validation_split[0] < validation_split[1] \
+               < backtest_split[0] < backtest_split[1]
 
         self.prices = self._get_prices(rescale)
-        self.train_interval = train_interval
-        self.test_interval = test_interval
+        self.train_split = train_split
+        self.validation_split = validation_split
+        self.backtest_split = backtest_split
 
     def _get_prices(self, rescale) -> Dict[str, pd.Series]:
         prices = dict()
@@ -174,7 +178,7 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         return prices
 
     def _render(self):
-        self.fig, self.ax = plt.subplots()
+        self.fig, self.ax = plt.subplots(figsize=(12, 6))
 
         y_min = sys.float_info.max
         y_max = sys.float_info.min
@@ -187,47 +191,48 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         y_min *= 0.9
         y_max *= 1.1
 
-        if self.train_interval[1] < self.test_interval[0]:
-            x_line_left = self.train_interval[1]
-            x_line_right = self.test_interval[0]
-        else:
-            x_line_left = self.test_interval[1]
-            x_line_right = self.train_interval[0]
-
-        start = min(self.train_interval[0], self.test_interval[0])
-        end = max(self.train_interval[1], self.test_interval[1])
+        # if self.train_split[1] < self.backtest_split[0]:
+        #     x_line_left = self.train_split[1]
+        #     x_line_right = self.backtest_split[0]
+        # else:
+        #     x_line_left = self.backtest_split[1]
+        #     x_line_right = self.train_split[0]
+        #
+        # start = min(self.train_split[0], self.backtest_split[0])
+        # end = max(self.train_split[1], self.backtest_split[1])
         self.ax.set_xticks([
-            start,
-            (x_line_left - start) / 2 + start,
-            x_line_left,
-            end
+            self.train_split[0],
+            (self.validation_split[0] - self.train_split[1]) / 2 + self.train_split[1],
+            (self.backtest_split[0] - self.validation_split[1]) / 2 + self.validation_split[1],
+            self.backtest_split[1]
         ])
 
-        self.ax.text(
-            x=(self.train_interval[1] - self.train_interval[0]) / 2.5 + self.train_interval[0],
-            y=y_max + 10,
-            s='TrainVal Split'
+        splits = (
+                (self.train_split, 'Train'),
+                (self.validation_split, 'Validation'),
+                (self.backtest_split, 'Backtest')
         )
-        self.ax.text(
-            x=(self.test_interval[1] - self.test_interval[0]) / 2.5 + self.test_interval[0],
-            y=y_max + 10,
-            s='Test Split'
-        )
-        self.ax.vlines(
-            x_line_left,
-            ymin=y_min,
-            ymax=y_max,
-            linestyles='dashed',
-            colors='gray'
-        )
-        self.ax.vlines(
-            x_line_right,
-            ymin=y_min,
-            ymax=y_max,
-            linestyles='dashed',
-            colors='gray'
-        )
-        self.ax.legend()
+        for split, name in splits:
+            self.ax.text(
+                x=(split[1] - split[0]) / 4 + split[0],
+                y=y_max + 10,
+                s=name
+            )
+            self.ax.vlines(
+                split[0],
+                ymin=y_min,
+                ymax=y_max,
+                linestyles='dashed',
+                colors='gray'
+            )
+            self.ax.vlines(
+                split[1],
+                ymin=y_min,
+                ymax=y_max,
+                linestyles='dashed',
+                colors='gray'
+            )
+        self.fig.legend(bbox_to_anchor=(1., 1.))
 
 
 class AssetEnvironmentRenderer(MplFinanceRenderer):

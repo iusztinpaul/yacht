@@ -53,11 +53,14 @@ def get_num_days(start: Union[str, datetime], end: Union[str, datetime], include
 def split_period(
         start: Union[str, datetime],
         end: Union[str, datetime],
-        split_ratio: float,
-        offset_ratio: float
-):
-    assert split_ratio < 1
-    assert offset_ratio < 1
+        validation_split_ratio: float,
+        backtest_split_ratio: float,
+        embargo_ratio: float
+) -> tuple:
+    assert 0 < validation_split_ratio < 1
+    assert 0 < backtest_split_ratio < 1
+    assert 0 < embargo_ratio < 1
+    assert validation_split_ratio + backtest_split_ratio + 2 * embargo_ratio < 1
 
     if isinstance(start, str):
         start = string_to_datetime(start)
@@ -66,23 +69,36 @@ def split_period(
 
     start_timestamp = start.timestamp()
     end_timestamp = end.timestamp()
-    interval_length = end_timestamp - start_timestamp
-    interval_1_length = (1 - split_ratio) * interval_length
-    interval_2_length = split_ratio * interval_length
+    total_interval_length = end_timestamp - start_timestamp
+    validation_split_length = validation_split_ratio * total_interval_length
+    backtest_interval_length = backtest_split_ratio * total_interval_length
+    train_interval_length = \
+        (1 - validation_split_ratio - backtest_split_ratio - 2 * embargo_ratio) * total_interval_length
+    embargo_offset = embargo_ratio * total_interval_length
 
-    start_1 = datetime.fromtimestamp(start_timestamp)
-    end_1 = datetime.fromtimestamp(start_timestamp + interval_1_length)
+    start_train_timestamp = start_timestamp
+    end_train_timestamp = start_timestamp + train_interval_length
+    start_train = datetime.fromtimestamp(start_train_timestamp)
+    end_train = datetime.fromtimestamp(end_train_timestamp)
 
-    offset = interval_2_length * offset_ratio
-    start_2 = datetime.fromtimestamp(start_timestamp + interval_1_length + offset)
-    end_2 = datetime.fromtimestamp(start_timestamp + interval_1_length + interval_2_length)
+    start_validation_timestamp = end_train_timestamp + embargo_offset
+    end_validation_timestamp = start_validation_timestamp + validation_split_length
+    start_validation = datetime.fromtimestamp(start_validation_timestamp)
+    end_validation = datetime.fromtimestamp(end_validation_timestamp)
 
-    assert start == start_1 and end == end_2
+    start_backtest_timestamp = end_validation_timestamp + embargo_offset
+    end_backtest_timestamp = start_backtest_timestamp + backtest_interval_length
+    start_backtest = datetime.fromtimestamp(start_backtest_timestamp)
+    end_backtest = datetime.fromtimestamp(end_backtest_timestamp)
 
-    end_1 = end_1.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_2 = start_2.replace(hour=0, minute=0, second=0, microsecond=0)
+    assert start == start_train and end == end_backtest
 
-    return start_1, end_1, start_2, end_2
+    end_train = end_train.replace(hour=0, minute=0, second=0, microsecond=0)
+    start_validation = start_validation.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_validation = end_validation.replace(hour=0, minute=0, second=0, microsecond=0)
+    start_backtest = start_backtest.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    return (start_train, end_train), (start_validation, end_validation), (start_backtest, end_backtest)
 
 
 def english_title_to_snake_case(string: str):

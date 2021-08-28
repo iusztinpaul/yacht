@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import List, Union
 
 import wandb
@@ -24,18 +24,25 @@ class Trainer(ABC):
             config: Config,
             name: str,
             agent: BaseAlgorithm,
-            dataset: AssetDataset,
+            train_dataset: AssetDataset,
+            validation_dataset: AssetDataset,
             train_env: VecEnv,
+            validation_env: VecEnv,
             logger: Logger,
             save: bool = True
     ):
         self.config = config
         self.name = name
         self.agent = agent
-        self.dataset = dataset
+        self.train_dataset = train_dataset
+        self.validation_dataset = validation_dataset
         self.train_env = train_env
+        self.validation_env = validation_env
         self.logger = logger
         self.save = save
+
+        assert self.train_dataset.storage_dir == self.validation_dataset.storage_dir
+        self.storage_dir = self.train_dataset.storage_dir
 
         self.agent.policy.train()
 
@@ -43,18 +50,27 @@ class Trainer(ABC):
         self.agent.policy.eval()
 
         if self.save is True:
-            save_path = utils.build_last_checkpoint_path(self.dataset.storage_dir)
+            save_path = utils.build_last_checkpoint_path(self.storage_dir)
             self.agent.save(
                 path=save_path
             )
 
             # TODO: Find a way to add this line to the wandb classes for consistency.
-            if utils.get_experiment_tracker_name(self.dataset.storage_dir) == 'wandb':
+            if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
                 wandb.save(save_path)
 
-    @abstractmethod
     def train(self) -> BaseAlgorithm:
-        pass
+        self.logger.info(f'Training for {self.config.train.total_timesteps} timesteps.')
+        self.logger.info(f'Train split length: {len(self.train_dataset)}')
+        self.logger.info(f'Validation split length: {len(self.validation_dataset)}\n')
+
+        self.agent = self.agent.learn(
+            total_timesteps=self.config.train.total_timesteps,
+            callback=self.build_callbacks(),
+            log_interval=self.config.train.collecting_n_steps,
+        )
+
+        return self.agent
 
     def build_callbacks(self) -> List[BaseCallback]:
         callbacks = [
@@ -62,49 +78,25 @@ class Trainer(ABC):
                 logger=self.logger,
                 total_timesteps=self.config.train.total_timesteps,
             ),
-            RewardsRenderCallback(
-                total_timesteps=self.config.train.total_timesteps,
-                storage_dir=self.dataset.storage_dir,
-                mode=Mode.Train
-            )
-        ]
-
-        if utils.get_experiment_tracker_name(self.dataset.storage_dir) == 'wandb':
-            wandb_callback = WandBCallback(storage_dir=self.dataset.storage_dir)
-            callbacks.append(wandb_callback)
-
-        return callbacks
-
-
-class NoEvalTrainer(Trainer):
-    def train(self) -> BaseAlgorithm:
-        self.logger.info(f'Training for {self.config.train.total_timesteps} timesteps.')
-        self.logger.info(f'Train split length: {len(self.dataset)}')
-        self.logger.info(f'Validation split length: 0\n')
-
-        self.agent = self.agent.learn(
-            total_timesteps=self.config.train.total_timesteps,
-            callback=self.build_callbacks(),
-            tb_log_name=self.name,
-            log_interval=self.config.train.collecting_n_steps,
-        )
-
-        return self.agent
-
-    def build_callbacks(self) -> List[BaseCallback]:
-        callbacks = super().build_callbacks()
-        # Save the best model relative to the training environment.
-        callbacks.append(
             EvalCallback(
-                eval_env=self.train_env,
+                eval_env=self.validation_env,
                 n_eval_episodes=self.config.input.backtest.n_runs,
-                eval_freq=self.config.train.collecting_n_steps,
-                log_path=utils.build_log_dir(self.dataset.storage_dir),
-                best_model_save_path=utils.build_best_checkpoint_dir(self.dataset.storage_dir),
+                eval_freq=self.config.train.collecting_n_steps * 2,
+                log_path=utils.build_log_dir(self.storage_dir),
+                best_model_save_path=utils.build_best_checkpoint_dir(self.storage_dir),
                 deterministic=self.config.input.backtest.deterministic,
                 verbose=True
-            )
-        )
+            ),
+            # RewardsRenderCallback(
+            #     total_timesteps=self.config.train.total_timesteps,
+            #     storage_dir=self.storage_dir,
+            #     mode=Mode.Train
+            # )
+        ]
+
+        if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
+            wandb_callback = WandBCallback(storage_dir=self.storage_dir)
+            callbacks.append(wandb_callback)
 
         return callbacks
 
@@ -116,23 +108,28 @@ class KFoldTrainer(Trainer):
             name: str,
             agent: BaseAlgorithm,
             dataset: AssetDataset,
-            train_env: BaseAssetEnvironment,
-            val_env: BaseAssetEnvironment,
+            train_env: VecEnv,
+            validation_env: VecEnv,
+            logger: Logger,
             k_fold: PurgedKFold,
+            save: bool = True,
     ):
-        train_config = config.train
-        assert train_config.collect_n_times >= train_config.eval_frequency
 
         super().__init__(
             config=config,
             name=name,
             agent=agent,
             dataset=dataset,
-            train_env=train_env
+            train_env=train_env,
+            validation_env=validation_env,
+            logger=logger,
+            save=save
         )
 
-        self.val_env = val_env
         self.k_fold = k_fold
+
+    def close(self):
+        self.k_fold.close()
 
     def train(self) -> BaseAlgorithm:
         self.logger.info(
@@ -141,29 +138,29 @@ class KFoldTrainer(Trainer):
         )
         progress_bar = tqdm(total=self.config.train.collect_n_times)
         print()
-        for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.dataset.get_prices())):
+        for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.train_dataset.get_prices())):
             k_fold_split_timesteps = self.config.train.total_timesteps // self.k_fold.n_splits
 
             self.logger.info(f'Training for {k_fold_split_timesteps} timesteps.')
             self.logger.info(f'Train split length: {len(train_indices)}')
             self.logger.info(f'Validation split length: {len(val_indices)}\n')
 
-            self.k_fold.render(self.dataset.storage_dir)
+            self.k_fold.render(self.storage_dir)
 
-            train_dataset = build_dataset_wrapper(self.dataset, indices=train_indices)
-            val_dataset = build_dataset_wrapper(self.dataset, indices=val_indices)
+            train_dataset = build_dataset_wrapper(self.train_dataset, indices=train_indices)
+            val_dataset = build_dataset_wrapper(self.train_dataset, indices=val_indices)
             self.train_env.set_dataset(train_dataset)
-            self.val_env.set_dataset(val_dataset)
+            self.validation_env.set_dataset(val_dataset)
 
             self.agent = self.agent.learn(
                 total_timesteps=k_fold_split_timesteps,
                 callback=self.build_callbacks(),
                 tb_log_name=self.name,
                 log_interval=self.config.train.collecting_n_steps,
-                eval_env=self.val_env,
+                eval_env=self.validation_env,
                 eval_freq=self.config.train.collecting_n_steps,
                 n_eval_episodes=1,
-                eval_log_path=self.dataset.storage_dir,
+                eval_log_path=self.storage_dir,
                 reset_num_timesteps=True
             )
 
@@ -174,21 +171,21 @@ class KFoldTrainer(Trainer):
 
         return self.agent
 
-    def close(self):
-        self.k_fold.close()
-
 
 #######################################################################################################################
 
 trainer_registry = {
-    'NoEvalTrainer': NoEvalTrainer,
+    'Trainer': Trainer,
     'KFoldTrainer': KFoldTrainer
 }
 
 
 def run_train(config: Config, logger: Logger, storage_dir: str, resume_training: bool):
-    dataset = build_dataset(config, logger, storage_dir, mode=Mode.Train)
-    train_env = build_env(config, dataset, logger, mode=Mode.Train)
+    train_dataset = build_dataset(config, logger, storage_dir, mode=Mode.Train)
+    train_env = build_env(config, train_dataset, logger, mode=Mode.Train)
+    validation_dataset = build_dataset(config, logger, storage_dir, mode=Mode.BacktestValidation)
+    validation_env = build_env(config, validation_dataset, logger, mode=Mode.BacktestValidation)
+
     agent = build_agent(
         config=config,
         env=train_env,
@@ -201,8 +198,10 @@ def run_train(config: Config, logger: Logger, storage_dir: str, resume_training:
     trainer = build_trainer(
         config=config,
         agent=agent,
-        dataset=dataset,
+        train_dataset=train_dataset,
+        validation_dataset=validation_dataset,
         train_env=train_env,
+        validation_env=validation_env,
         logger=logger,
         save=True
     )
@@ -213,8 +212,10 @@ def run_train(config: Config, logger: Logger, storage_dir: str, resume_training:
 def build_trainer(
         config,
         agent: BaseAlgorithm,
-        dataset: AssetDataset,
+        train_dataset: AssetDataset,
+        validation_dataset: AssetDataset,
         train_env: Union[BaseAssetEnvironment, VecEnv],
+        validation_env: Union[BaseAssetEnvironment, VecEnv],
         logger: Logger,
         save: bool
 ) -> Trainer:
@@ -222,9 +223,11 @@ def build_trainer(
     trainer_kwargs = {
         'config': config,
         'agent': agent,
-        'name': f'{agent.__class__.__name__}_{config.environment.name}',
-        'dataset': dataset,
+        'name': utils.create_project_name(config, train_dataset.storage_dir),
+        'train_dataset': train_dataset,
+        'validation_dataset': validation_dataset,
         'train_env': train_env,
+        'validation_env': validation_env,
         'logger': logger,
         'save': save
     }

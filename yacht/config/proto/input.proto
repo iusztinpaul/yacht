@@ -20,7 +20,8 @@ message InputConfig {
   string end = 12;
   int32 window_size = 13;
   bool include_weekends = 14;
-  double backtest_split_ratio = 15;
-  double backtest_embargo_ratio = 16;
-  BacktestConfig backtest = 17;
+  double validation_split_ratio = 15;
+  double backtest_split_ratio = 16;
+  double embargo_ratio = 17;
+  BacktestConfig backtest = 18;
 }

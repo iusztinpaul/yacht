@@ -12,8 +12,9 @@ input: {
     end: '1/8/2021'
     window_size: 1
     include_weekends: true
-    backtest_split_ratio: 0.27
-    backtest_embargo_ratio: 0.03
+    validation_split_ratio: 0.25
+    backtest_split_ratio: 0.20
+    embargo_ratio: 0.025
     backtest: {
         run: true
         deterministic: false
@@ -23,7 +24,7 @@ input: {
 }
 environment: {
     name: 'MultiAssetEnvironment-v0'
-    n_envs: 4
+    n_envs: 8
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00

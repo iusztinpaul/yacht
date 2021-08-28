@@ -12,8 +12,9 @@ input: {
     end: '1/8/2021'
     window_size: 10
     include_weekends: true
-    backtest_split_ratio: 0.27
-    backtest_embargo_ratio: 0.03
+    validation_split_ratio: 0.25
+    backtest_split_ratio: 0.20
+    embargo_ratio: 0.025
     backtest: {
         run: true
         deterministic: false
@@ -61,11 +62,11 @@ agent: {
     }
 }
 train: {
-    trainer_name: 'NoEvalTrainer'
+    trainer_name: 'Trainer'
     total_timesteps: 1000
-    collecting_n_steps: 1000
+    collecting_n_steps: 500
     learning_rate: 0.00025
-    batch_size: 1000
+    batch_size: 500
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95

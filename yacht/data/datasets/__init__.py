@@ -32,11 +32,12 @@ def build_dataset(
     market = build_market(config, logger, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]
 
-    train_start, train_end, backtest_start, backtest_end = utils.split_period(
+    train_split, validation_split, backtest_split = utils.split_period(
         input_config.start,
         input_config.end,
+        input_config.validation_split_ratio,
         input_config.backtest_split_ratio,
-        input_config.backtest_embargo_ratio
+        input_config.embargo_ratio
     )
 
     # Download the whole requested interval in one shot for further processing & rendering.
@@ -62,8 +63,9 @@ def build_dataset(
         # Render de train-test split in rescaled mode.
         renderer = TrainTestSplitRenderer(
             data=data,
-            train_interval=(train_start, train_end),
-            test_interval=(backtest_start, backtest_end),
+            train_split=train_split,
+            validation_split=validation_split,
+            backtest_split=backtest_split,
             rescale=True
         )
         renderer.render()
@@ -73,23 +75,28 @@ def build_dataset(
         # Render de train-test split with original values.
         renderer = TrainTestSplitRenderer(
             data=data,
-            train_interval=(train_start, train_end),
-            test_interval=(backtest_start, backtest_end),
+            train_split=train_split,
+            validation_split=validation_split,
+            backtest_split=backtest_split,
             rescale=False
         )
         renderer.render()
         renderer.save(utils.build_graphics_path(storage_dir, 'train_test_split.png'))
         renderer.close()
 
-    logger.info(f'Train split: {train_start} - {train_end}')
-    logger.info(f'Test split: {backtest_start} - {backtest_end}')
+    logger.info(f'Train split: {train_split[0]} - {train_split[1]}')
+    logger.info(f'Validation split: {validation_split[0]} - {validation_split[1]}')
+    logger.info(f'Backtest split: {backtest_split[0]} - {backtest_split[1]}')
 
     if mode.is_trainable() or mode.is_backtest_on_train():
-        start = train_start
-        end = train_end
+        start = train_split[0]
+        end = train_split[1]
+    elif mode.is_validation():
+        start = validation_split[0]
+        end = validation_split[1]
     else:
-        start = backtest_start
-        end = backtest_end
+        start = backtest_split[0]
+        end = backtest_split[1]
 
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
     num_datasets = len(tickers) / config.input.num_assets_per_dataset
@@ -97,7 +104,7 @@ def build_dataset(
         num_datasets = int(num_datasets) + 1
     num_datasets = int(num_datasets)
     for _ in range(num_datasets):
-        # TODO: Create e better mechanism so that it takes all the tickers.
+        # TODO: Create e better mechanism so that it takes all the tickers. In a random fashion there is a huge change that some tickers will never be used.
         dataset_tickers = np.random.choice(
             tickers,
             config.input.num_assets_per_dataset,
@@ -113,8 +120,8 @@ def build_dataset(
             Scaler.fit_on(
                 scaler=scaler,
                 market=market,
-                train_start=train_start,
-                train_end=train_end,
+                train_start=train_split[0],
+                train_end=train_split[1],
                 interval=config.input.scale_on_interval
             )
 
