@@ -10,7 +10,7 @@ input: {
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/1/2015'
     end: '1/8/2021'
-    window_size: 1
+    window_size: 10
     include_weekends: true
     validation_split_ratio: 0.25
     backtest_split_ratio: 0.20
@@ -19,7 +19,7 @@ input: {
         run: true
         deterministic: false
         tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD']
-        n_runs: 4
+        n_runs: 3
     }
 }
 environment: {
@@ -49,16 +49,21 @@ agent: {
     policy: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
+        feature_extractor: {
+            name: 'RecurrentFeatureExtractor'
+            features_dim: [64, 64, 512]
+            drop_out_p: 0.5
+        }
         net_arch: {
-            shared: [128, 128, 128]
-            vf: [64, 64]
-            pi: [64, 64]
+            shared: [256]
+            vf: [64]
+            pi: [64]
         }
     }
 }
 train: {
-    trainer_name: 'NoEvalTrainer'
-    total_timesteps: 80000
+    trainer_name: 'Trainer'
+    total_timesteps: 500000
     collecting_n_steps: 2048
     learning_rate: 0.00025
     batch_size: 2048

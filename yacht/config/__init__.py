@@ -1,9 +1,9 @@
+from .proto import *
+
 import os
 
 from google.protobuf import text_format
 from google.protobuf.text_format import MessageToString
-
-from yacht.config.proto import *
 
 
 def load_config(config_path: str):

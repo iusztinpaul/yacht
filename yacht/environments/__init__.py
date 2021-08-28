@@ -5,17 +5,16 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from .base import *
 from .day import *
 
-from .action_schemas import build_action_schema
-from .reward_schemas import build_reward_schema
+from yacht.environments.action_schemas import build_action_schema
+from yacht.environments.reward_schemas import build_reward_schema
 
 import gym
 from gym.envs.registration import register
 
 from yacht.logger import Logger
-from .wrappers import MultiFrequencyDictToBoxWrapper, MetricsVecEnvWrapper
-from .. import utils, Mode
-from ..config import Config
-from ..config.proto.environment_pb2 import EnvironmentConfig
+from yacht.environments.wrappers import MultiFrequencyDictToBoxWrapper, MetricsVecEnvWrapper
+from yacht import utils, Mode
+from yacht.config import Config, EnvironmentConfig
 
 
 def build_env(

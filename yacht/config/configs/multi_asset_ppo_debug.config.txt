@@ -4,7 +4,7 @@ input: {
     num_assets_per_dataset: 3
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
+    tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
@@ -24,7 +24,7 @@ input: {
 }
 environment: {
     name: 'MultiAssetEnvironment-v0'
-    n_envs: 1
+    n_envs: 2
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -50,12 +50,12 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh'
         feature_extractor: {
-            name: ''
-            features_dim: [64, 128]
+            name: 'RecurrentFeatureExtractor'
+            features_dim: [64, 64, 64, 64]
             drop_out_p: 0.5
         }
         net_arch: {
-            shared: [128]
+            shared: [32]
             vf: [64]
             pi: [64]
         }
@@ -63,10 +63,10 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1000
-    collecting_n_steps: 500
+    total_timesteps: 2000
+    collecting_n_steps: 2000
     learning_rate: 0.00025
-    batch_size: 500
+    batch_size: 2000
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95

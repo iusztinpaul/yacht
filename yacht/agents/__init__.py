@@ -11,12 +11,10 @@ from torch import nn
 from yacht import utils
 from yacht.logger import Logger
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
-from yacht.agents.modules.multi_frequency import MultiFrequencyFeatureExtractor
-from yacht.agents.policies.generic import GenericActorCriticPolicy
+from yacht.agents.modules import RecurrentFeatureExtractor, MultiFrequencyFeatureExtractor
 from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
-from yacht.environments import BaseAssetEnvironment
-
+from ..environments import BaseAssetEnvironment
 
 reinforcement_learning_agents = {
     'PPO': PPO,
@@ -34,6 +32,7 @@ policy_registry = {
 
 feature_extractor_registry = {
     'MultiFrequencyFeatureExtractor': MultiFrequencyFeatureExtractor,
+    'RecurrentFeatureExtractor': RecurrentFeatureExtractor,
     '': None,
     None: None
 }
@@ -57,6 +56,7 @@ def build_agent(
     Args:
         config:
         env:
+        logger:
         storage_dir:
         resume:
         agent_from: choose from (latest checkpoint, best checkpoint, absolute_path to the checkpoint)

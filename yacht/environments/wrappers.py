@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import gym
 import numpy as np
@@ -10,7 +10,7 @@ from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.vec_env import VecEnvWrapper, VecEnv
 from stable_baselines3.common.vec_env.base_vec_env import VecEnvStepReturn
 
-from yacht.agents.misc import unflatten_observations
+from yacht.agents.utils import unflatten_observations
 from yacht.environments import BaseAssetEnvironment
 from yacht import Mode
 
@@ -70,20 +70,6 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         ], axis=-1)
 
         return flattened_observation
-
-    @classmethod
-    def unflatten_observation(
-            cls,
-            intervals: List[str],
-            observations: np.ndarray,
-            num_env_features: int,
-            num_assets: int
-    ) -> np.ndarray:
-        observations = torch.from_numpy(observations)
-        observations = unflatten_observations(observations, intervals, num_env_features, num_assets)
-        observations = observations.numpy()
-
-        return observations
 
 
 class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
