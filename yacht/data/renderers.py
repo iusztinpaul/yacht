@@ -187,19 +187,9 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
 
             y_min = np.min(prices) if np.min(prices) < y_min else y_min
             y_max = np.max(prices) if np.max(prices) > y_max else y_max
-
         y_min *= 0.9
         y_max *= 1.1
 
-        # if self.train_split[1] < self.backtest_split[0]:
-        #     x_line_left = self.train_split[1]
-        #     x_line_right = self.backtest_split[0]
-        # else:
-        #     x_line_left = self.backtest_split[1]
-        #     x_line_right = self.train_split[0]
-        #
-        # start = min(self.train_split[0], self.backtest_split[0])
-        # end = max(self.train_split[1], self.backtest_split[1])
         self.ax.set_xticks([
             self.train_split[0],
             (self.validation_split[0] - self.train_split[1]) / 2 + self.train_split[1],
