@@ -87,11 +87,11 @@ class Trainer(ABC):
                 deterministic=self.config.input.backtest.deterministic,
                 verbose=True
             ),
-            # RewardsRenderCallback(
-            #     total_timesteps=self.config.train.total_timesteps,
-            #     storage_dir=self.storage_dir,
-            #     mode=Mode.Train
-            # )
+            RewardsRenderCallback(
+                total_timesteps=self.config.train.total_timesteps,
+                storage_dir=self.storage_dir,
+                mode=Mode.Train
+            )
         ]
 
         if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':

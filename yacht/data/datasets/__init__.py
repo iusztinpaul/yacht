@@ -1,3 +1,5 @@
+import itertools
+
 from .base import *
 from .aggregators import ChooseAssetDataset
 from .multi_frequency import *
@@ -99,12 +101,7 @@ def build_dataset(
         end = backtest_split[1]
 
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
-    num_datasets = len(tickers) / config.input.num_assets_per_dataset
-    if num_datasets != int(num_datasets):
-        num_datasets = int(num_datasets) + 1
-    num_datasets = int(num_datasets)
-    for _ in range(num_datasets):
-        # TODO: Create e better mechanism so that it takes all the tickers. In a random fashion there is a huge change that some tickers will never be used.
+    for _ in itertools.combinations(tickers, config.input.num_assets_per_dataset):
         dataset_tickers = np.random.choice(
             tickers,
             config.input.num_assets_per_dataset,
