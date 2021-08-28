@@ -1,16 +1,14 @@
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import gym
 import numpy as np
-import torch
 from gym import spaces
 from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.vec_env import VecEnvWrapper, VecEnv
 from stable_baselines3.common.vec_env.base_vec_env import VecEnvStepReturn
 
-from yacht.agents.utils import unflatten_observations
 from yacht.environments import BaseAssetEnvironment
 from yacht import Mode
 

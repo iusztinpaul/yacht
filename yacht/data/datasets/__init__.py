@@ -39,7 +39,8 @@ def build_dataset(
         input_config.end,
         input_config.validation_split_ratio,
         input_config.backtest_split_ratio,
-        input_config.embargo_ratio
+        input_config.embargo_ratio,
+        input_config.include_weekends
     )
 
     # Download the whole requested interval in one shot for further processing & rendering.

@@ -51,7 +51,8 @@ def build_env(
         'render_on_done': not mode.is_trainable(),
         'buy_commission': env_config.buy_commission,
         'sell_commission': env_config.sell_commission,
-        'initial_cash_position': env_config.initial_cash_position
+        'initial_cash_position': env_config.initial_cash_position,
+        'include_weekends': config.input.include_weekends
     }
 
     n_envs = env_config.n_envs if mode.is_trainable() else backtest_config.n_runs
@@ -79,19 +80,15 @@ def build_env(
 
 def register_gym_envs():
     to_register_envs = {
-        'DayForecastEnvironment-v0': {
-            'entry_point': 'yacht.environments.day:DayForecastEnvironment',
-            'kwargs': {
-            }
-        },
-        'SingleAssetEnvironment-v0': {
-            'entry_point': 'yacht.environments.single_asset:SingleAssetEnvironment',
-            'kwargs': {
-            }
-        },
         'MultiAssetEnvironment-v0': {
             'entry_point': 'yacht.environments.multi_asset:MultiAssetEnvironment',
             'kwargs': {
+            }
+        },
+        'OrderExecutionEnvironment-v0': {
+            'entry_point': 'yacht.environments.order_execution:OrderExecutionEnvironment',
+            'kwargs': {
+
             }
         }
     }

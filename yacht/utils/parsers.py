@@ -55,7 +55,8 @@ def split_period(
         end: Union[str, datetime],
         validation_split_ratio: float,
         backtest_split_ratio: float,
-        embargo_ratio: float
+        embargo_ratio: float,
+        include_weekends: bool = False
 ) -> tuple:
     assert 0 < validation_split_ratio < 1
     assert 0 < backtest_split_ratio < 1
@@ -98,7 +99,23 @@ def split_period(
     end_validation = end_validation.replace(hour=0, minute=0, second=0, microsecond=0)
     start_backtest = start_backtest.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    if not include_weekends:
+        start_train = map_to_business_day(start_train)
+        end_train = map_to_business_day(end_train)
+        start_validation = map_to_business_day(start_validation)
+        end_validation = map_to_business_day(end_validation)
+        start_backtest = map_to_business_day(start_backtest)
+        end_backtest = map_to_business_day(end_backtest)
+
     return (start_train, end_train), (start_validation, end_validation), (start_backtest, end_backtest)
+
+
+def map_to_business_day(obj: Union[datetime, pd.Timestamp]) -> datetime:
+    if isinstance(obj, datetime):
+        obj = pd.Timestamp(obj)
+    obj += 0 * pd.tseries.offsets.BDay()
+
+    return obj.to_pydatetime()
 
 
 def english_title_to_snake_case(string: str):

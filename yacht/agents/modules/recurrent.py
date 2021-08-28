@@ -5,8 +5,7 @@ import torch
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from torch import nn
 
-from yacht import utils
-from yacht.agents.utils import unflatten_observations
+from yacht.agents.misc import unflatten_observations
 
 
 class RecurrentFeatureExtractor(BaseFeaturesExtractor):
