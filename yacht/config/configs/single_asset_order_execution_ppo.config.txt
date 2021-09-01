@@ -24,23 +24,22 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 8
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
     initial_cash_position: 30000
     reward_schemas: [
     {
-        name: 'AssetsPriceChangeRewardSchema'
-        reward_scaling: 0.0001
+        name: 'DecisionMakingRewardSchema'
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.0001
+        reward_scaling: 1
     }
     ]
-    action_schema: 'ContinuousFloatActionSchema'
-    action_scaling_factor: 100
+    action_schema: 'DiscreteActionScheme'
+    possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
 agent: {
     name: 'PPO'
@@ -49,11 +48,6 @@ agent: {
     policy: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
-        feature_extractor: {
-            name: 'RecurrentFeatureExtractor'
-            features_dim: [64, 64, 512]
-            drop_out_p: 0.5
-        }
         net_arch: {
             shared: [256]
             vf: [64]
@@ -63,7 +57,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 500000
+    total_timesteps: 50000
     collecting_n_steps: 2048
     learning_rate: 0.00025
     batch_size: 2048
@@ -81,6 +75,7 @@ train: {
     k_fold_embargo_ratio: 0.01
 }
 meta: {
+    log_frequency_steps: 5000
     device: 'gpu'
     experiment_tracker: 'wandb'
 }

@@ -66,6 +66,9 @@ class ChooseAssetDataset(AssetDataset):
     def get_prices(self) -> pd.DataFrame:
         return self.datasets[self.current_dataset_index].get_prices()
 
+    def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
+        return self.datasets[self.current_dataset_index].get_mean_over_period(start, end)
+
     def get_external_observation_space(self) -> Dict[str, Space]:
         return self.datasets[self.current_dataset_index].get_external_observation_space()
 

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -137,6 +137,10 @@ class AssetDataset(Dataset, ABC):
         pass
 
     @abstractmethod
+    def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
+        pass
+
+    @abstractmethod
     def get_external_observation_space(self) -> Dict[str, Space]:
         """
             Returns the gym spaces observation space in the format that the dataset gives the data.
@@ -204,6 +208,12 @@ class SingleAssetDataset(AssetDataset, ABC):
 
     def get_prices(self) -> pd.DataFrame:
         return self.data['1d']
+
+    def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
+        period_data = self.data['1d'].loc[start:end]
+        period_mean = period_data.mean()
+
+        return period_mean
 
     def inverse_scaling(self, observation: dict, asset_idx: int = -1) -> dict:
         for interval in self.intervals:
@@ -304,6 +314,20 @@ class MultiAssetDataset(AssetDataset):
         prices = pd.concat(prices)
 
         return prices
+
+    def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
+        mean_data = []
+        for dataset in self.datasets:
+            dataset_mean = dataset.get_mean_over_period(start, end)
+            dataset_mean['ticker'] = dataset.ticker
+
+            mean_data.append(dataset_mean)
+
+        mean_data = pd.concat(mean_data, axis=1)
+        mean_data = mean_data.transpose()
+        mean_data = mean_data.set_index(keys=['ticker'], drop=True)
+
+        return mean_data
 
     def get_external_observation_space(self) -> Dict[str, Space]:
         """

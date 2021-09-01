@@ -30,6 +30,7 @@ def build_dataset(
     input_config = config.input
     tickers = input_config.tickers if mode.is_trainable() else input_config.backtest.tickers
     assert len(tickers) > 0
+    assert len(tickers) >= config.input.num_assets_per_dataset, 'Cannot create a dataset with less tickers than asked.'
 
     market = build_market(config, logger, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]

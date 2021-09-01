@@ -10,10 +10,14 @@ from yacht.config import Config
 from yacht.config.proto.environment_pb2 import EnvironmentConfig
 from yacht.data.datasets import AssetDataset
 
+#########################################################
+#################### INTERFACES #########################
+#########################################################
+
 
 class RewardSchema(ABC):
     @abstractmethod
-    def calculate_reward(self, action: np.ndarray, current_state: dict, next_state: dict) -> float:
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
         pass
 
 
@@ -21,9 +25,9 @@ class RewardSchemaAggregator(RewardSchema):
     def __init__(self, reward_schemas: List[RewardSchema]):
         self.reward_schemas = reward_schemas
 
-    def calculate_reward(self, action: np.ndarray, current_state: dict, next_state: dict) -> float:
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
         rewards = [
-            reward_schema.calculate_reward(action, current_state, next_state)
+            reward_schema.calculate_reward(action, *args, **kwargs)
             for reward_schema in self.reward_schemas
         ]
 
@@ -32,13 +36,21 @@ class RewardSchemaAggregator(RewardSchema):
 
 class ScaledRewardSchema(RewardSchema, ABC):
     def __init__(self, reward_scaling: float):
-        assert 0 < reward_scaling <= 1, '"reward_scaling" should be within (0, 1].'
+        assert 0 < reward_scaling, '"reward_scaling" should be positive.'
 
         self.reward_scaling = reward_scaling
 
 
+######################################################
+#################### TRADING #########################
+######################################################
+
+
 class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
-    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
+        current_state = kwargs['current_state']
+        next_state = kwargs['next_state']
+
         begin_total_assets = current_state['env_features'][-1][0] + \
             (current_state['env_features'][-1][1:] * current_state['1d'][-1, 0, :, 1]).sum()
         end_total_assets = next_state['env_features'][-1][0] + \
@@ -50,13 +62,35 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
         return reward
 
 
+##############################################################
+#################### ORDER EXECUTION #########################
+##############################################################
+
+class DecisionMakingRewardSchema(RewardSchema):
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs):
+        # TODO: Adapt for sell execution
+
+        market_mean_price = kwargs['market_mean_price']
+        next_price = kwargs['next_price']
+
+        price_advantage = (1 - next_price / market_mean_price)
+        reward = action * price_advantage
+
+        return reward.mean()
+
+
 class ActionMagnitudeRewardSchema(ScaledRewardSchema):
-    def calculate_reward(self, action: Union[int, float], current_state: dict, next_state: dict) -> float:
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
         reward = action ** 2
         reward = reward.sum()
         reward = -reward * self.reward_scaling
 
         return reward
+
+
+###########################################################
+#################### SCORE BASED  #########################
+############################################################
 
 
 class ScoreBasedRewardSchema(RewardSchema, ABC):
@@ -78,19 +112,6 @@ class ScoreBasedRewardSchema(RewardSchema, ABC):
 
         reward = 1 if action_side == price_side else -1
         reward *= action_magnitude
-
-        return reward
-
-
-class PriceChangeRewardSchema(ScoreBasedRewardSchema):
-    def __init__(self, reward_scaling: float):
-        assert 0 < reward_scaling <= 1, '"reward_scaling" should be within (0, 1].'
-
-        self.reward_scaling = reward_scaling
-
-    def calculate_reward(self, action: Union[int, float], dataset: AssetDataset, current_index: int) -> float:
-        reward = super().calculate_reward(action, dataset, current_index)
-        reward *= self.reward_scaling
 
         return reward
 
@@ -164,8 +185,8 @@ class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
 
 reward_schema_registry = {
     'AssetsPriceChangeRewardSchema': AssetsPriceChangeRewardSchema,
+    'DecisionMakingRewardSchema': DecisionMakingRewardSchema,
     'ActionMagnitudeRewardSchema': ActionMagnitudeRewardSchema,
-    'PriceChangeRewardSchema': PriceChangeRewardSchema,
     'LeaderBoardRewardSchema': LeaderBoardRewardSchema
 }
 

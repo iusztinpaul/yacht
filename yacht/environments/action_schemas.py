@@ -27,7 +27,10 @@ class DiscreteActionScheme(ActionSchema):
         self.possibilities = np.array(possibilities)
 
     def get_action_space(self) -> Space:
-        return spaces.MultiDiscrete(nvec=(self.num_assets, len(self.possibilities)))
+        return spaces.MultiDiscrete(
+            nvec=list(len(self.possibilities) for _ in range(self.num_assets))
+
+        )
 
     def get_value(self, action: np.ndarray) -> np.ndarray:
         return self.possibilities[action]
@@ -40,7 +43,7 @@ class ContinuousFloatActionSchema(ActionSchema):
         self.action_scaling_factor = action_scaling_factor
 
     def get_action_space(self) -> Space:
-        return spaces.Box(low=-1, high=1, shape=(self.num_assets, ))
+        return spaces.Box(low=-1, high=1, shape=(self.num_assets,))
 
     def get_value(self, action: np.ndarray) -> np.ndarray:
         return action * self.action_scaling_factor

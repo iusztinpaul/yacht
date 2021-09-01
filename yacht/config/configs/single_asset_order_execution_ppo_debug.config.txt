@@ -8,12 +8,12 @@ input: {
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
-    start: '3/1/2015'
-    end: '21/8/2021'
+    start: '3/1/2016'
+    end: '22/1/2017'
     window_size: 10
-    include_weekends: false
-    validation_split_ratio: 0.25
-    backtest_split_ratio: 0.20
+    include_weekends: true
+    validation_split_ratio: 0.225
+    backtest_split_ratio: 0.225
     embargo_ratio: 0.02
     backtest: {
         run: true
@@ -24,19 +24,18 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 2
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
     initial_cash_position: 30000
     reward_schemas: [
     {
-        name: 'AssetsPriceChangeRewardSchema'
-        reward_scaling: 0.0001
+        name: 'DecisionMakingRewardSchema'
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.0001
+        reward_scaling: 1
     }
     ]
     action_schema: 'DiscreteActionScheme'
@@ -81,6 +80,7 @@ train: {
     k_fold_embargo_ratio: 0.01
 }
 meta: {
+    log_frequency_steps: 5000
     device: 'gpu'
     experiment_tracker: ''
 }

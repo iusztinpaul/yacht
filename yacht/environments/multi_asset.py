@@ -111,18 +111,18 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         buy_asset_actions = action[action > 0]
         # Buy from the most conviction items to the least.
         buy_asset_actions = buy_asset_actions.iloc[::-1]
-        for ticker, num_units in buy_asset_actions.iteritems():
+        for ticker, ticker_action in buy_asset_actions.iteritems():
             self._buy_asset(
                 ticker,
-                num_units
+                ticker_action
             )
 
         # Sell from the most conviction items to the least.
         sell_asset_actions = action[action < 0]
-        for ticker, num_units in sell_asset_actions.iteritems():
+        for ticker, ticker_action in sell_asset_actions.iteritems():
             self._sell_asset(
                 ticker,
-                num_units
+                ticker_action
             )
 
         return {
@@ -134,7 +134,6 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         t_datetime = self.dataset.index_to_datetime(self.t_tick)
         asset_open_price = self.prices.loc[(t_datetime, ticker), 'Open']
 
-        # Sell only if the price is valid and current units are > 0.
         if asset_open_price > 0 and self._total_units[ticker] > 0:
             sell_num_shares = min(abs(num_units_to_sell), self._total_units[ticker])
             sell_amount = asset_open_price * sell_num_shares * (1 - self.sell_commission)
@@ -143,16 +142,11 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
             self._total_cash += sell_amount
             self._total_units[ticker] -= sell_num_shares
             self._total_loss_commissions += asset_open_price * sell_num_shares * self.sell_commission
-        else:
-            sell_num_shares = 0
-
-        return sell_num_shares
 
     def _buy_asset(self, ticker: str, num_units_to_buy: float):
         t_datetime = self.dataset.index_to_datetime(self.t_tick)
         asset_open_price = self.prices.loc[(t_datetime, ticker), 'Open']
 
-        # Buy only if the price is > 0.
         if asset_open_price > 0:
             available_amount = self._total_cash / asset_open_price
             buy_num_shares = min(available_amount, num_units_to_buy)
@@ -162,14 +156,10 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
             self._total_cash -= buy_amount
             self._total_units[ticker] += buy_num_shares
             self._total_loss_commissions += asset_open_price * buy_num_shares * self.buy_commission
-        else:
-            buy_num_shares = 0
-
-        return buy_num_shares
 
     def _is_done(self) -> bool:
         # If the agent has no more assets finish the episode.
-        return self._total_cash <= 0 and (self._total_units <= 0).all()
+        return self._total_cash <= 0 or (self._total_units <= 0).all()
 
     def render(self, mode='human', name='trades.png'):
         pass

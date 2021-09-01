@@ -76,6 +76,7 @@ class Trainer(ABC):
         callbacks = [
             LoggerCallback(
                 logger=self.logger,
+                log_frequency=self.config.meta.log_frequency_steps,
                 total_timesteps=self.config.train.total_timesteps,
             ),
             EvalCallback(

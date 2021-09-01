@@ -178,10 +178,10 @@ class BaseAssetEnvironment(gym.Env, ABC):
             next_state = self.get_next_observation()
 
             # For a_t compute r_t.
+            reward_function_kwargs = self._get_reward_function_kwargs(next_state)
             self._r_t = self.reward_schema.calculate_reward(
                 action=self._a_t,
-                current_state=self.inverse_scaling(self._s_t),
-                next_state=self.inverse_scaling(next_state)
+                **reward_function_kwargs
             )
 
             # See if it is done after incrementing the tick & computing the internal state.
@@ -206,9 +206,15 @@ class BaseAssetEnvironment(gym.Env, ABC):
     @abstractmethod
     def update_internal_state(self, action: np.ndarray) -> dict:
         """
-            Returns: The internal state variables that has to be updated.
+            Returns: The internal state variables that has to be updated before creating the next observation.
         """
         pass
+
+    def _get_reward_function_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:
+        return {
+            'current_state': self.inverse_scaling(self._s_t),
+            'next_state': self.inverse_scaling(next_state)
+        }
 
     def get_observation_space(self) -> Dict[str, Optional[spaces.Space]]:
         observation_space = self.dataset.get_external_observation_space()
@@ -295,7 +301,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         changes['date'] = None
         if self._should_update_history(key='date', changes=changes):
             # Map index_t to its corresponding date.
-            current_date = self.dataset.index_to_datetime(self.t_tick)
+            current_date = self.dataset.index_to_datetime(self.t_tick - 1)
             self.history['date'].append(current_date)
 
         for key, value in changes.items():
@@ -388,8 +394,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
         prices = self.prices.loc[:, 'Open']
         prices = prices.values.reshape(self.dataset.num_assets, -1)
         prices = np.transpose(prices, axes=(1, 0))
-        # The items are padded in the beginning, but not in the end.
-        prices = prices[:self.end_tick, :]
+        # The history items are padded in the beginning, but not in the end.
+        prices = prices[:len(self.history['date']), :]
+        # TODO: Check again prices & date to history logic
 
         data = {
             'date': self.history['date'],
