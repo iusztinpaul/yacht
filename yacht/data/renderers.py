@@ -151,12 +151,13 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         assert len(train_split) == 2 and len(validation_split) == 2 and len(backtest_split) == 2
         assert train_split[0] < train_split[1] \
                < validation_split[0] < validation_split[1] \
-               < backtest_split[0] < backtest_split[1]
+               <= backtest_split[0] <= backtest_split[1]
 
         self.prices = self._get_prices(rescale)
         self.train_split = train_split
         self.validation_split = validation_split
         self.backtest_split = backtest_split
+        self.has_backtest_split = not (validation_split[1] == backtest_split[0] == backtest_split[1])
 
     def _get_prices(self, rescale) -> Dict[str, pd.Series]:
         prices = dict()
@@ -197,11 +198,17 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
             self.backtest_split[1]
         ])
 
-        splits = (
+        if self.has_backtest_split:
+            splits = (
+                    (self.train_split, 'Train'),
+                    (self.validation_split, 'Validation'),
+                    (self.backtest_split, 'Backtest')
+            )
+        else:
+            splits = (
                 (self.train_split, 'Train'),
-                (self.validation_split, 'Validation'),
-                (self.backtest_split, 'Backtest')
-        )
+                (self.validation_split, 'Validation')
+            )
         for split, name in splits:
             self.ax.text(
                 x=(split[1] - split[0]) / 4 + split[0],

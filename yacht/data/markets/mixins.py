@@ -40,3 +40,16 @@ class TechnicalIndicatorMixin:
         return df
 
 
+class TargetPriceMixin:
+    def process_request(self, data: List[List[Any]]) -> pd.DataFrame:
+        df = super().process_request(data)
+
+        df['TP'] = df.apply(func=self.compute_target_price, axis=1)
+
+        return df
+
+    @classmethod
+    def compute_target_price(cls, row: pd.Series):
+        # Because there is no VWAP field in the yahoo data,
+        # a method similar to Simpson integration is used to approximate VWAP.
+        return (row['Open'] + 2 * row['High'] + 2 * row['Low'] + row['Close']) / 6

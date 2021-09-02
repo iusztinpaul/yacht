@@ -62,13 +62,21 @@ if __name__ == '__main__':
                 storage_dir=storage_dir,
                 resume_training=args.resume_training
             )
+            run_backtest(
+                config=config,
+                logger=logger,
+                storage_dir=storage_dir,
+                agent_from=args.agent_from,
+                mode=Mode.BacktestTrain
+            )
 
             if config.input.backtest.run:
                 run_backtest(
                     config=config,
                     logger=logger,
                     storage_dir=storage_dir,
-                    agent_from=args.agent_from
+                    agent_from=args.agent_from,
+                    mode=Mode.Backtest
                 )
 
         elif mode == Mode.Backtest:
@@ -76,5 +84,20 @@ if __name__ == '__main__':
                 config=config,
                 logger=logger,
                 storage_dir=storage_dir,
-                agent_from=args.agent_from
+                agent_from=args.agent_from,
+                mode=Mode.BacktestTrain
+            )
+            run_backtest(
+                config=config,
+                logger=logger,
+                storage_dir=storage_dir,
+                agent_from=args.agent_from,
+                mode=Mode.BacktestValidation
+            )
+            run_backtest(
+                config=config,
+                logger=logger,
+                storage_dir=storage_dir,
+                agent_from=args.agent_from,
+                mode=Mode.Backtest
             )

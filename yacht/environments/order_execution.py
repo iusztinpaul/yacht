@@ -112,8 +112,8 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     def update_internal_state(self, action: np.ndarray) -> dict:
         if self._is_end_of_month_interval():
             # Split money equally between the assets, if there is any cash position left for the current month.
-            if self._total_cash > 0:
-                remaining_month_cash = np.tile(self._total_cash // self.dataset.num_assets, self.dataset.num_assets)
+            remaining_month_cash = np.tile(self._total_cash // self.dataset.num_assets, self.dataset.num_assets)
+            if (remaining_month_cash > 0).all():
                 for ticker, ticker_cash_to_use in zip(self.dataset.asset_tickers, remaining_month_cash):
                     self._buy_asset(
                         ticker=ticker,

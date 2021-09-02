@@ -7,7 +7,7 @@ from binance.client import Client
 from binance.exceptions import BinanceAPIException
 
 from yacht.data.markets.base import H5Market
-from yacht.data.markets.mixins import TechnicalIndicatorMixin
+from yacht.data.markets.mixins import TechnicalIndicatorMixin, TargetPriceMixin
 from yacht.logger import Logger
 
 
@@ -79,5 +79,5 @@ class Binance(H5Market):
         return df
 
 
-class TechnicalIndicatorBinance(TechnicalIndicatorMixin, Binance):
+class TechnicalIndicatorBinance(TechnicalIndicatorMixin, TargetPriceMixin, Binance):
     pass

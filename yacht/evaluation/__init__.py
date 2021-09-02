@@ -5,23 +5,34 @@ from yacht.config import Config
 from yacht.logger import Logger
 
 
-def run_backtest(config: Config, logger: Logger, storage_dir: str, agent_from: str):
-    logger.info('Starting backtesting...')
+def run_backtest(config: Config, logger: Logger, storage_dir: str, agent_from: str, mode: Mode):
+    logger.info(f'Backtesting on {mode}')
 
-    train_backtester = build_backtester(
-        config=config,
-        logger=logger,
-        storage_dir=storage_dir,
-        mode=Mode.BacktestTrain,
-        agent_from=agent_from
-    )
-    train_backtester.test()
+    if mode == Mode.BacktestTrain:
+        backtester_ = build_backtester(
+            config=config,
+            logger=logger,
+            storage_dir=storage_dir,
+            mode=Mode.BacktestTrain,
+            agent_from=agent_from
+        )
+    elif mode == Mode.BacktestValidation:
+        backtester_ = build_backtester(
+            config=config,
+            logger=logger,
+            storage_dir=storage_dir,
+            mode=Mode.BacktestValidation,
+            agent_from=agent_from
+        )
+    elif mode == Mode.Backtest:
+        backtester_ = build_backtester(
+            config=config,
+            logger=logger,
+            storage_dir=storage_dir,
+            mode=Mode.Backtest,
+            agent_from=agent_from
+        )
+    else:
+        raise RuntimeError(f'Wrong mode for backtesting: {mode}')
 
-    test_backtester = build_backtester(
-        config=config,
-        logger=logger,
-        storage_dir=storage_dir,
-        mode=Mode.Backtest,
-        agent_from=agent_from
-    )
-    test_backtester.test()
+    backtester_.test()

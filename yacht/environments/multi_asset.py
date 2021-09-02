@@ -86,7 +86,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         return observation
 
     def _initialize_history(self, history: dict) -> dict:
-        history['total_units'] = (self.window_size - 1) * [self._total_units]
+        history['total_units'] = (self.window_size - 1) * [self._total_units.values]
         history['total_assets'] = (self.window_size - 1) * [self._initial_cash_position]
 
         return history

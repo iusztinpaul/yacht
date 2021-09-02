@@ -5,7 +5,7 @@ import pandas as pd
 import yfinance
 
 from yacht.data.markets.base import H5Market
-from yacht.data.markets.mixins import TechnicalIndicatorMixin
+from yacht.data.markets.mixins import TechnicalIndicatorMixin, TargetPriceMixin
 from yacht.logger import Logger
 
 
@@ -43,5 +43,5 @@ class Yahoo(H5Market):
         return data
 
 
-class TechnicalIndicatorYahoo(TechnicalIndicatorMixin, Yahoo):
+class TechnicalIndicatorYahoo(TechnicalIndicatorMixin, TargetPriceMixin, Yahoo):
     pass
