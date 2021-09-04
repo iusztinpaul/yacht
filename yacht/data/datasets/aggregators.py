@@ -18,6 +18,7 @@ class ChooseAssetDataset(AssetDataset):
             market: Market,
             intervals: List[str],
             features: List[str],
+            decision_price_feature: str,
             start: datetime,
             end: datetime,
             mode: Mode,
@@ -29,6 +30,7 @@ class ChooseAssetDataset(AssetDataset):
             market=market,
             intervals=intervals,
             features=features,
+            decision_price_feature=decision_price_feature,
             start=start,
             end=end,
             mode=mode,
@@ -65,6 +67,9 @@ class ChooseAssetDataset(AssetDataset):
 
     def get_prices(self) -> pd.DataFrame:
         return self.datasets[self.current_dataset_index].get_prices()
+
+    def get_decision_prices(self, t_tick: Optional[int] = None, ticker: Optional[str] = None) -> pd.Series:
+        return self.datasets[self.current_dataset_index].get_decision_prices(t_tick, ticker)
 
     def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
         return self.datasets[self.current_dataset_index].get_mean_over_period(start, end)

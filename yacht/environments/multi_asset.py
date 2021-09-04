@@ -41,7 +41,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         total_units = pd.Series(
             data=[0] * dataset.num_assets,
             index=dataset.asset_tickers,
-            name='Total Units',
+            name='total_units',
             dtype=np.float32
         )
 
@@ -92,15 +92,16 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         return history
 
     def _create_info(self, info: dict) -> dict:
-        data_datetime = self.dataset.index_to_datetime(self.t_tick)
-        asset_open_prices = self.prices.loc[(data_datetime, slice(None)), 'Open']
-        asset_open_prices = asset_open_prices.unstack(level=0)
-        total_units_and_prices = asset_open_prices.join(self._total_units).values
-        total_units_and_prices = (total_units_and_prices[:, 0] * total_units_and_prices[:, 1]).sum()
+        asset_prices = self.dataset.get_decision_prices(t_tick=self.t_tick)
+        total_units_price = self._total_units.combine(
+            other=asset_prices,
+            func=lambda num_units, unit_price: num_units * unit_price
+        )
+        total_units_price = total_units_price.sum()
 
         info['total_loss_commissions'] = self._total_loss_commissions
         info['total_units'] = np.copy(self._total_units.values)
-        info['total_assets'] = total_units_and_prices + self._total_cash
+        info['total_assets'] = total_units_price + self._total_cash
 
         return info
 
@@ -131,31 +132,29 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         }
 
     def _sell_asset(self, ticker: str, num_units_to_sell: float):
-        t_datetime = self.dataset.index_to_datetime(self.t_tick)
-        asset_open_price = self.prices.loc[(t_datetime, ticker), 'Open']
+        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
 
-        if asset_open_price > 0 and self._total_units[ticker] > 0:
+        if asset_price > 0 and self._total_units[ticker] > 0:
             sell_num_shares = min(abs(num_units_to_sell), self._total_units[ticker])
-            sell_amount = asset_open_price * sell_num_shares * (1 - self.sell_commission)
+            sell_amount = asset_price * sell_num_shares * (1 - self.sell_commission)
 
             # Update balance.
             self._total_cash += sell_amount
             self._total_units[ticker] -= sell_num_shares
-            self._total_loss_commissions += asset_open_price * sell_num_shares * self.sell_commission
+            self._total_loss_commissions += asset_price * sell_num_shares * self.sell_commission
 
     def _buy_asset(self, ticker: str, num_units_to_buy: float):
-        t_datetime = self.dataset.index_to_datetime(self.t_tick)
-        asset_open_price = self.prices.loc[(t_datetime, ticker), 'Open']
+        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
 
-        if asset_open_price > 0:
-            available_amount = self._total_cash / asset_open_price
+        if asset_price > 0:
+            available_amount = self._total_cash / asset_price
             buy_num_shares = min(available_amount, num_units_to_buy)
-            buy_amount = asset_open_price * buy_num_shares * (1 + self.buy_commission)
+            buy_amount = asset_price * buy_num_shares * (1 + self.buy_commission)
 
             # Update balance.
             self._total_cash -= buy_amount
             self._total_units[ticker] += buy_num_shares
-            self._total_loss_commissions += asset_open_price * buy_num_shares * self.buy_commission
+            self._total_loss_commissions += asset_price * buy_num_shares * self.buy_commission
 
     def _is_done(self) -> bool:
         # If the agent has no more assets finish the episode.

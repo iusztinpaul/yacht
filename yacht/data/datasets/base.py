@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Tuple, Dict, Union
+from typing import List, Tuple, Dict, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -27,6 +27,7 @@ class AssetDataset(Dataset, ABC):
             market: Market,
             intervals: List[str],
             features: List[str],
+            decision_price_feature: str,
             start: datetime,
             end: datetime,
             mode: Mode,
@@ -37,7 +38,8 @@ class AssetDataset(Dataset, ABC):
             market:
             ticker:
             intervals: data bars frequency
-            features: supported data features
+            features: observation data features
+            decision_price_feature: the feature that it will used for buying / selling assets or other decision making
             start:
             end:
             normalizer:
@@ -52,6 +54,7 @@ class AssetDataset(Dataset, ABC):
         self.market = market
         self.intervals = intervals
         self.features, self.price_features, self.other_features = self.split_features(features)
+        self.decision_price_feature = decision_price_feature
         self.start = start
         self.end = end
         self.mode = mode
@@ -121,11 +124,11 @@ class AssetDataset(Dataset, ABC):
         pass
 
     @abstractmethod
-    def __getitem__(self, current_index: int) -> Dict[str, np.array]:
+    def __len__(self):
         pass
 
     @abstractmethod
-    def __len__(self):
+    def __getitem__(self, current_index: int) -> Dict[str, np.array]:
         pass
 
     @abstractmethod
@@ -134,6 +137,10 @@ class AssetDataset(Dataset, ABC):
 
     @abstractmethod
     def get_prices(self) -> pd.DataFrame:
+        pass
+
+    @abstractmethod
+    def get_decision_prices(self, t_tick: Optional[int] = None, **kwargs) -> pd.Series:
         pass
 
     @abstractmethod
@@ -155,6 +162,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             market: Market,
             intervals: List[str],
             features: List[str],
+            decision_price_feature: str,
             start: datetime,
             end: datetime,
             mode: Mode,
@@ -167,6 +175,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             market=market,
             intervals=intervals,
             features=features,
+            decision_price_feature=decision_price_feature,
             start=start,
             end=end,
             mode=mode,
@@ -187,9 +196,13 @@ class SingleAssetDataset(AssetDataset, ABC):
             for interval in self.intervals:
                 self.market.download(ticker, interval, start, end)
                 self.data[interval] = self.market.get(ticker, interval, start, end)
+        self.prices = self.get_prices()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.ticker
+
+    def __len__(self) -> int:
+        return len(self.prices)
 
     @property
     def num_days(self) -> int:
@@ -209,11 +222,22 @@ class SingleAssetDataset(AssetDataset, ABC):
     def get_prices(self) -> pd.DataFrame:
         return self.data['1d']
 
+    def get_decision_prices(self, t_tick: Optional[int] = None, **kwargs) -> pd.Series:
+        if t_tick is None:
+            decision_prices = self.prices.loc[slice(None), self.decision_price_feature]
+            decision_prices.name = 'decision_price'
+        else:
+            t_datetime = self.index_to_datetime(t_tick)
+            decision_prices = self.prices.loc[t_datetime, self.decision_price_feature]
+            decision_prices = pd.Series(decision_prices, index=[self.ticker], name='decision_price')
+
+        return decision_prices
+
     def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
-        period_data = self.data['1d'].loc[start:end]
+        period_data = self.data['1d'].loc[start:end, self.decision_price_feature]
         period_mean = period_data.mean()
 
-        return period_mean
+        return pd.Series(period_mean, index=[self.ticker], name='mean_price')
 
     def inverse_scaling(self, observation: dict, asset_idx: int = -1) -> dict:
         for interval in self.intervals:
@@ -234,6 +258,7 @@ class MultiAssetDataset(AssetDataset):
             market: Market,
             intervals: List[str],
             features: List[str],
+            decision_price_feature: str,
             start: datetime,
             end: datetime,
             mode: Mode,
@@ -244,6 +269,7 @@ class MultiAssetDataset(AssetDataset):
             market=market,
             intervals=intervals,
             features=features,
+            decision_price_feature=decision_price_feature,
             start=start,
             end=end,
             mode=mode,
@@ -314,6 +340,34 @@ class MultiAssetDataset(AssetDataset):
         prices = pd.concat(prices)
 
         return prices
+
+    def get_decision_prices(self, t_tick: Optional[int] = None, ticker: Optional[str] = None) -> pd.Series:
+        if ticker is not None:
+            datasets = [self._pick_dataset(ticker=ticker)]
+        else:
+            datasets = self.datasets
+
+        prices = []
+        for dataset in datasets:
+            decision_prices = dataset.get_decision_prices(t_tick)
+            decision_prices.name = dataset.ticker
+
+            prices.append(decision_prices)
+
+        if t_tick is None:
+            prices = pd.concat(prices, axis=1)  # We want to keep the dates as index.
+        else:
+            prices = pd.concat(prices, axis=0)  # We want to make the ticker as index.
+        prices.name = 'decision_price'
+
+        return prices
+
+    def _pick_dataset(self, ticker: str) -> SingleAssetDataset:
+        for dataset in self.datasets:
+            if dataset.ticker == ticker:
+                return dataset
+
+        raise RuntimeError(f'No dataset with ticker: {ticker}')
 
     def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
         mean_data = []

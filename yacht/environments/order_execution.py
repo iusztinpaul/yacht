@@ -133,24 +133,19 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     def _buy_asset(self, ticker: str, cash_ratio_to_use: float):
         cash_to_use = abs(cash_ratio_to_use) * self._initial_cash_position
         cash_to_use = min(cash_to_use, self._total_cash)
+        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
 
-        t_datetime = self.dataset.index_to_datetime(self.t_tick)
-        asset_open_price = self.prices.loc[(t_datetime, ticker), 'Open']
-
-        if asset_open_price:
-            num_units_to_buy = cash_to_use / asset_open_price
+        if asset_price:
+            num_units_to_buy = cash_to_use / asset_price
             super()._buy_asset(ticker=ticker, num_units_to_buy=num_units_to_buy)
 
     def _get_reward_function_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:
         current_month_interval = self.month_periods[self.current_month_period_index]
         market_mean_price = self.dataset.get_mean_over_period(current_month_interval.left, current_month_interval.right)
 
-        t_datetime = self.dataset.index_to_datetime(self.t_tick)
-        asset_open_price = self.prices.loc[(t_datetime, slice(None)), 'Open'].reset_index(level=0, drop=True)
-
         return {
-            'market_mean_price': market_mean_price['Open'],
-            'next_price': asset_open_price
+            'market_mean_price': market_mean_price,
+            'next_price': self.dataset.get_decision_prices(self.t_tick)
         }
 
     def _is_done(self) -> bool:

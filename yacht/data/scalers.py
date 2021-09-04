@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 import pandas as pd
@@ -12,12 +12,15 @@ from yacht.data.markets import Market
 
 
 class Scaler(ABC):
-    def __init__(self, ticker: str):
+    def __init__(self, ticker: str, features: List[str]):
         self.ticker = ticker
+        self.features = features
         self.is_fitted = False
 
     def fit(self, data: Union[pd.DataFrame, np.ndarray]):
         if self.is_fitted is False:
+            data = self._check_features(data)
+
             self._fit(data)
 
             # Avoid fitting multiple times to avoid useless computations.
@@ -28,6 +31,8 @@ class Scaler(ABC):
         pass
 
     def transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        data = self._check_features(data)
+
         shape = None
         if isinstance(data, np.ndarray):
             shape = data.shape
@@ -45,6 +50,8 @@ class Scaler(ABC):
         pass
 
     def inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        data = self._check_features(data)
+
         shape = None
         if isinstance(data, np.ndarray):
             shape = data.shape
@@ -60,6 +67,14 @@ class Scaler(ABC):
     @abstractmethod
     def _inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
         pass
+
+    def _check_features(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        if isinstance(data, pd.DataFrame):
+            data = data[self.features]
+        else:
+            assert data.shape[-1] == len(self.features), 'Given data has more / less features than are supported.'
+
+        return data
 
     @classmethod
     def fit_on(
@@ -91,8 +106,8 @@ class IdentityScaler(Scaler):
 
 
 class MinMaxScaler(Scaler):
-    def __init__(self, ticker: str):
-        super().__init__(ticker=ticker)
+    def __init__(self, ticker: str, features: List[str]):
+        super().__init__(ticker=ticker, features=features)
 
         self.scaler = SkMinMaxScaler()
 
@@ -126,7 +141,8 @@ def build_scaler(config: Config, ticker: str) -> Scaler:
     scaler_class = scaler_registry[scaler_name]
 
     scaler = scaler_class(
-        ticker=ticker
+        ticker=ticker,
+        features=list(config.input.features) + list(config.input.technical_indicators),
     )
     scaler_singletones[ticker] = scaler
 

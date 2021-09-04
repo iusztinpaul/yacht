@@ -31,9 +31,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.given_seed = seed
 
         # Environment general requirements.
-        self.dataset = copy(dataset)  # Copy the dataset, so every instance of the environment will choose different.
+        self.dataset = copy(dataset)  # Copy the dataset, so every instance of the env will choose a different ticker.
         self.window_size = dataset.window_size
-        self.prices = dataset.get_prices()
         self.reward_schema = reward_schema
         self.action_schema = action_schema
 
@@ -68,7 +67,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         # Rendering.
         self.renderer = AssetEnvironmentRenderer(
-            data=self.prices,
+            data=self.dataset.get_prices(),
             start=dataset.start,
             end=dataset.end
         )
@@ -84,12 +83,10 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         # Choose a random ticker for every instance of the environment.
         self.dataset.choose()
-        # Get the prices for the new chosen assets.
-        self.prices = self.dataset.get_prices()
 
         # Rendering.
         self.renderer = AssetEnvironmentRenderer(
-            data=self.prices,
+            data=self.dataset.get_prices(),
             start=self.dataset.start,
             end=self.dataset.end
         )
@@ -129,18 +126,17 @@ class BaseAssetEnvironment(gym.Env, ABC):
         from yacht.data.renderers import AssetEnvironmentRenderer
 
         self.dataset = dataset
-        self.prices = self.dataset.get_prices()
 
         # spaces
         self.observation_space = spaces.Dict(self.get_observation_space())
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
 
         # episode
-        self.end_tick = len(self.prices) - 2
+        self.end_tick = len(self.dataset) - 2
 
         # Rendering
         self.renderer = AssetEnvironmentRenderer(
-            data=self.prices,
+            data=self.dataset.get_prices(),
             start=dataset.start,
             end=dataset.end
         )
@@ -391,17 +387,13 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return episode_metrics, report
 
     def create_report(self) -> Dict[str, Union[np.ndarray, list]]:
-        prices = self.prices.loc[:, 'Open']
-        prices = prices.values.reshape(self.dataset.num_assets, -1)
-        prices = np.transpose(prices, axes=(1, 0))
-        # The history items are padded in the beginning, but not in the end.
-        prices = prices[:len(self.history['date']), :]
-        # TODO: Check again prices & date to history logic
+        prices = self.dataset.get_decision_prices()
+        prices = prices.loc[self.history['date']]
 
         data = {
             'date': self.history['date'],
             'action': np.array(self.history['action'], dtype=np.float32),
-            'price': prices,
+            'price': prices.values,
             'longs': self.history['num_longs'],
             'shorts': self.history['num_shorts'],
             'holds': self.history['num_holds']

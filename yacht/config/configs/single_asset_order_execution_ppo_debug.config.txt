@@ -7,6 +7,7 @@ input: {
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    decision_price_feature: 'TP'
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '3/1/2016'
     end: '22/1/2017'

@@ -15,13 +15,14 @@ message InputConfig {
   repeated string tickers = 7;
   repeated string intervals = 8;
   repeated string features = 9;
-  repeated string technical_indicators = 10;
-  string start = 11;
-  string end = 12;
-  int32 window_size = 13;
-  bool include_weekends = 14;
-  double validation_split_ratio = 15;
-  double backtest_split_ratio = 16;
-  double embargo_ratio = 17;
-  BacktestConfig backtest = 18;
+  string decision_price_feature = 10;
+  repeated string technical_indicators = 11;
+  string start = 12;
+  string end = 13;
+  int32 window_size = 14;
+  bool include_weekends = 15;
+  double validation_split_ratio = 16;
+  double backtest_split_ratio = 17;
+  double embargo_ratio = 18;
+  BacktestConfig backtest = 19;
 }
