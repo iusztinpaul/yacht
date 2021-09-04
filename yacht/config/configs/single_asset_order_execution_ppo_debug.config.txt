@@ -11,16 +11,16 @@ input: {
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '3/1/2016'
     end: '22/1/2017'
+    period_length: '1M'
     window_size: 10
-    include_weekends: true
+    include_weekends: false
     validation_split_ratio: 0.40
     backtest_split_ratio: 0
     embargo_ratio: 0.02
     backtest: {
-        run: true
+        run: false
         deterministic: false
         tickers: ['BTC-USD']
-        n_runs: 3
     }
 }
 environment: {

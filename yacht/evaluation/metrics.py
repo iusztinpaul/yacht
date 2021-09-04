@@ -10,7 +10,7 @@ from yacht import utils
 
 def compute_backtest_metrics(
         report: Dict[str, Union[list, np.ndarray]],
-        total_assets_col_name='total'
+        total_assets_col_name='total_assets'
 ) -> Tuple[dict, dict]:
     daily_returns = get_daily_return(report[total_assets_col_name])
     report['daily_returns'] = daily_returns.values
@@ -33,8 +33,7 @@ def compute_backtest_metrics(
         snake_case_strategy_metrics[utils.english_title_to_snake_case(k)] = v
     strategy_metrics = snake_case_strategy_metrics
 
-    # TODO: Adapt metrics for multiple actions / prices
-    price_advantage_metrics = compute_price_advantage(report)
+    price_advantage_metrics = aggregate_price_advantage(report)
     strategy_metrics.update(price_advantage_metrics)
 
     longs_shorts_ratio = compute_longs_shorts_ratio(report)
@@ -51,7 +50,7 @@ def get_daily_return(total_assets_over_time: Union[np.ndarray, pd.Series]) -> pd
     return total_assets_over_time.pct_change(1)
 
 
-def compute_price_advantage(report: dict) -> dict:
+def aggregate_price_advantage(report: dict) -> dict:
     actions = report['action']
     prices = report['price']
     mean_price = np.mean(prices, axis=0)
@@ -65,7 +64,7 @@ def compute_price_advantage(report: dict) -> dict:
         sell_actions = actions[negative_positions_mask, asset_idx]
 
         if positive_positions_mask.any():
-            statistics['buy_pa'].append(_compute_price_advantage(
+            statistics['buy_pa'].append(compute_price_advantage(
                 buy_actions,
                 prices[positive_positions_mask, asset_idx],
                 mean_price=mean_price[asset_idx],
@@ -74,7 +73,7 @@ def compute_price_advantage(report: dict) -> dict:
             statistics['buy_weights'].append(buy_actions.sum())
 
         if negative_positions_mask.any():
-            statistics['sell_pa'].append(_compute_price_advantage(
+            statistics['sell_pa'].append(compute_price_advantage(
                 sell_actions,
                 prices[negative_positions_mask, asset_idx],
                 mean_price=mean_price[asset_idx],
@@ -95,7 +94,7 @@ def compute_price_advantage(report: dict) -> dict:
     return statistics
 
 
-def _compute_price_advantage(
+def compute_price_advantage(
         actions: np.ndarray,
         prices: np.ndarray,
         mean_price: np.ndarray,

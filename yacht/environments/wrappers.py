@@ -71,15 +71,22 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
 
 
 class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
-    def __init__(self, env: VecEnv, logger: Logger, mode: Mode, log_std: bool = False):
+    def __init__(
+            self,
+            env: VecEnv,
+            n_metrics_episodes: int,
+            logger: Logger,
+            mode: Mode,
+            log_std: bool = False,
+    ):
         super().__init__(env)
-
+        
+        self.n_metrics_episodes = n_metrics_episodes
         self.logger = logger
         self.mode = mode
         self.log_std = log_std
 
-        self.dones = np.array([False] * env.num_envs)
-        self.metrics: List[Optional[dict]] = [None] * env.num_envs
+        self.metrics: List[dict] = []
 
         self._mean_metrics = dict()
         self._std_metrics = dict()
@@ -106,14 +113,10 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             if done.any():
                 done_indices = np.where(done)[0]
                 for idx in done_indices:
-                    assert self.dones[idx].item() is False, \
-                        'An environment cannot by done twice until the other environments are also finished.'
-                    self.dones[idx] = True
-
-                    self.metrics[idx] = self._extract_metrics(info=info[idx])
+                    self.metrics.append(self._extract_metrics(info=info[idx]))
 
             # Log the mean & std when all environments are done.
-            if self.dones.all():
+            if len(self.metrics) == self.n_metrics_episodes:
                 mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(infos=self.metrics)
                 self._mean_metrics = self._flatten_keys(mean_metrics_over_envs)
                 self._std_metrics = self._flatten_keys(std_metrics_over_envs)
@@ -122,8 +125,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                 if self.log_std:
                     self.logger.log(self._std_metrics)
 
-                self.dones = np.array([False] * self.venv.num_envs)
-                self.metrics = [None] * self.venv.num_envs
+                self.metrics = []
 
         return obs, reward, done, info
 
@@ -145,7 +147,6 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             'cumulative_returns': episode_metrics['cumulative_returns'],
             'sharpe_ratio': episode_metrics['sharpe_ratio'],
             'max_drawdown': episode_metrics['max_drawdown'],
-            'LSR': episode_metrics['LSR']
         }
         if episode_metrics.get('buy_pa'):
             metrics_to_log['buy_pa'] = episode_metrics['buy_pa']

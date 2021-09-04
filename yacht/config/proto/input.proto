@@ -19,10 +19,11 @@ message InputConfig {
   repeated string technical_indicators = 11;
   string start = 12;
   string end = 13;
-  int32 window_size = 14;
-  bool include_weekends = 15;
-  double validation_split_ratio = 16;
-  double backtest_split_ratio = 17;
-  double embargo_ratio = 18;
-  BacktestConfig backtest = 19;
+  string period_length = 14;
+  int32 window_size = 15;
+  bool include_weekends = 16;
+  double validation_split_ratio = 17;
+  double backtest_split_ratio = 18;
+  double embargo_ratio = 19;
+  BacktestConfig backtest = 20;
 }

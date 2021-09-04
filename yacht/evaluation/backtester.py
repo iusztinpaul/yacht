@@ -5,7 +5,7 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from yacht import Mode, utils
 from yacht.agents import build_agent
 from yacht.config import Config
-from yacht.data.datasets import build_dataset, ChooseAssetDataset
+from yacht.data.datasets import build_dataset, SampleAssetDataset
 from yacht.data.renderers import RewardsRenderer
 from yacht.environments import build_env, MetricsVecEnvWrapper
 from yacht.logger import Logger
@@ -15,7 +15,7 @@ class BackTester:
     def __init__(
             self,
             config: Config,
-            dataset: ChooseAssetDataset,
+            dataset: SampleAssetDataset,
             env: MetricsVecEnvWrapper,
             agent: BaseAlgorithm,
             logger: Logger,

@@ -10,7 +10,7 @@ from tqdm import tqdm
 from yacht import utils, Mode
 from yacht.agents import build_agent
 from yacht.config import Config
-from yacht.data.datasets import AssetDataset, build_dataset_wrapper, build_dataset
+from yacht.data.datasets import AssetDataset, build_dataset_wrapper, build_dataset, SampleAssetDataset
 from yacht.data.k_fold import PurgedKFold
 from yacht.environments import BaseAssetEnvironment, build_env
 from yacht.environments.callbacks import LoggerCallback, RewardsRenderCallback
@@ -24,8 +24,8 @@ class Trainer(ABC):
             config: Config,
             name: str,
             agent: BaseAlgorithm,
-            train_dataset: AssetDataset,
-            validation_dataset: AssetDataset,
+            train_dataset: SampleAssetDataset,
+            validation_dataset: SampleAssetDataset,
             train_env: VecEnv,
             validation_env: VecEnv,
             logger: Logger,
@@ -81,7 +81,7 @@ class Trainer(ABC):
             ),
             EvalCallback(
                 eval_env=self.validation_env,
-                n_eval_episodes=self.config.input.backtest.n_runs,
+                n_eval_episodes=len(self.validation_dataset.datasets),
                 eval_freq=self.config.train.collecting_n_steps * 3,
                 log_path=utils.build_log_dir(self.storage_dir),
                 best_model_save_path=utils.build_best_checkpoint_dir(self.storage_dir),

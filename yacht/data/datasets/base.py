@@ -144,7 +144,7 @@ class AssetDataset(Dataset, ABC):
         pass
 
     @abstractmethod
-    def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
+    def compute_mean_price(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
         pass
 
     @abstractmethod
@@ -188,10 +188,7 @@ class SingleAssetDataset(AssetDataset, ABC):
         if data is not None:
             self.data = data
         else:
-            self.logger.info(
-                f'Downloading & loading data in memory for ticker - {ticker} - '
-                f'from {start} to {end} - for intervals: {intervals}'
-            )
+            self.logger.info(f'Preparing dataset... {ticker} | {start} to {end} | {intervals}')
             self.data = dict()
             for interval in self.intervals:
                 self.market.download(ticker, interval, start, end)
@@ -233,7 +230,7 @@ class SingleAssetDataset(AssetDataset, ABC):
 
         return decision_prices
 
-    def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
+    def compute_mean_price(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
         period_data = self.data['1d'].loc[start:end, self.decision_price_feature]
         period_mean = period_data.mean()
 
@@ -369,19 +366,14 @@ class MultiAssetDataset(AssetDataset):
 
         raise RuntimeError(f'No dataset with ticker: {ticker}')
 
-    def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
+    def compute_mean_price(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
         mean_data = []
         for dataset in self.datasets:
-            dataset_mean = dataset.get_mean_over_period(start, end)
-            dataset_mean['ticker'] = dataset.ticker
+            mean_data.append(
+                dataset.compute_mean_price(start, end).item()
+            )
 
-            mean_data.append(dataset_mean)
-
-        mean_data = pd.concat(mean_data, axis=1)
-        mean_data = mean_data.transpose()
-        mean_data = mean_data.set_index(keys=['ticker'], drop=True)
-
-        return mean_data
+        return pd.Series(data=mean_data, index=[d.ticker for d in self.datasets])
 
     def get_external_observation_space(self) -> Dict[str, Space]:
         """

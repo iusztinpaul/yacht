@@ -6,10 +6,11 @@ from typing import Dict, List, Optional, Union, Tuple
 import gym
 from gym import spaces
 import numpy as np
+from pandas._libs.tslibs.offsets import BDay
 from stable_baselines3.common.utils import set_random_seed
 
 from yacht import utils
-from yacht.data.datasets import ChooseAssetDataset
+from yacht.data.datasets import SampleAssetDataset
 from yacht.environments.action_schemas import ActionSchema
 from yacht.environments.reward_schemas import RewardSchema
 
@@ -18,11 +19,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def __init__(
             self,
             name: str,
-            dataset: ChooseAssetDataset,
+            dataset: SampleAssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
             seed: int = 0,
-            render_on_done: bool = False
+            compute_metrics: bool = False
     ):
         from yacht.data.renderers import AssetEnvironmentRenderer
 
@@ -71,7 +72,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             start=dataset.start,
             end=dataset.end
         )
-        self.render_on_done = render_on_done
+        self.compute_metrics = compute_metrics
 
     def seed(self, seed=None):
         self.given_seed = seed
@@ -82,7 +83,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         from yacht.data.renderers import AssetEnvironmentRenderer
 
         # Choose a random ticker for every instance of the environment.
-        self.dataset.choose()
+        self.dataset.sample()
 
         # Rendering.
         self.renderer = AssetEnvironmentRenderer(
@@ -121,7 +122,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def _reset(self):
         pass
 
-    def set_dataset(self, dataset: ChooseAssetDataset):
+    def set_dataset(self, dataset: SampleAssetDataset):
         # TODO: Find a better way to reinject the dataset.
         from yacht.data.renderers import AssetEnvironmentRenderer
 
@@ -163,6 +164,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             return self._s_t, self._r_t, self._done, info
         else:
             self._a_t = self.action_schema.get_value(action)
+            self._a_t = self._filter_actions(self._a_t)
 
             # Update internal state after (s_t, a_t).
             self.t_tick += 1
@@ -174,10 +176,10 @@ class BaseAssetEnvironment(gym.Env, ABC):
             next_state = self.get_next_observation()
 
             # For a_t compute r_t.
-            reward_function_kwargs = self._get_reward_function_kwargs(next_state)
+            reward_schema_kwargs = self._get_reward_schema_kwargs(next_state)
             self._r_t = self.reward_schema.calculate_reward(
                 action=self._a_t,
-                **reward_function_kwargs
+                **reward_schema_kwargs
             )
 
             # See if it is done after incrementing the tick & computing the internal state.
@@ -206,7 +208,10 @@ class BaseAssetEnvironment(gym.Env, ABC):
         """
         pass
 
-    def _get_reward_function_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:
+    def _filter_actions(self, actions: np.ndarray) -> np.ndarray:
+        return actions
+
+    def _get_reward_schema_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:
         return {
             'current_state': self.inverse_scaling(self._s_t),
             'next_state': self.inverse_scaling(next_state)
@@ -307,6 +312,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.history = self._update_history(self.history)
 
     def initialize_history(self):
+        def _get_day_offset(day_delta):
+            if self.dataset.sampled_dataset.include_weekends:
+                return datetime.timedelta(days=day_delta)
+            else:
+                return BDay(day_delta)
         history = dict()
 
         history_keys = set(self.create_info().keys())
@@ -319,7 +329,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             elif key == 'date':
                 current_date = self.dataset.index_to_datetime(self.t_tick)
                 history['date'] = [
-                    current_date - datetime.timedelta(days=day_delta)
+                    current_date - _get_day_offset(day_delta)
                     for day_delta in range(self.window_size - 1, 0, -1)
                 ]
             else:
@@ -365,14 +375,14 @@ class BaseAssetEnvironment(gym.Env, ABC):
         """
         from yacht.evaluation import compute_backtest_metrics
 
-        report = self.create_report()
+        if self.compute_metrics:
+            report = self.create_report()
 
-        episode_metrics, _ = compute_backtest_metrics(
-            report,
-            total_assets_col_name='total',
-        )
+            episode_metrics, _ = compute_backtest_metrics(
+                report,
+                total_assets_col_name='total_assets',
+            )
 
-        if self.render_on_done:
             annual_return = round(episode_metrics['annual_return'], 4)
             cumulative_returns = round(episode_metrics['cumulative_returns'], 4)
             sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
@@ -384,7 +394,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
                     f'Max Drawdown={max_drawdown}'
             self.render_all(title=title, name=f'{self.name}.png')
 
-        return episode_metrics, report
+            return episode_metrics, report
+
+        return dict(), dict()
 
     def create_report(self) -> Dict[str, Union[np.ndarray, list]]:
         prices = self.dataset.get_decision_prices()
@@ -392,16 +404,17 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         data = {
             'date': self.history['date'],
-            'action': np.array(self.history['action'], dtype=np.float32),
             'price': prices.values,
+            'action': np.array(self.history['action'], dtype=np.float32),
             'longs': self.history['num_longs'],
             'shorts': self.history['num_shorts'],
-            'holds': self.history['num_holds']
+            'holds': self.history['num_holds'],
+            'total_cash': np.array(self.history['total_cash'], dtype=np.float64)
         }
-        if 'total_assets' in self.history and len(self.history['total_assets']) > 0:
-            data['total'] = np.array(self.history['total_assets'], dtype=np.float64)
-        else:
-            data['total'] = np.array(self.history['total_cash'], dtype=np.float64)
+        if len(self.history['total_units']) > 0:
+            data['total_units'] = np.array(self.history['total_units'], dtype=np.float32)
+        if len(self.history['total_assets']) > 0:
+            data['total_assets'] = np.array(self.history['total_assets'], dtype=np.float64)
 
         return data
 
@@ -417,9 +430,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
             'actions': np.array(self.history['action'], dtype=np.float32),
             'total_cash': np.array(self.history['total_cash'], dtype=np.float32)
         }
-        if 'total_assets' in self.history and len(self.history['total_assets']) > 0:
+        if len(self.history['total_assets']) > 0:
             renderer_kwargs['total_assets'] = np.array(self.history['total_assets'], dtype=np.float32)
-        if 'total_units' in self.history and len(self.history['total_units']) > 0:
+        if len(self.history['total_units']) > 0:
             renderer_kwargs['total_units'] = np.array(self.history['total_units'], dtype=np.float32)
 
         self.renderer.render(**renderer_kwargs)

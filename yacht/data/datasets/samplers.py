@@ -11,7 +11,7 @@ from yacht.data.markets import Market
 from yacht.logger import Logger
 
 
-class ChooseAssetDataset(AssetDataset):
+class SampleAssetDataset(AssetDataset):
     def __init__(
             self,
             datasets: List[Union[SingleAssetDataset, MultiAssetDataset]],
@@ -40,15 +40,25 @@ class ChooseAssetDataset(AssetDataset):
 
         self.datasets = datasets
         self.default_index = default_index
-        self.current_dataset_index = self.choose(default_index)
+        self.current_dataset_index = self.sample(default_index)
 
-    def choose(self, idx: Optional[int] = None) -> int:
+    def sample(self, idx: Optional[int] = None, random: bool = False) -> int:
         if idx is None:
-            idx = np.random.randint(0, len(self.datasets))
+            if random:
+                idx = np.random.randint(0, len(self.datasets))
+            else:
+                idx = self.current_dataset_index + 1
+                if idx == len(self.datasets):
+                    idx = 0
 
         self.current_dataset_index = idx
 
         return idx
+
+    @property
+    def sampled_dataset(self) -> Union[SingleAssetDataset, MultiAssetDataset]:
+        # Expose the chosen dataset to access its attributes.
+        return self.datasets[self.current_dataset_index]
 
     @property
     def num_days(self) -> int:
@@ -71,8 +81,8 @@ class ChooseAssetDataset(AssetDataset):
     def get_decision_prices(self, t_tick: Optional[int] = None, ticker: Optional[str] = None) -> pd.Series:
         return self.datasets[self.current_dataset_index].get_decision_prices(t_tick, ticker)
 
-    def get_mean_over_period(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
-        return self.datasets[self.current_dataset_index].get_mean_over_period(start, end)
+    def compute_mean_price(self, start: datetime, end: datetime) -> Union[pd.DataFrame, pd.Series]:
+        return self.datasets[self.current_dataset_index].compute_mean_price(start, end)
 
     def get_external_observation_space(self) -> Dict[str, Space]:
         return self.datasets[self.current_dataset_index].get_external_observation_space()

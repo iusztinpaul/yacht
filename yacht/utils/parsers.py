@@ -1,9 +1,10 @@
 import os
 from datetime import datetime, timedelta
 from functools import reduce
-from typing import Union
+from typing import Union, List, Tuple
 
 import pandas as pd
+from pandas._libs.tslibs.offsets import BDay
 
 
 def file_path_to_name(file_path: str) -> str:
@@ -50,7 +51,7 @@ def get_num_days(start: Union[str, datetime], end: Union[str, datetime], include
     return len(days) - 1
 
 
-def split_period(
+def split(
         start: Union[str, datetime],
         end: Union[str, datetime],
         validation_split_ratio: float,
@@ -111,20 +112,77 @@ def split_period(
     start_backtest = start_backtest.replace(hour=0, minute=0, second=0, microsecond=0)
 
     if not include_weekends:
-        start_train = map_to_business_day(start_train)
-        end_train = map_to_business_day(end_train)
-        start_validation = map_to_business_day(start_validation)
-        end_validation = map_to_business_day(end_validation)
-        start_backtest = map_to_business_day(start_backtest)
-        end_backtest = map_to_business_day(end_backtest)
+        start_train = map_to_business_day(start_train, action='+')
+        end_train = map_to_business_day(end_train, action='-')
+        start_validation = map_to_business_day(start_validation, action='+')
+        end_validation = map_to_business_day(end_validation, action='-')
+        if has_backtest_split:
+            start_backtest = map_to_business_day(start_backtest, action='+')
+            end_backtest = map_to_business_day(end_backtest, action='-')
 
     return (start_train, end_train), (start_validation, end_validation), (start_backtest, end_backtest)
 
 
-def map_to_business_day(obj: Union[datetime, pd.Timestamp]) -> datetime:
+def compute_periods(
+        start: Union[str, datetime],
+        end: Union[str, datetime],
+        include_weekends: bool,
+        period_length: str,
+        include_edges: bool = False
+) -> List[Tuple[datetime, datetime]]:
+    assert period_length in ('all', '1M')
+
+    if isinstance(start, str):
+        start = string_to_datetime(start)
+    if isinstance(end, str):
+        end = string_to_datetime(end)
+
+    if period_length == 'all':
+        return [(start, end)]
+
+    start = pd.Timestamp(start)
+    end = pd.Timestamp(end)
+    offset = timedelta(days=1) if include_weekends else BDay(1)
+    freq = {
+        True: {
+            '1M': '1MS'
+        },
+        False: {
+            '1M': '1BMS'
+        }
+    }[include_weekends][period_length]
+
+    month_periods = list(pd.interval_range(start=start, end=end, freq=freq))
+    assert len(month_periods) > 0
+    if include_edges:
+        if month_periods[0].left != start:
+            month_periods.insert(
+                0, pd.Interval(left=start, right=month_periods[0].left)
+            )
+        if month_periods[-1].right != end:
+            month_periods.append(
+                pd.Interval(left=month_periods[-1].right, right=end)
+            )
+
+    periods = [
+        (
+            period.left.to_pydatetime(),
+            (period.right - offset).to_pydatetime()
+        ) for period in month_periods
+    ]
+
+    return periods
+
+
+def map_to_business_day(obj: Union[datetime, pd.Timestamp], action: str) -> datetime:
+    assert action in ('+', '-')
+
     if isinstance(obj, datetime):
         obj = pd.Timestamp(obj)
-    obj += 0 * pd.tseries.offsets.BDay()
+    if action == '+':
+        obj += BDay(1)
+    else:
+        obj -= BDay(1)
 
     return obj.to_pydatetime()
 

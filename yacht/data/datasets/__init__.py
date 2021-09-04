@@ -1,7 +1,7 @@
 import itertools
 
 from .base import *
-from .aggregators import ChooseAssetDataset
+from .samplers import SampleAssetDataset
 from .multi_frequency import *
 
 import yacht.utils as utils
@@ -24,7 +24,7 @@ def build_dataset(
         storage_dir,
         mode: Mode,
         render_split: bool = True
-) -> ChooseAssetDataset:
+) -> SampleAssetDataset:
     global split_rendered
 
     input_config = config.input
@@ -35,7 +35,7 @@ def build_dataset(
     market = build_market(config, logger, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]
 
-    train_split, validation_split, backtest_split = utils.split_period(
+    train_split, validation_split, backtest_split = utils.split(
         input_config.start,
         input_config.end,
         input_config.validation_split_ratio,
@@ -101,63 +101,71 @@ def build_dataset(
     else:
         start = backtest_split[0]
         end = backtest_split[1]
+    periods = utils.compute_periods(
+        start=start,
+        end=end,
+        include_weekends=input_config.include_weekends,
+        period_length=input_config.period_length,
+        include_edges=False
+    )
 
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
-    for _ in itertools.combinations(tickers, config.input.num_assets_per_dataset):
-        dataset_tickers = np.random.choice(
-            tickers,
-            config.input.num_assets_per_dataset,
-            replace=False
-        )
-        single_asset_datasets: List[SingleAssetDataset] = []
-
-        for ticker in dataset_tickers:
-            scaler = build_scaler(
-                config=config,
-                ticker=ticker
+    for (period_start, period_end) in periods:
+        for _ in itertools.combinations(tickers, config.input.num_assets_per_dataset):
+            dataset_tickers = np.random.choice(
+                tickers,
+                config.input.num_assets_per_dataset,
+                replace=False
             )
-            Scaler.fit_on(
-                scaler=scaler,
-                market=market,
-                train_start=train_split[0],
-                train_end=train_split[1],
-                interval=config.input.scale_on_interval
-            )
+            single_asset_datasets: List[SingleAssetDataset] = []
 
-            single_asset_datasets.append(
-                dataset_cls(
-                    ticker=ticker,
-                    market=market,
-                    intervals=input_config.intervals,
-                    features=list(input_config.features) + list(input_config.technical_indicators),
-                    decision_price_feature=input_config.decision_price_feature,
-                    start=start,
-                    end=end,
-                    mode=mode,
-                    logger=logger,
-                    scaler=scaler,
-                    window_size=input_config.window_size
+            for ticker in dataset_tickers:
+                scaler = build_scaler(
+                    config=config,
+                    ticker=ticker
                 )
+                Scaler.fit_on(
+                    scaler=scaler,
+                    market=market,
+                    train_start=train_split[0],
+                    train_end=train_split[1],
+                    interval=config.input.scale_on_interval
+                )
+
+                single_asset_datasets.append(
+                    dataset_cls(
+                        ticker=ticker,
+                        market=market,
+                        intervals=list(input_config.intervals),
+                        features=list(input_config.features) + list(input_config.technical_indicators),
+                        decision_price_feature=input_config.decision_price_feature,
+                        start=period_start,
+                        end=period_end,
+                        mode=mode,
+                        logger=logger,
+                        scaler=scaler,
+                        window_size=input_config.window_size
+                    )
+                )
+
+            dataset = MultiAssetDataset(
+                datasets=single_asset_datasets,
+                market=market,
+                intervals=list(input_config.intervals),
+                features=list(input_config.features) + list(input_config.technical_indicators),
+                decision_price_feature=input_config.decision_price_feature,
+                start=period_start,
+                end=period_end,
+                mode=mode,
+                logger=logger,
+                window_size=input_config.window_size
             )
+            datasets.append(dataset)
 
-        dataset = MultiAssetDataset(
-            datasets=single_asset_datasets,
-            market=market,
-            intervals=input_config.intervals,
-            features=list(input_config.features) + list(input_config.technical_indicators),
-            decision_price_feature=input_config.decision_price_feature,
-            start=start,
-            end=end,
-            mode=mode,
-            logger=logger,
-            window_size=input_config.window_size
-        )
-        datasets.append(dataset)
-
-    return ChooseAssetDataset(
+    return SampleAssetDataset(
         datasets=datasets,
         market=market,
-        intervals=input_config.intervals,
+        intervals=list(input_config.intervals),
         features=list(input_config.features) + list(input_config.technical_indicators),
         decision_price_feature=input_config.decision_price_feature,
         start=start,

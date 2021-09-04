@@ -19,7 +19,7 @@ from yacht.config import Config, EnvironmentConfig
 
 def build_env(
         config: Config,
-        dataset: ChooseAssetDataset,
+        dataset: SampleAssetDataset,
         logger: Logger,
         mode: Mode,
 ) -> MetricsVecEnvWrapper:
@@ -34,7 +34,6 @@ def build_env(
         return env
 
     env_config: EnvironmentConfig = config.environment
-    backtest_config = config.input.backtest
 
     action_schema = build_action_schema(config, dataset)
     reward_schema = build_reward_schema(config)
@@ -43,17 +42,16 @@ def build_env(
         'dataset': dataset,
         'reward_schema': reward_schema,
         'action_schema': action_schema,
-        'render_on_done': not mode.is_trainable(),
+        'compute_metrics': not mode.is_trainable(),
         'buy_commission': env_config.buy_commission,
         'sell_commission': env_config.sell_commission,
         'initial_cash_position': env_config.initial_cash_position,
         'include_weekends': config.input.include_weekends
     }
 
-    n_envs = env_config.n_envs if mode.is_trainable() else backtest_config.n_runs
     env = make_vec_env(
         env_id=env_config.name,
-        n_envs=n_envs,
+        n_envs=env_config.n_envs,
         seed=0,
         start_index=0,
         monitor_dir=utils.build_monitor_dir(dataset.storage_dir, mode),
@@ -66,6 +64,7 @@ def build_env(
     )
     env = MetricsVecEnvWrapper(
         env=env,
+        n_metrics_episodes=len(dataset),
         logger=logger,
         mode=mode
     )

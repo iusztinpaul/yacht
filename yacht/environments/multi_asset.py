@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from gym import spaces
 
-from yacht.data.datasets import ChooseAssetDataset
+from yacht.data.datasets import SampleAssetDataset
 from yacht.environments import BaseAssetEnvironment, RewardSchema, ActionSchema
 
 
@@ -12,14 +12,14 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
     def __init__(
             self,
             name: str,
-            dataset: ChooseAssetDataset,
+            dataset: SampleAssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
             seed: int = 0,
-            render_on_done: bool = False,
+            compute_metrics: bool = False,
             **kwargs
     ):
-        super().__init__(name, dataset, reward_schema, action_schema, seed, render_on_done)
+        super().__init__(name, dataset, reward_schema, action_schema, seed, compute_metrics)
 
         self.buy_commission = kwargs.get('buy_commission', 0)
         self.sell_commission = kwargs.get('sell_commission', 0)
@@ -37,7 +37,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         self._total_loss_commissions = 0
 
     @classmethod
-    def _initialize_total_units(cls, dataset: ChooseAssetDataset) -> pd.Series:
+    def _initialize_total_units(cls, dataset: SampleAssetDataset) -> pd.Series:
         total_units = pd.Series(
             data=[0] * dataset.num_assets,
             index=dataset.asset_tickers,
@@ -86,12 +86,19 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         return observation
 
     def _initialize_history(self, history: dict) -> dict:
-        history['total_units'] = (self.window_size - 1) * [self._total_units.values]
+        history['total_units'] = (self.window_size - 1) * [np.copy(self._total_units.values)]
         history['total_assets'] = (self.window_size - 1) * [self._initial_cash_position]
 
         return history
 
     def _create_info(self, info: dict) -> dict:
+        info['total_loss_commissions'] = self._total_loss_commissions
+        info['total_units'] = np.copy(self._total_units.values)
+        info['total_assets'] = self._compute_total_assets()
+
+        return info
+
+    def _compute_total_assets(self) -> float:
         asset_prices = self.dataset.get_decision_prices(t_tick=self.t_tick)
         total_units_price = self._total_units.combine(
             other=asset_prices,
@@ -99,11 +106,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         )
         total_units_price = total_units_price.sum()
 
-        info['total_loss_commissions'] = self._total_loss_commissions
-        info['total_units'] = np.copy(self._total_units.values)
-        info['total_assets'] = total_units_price + self._total_cash
-
-        return info
+        return total_units_price + self._total_cash
 
     def update_internal_state(self, action: np.ndarray) -> dict:
         action = pd.Series(data=action, index=self.dataset.asset_tickers, name='Actions')

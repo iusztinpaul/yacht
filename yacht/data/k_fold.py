@@ -127,7 +127,7 @@ def build_k_fold(config: Config) -> PurgedKFold:
     input_config = config.input
     train_config = config.train
 
-    train_val_start, train_val_end, _, _ = utils.split_period(
+    train_val_start, train_val_end, _, _ = utils.split(
         input_config.start,
         input_config.end,
         input_config.back_test_split_ratio,
