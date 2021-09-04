@@ -61,8 +61,8 @@ class Trainer(ABC):
 
     def train(self) -> BaseAlgorithm:
         self.logger.info(f'Training for {self.config.train.total_timesteps} timesteps.')
-        self.logger.info(f'Train split length: {len(self.train_dataset)}')
-        self.logger.info(f'Validation split length: {len(self.validation_dataset)}\n')
+        self.logger.info(f'Train split length: {self.train_dataset.num_sampling_period}')
+        self.logger.info(f'Validation split length: {self.validation_dataset.num_sampling_period}\n')
 
         self.agent = self.agent.learn(
             total_timesteps=self.config.train.total_timesteps,

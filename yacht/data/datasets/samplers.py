@@ -56,6 +56,10 @@ class SampleAssetDataset(AssetDataset):
         return idx
 
     @property
+    def num_sampling_period(self) -> int:
+        return (self.end - self.start).days
+
+    @property
     def sampled_dataset(self) -> Union[SingleAssetDataset, MultiAssetDataset]:
         # Expose the chosen dataset to access its attributes.
         return self.datasets[self.current_dataset_index]
