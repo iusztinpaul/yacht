@@ -4,6 +4,7 @@ from typing import List, Optional, Dict, Union
 import numpy as np
 import pandas as pd
 from gym import Space
+from pandas import Interval
 
 from yacht import Mode
 from yacht.data.datasets import AssetDataset, SingleAssetDataset, MultiAssetDataset
@@ -21,6 +22,7 @@ class SampleAssetDataset(AssetDataset):
             decision_price_feature: str,
             start: datetime,
             end: datetime,
+            render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
             window_size: int = 1,
@@ -33,6 +35,7 @@ class SampleAssetDataset(AssetDataset):
             decision_price_feature=decision_price_feature,
             start=start,
             end=end,
+            render_intervals=render_intervals,
             mode=mode,
             logger=logger,
             window_size=window_size,
@@ -65,6 +68,10 @@ class SampleAssetDataset(AssetDataset):
         return self.datasets[self.current_dataset_index]
 
     @property
+    def should_render(self) -> bool:
+        return self.datasets[self.current_dataset_index].should_render
+
+    @property
     def num_days(self) -> int:
         return self.datasets[self.current_dataset_index].num_days
 
@@ -91,14 +98,14 @@ class SampleAssetDataset(AssetDataset):
     def get_external_observation_space(self) -> Dict[str, Space]:
         return self.datasets[self.current_dataset_index].get_external_observation_space()
 
+    def inverse_scaling(self, observation: dict, **kwargs) -> dict:
+        return self.datasets[self.current_dataset_index].inverse_scaling(observation, **kwargs)
+
     def __len__(self):
         return len(self.datasets[self.current_dataset_index])
 
     def __getitem__(self, item):
         return self.datasets[self.current_dataset_index][item]
-
-    def inverse_scaling(self, observation: dict, **kwargs) -> dict:
-        return self.datasets[self.current_dataset_index].inverse_scaling(observation, **kwargs)
 
     def __str__(self) -> str:
         return self.datasets[self.current_dataset_index].__str__()

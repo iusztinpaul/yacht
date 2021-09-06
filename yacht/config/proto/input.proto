@@ -3,6 +3,7 @@ syntax = "proto3";
 package yacht.config.proto;
 
 import "yacht/config/proto/backtest.proto";
+import "yacht/config/proto/period.proto";
 
 
 message InputConfig {
@@ -21,9 +22,10 @@ message InputConfig {
   string end = 13;
   string period_length = 14;
   int32 window_size = 15;
-  bool include_weekends = 16;
-  double validation_split_ratio = 17;
-  double backtest_split_ratio = 18;
-  double embargo_ratio = 19;
-  BacktestConfig backtest = 20;
+  repeated PeriodConfig render_periods = 16;
+  bool include_weekends = 17;
+  double validation_split_ratio = 18;
+  double backtest_split_ratio = 19;
+  double embargo_ratio = 20;
+  BacktestConfig backtest = 21;
 }

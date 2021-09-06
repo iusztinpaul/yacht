@@ -6,6 +6,7 @@ from typing import List, Tuple, Dict, Union, Optional
 import numpy as np
 import pandas as pd
 from gym import Space, spaces
+from pandas import Interval
 from torch.utils.data import Dataset
 
 from yacht import Mode
@@ -30,6 +31,7 @@ class AssetDataset(Dataset, ABC):
             decision_price_feature: str,
             start: datetime,
             end: datetime,
+            render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
             window_size: int = 1,
@@ -42,6 +44,7 @@ class AssetDataset(Dataset, ABC):
             decision_price_feature: the feature that it will used for buying / selling assets or other decision making
             start:
             end:
+            render_intervals: a list of datetime intervals to know if this environment should be rendered or not.
             normalizer:
             window_size: The past information that you want to add to the current item that you query from the dataset.
             data: If data != None, it will be encapsulated within the Dataset Object, otherwise it will be queried
@@ -57,6 +60,7 @@ class AssetDataset(Dataset, ABC):
         self.decision_price_feature = decision_price_feature
         self.start = start
         self.end = end
+        self.render_intervals = render_intervals
         self.mode = mode
         self.logger = logger
         self.window_size = window_size
@@ -82,6 +86,15 @@ class AssetDataset(Dataset, ABC):
     @property
     def num_other_features(self) -> int:
         return len(self.other_features)
+
+    @property
+    def should_render(self) -> bool:
+        # Because it is not efficient to render all the environments, we choose over some desired logic what to render.
+        for render_interval in self.render_intervals:
+            if self.start in render_interval or self.end in render_interval:
+                return True
+
+        return False
 
     @classmethod
     def split_features(cls, features: List[str]) -> Tuple[List[str], List[str], List[str]]:
@@ -165,6 +178,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             decision_price_feature: str,
             start: datetime,
             end: datetime,
+            render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
             scaler: Scaler,
@@ -178,6 +192,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             decision_price_feature=decision_price_feature,
             start=start,
             end=end,
+            render_intervals=render_intervals,
             mode=mode,
             logger=logger,
             window_size=window_size,
@@ -258,6 +273,7 @@ class MultiAssetDataset(AssetDataset):
             decision_price_feature: str,
             start: datetime,
             end: datetime,
+            render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
             window_size: int = 1
@@ -269,6 +285,7 @@ class MultiAssetDataset(AssetDataset):
             decision_price_feature=decision_price_feature,
             start=start,
             end=end,
+            render_intervals=render_intervals,
             mode=mode,
             logger=logger,
             window_size=window_size,

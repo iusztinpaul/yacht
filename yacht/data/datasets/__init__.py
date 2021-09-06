@@ -108,6 +108,7 @@ def build_dataset(
         period_length=input_config.period_length,
         include_edges=False
     )
+    render_intervals = utils.compute_render_periods(list(config.input.render_periods))
 
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
     for (period_start, period_end) in periods:
@@ -141,6 +142,7 @@ def build_dataset(
                         decision_price_feature=input_config.decision_price_feature,
                         start=period_start,
                         end=period_end,
+                        render_intervals=render_intervals,
                         mode=mode,
                         logger=logger,
                         scaler=scaler,
@@ -156,6 +158,7 @@ def build_dataset(
                 decision_price_feature=input_config.decision_price_feature,
                 start=period_start,
                 end=period_end,
+                render_intervals=render_intervals,
                 mode=mode,
                 logger=logger,
                 window_size=input_config.window_size
@@ -170,6 +173,7 @@ def build_dataset(
         decision_price_feature=input_config.decision_price_feature,
         start=start,
         end=end,
+        render_intervals=render_intervals,
         mode=mode,
         logger=logger,
         window_size=input_config.window_size,

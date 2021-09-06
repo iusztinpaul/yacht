@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package yacht.config.proto;
+
+
+message PeriodConfig {
+    string start = 1;
+    string end = 2;
+}

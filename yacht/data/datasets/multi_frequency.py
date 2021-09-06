@@ -5,6 +5,7 @@ from typing import List, Dict, Union
 import numpy as np
 import pandas as pd
 from gym import spaces
+from pandas import Interval
 
 from yacht import Mode
 from yacht.data.datasets import IndexedDatasetMixin, SingleAssetDataset
@@ -32,6 +33,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             decision_price_feature: str,
             start: datetime,
             end: datetime,
+            render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
             scaler: Scaler,
@@ -41,22 +43,23 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
         assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
 
         super().__init__(
-            ticker,
-            market,
-            intervals,
-            features,
-            decision_price_feature,
-            start,
-            end,
-            mode,
-            logger,
-            scaler,
-            window_size,
-            data
+            ticker=ticker,
+            market=market,
+            intervals=intervals,
+            features=features,
+            decision_price_feature=decision_price_feature,
+            start=start,
+            end=end,
+            render_intervals=render_intervals,
+            mode=mode,
+            logger=logger,
+            scaler=scaler,
+            window_size=window_size,
+            data=data
         )
 
     def __len__(self):
-        return len(self.data[self.intervals[0]].index)
+        return len(self.data['1d'])
 
     def get_external_observation_space(self) -> Dict[str, spaces.Space]:
         observation_space = dict()
@@ -91,7 +94,12 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
                 window_item[interval].append(features)
         else:
             for interval in self.intervals:
-                window_item[interval] = np.stack(window_item[interval])
+                try:
+                    window_item[interval] = np.stack(window_item[interval])
+                except Exception as e:
+                    print(window_item)
+                    print(e)
+
                 window_item[interval] = self.scaler.transform(window_item[interval])
 
         return window_item

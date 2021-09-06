@@ -4,7 +4,10 @@ from functools import reduce
 from typing import Union, List, Tuple
 
 import pandas as pd
+from pandas import Interval
 from pandas._libs.tslibs.offsets import BDay
+
+from yacht.config.proto.period_pb2 import PeriodConfig
 
 
 def file_path_to_name(file_path: str) -> str:
@@ -170,6 +173,19 @@ def compute_periods(
             (period.right - offset).to_pydatetime()
         ) for period in month_periods
     ]
+
+    return periods
+
+
+def compute_render_periods(config_periods: List[PeriodConfig]) -> List[Interval]:
+    periods = []
+    for config_period in config_periods:
+        start = pd.Timestamp(string_to_datetime(config_period.start))
+        end = pd.Timestamp(string_to_datetime(config_period.end))
+
+        periods.append(
+            pd.Interval(left=start, right=end, closed='both')
+        )
 
     return periods
 

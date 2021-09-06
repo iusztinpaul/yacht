@@ -9,10 +9,14 @@ input: {
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
-    start: '1/1/2015'
+    start: '1/8/2015'
     end: '1/8/2021'
     period_length: '1M'
     window_size: 10
+    render_periods: [
+     {start: '1/1/2021', end: '1/2/2021'},
+     {start: '1/4/2021', end: '1/8/2021'}
+    ]
     include_weekends: true
     validation_split_ratio: 0.40
     backtest_split_ratio: 0.0

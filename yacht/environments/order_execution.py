@@ -154,3 +154,16 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
     def _is_done(self) -> bool:
         return False
+
+    def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:
+        buy_pa = round(episode_metrics['buy_pa'], 4)
+        cumulative_returns = round(episode_metrics['cumulative_returns'], 4)
+        sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
+        max_drawdown = round(episode_metrics['max_drawdown'], 4)
+
+        title = f'SR={sharpe_ratio};' \
+                f'Cumulative Returns={cumulative_returns};' \
+                f'Buy PA={buy_pa};' \
+                f'Max Drawdown={max_drawdown}'
+
+        return title

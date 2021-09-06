@@ -64,7 +64,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         # History.
         self.history = None
-        self.is_history_initialized = False
 
         # Rendering.
         self.renderer = AssetEnvironmentRenderer(
@@ -92,6 +91,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
             end=self.dataset.end
         )
 
+        # Ticks.
+        self.start_tick = self.window_size - 1
+        self.end_tick = self.dataset.num_days - 2  # Another -1 because the reward is calculated with one step further.
         self.t_tick = self.start_tick
 
         # MDP state.
@@ -141,6 +143,10 @@ class BaseAssetEnvironment(gym.Env, ABC):
             start=dataset.start,
             end=dataset.end
         )
+
+    @property
+    def is_history_initialized(self) -> bool:
+        return self.history is not None
 
     @property
     def intervals(self) -> List[str]:
@@ -338,8 +344,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # Initialize custom states.
         history = self._initialize_history(history)
 
-        self.is_history_initialized = True
-
         return history
 
     def _initialize_history(self, history: dict) -> dict:
@@ -383,20 +387,28 @@ class BaseAssetEnvironment(gym.Env, ABC):
                 total_assets_col_name='total_assets',
             )
 
-            annual_return = round(episode_metrics['annual_return'], 4)
-            cumulative_returns = round(episode_metrics['cumulative_returns'], 4)
-            sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
-            max_drawdown = round(episode_metrics['max_drawdown'], 4)
-
-            title = f'SR={sharpe_ratio};' \
-                    f'Cumulative Returns={cumulative_returns};' \
-                    f'Annual Return={annual_return};' \
-                    f'Max Drawdown={max_drawdown}'
-            self.render_all(title=title, name=f'{self.name}.png')
+            if self.dataset.should_render:
+                self.render_all(
+                    title=self._compute_render_all_graph_title(episode_metrics),
+                    name=f'{self.name}.png'
+                )
 
             return episode_metrics, report
 
         return dict(), dict()
+
+    def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:
+        annual_return = round(episode_metrics['annual_return'], 4)
+        cumulative_returns = round(episode_metrics['cumulative_returns'], 4)
+        sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
+        max_drawdown = round(episode_metrics['max_drawdown'], 4)
+
+        title = f'SR={sharpe_ratio};' \
+                f'Cumulative Returns={cumulative_returns};' \
+                f'Annual Return={annual_return};' \
+                f'Max Drawdown={max_drawdown}'
+
+        return title
 
     def create_report(self) -> Dict[str, Union[np.ndarray, list]]:
         prices = self.dataset.get_decision_prices()
