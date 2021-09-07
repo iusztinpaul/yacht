@@ -80,7 +80,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             log_std: bool = False,
     ):
         super().__init__(env)
-        
+
         self.n_metrics_episodes = n_metrics_episodes
         self.logger = logger
         self.mode = mode
@@ -115,17 +115,16 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                 for idx in done_indices:
                     self.metrics.append(self._extract_metrics(info=info[idx]))
 
-            # Log the mean & std when all environments are done.
-            if len(self.metrics) == self.n_metrics_episodes:
-                mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(infos=self.metrics)
+            if len(self.metrics) >= self.n_metrics_episodes:
+                mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(
+                    infos=self.metrics[-self.n_metrics_episodes:]
+                )
                 self._mean_metrics = self._flatten_keys(mean_metrics_over_envs)
                 self._std_metrics = self._flatten_keys(std_metrics_over_envs)
 
                 self.logger.log(self._mean_metrics)
                 if self.log_std:
                     self.logger.log(self._std_metrics)
-
-                self.metrics = []
 
         return obs, reward, done, info
 

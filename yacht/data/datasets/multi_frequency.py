@@ -94,12 +94,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
                 window_item[interval].append(features)
         else:
             for interval in self.intervals:
-                try:
-                    window_item[interval] = np.stack(window_item[interval])
-                except Exception as e:
-                    print(window_item)
-                    print(e)
-
+                window_item[interval] = np.stack(window_item[interval])
                 window_item[interval] = self.scaler.transform(window_item[interval])
 
         return window_item

@@ -64,7 +64,7 @@ def build_env(
     )
     env = MetricsVecEnvWrapper(
         env=env,
-        n_metrics_episodes=len(dataset),
+        n_metrics_episodes=len(dataset.datasets),
         logger=logger,
         mode=mode
     )

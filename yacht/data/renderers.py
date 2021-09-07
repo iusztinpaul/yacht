@@ -250,6 +250,7 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         total_cash = kwargs.get('total_cash')
         total_units = kwargs.get('total_units')
         total_assets = kwargs.get('total_assets')
+        remove_adjacent_positions = kwargs.get('remove_adjacent_positions', False)
 
         assert len(tickers) <= len(self.COLOURS), 'Not enough supported colours.'
 
@@ -279,7 +280,7 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
 
             ticker_actions = actions[:, ticker_idx]
             # Trim extra data from the end.
-            data = self.data.loc[(slice(None), ticker),][:len(ticker_actions)]
+            data = self.data.loc[(slice(None), ticker), ][:len(ticker_actions)]
             data = data.reset_index(level=1, drop=True)
             # Keep a reference only for the indices for the main plot.
             dummy_data = data
@@ -292,7 +293,7 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
                 )
             )
 
-            trading_renderer = TradingPositionRenderer(data)
+            trading_renderer = TradingPositionRenderer(data, remove_adjacent_positions=remove_adjacent_positions)
             filename, file_extension = os.path.splitext(save_file_path)
             trading_renderer.render(
                 title=f'{ticker}',
@@ -358,15 +359,21 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
 
 
 class TradingPositionRenderer(MplFinanceRenderer):
+    def __init__(self, data: Union[pd.DataFrame, Dict[str, pd.DataFrame]], remove_adjacent_positions: bool):
+        super().__init__(data)
+
+        self.remove_adjacent_positions = remove_adjacent_positions
+
     def _render(self, title: str, save_file_path: str, **kwargs):
         actions = kwargs['actions']
         # We are interested only in the direction of the action.
         positions = np.sign(actions)
 
         # Replace with nan adjacent values that are equal.
-        adjacent_equal_values_mask = np.zeros(positions.shape[0], dtype=bool)
-        adjacent_equal_values_mask[1:] = positions[1:] == positions[:-1]
-        positions[adjacent_equal_values_mask] = np.nan
+        if self.remove_adjacent_positions:
+            adjacent_equal_values_mask = np.zeros(positions.shape[0], dtype=bool)
+            adjacent_equal_values_mask[1:] = positions[1:] == positions[:-1]
+            positions[adjacent_equal_values_mask] = np.nan
 
         # Remove extra data.
         self.data = self.data.iloc[:len(positions)]
@@ -409,6 +416,19 @@ class TradingPositionRenderer(MplFinanceRenderer):
                 mpf.make_addplot(hold_positions, type='scatter', markersize=20, marker='.', color='y')
             )
 
+        # Calculate actions.
+        actions: pd.Series = pd.Series(index=self.data.index, data=actions)
+        additional_plots.append(
+            mpf.make_addplot(
+                actions,
+                panel=1,
+                type='bar',
+                width=1,
+                ylabel='Actions',
+                color='tab:blue',
+            ),
+        )
+
         mpf.plot(
             self.data,
             addplot=additional_plots,
@@ -416,9 +436,10 @@ class TradingPositionRenderer(MplFinanceRenderer):
             type='line',
             ylabel='Prices',
             figratio=(2, 1),
+            panel_ratios=(1, 0.75),
             figscale=1.5,
             savefig=save_file_path,
-            volume=True
+            volume=False
         )
 
 

@@ -57,7 +57,11 @@ class DCFAgent(BaseClassicAgent):
 
         start_tick = self.env.envs[0].unwrapped.start_tick
         end_tick = self.env.envs[0].unwrapped.end_tick
+        self.current_tick = start_tick
+        self.num_buying_times = 4
         self.time_horizon = end_tick - start_tick
+        self.buying_ticks = np.linspace(start_tick, end_tick, self.num_buying_times)
+        self.bought_n_times = 0
         self.cash_distribution_per_tick = None
         self.cash_distribution_per_ticker = None
 
@@ -69,14 +73,21 @@ class DCFAgent(BaseClassicAgent):
     ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         if self.cash_distribution_per_ticker is None:
             total_cash_positions = observation['env_features'][:, -1, 0]
-            self.cash_distribution_per_tick = total_cash_positions / self.time_horizon
+            self.cash_distribution_per_tick = total_cash_positions / self.num_buying_times
 
             # TODO: Adapt cash distribution by market cap.
             num_assets = observation['1d'].shape[3]
             self.cash_distribution_per_ticker = self.cash_distribution_per_tick / num_assets
             self.cash_distribution_per_ticker = np.tile(self.cash_distribution_per_ticker, num_assets)
 
-        total_close_prices = observation['1d'][:, -1, 0, :, 0]
-        actions = self.cash_distribution_per_ticker / total_close_prices
+        if self.current_tick >= self.buying_ticks[self.bought_n_times]:
+            total_close_prices = observation['1d'][:, -1, 0, :, 0]
+            actions = self.cash_distribution_per_ticker / total_close_prices
+
+            self.bought_n_times += 1
+        else:
+            actions = np.zeros_like(self.cash_distribution_per_ticker)
+
+        self.current_tick += 1
 
         return actions, None
