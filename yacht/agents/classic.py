@@ -87,6 +87,7 @@ class DCFAgent(BaseClassicAgent):
             self.bought_n_times += 1
         else:
             actions = np.zeros_like(self.cash_distribution_per_ticker)
+            actions = np.expand_dims(actions, axis=0)
 
         self.current_tick += 1
 

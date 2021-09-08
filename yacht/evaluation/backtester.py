@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -66,8 +68,17 @@ class BackTester:
 #######################################################################################################################
 
 
-def build_backtester(config: Config, logger: Logger, storage_dir: str, mode: Mode, agent_from: str) -> BackTester:
+def build_backtester(
+        config: Config,
+        logger: Logger,
+        storage_dir: str,
+        mode: Mode,
+        agent_from: str
+) -> Optional[BackTester]:
     dataset = build_dataset(config, logger, storage_dir, mode=mode)
+    if dataset is None:
+        return None
+
     env = build_env(config, dataset, logger, mode=mode)
     agent = build_agent(
         config,

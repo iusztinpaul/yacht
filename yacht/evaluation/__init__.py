@@ -35,4 +35,7 @@ def run_backtest(config: Config, logger: Logger, storage_dir: str, agent_from: s
     else:
         raise RuntimeError(f'Wrong mode for backtesting: {mode}')
 
-    backtester_.test()
+    if backtester_ is not None:
+        backtester_.test()
+    else:
+        logger.info(f'Backtester for mode: {mode.value} is not valid.')

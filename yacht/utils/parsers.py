@@ -156,7 +156,9 @@ def compute_periods(
     }[include_weekends][period_length]
 
     month_periods = list(pd.interval_range(start=start, end=end, freq=freq))
-    assert len(month_periods) > 0
+    if len(month_periods) == 0:
+        return []
+
     if include_edges:
         if month_periods[0].left != start:
             month_periods.insert(

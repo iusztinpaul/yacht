@@ -272,13 +272,14 @@ class BaseAssetEnvironment(gym.Env, ABC):
             action = np.array([])
             position = np.array([])
 
-        for p in position:
-            if p == 1:
-                self._num_longs += 1
-            elif p == -1:
-                self._num_shorts += 1
-            else:
-                self._num_holds += 1
+        if position.size != 0:
+            for p in position:
+                if p == 1:
+                    self._num_longs += 1
+                elif p == -1:
+                    self._num_shorts += 1
+                else:
+                    self._num_holds += 1
 
         info = dict(
             # MDP information.

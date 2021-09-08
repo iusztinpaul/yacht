@@ -8,18 +8,24 @@ input: {
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
-    start: '1/1/2015'
+    start: '1/8/2015'
     end: '1/8/2021'
+    period_length: '1M'
     window_size: 1
+    render_periods: [
+     {start: '1/8/2018', end: '1/8/2019'},
+     {start: '1/8/2019', end: '1/8/2020'},
+     {start: '1/1/2021', end: '1/2/2021'},
+     {start: '1/4/2021', end: '1/8/2021'}
+    ]
     include_weekends: true
-    validation_split_ratio: 0.25
-    backtest_split_ratio: 0.20
-    embargo_ratio: 0.025
+    validation_split_ratio: 0.40
+    backtest_split_ratio: 0.0
+    embargo_ratio: 0.02
     backtest: {
-        run: true
+        run: false
         deterministic: false
         tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD']
-        n_runs: 1
     }
 }
 environment: {
@@ -45,5 +51,5 @@ agent: {
 }
 meta: {
     device: 'gpu'
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
 }

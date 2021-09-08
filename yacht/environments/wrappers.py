@@ -115,16 +115,16 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                 for idx in done_indices:
                     self.metrics.append(self._extract_metrics(info=info[idx]))
 
-            if len(self.metrics) >= self.n_metrics_episodes:
-                mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(
-                    infos=self.metrics[-self.n_metrics_episodes:]
-                )
+            if len(self.metrics) == self.n_metrics_episodes:
+                mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(metrics=self.metrics)
                 self._mean_metrics = self._flatten_keys(mean_metrics_over_envs)
                 self._std_metrics = self._flatten_keys(std_metrics_over_envs)
 
                 self.logger.log(self._mean_metrics)
                 if self.log_std:
                     self.logger.log(self._std_metrics)
+
+                self.metrics = []
 
         return obs, reward, done, info
 
@@ -155,9 +155,9 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
         return metrics_to_log
 
     @classmethod
-    def _compute_mean_std(cls, infos: List[dict]) -> Tuple[dict, dict]:
+    def _compute_mean_std(cls, metrics: List[dict]) -> Tuple[dict, dict]:
         aggregated_metrics: Dict[str, list] = defaultdict(list)
-        for env_metrics in infos:
+        for env_metrics in metrics:
             for metric_name, metric_value in env_metrics.items():
                 aggregated_metrics[metric_name].append(metric_value)
 

@@ -24,7 +24,7 @@ def build_dataset(
         storage_dir,
         mode: Mode,
         render_split: bool = True
-) -> SampleAssetDataset:
+) -> Optional[SampleAssetDataset]:
     global split_rendered
 
     input_config = config.input
@@ -108,6 +108,9 @@ def build_dataset(
         period_length=input_config.period_length,
         include_edges=False
     )
+    if len(periods) == 0:
+        return None
+
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
 
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []

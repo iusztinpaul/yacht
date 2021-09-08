@@ -161,7 +161,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
 
     def _is_done(self) -> bool:
         # If the agent has no more assets finish the episode.
-        return self._total_cash <= 0 or (self._total_units <= 0).all()
+        return bool(self._total_cash <= 0 and (self._total_units <= 0).all())
 
     def render(self, mode='human', name='trades.png'):
         pass
