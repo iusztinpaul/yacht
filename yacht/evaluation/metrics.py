@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Union, Dict, Tuple
+from typing import Union, Dict, Tuple, List
 
 import pandas as pd
 import numpy as np
@@ -10,7 +10,8 @@ from yacht import utils
 
 def compute_backtest_metrics(
         report: Dict[str, Union[list, np.ndarray]],
-        total_assets_col_name='total_assets'
+        total_assets_col_name='total_assets',
+        buy: bool = True
 ) -> Tuple[dict, dict]:
     daily_returns = get_daily_return(report[total_assets_col_name])
     report['daily_returns'] = daily_returns.values
@@ -33,11 +34,8 @@ def compute_backtest_metrics(
         snake_case_strategy_metrics[utils.english_title_to_snake_case(k)] = v
     strategy_metrics = snake_case_strategy_metrics
 
-    price_advantage_metrics = aggregate_price_advantage(report)
-    strategy_metrics.update(price_advantage_metrics)
-
-    longs_shorts_ratio = compute_longs_shorts_ratio(report)
-    strategy_metrics['LSR'] = longs_shorts_ratio
+    strategy_metrics['PA'] = aggregate_price_advantage(report, buy=buy)
+    strategy_metrics['LSR'] = compute_longs_shorts_ratio(report)
 
     return strategy_metrics, report
 
@@ -50,48 +48,50 @@ def get_daily_return(total_assets_over_time: Union[np.ndarray, pd.Series]) -> pd
     return total_assets_over_time.pct_change(1)
 
 
-def aggregate_price_advantage(report: dict) -> dict:
+def aggregate_price_advantage(report: dict, buy: bool) -> np.ndarray:
     actions = report['action']
     prices = report['price']
     mean_price = np.mean(prices, axis=0)
 
     statistics: Dict[str, Union[list, np.ndarray]] = defaultdict(list)
     for asset_idx in range(actions.shape[1]):
-        # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
-        positive_positions_mask = actions[:, asset_idx] > 0
-        negative_positions_mask = actions[:, asset_idx] < 0
-        buy_actions = actions[positive_positions_mask, asset_idx]
-        sell_actions = actions[negative_positions_mask, asset_idx]
+        if buy:
+            # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
+            positive_positions_mask = actions[:, asset_idx] > 0
+            buy_actions = actions[positive_positions_mask, asset_idx]
 
-        if positive_positions_mask.any():
-            statistics['buy_pa'].append(compute_price_advantage(
-                buy_actions,
-                prices[positive_positions_mask, asset_idx],
-                mean_price=mean_price[asset_idx],
-                buy=True
-            ))
-            statistics['buy_weights'].append(buy_actions.sum())
+            if positive_positions_mask.any():
+                statistics['PA'].append(compute_price_advantage(
+                    buy_actions,
+                    prices[positive_positions_mask, asset_idx],
+                    mean_price=mean_price[asset_idx],
+                    buy=True
+                ))
+                statistics['weights'].append(buy_actions.sum())
+            else:
+                raise RuntimeError('No buy actions to compute PA metric.')
+        else:
+            # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
+            negative_positions_mask = actions[:, asset_idx] < 0
+            sell_actions = actions[negative_positions_mask, asset_idx]
 
-        if negative_positions_mask.any():
-            statistics['sell_pa'].append(compute_price_advantage(
-                sell_actions,
-                prices[negative_positions_mask, asset_idx],
-                mean_price=mean_price[asset_idx],
-                buy=False
-            ))
-            statistics['sell_weights'].append(buy_actions.sum())
+            if negative_positions_mask.any():
+                statistics['PA'].append(compute_price_advantage(
+                    sell_actions,
+                    prices[negative_positions_mask, asset_idx],
+                    mean_price=mean_price[asset_idx],
+                    buy=False
+                ))
+                statistics['weights'].append(sell_actions.sum())
+            else:
+                raise RuntimeError('No sell actions to compute PA metric.')
 
-    statistics['buy_weights'] = np.array(statistics['buy_weights'], dtype=np.float32)
-    statistics['buy_weights'] /= statistics['buy_weights'].sum()
-    statistics['sell_weights'] = np.array(statistics['sell_weights'], dtype=np.float32)
-    statistics['sell_weights'] /= statistics['sell_weights'].sum()
+    statistics['weights'] = np.array(statistics['weights'], dtype=np.float32)
+    statistics['weights'] /= statistics['weights'].sum()
+    statistics['PA'] = np.array(statistics['PA'], dtype=np.float32) * statistics['weights']
+    statistics['PA'] = statistics['PA'].sum()
 
-    statistics['buy_pa'] = np.array(statistics['buy_pa'], dtype=np.float32) * statistics['buy_weights']
-    statistics['buy_pa'] = statistics['buy_pa'].sum()
-    statistics['sell_pa'] = np.array(statistics['sell_pa'], dtype=np.float32) * statistics['sell_weights']
-    statistics['sell_pa'] = statistics['sell_pa'].sum()
-
-    return statistics
+    return statistics['PA']
 
 
 def compute_price_advantage(
@@ -111,6 +111,16 @@ def compute_price_advantage(
     pa *= 1e4
 
     return pa
+
+
+def compute_glr_ratio(pa_values: Union[List[float], np.ndarray]) -> np.ndarray:
+    if isinstance(pa_values, list):
+        pa_values = np.array(pa_values, dtype=np.float32)
+
+    positive_pa_values = pa_values[pa_values >= 0]
+    negative_pa_values = pa_values[pa_values < 0]
+
+    return positive_pa_values.mean() / np.abs(negative_pa_values.mean())
 
 
 def compute_longs_shorts_ratio(report: dict) -> float:

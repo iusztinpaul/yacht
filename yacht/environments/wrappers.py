@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import gym
 import numpy as np
@@ -119,6 +119,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                 mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(metrics=self.metrics)
                 self._mean_metrics = self._flatten_keys(mean_metrics_over_envs)
                 self._std_metrics = self._flatten_keys(std_metrics_over_envs)
+                self._mean_metrics.update(self.computed_aggregated_metrics())
 
                 self.logger.log(self._mean_metrics)
                 if self.log_std:
@@ -127,6 +128,20 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                 self.metrics = []
 
         return obs, reward, done, info
+
+    def computed_aggregated_metrics(self) -> dict:
+        """
+            Compute metrics were we need results from multiple environment runs.
+        Returns:
+            Metrics in form of a dictionary.
+        """
+        from yacht import evaluation
+
+        glr_ratio = evaluation.compute_glr_ratio(pa_values=[env_metric['PA'] for env_metric in self.metrics])
+
+        return {
+            'GLR': glr_ratio
+        }
 
     def _flatten_keys(self, metrics_to_log: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         flattened_dict = dict()
@@ -147,10 +162,10 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             'sharpe_ratio': episode_metrics['sharpe_ratio'],
             'max_drawdown': episode_metrics['max_drawdown'],
         }
-        if episode_metrics.get('buy_pa'):
-            metrics_to_log['buy_pa'] = episode_metrics['buy_pa']
-        if episode_metrics.get('sell_pa'):
-            metrics_to_log['sell_pa'] = episode_metrics['sell_pa']
+        if episode_metrics.get('PA') is not None:
+            metrics_to_log['PA'] = episode_metrics['PA']
+        if episode_metrics.get('cash_used_on_last_tick') is not None:
+            metrics_to_log['cash_used_on_last_tick'] = episode_metrics['cash_used_on_last_tick']
 
         return metrics_to_log
 

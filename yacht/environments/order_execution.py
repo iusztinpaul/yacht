@@ -1,3 +1,4 @@
+from copy import copy
 from typing import Optional, Dict
 
 import numpy as np
@@ -21,12 +22,12 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     ):
         super().__init__(name, dataset, reward_schema, action_schema, seed, compute_metrics, **kwargs)
 
-        self.monthly_cash_used = None
+        self.cash_used_on_last_tick = 0
 
     def _reset(self):
         super()._reset()
 
-        self.monthly_cash_used = 0
+        self.cash_used_on_last_tick = 0
 
     def _get_observation_space(
             self,
@@ -72,6 +73,9 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
     def update_internal_state(self, action: np.ndarray) -> dict:
         if self.is_done():
+            # Make a copy to keep it for metrics.
+            self.cash_used_on_last_tick = copy(self._total_cash)
+
             # Split money equally between the assets, if there is any cash position left for the current month.
             remaining_month_cash = np.tile(self._total_cash // self.dataset.num_assets, self.dataset.num_assets)
             if (remaining_month_cash > 0).all():
@@ -105,7 +109,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
                 super()._buy_asset(ticker=ticker, num_units_to_buy=num_units_to_buy)
 
     def _filter_actions(self, actions: np.ndarray) -> np.ndarray:
-        if self._total_cash <= 1:
+        if self._total_cash <= 1.:
             actions = np.zeros_like(actions)
 
         return actions
@@ -152,18 +156,23 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
         return ratio
 
+    def _on_done(self) -> dict:
+        return {
+            'cash_used_on_last_tick': self.cash_used_on_last_tick
+        }
+
     def _is_done(self) -> bool:
         return False
 
     def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:
-        buy_pa = round(episode_metrics['buy_pa'], 4)
+        pa = round(episode_metrics['PA'], 4)
         cumulative_returns = round(episode_metrics['cumulative_returns'], 4)
         sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
         max_drawdown = round(episode_metrics['max_drawdown'], 4)
 
         title = f'SR={sharpe_ratio};' \
                 f'Cumulative Returns={cumulative_returns};' \
-                f'Buy PA={buy_pa};' \
+                f'PA={pa};' \
                 f'Max Drawdown={max_drawdown}'
 
         return title

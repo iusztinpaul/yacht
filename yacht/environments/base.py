@@ -394,9 +394,16 @@ class BaseAssetEnvironment(gym.Env, ABC):
                     name=f'{self.name}.png'
                 )
 
+            episode_metrics.update(
+                self._on_done()
+            )
+
             return episode_metrics, report
 
-        return dict(), dict()
+        return self._on_done(), dict()
+
+    def _on_done(self) -> dict:
+        return dict()
 
     def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:
         annual_return = round(episode_metrics['annual_return'], 4)
