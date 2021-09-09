@@ -115,7 +115,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                 for idx in done_indices:
                     self.metrics.append(self._extract_metrics(info=info[idx]))
 
-            if len(self.metrics) == self.n_metrics_episodes:
+            if len(self.metrics) >= self.n_metrics_episodes:
                 mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(metrics=self.metrics)
                 self._mean_metrics = self._flatten_keys(mean_metrics_over_envs)
                 self._std_metrics = self._flatten_keys(std_metrics_over_envs)
