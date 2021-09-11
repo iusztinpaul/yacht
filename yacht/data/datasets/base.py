@@ -9,7 +9,7 @@ from gym import Space, spaces
 from pandas import Interval
 from torch.utils.data import Dataset
 
-from yacht import Mode
+from yacht import Mode, utils
 from yacht.data.markets import Market
 from yacht.data.scalers import Scaler
 from yacht.logger import Logger
@@ -58,12 +58,17 @@ class AssetDataset(Dataset, ABC):
         self.intervals = intervals
         self.features, self.price_features, self.other_features = self.split_features(features)
         self.decision_price_feature = decision_price_feature
-        self.start = start
-        self.end = end
         self.render_intervals = render_intervals
         self.mode = mode
         self.logger = logger
         self.window_size = window_size
+        self.start, self.end = utils.adjust_period_to_window(
+            start=start,
+            end=end,
+            window_size=window_size - 1,
+            action='-',
+            include_weekends=self.include_weekends
+        )
 
         assert set(self.features) == set(self.price_features).union(set(self.other_features)), \
             '"self.features" should be all the supported features.'
@@ -206,8 +211,8 @@ class SingleAssetDataset(AssetDataset, ABC):
             self.logger.info(f'Preparing dataset... {ticker} | {start} to {end} | {intervals}')
             self.data = dict()
             for interval in self.intervals:
-                self.market.download(ticker, interval, start, end)
-                self.data[interval] = self.market.get(ticker, interval, start, end)
+                self.market.download(ticker, interval, self.start, self.end)
+                self.data[interval] = self.market.get(ticker, interval, self.start, self.end)
         self.prices = self.get_prices()
 
     def __str__(self) -> str:

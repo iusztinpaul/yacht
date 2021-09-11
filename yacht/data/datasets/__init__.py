@@ -101,6 +101,14 @@ def build_dataset(
     else:
         start = backtest_split[0]
         end = backtest_split[1]
+
+    start, end = utils.adjust_period_to_window(
+        start=start,
+        end=end,
+        window_size=input_config.window_size,
+        action='+',
+        include_weekends=input_config.include_weekends
+    )
     periods = utils.compute_periods(
         start=start,
         end=end,

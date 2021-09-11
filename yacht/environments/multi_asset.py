@@ -59,7 +59,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
 
         return observation_space
 
-    def _get_next_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+    def _get_next_env_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
         assert self.is_history_initialized
 
         # The slicing method does not work for window_size == 1.

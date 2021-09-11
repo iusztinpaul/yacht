@@ -115,15 +115,42 @@ def split(
     start_backtest = start_backtest.replace(hour=0, minute=0, second=0, microsecond=0)
 
     if not include_weekends:
-        start_train = map_to_business_day(start_train, action='+')
-        end_train = map_to_business_day(end_train, action='-')
-        start_validation = map_to_business_day(start_validation, action='+')
-        end_validation = map_to_business_day(end_validation, action='-')
+        start_train = add_business_days(start_train, action='+', offset=1)
+        end_train = add_business_days(end_train, action='-', offset=1)
+        start_validation = add_business_days(start_validation, action='+', offset=1)
+        end_validation = add_business_days(end_validation, action='-', offset=1)
         if has_backtest_split:
-            start_backtest = map_to_business_day(start_backtest, action='+')
-            end_backtest = map_to_business_day(end_backtest, action='-')
+            start_backtest = add_business_days(start_backtest, action='+', offset=1)
+            end_backtest = add_business_days(end_backtest, action='-', offset=1)
 
     return (start_train, end_train), (start_validation, end_validation), (start_backtest, end_backtest)
+
+
+def adjust_period_to_window(
+        start: Union[str, datetime],
+        end: Union[str, datetime],
+        window_size: int,
+        action: str,
+        include_weekends: bool
+):
+    assert action in ('+', '-')
+
+    if isinstance(start, str):
+        start = string_to_datetime(start)
+    if isinstance(end, str):
+        end = string_to_datetime(end)
+
+    if include_weekends:
+        if action == '+':
+            start += timedelta(days=window_size)
+        else:
+            start -= timedelta(days=window_size)
+    else:
+        start = add_business_days(start, action=action, offset=window_size)
+
+    assert start < end, f'{start} - {end} interval is too small.'
+
+    return start, end
 
 
 def compute_periods(
@@ -192,15 +219,15 @@ def compute_render_periods(config_periods: List[PeriodConfig]) -> List[Interval]
     return periods
 
 
-def map_to_business_day(obj: Union[datetime, pd.Timestamp], action: str) -> datetime:
+def add_business_days(obj: Union[datetime, pd.Timestamp], action: str, offset: int = 1) -> datetime:
     assert action in ('+', '-')
 
     if isinstance(obj, datetime):
         obj = pd.Timestamp(obj)
     if action == '+':
-        obj += BDay(1)
+        obj += BDay(offset)
     else:
-        obj -= BDay(1)
+        obj -= BDay(offset)
 
     return obj.to_pydatetime()
 

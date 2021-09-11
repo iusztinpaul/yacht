@@ -243,12 +243,12 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # Replace the value of 'env_features' if you want to add custom data.
         # observation['env_features'] = ...
 
-        observation = self._get_next_observation(observation)
+        observation = self._get_next_env_observation(observation)
         observation = self.scale_env_observation(observation)
 
         return observation
 
-    def _get_next_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def _get_next_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         return observation
 
     def scale_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
