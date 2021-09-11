@@ -4,7 +4,7 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
+    tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
@@ -42,7 +42,7 @@ environment: {
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.05
+        reward_scaling: 0.01
     }
     ]
     action_schema: 'DiscreteActionScheme'

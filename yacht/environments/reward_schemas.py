@@ -69,23 +69,21 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
 class DecisionMakingRewardSchema(RewardSchema):
     def calculate_reward(self, action: np.ndarray, *args, **kwargs):
         # TODO: Adapt for sell execution
-
         market_mean_price = kwargs['market_mean_price']
         next_price = kwargs['next_price']
 
         price_advantage = (1 - next_price / market_mean_price)
         reward = action * price_advantage
 
-        return reward.mean()
+        return reward.item()
 
 
 class ActionMagnitudeRewardSchema(ScaledRewardSchema):
     def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
         reward = action ** 2
-        reward = reward.sum()
         reward = -reward * self.reward_scaling
 
-        return reward
+        return reward.item()
 
 
 ###########################################################

@@ -104,9 +104,8 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             cash_to_use = min(cash_to_use, self._total_cash)
             asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
 
-            if asset_price:
-                num_units_to_buy = cash_to_use / asset_price
-                super()._buy_asset(ticker=ticker, num_units_to_buy=num_units_to_buy)
+            num_units_to_buy = cash_to_use / asset_price
+            super()._buy_asset(ticker=ticker, num_units_to_buy=num_units_to_buy)
 
     def _filter_actions(self, actions: np.ndarray) -> np.ndarray:
         if self._total_cash <= 1.:
