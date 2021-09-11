@@ -100,10 +100,8 @@ def compute_price_advantage(
         mean_price: np.ndarray,
         buy: bool = True
 ) -> float:
-    try:
-        average_execution_price = (actions * prices).sum() / actions.sum()
-    except ZeroDivisionError:
-        return 0
+    average_execution_price = (actions * prices).sum() / actions.sum()
+    assert np.isfinite(average_execution_price)
 
     # If you buy, you want a lower AEP, else if you sell, you want a higher AEP.
     if buy:

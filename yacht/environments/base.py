@@ -360,7 +360,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             Because the history can be updated on multiple calls on the step function check if in the changes
             dictionary there is the desired key & that it was not already added in the current step.
         """
-        return key in changes and len(self.history.get(key, dict())) < self.t_tick
+        return key in changes and len(self.history.get(key, dict())) <= self.t_tick
 
     def _update_history(self, history: dict) -> dict:
         return history
@@ -387,16 +387,15 @@ class BaseAssetEnvironment(gym.Env, ABC):
                 report,
                 total_assets_col_name='total_assets',
             )
+            episode_metrics.update(
+                self._on_done()
+            )
 
             if self.dataset.should_render:
                 self.render_all(
                     title=self._compute_render_all_graph_title(episode_metrics),
                     name=f'{self.name}.png'
                 )
-
-            episode_metrics.update(
-                self._on_done()
-            )
 
             return episode_metrics, report
 
