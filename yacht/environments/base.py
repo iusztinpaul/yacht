@@ -330,17 +330,17 @@ class BaseAssetEnvironment(gym.Env, ABC):
         history_keys.add('date')
         for key in history_keys:
             if key == 'action':
-                history['action'] = (self.window_size - 1) * [[0] * self.dataset.num_assets]
+                history['action'] = self.window_size * [[0] * self.dataset.num_assets]
             elif key == 'total_cash':
-                history['total_cash'] = (self.window_size - 1) * [self._total_cash]
+                history['total_cash'] = self.window_size * [self._total_cash]
             elif key == 'date':
-                current_date = self.dataset.index_to_datetime(self.t_tick)
+                current_date = self.dataset.index_to_datetime(self.window_size)
                 history['date'] = [
                     current_date - _get_day_offset(day_delta)
-                    for day_delta in range(self.window_size - 1, 0, -1)
+                    for day_delta in range(self.window_size, 0, -1)
                 ]
             else:
-                history[key] = (self.window_size - 1) * [np.nan]
+                history[key] = self.window_size * [np.nan]
 
         # Initialize custom states.
         history = self._initialize_history(history)

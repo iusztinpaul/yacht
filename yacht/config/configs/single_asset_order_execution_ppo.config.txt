@@ -4,7 +4,7 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
+    tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
@@ -12,7 +12,7 @@ input: {
     start: '1/8/2015'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 10
+    window_size: 30
     render_periods: [
      {start: '1/8/2018', end: '1/8/2019'},
      {start: '1/8/2019', end: '1/8/2020'},

@@ -65,7 +65,7 @@ class AssetDataset(Dataset, ABC):
         self.start, self.end = utils.adjust_period_to_window(
             start=start,
             end=end,
-            window_size=window_size - 1,
+            window_size=window_size,
             action='-',
             include_weekends=self.include_weekends
         )

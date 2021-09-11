@@ -64,9 +64,9 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     def _initialize_history(self, history: dict) -> dict:
         history = super()._initialize_history(history)
 
-        history['used_position'] = (self.window_size - 1) * [self._compute_used_position()]
+        history['used_position'] = self.window_size * [self._compute_used_position()]
         history['used_time'] = [
-            self._compute_used_time_ratio(i) for i in range(self.window_size - 1)
+            self._compute_used_time_ratio(i) for i in range(self.window_size)
         ]
 
         return history
