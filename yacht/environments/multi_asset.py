@@ -82,7 +82,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
     def scale_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         return observation
 
-    def _inverse_scaling(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+    def inverse_scale_env_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
         return observation
 
     def _initialize_history(self, history: dict) -> dict:
@@ -135,9 +135,11 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         }
 
     def _sell_asset(self, ticker: str, num_units_to_sell: float):
-        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
+        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker)
+        assert asset_price.notna().all(), 'Cannot sell assets with price = nan.'
+        asset_price = asset_price.item()
 
-        if asset_price > 0 and self._total_units[ticker] > 0:
+        if self._total_units[ticker] > 0:
             sell_num_shares = min(abs(num_units_to_sell), self._total_units[ticker])
             sell_amount = asset_price * sell_num_shares * (1 - self.sell_commission)
 
@@ -147,17 +149,18 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
             self._total_loss_commissions += asset_price * sell_num_shares * self.sell_commission
 
     def _buy_asset(self, ticker: str, num_units_to_buy: float):
-        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
+        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker)
+        assert asset_price.notna().all(), 'Cannot buy assets with price = nan.'
+        asset_price = asset_price.item()
 
-        if asset_price > 0:
-            available_amount = self._total_cash / asset_price
-            buy_num_shares = min(available_amount, num_units_to_buy)
-            buy_amount = asset_price * buy_num_shares * (1 + self.buy_commission)
+        available_amount = self._total_cash / asset_price
+        buy_num_shares = min(available_amount, num_units_to_buy)
+        buy_amount = asset_price * buy_num_shares * (1 + self.buy_commission)
 
-            # Update balance.
-            self._total_cash -= buy_amount
-            self._total_units[ticker] += buy_num_shares
-            self._total_loss_commissions += asset_price * buy_num_shares * self.buy_commission
+        # Update balance.
+        self._total_cash -= buy_amount
+        self._total_units[ticker] += buy_num_shares
+        self._total_loss_commissions += asset_price * buy_num_shares * self.buy_commission
 
     def _is_done(self) -> bool:
         # If the agent has no more assets finish the episode.

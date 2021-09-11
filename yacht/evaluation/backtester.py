@@ -37,7 +37,7 @@ class BackTester:
         evaluate_policy(
             model=self.agent,
             env=self.env,
-            n_eval_episodes=self.env.num_envs,  # One episode for every environment.
+            n_eval_episodes=len(self.dataset.datasets),  # Evaluate all possible datasets.
             deterministic=self.config.input.backtest.deterministic,
             render=False,
             callback=None,

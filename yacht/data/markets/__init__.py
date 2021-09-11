@@ -19,6 +19,8 @@ singletones = dict()
 def build_market(config: Config, logger: Logger, storage_path: str) -> Market:
     input_config = config.input
 
+    assert input_config.decision_price_feature != 0, 'You have to pick a decision_price_feature.'
+
     market_kwargs = {
         'features': list(input_config.features) + [input_config.decision_price_feature],
         'logger': logger,

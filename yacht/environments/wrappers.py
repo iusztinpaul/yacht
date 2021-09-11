@@ -117,9 +117,9 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
 
             if len(self.metrics) >= self.n_metrics_episodes:
                 mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(metrics=self.metrics)
+                mean_metrics_over_envs.update(self.computed_aggregated_metrics())
                 self._mean_metrics = self._flatten_keys(mean_metrics_over_envs)
                 self._std_metrics = self._flatten_keys(std_metrics_over_envs)
-                self._mean_metrics.update(self.computed_aggregated_metrics())
 
                 self.logger.log(self._mean_metrics)
                 if self.log_std:

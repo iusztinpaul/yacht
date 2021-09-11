@@ -257,11 +257,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
     def inverse_scaling(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         observation = self.dataset.inverse_scaling(observation)
-        observation = self._inverse_scaling(observation)
+        observation = self.inverse_scale_env_observation(observation)
 
         return observation
 
-    def _inverse_scaling(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def inverse_scale_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         return observation
 
     def create_info(self) -> dict:

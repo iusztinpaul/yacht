@@ -56,8 +56,8 @@ def aggregate_price_advantage(report: dict, buy: bool) -> np.ndarray:
     statistics: Dict[str, Union[list, np.ndarray]] = defaultdict(list)
     for asset_idx in range(actions.shape[1]):
         if buy:
-            # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
-            positive_positions_mask = actions[:, asset_idx] > 0
+            # Accept 0 actions for the case when all actions are 0. It will not influence the metric.
+            positive_positions_mask = actions[:, asset_idx] >= 0
             buy_actions = actions[positive_positions_mask, asset_idx]
 
             if positive_positions_mask.any():
@@ -71,8 +71,8 @@ def aggregate_price_advantage(report: dict, buy: bool) -> np.ndarray:
             else:
                 raise RuntimeError('No buy actions to compute PA metric.')
         else:
-            # Ignore hold actions ( action = 0) because their are irrelevant in this metric.
-            negative_positions_mask = actions[:, asset_idx] < 0
+            # Accept 0 actions for the case when all actions are 0. It will not influence the metric.
+            negative_positions_mask = actions[:, asset_idx] <= 0
             sell_actions = actions[negative_positions_mask, asset_idx]
 
             if negative_positions_mask.any():
@@ -100,7 +100,10 @@ def compute_price_advantage(
         mean_price: np.ndarray,
         buy: bool = True
 ) -> float:
-    average_execution_price = (actions * prices).sum() / actions.sum()
+    try:
+        average_execution_price = (actions * prices).sum() / actions.sum()
+    except ZeroDivisionError:
+        return 0
 
     # If you buy, you want a lower AEP, else if you sell, you want a higher AEP.
     if buy:

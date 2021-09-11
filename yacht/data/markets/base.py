@@ -169,6 +169,8 @@ class H5Market(Market, ABC):
         final_data.fillna(method='bfill', inplace=True, axis=0)
         final_data.fillna(method='ffill', inplace=True, axis=0)
 
+        assert final_data.notna().all().all(), 'Data from the market is not valid.'
+
         return final_data
 
     def is_cached(self, ticker: str, interval: str, start: datetime, end: datetime) -> bool:
