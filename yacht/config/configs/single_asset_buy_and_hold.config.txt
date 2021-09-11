@@ -4,7 +4,7 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'IdentityScaler'
     scale_on_interval: '1d'
-    tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
+    tickers: ['BTC-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
@@ -35,7 +35,7 @@ environment: {
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
-    initial_cash_position: 1000000
+    initial_cash_position: 5000
     reward_schemas: [
     {
         name: 'AssetsPriceChangeRewardSchema'
