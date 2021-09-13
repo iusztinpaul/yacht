@@ -116,6 +116,6 @@ class WandBCallback(BaseCallback):
         )
 
         if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
-            best_model_path = utils.build_best_checkpoint_path(self.storage_dir)
+            best_model_path = utils.build_best_reward_checkpoint_path(self.storage_dir)
             if os.path.exists(best_model_path):
                 wandb.save(best_model_path)

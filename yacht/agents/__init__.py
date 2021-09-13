@@ -49,7 +49,8 @@ def build_agent(
         logger: Logger,
         storage_dir: str,
         resume: bool = False,
-        agent_from: str = None
+        agent_from: str = None,
+        best_metric: str = None
 ) -> BaseAlgorithm:
     """
 
@@ -60,6 +61,8 @@ def build_agent(
         storage_dir:
         resume:
         agent_from: choose from (latest checkpoint, best checkpoint, absolute_path to the checkpoint)
+        best_metric: The metric you want to resume the agent from. If it is none it will be resumed based on the best
+            reward. You have to choose `agent_from=best`.
 
     Returns:
 
@@ -80,8 +83,12 @@ def build_agent(
 
     if resume:
         if agent_from == 'best':
-            agent_from = utils.build_best_checkpoint_path(storage_dir)
-            logger.info(f'Resuming from the best checkpoint: {agent_from}')
+            if best_metric is None:
+                agent_from = utils.build_best_reward_checkpoint_path(storage_dir)
+                logger.info(f'Resuming from the best reward checkpoint: {agent_from}')
+            else:
+                agent_from = utils.build_best_metric_checkpoint_path(storage_dir, best_metric)
+                logger.info(f'Resuming from the best metric - {best_metric} - checkpoint: {agent_from}')
         elif agent_from == 'latest':
             agent_from = utils.build_last_checkpoint_path(storage_dir)
             logger.info(f'Resuming from the latest checkpoint: {agent_from}')

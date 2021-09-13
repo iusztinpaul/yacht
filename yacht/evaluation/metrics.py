@@ -48,7 +48,7 @@ def get_daily_return(total_assets_over_time: Union[np.ndarray, pd.Series]) -> pd
     return total_assets_over_time.pct_change(1)
 
 
-def aggregate_price_advantage(report: dict, buy: bool) -> np.ndarray:
+def aggregate_price_advantage(report: dict, buy: bool) -> float:
     actions = report['action']
     prices = report['price']
     mean_price = np.mean(prices, axis=0)
@@ -91,7 +91,7 @@ def aggregate_price_advantage(report: dict, buy: bool) -> np.ndarray:
     statistics['PA'] = np.array(statistics['PA'], dtype=np.float32) * statistics['weights']
     statistics['PA'] = statistics['PA'].sum()
 
-    return statistics['PA']
+    return statistics['PA'].item()
 
 
 def compute_price_advantage(
@@ -111,17 +111,22 @@ def compute_price_advantage(
 
     pa *= 1e4
 
-    return pa
+    return pa.item()
 
 
-def compute_glr_ratio(pa_values: Union[List[float], np.ndarray]) -> np.ndarray:
+def compute_glr_ratio(pa_values: Union[List[float], np.ndarray]) -> float:
     if isinstance(pa_values, list):
         pa_values = np.array(pa_values, dtype=np.float32)
 
     positive_pa_values = pa_values[pa_values >= 0]
     negative_pa_values = pa_values[pa_values < 0]
 
-    return positive_pa_values.mean() / np.abs(negative_pa_values.mean())
+    if negative_pa_values.size == 0:
+        return 1.
+
+    glr = positive_pa_values.mean() / np.abs(negative_pa_values.mean())
+
+    return glr.item()
 
 
 def compute_longs_shorts_ratio(report: dict) -> float:

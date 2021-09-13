@@ -8,15 +8,26 @@ def build_config_path(project_root_dir: str, config_name: str) -> str:
 
 
 def build_last_checkpoint_path(storage_dir: str) -> str:
-    return build_checkpoints_path(storage_dir, 'last_checkpoint.zip')
+    return build_checkpoints_path(storage_dir, 'last_model.zip')
 
 
-def build_best_checkpoint_path(storage_dir: str) -> str:
+def build_best_reward_checkpoint_path(storage_dir: str) -> str:
     return build_checkpoints_path(storage_dir, 'best_model.zip')
 
 
 def build_best_checkpoint_dir(storage_dir: str) -> str:
     return build_checkpoints_path(storage_dir, '')
+
+
+def build_best_metric_checkpoint_path(storage_dir: str, metric: str) -> str:
+    return build_checkpoints_path(
+        storage_dir,
+        build_best_metric_checkpoint_file_name(metric)
+    )
+
+
+def build_best_metric_checkpoint_file_name(metric: str) -> str:
+    return f'best_model_{metric}.zip'
 
 
 def build_checkpoints_path(storage_dir: str, file_name: str) -> str:

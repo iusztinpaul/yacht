@@ -3,7 +3,7 @@ from typing import List, Union
 
 import wandb
 from stable_baselines3.common.base_class import BaseAlgorithm
-from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import VecEnv
 from tqdm import tqdm
 
@@ -12,8 +12,8 @@ from yacht.agents import build_agent
 from yacht.config import Config
 from yacht.data.datasets import AssetDataset, build_dataset_wrapper, build_dataset, SampleAssetDataset
 from yacht.data.k_fold import PurgedKFold
-from yacht.environments import BaseAssetEnvironment, build_env
-from yacht.environments.callbacks import LoggerCallback, RewardsRenderCallback
+from yacht.environments import BaseAssetEnvironment, build_env, MetricsVecEnvWrapper
+from yacht.environments.callbacks import LoggerCallback, RewardsRenderCallback, MetricsEvalCallback
 from yacht.logger import Logger
 from yacht.utils.wandb import WandBCallback
 
@@ -27,7 +27,7 @@ class Trainer(ABC):
             train_dataset: SampleAssetDataset,
             validation_dataset: SampleAssetDataset,
             train_env: VecEnv,
-            validation_env: VecEnv,
+            validation_env: MetricsVecEnvWrapper,
             logger: Logger,
             save: bool = True
     ):
@@ -79,10 +79,12 @@ class Trainer(ABC):
                 log_frequency=self.config.meta.log_frequency_steps,
                 total_timesteps=self.config.train.total_timesteps,
             ),
-            EvalCallback(
+            MetricsEvalCallback(
                 eval_env=self.validation_env,
+                metrics_to_save_best_on=list(self.config.meta.metrics_to_save_best_on),
+                mode=Mode.BacktestValidation,
                 n_eval_episodes=len(self.validation_dataset.datasets),
-                eval_freq=self.config.train.collecting_n_steps * 3,
+                eval_freq=self.config.train.collecting_n_steps * 2,
                 log_path=utils.build_log_dir(self.storage_dir),
                 best_model_save_path=utils.build_best_checkpoint_dir(self.storage_dir),
                 deterministic=self.config.input.backtest.deterministic,

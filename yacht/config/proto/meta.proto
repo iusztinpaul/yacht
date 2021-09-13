@@ -4,6 +4,8 @@ package yacht.config.proto;
 
 message MetaConfig {
   string device = 1;
-  int32 log_frequency_steps = 2;
-  string experiment_tracker = 3;
+  repeated string metrics_to_save_best_on = 2;
+  repeated string metrics_to_load_best_on = 3;
+  int32 log_frequency_steps = 4;
+  string experiment_tracker = 5;
 }

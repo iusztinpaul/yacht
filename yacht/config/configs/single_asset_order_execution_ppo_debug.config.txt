@@ -17,8 +17,8 @@ input: {
      {start: '3/1/2016', end: '22/1/2017'}
     ]
     include_weekends: true
-    validation_split_ratio: 0.40
-    backtest_split_ratio: 0
+    validation_split_ratio: 0.3
+    backtest_split_ratio: 0.0
     embargo_ratio: 0.02
     backtest: {
         run: false
@@ -66,7 +66,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 2000
+    total_timesteps: 5000
     collecting_n_steps: 500
     learning_rate: 0.00025
     batch_size: 500
@@ -82,6 +82,8 @@ train: {
 }
 meta: {
     log_frequency_steps: 5000
+    metrics_to_save_best_on: ['PA']
+    metrics_to_load_best_on: ['PA']
     device: 'gpu'
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import gym
 import numpy as np
@@ -77,27 +77,37 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             n_metrics_episodes: int,
             logger: Logger,
             mode: Mode,
-            log_std: bool = False,
+            extra_metrics_to_log: List[str]
     ):
         super().__init__(env)
 
         self.n_metrics_episodes = n_metrics_episodes
         self.logger = logger
         self.mode = mode
-        self.log_std = log_std
+        self.extra_metrics_to_log = extra_metrics_to_log
 
         self.metrics: List[dict] = []
 
         self._mean_metrics = dict()
+        self._median_metrics = dict()
         self._std_metrics = dict()
+        self._third_quartile_metrics = dict()
 
     @property
     def mean_metrics(self) -> dict:
         return self._mean_metrics
 
     @property
+    def median_metrics(self) -> dict:
+        return self._median_metrics
+
+    @property
     def std_metrics(self) -> dict:
         return self._std_metrics
+
+    @property
+    def third_quartile_metrics(self) -> dict:
+        return self._third_quartile_metrics
 
     def reset(self) -> np.ndarray:
         return self.venv.reset()
@@ -113,21 +123,36 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             if done.any():
                 done_indices = np.where(done)[0]
                 for idx in done_indices:
-                    self.metrics.append(self._extract_metrics(info=info[idx]))
+                    self.metrics.append(self.extract_metrics(info=info[idx]))
 
             if len(self.metrics) >= self.n_metrics_episodes:
-                mean_metrics_over_envs, std_metrics_over_envs = self._compute_mean_std(metrics=self.metrics)
-                mean_metrics_over_envs.update(self.computed_aggregated_metrics())
-                self._mean_metrics = self._flatten_keys(mean_metrics_over_envs)
-                self._std_metrics = self._flatten_keys(std_metrics_over_envs)
+                self._mean_metrics, self._median_metrics, self._std_metrics, self._third_quartile_metrics = \
+                    self.compute_metrics_statistics(metrics=self.metrics)
+                self._mean_metrics.update(self.computed_aggregated_metrics())
 
-                self.logger.log(self._mean_metrics)
-                if self.log_std:
-                    self.logger.log(self._std_metrics)
+                self.log(self._mean_metrics, method='mean')
+                self.log(self._median_metrics, method='median')
+                self.log(self._std_metrics, method='std')
+                self.log(self._third_quartile_metrics, method='quantile-75')
 
                 self.metrics = []
 
         return obs, reward, done, info
+
+    def log(self, metrics: Dict[str, np.ndarray], method: str = 'mean'):
+        assert method in ('mean', 'median', 'std', 'quantile-75')
+
+        if method == 'mean':
+            metrics = self._prefix_keys(metrics)
+
+            self.logger.log(metrics)
+        else:
+            # We don't want to clutter the board with redundant information. Log only essential metrics.
+            metrics = self.filter_metrics(metrics, self.extra_metrics_to_log)
+            metrics = {f'{method}/{k}': v for k, v in metrics.items()}
+            metrics = self._prefix_keys(metrics)
+
+            self.logger.log(metrics)
 
     def computed_aggregated_metrics(self) -> dict:
         """
@@ -143,15 +168,27 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             'GLR': glr_ratio
         }
 
-    def _flatten_keys(self, metrics_to_log: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def _prefix_keys(self, metrics_to_log: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         flattened_dict = dict()
         for metric_name, metric_value in metrics_to_log.items():
-            flattened_dict[f'{self.mode.value}/{metric_name}'] = metric_value
+            flattened_dict[self._prefix_key(metric_name)] = metric_value
 
         return flattened_dict
 
+    def _prefix_key(self, key: str) -> str:
+        return f'{self.mode.value}/{key}'
+
     @classmethod
-    def _extract_metrics(cls, info: dict) -> dict:
+    def filter_metrics(cls, metrics: Dict[str, np.ndarray], keys: Optional[List[str]] = None) -> Dict[str, np.ndarray]:
+        if keys is None:
+            return metrics
+
+        return {
+            k: v for k, v in metrics.items() if k in keys
+        }
+
+    @classmethod
+    def extract_metrics(cls, info: dict) -> dict:
         episode_metrics = info['episode_metrics']
         episode_data = info['episode']
 
@@ -170,18 +207,22 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
         return metrics_to_log
 
     @classmethod
-    def _compute_mean_std(cls, metrics: List[dict]) -> Tuple[dict, dict]:
+    def compute_metrics_statistics(cls, metrics: List[dict]):
         aggregated_metrics: Dict[str, list] = defaultdict(list)
         for env_metrics in metrics:
             for metric_name, metric_value in env_metrics.items():
                 aggregated_metrics[metric_name].append(metric_value)
 
         mean_metrics: Dict[str, np.ndarray] = dict()
+        median_metrics: Dict[str, np.ndarray] = dict()
         std_metrics: Dict[str, np.ndarray] = dict()
+        third_quartile_metrics: Dict[str, np.ndarray] = dict()
         for metric_name, metric_values in aggregated_metrics.items():
             metric_values = np.array(metric_values, dtype=np.float32)
 
             mean_metrics[metric_name] = np.mean(metric_values)
+            median_metrics[metric_name] = np.median(metric_values)
             std_metrics[metric_name] = np.std(metric_values)
+            third_quartile_metrics[metric_name] = np.quantile(metric_values, 0.75)
 
-        return mean_metrics, std_metrics
+        return mean_metrics, median_metrics, std_metrics, third_quartile_metrics

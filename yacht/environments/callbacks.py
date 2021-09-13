@@ -1,8 +1,14 @@
-from stable_baselines3.common.callbacks import BaseCallback
+import os
+import sys
+from typing import List
+
+from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 
 from yacht import utils, Mode
 from yacht.data.renderers import RewardsRenderer
+from yacht.environments import MetricsVecEnvWrapper
 from yacht.logger import Logger
+from yacht.utils import build_best_metric_checkpoint_file_name
 
 
 class LoggerCallback(BaseCallback):
@@ -43,3 +49,54 @@ class RewardsRenderCallback(BaseCallback):
     def _on_training_end(self) -> None:
         self.renderer.render()
         self.renderer.save(file_path=self.save_path)
+
+
+class MetricsEvalCallback(EvalCallback):
+    def __init__(
+            self,
+            eval_env: MetricsVecEnvWrapper,
+            metrics_to_save_best_on: List[str],
+            mode: Mode,
+            n_eval_episodes: int = 5,
+            eval_freq: int = 10000,
+            log_path: str = None,
+            best_model_save_path: str = None,
+            deterministic: bool = True,
+            render: bool = False,
+            verbose: int = 1,
+            warn: bool = True,
+    ):
+        super().__init__(
+            eval_env=eval_env,
+            callback_on_new_best=None,
+            n_eval_episodes=n_eval_episodes,
+            eval_freq=eval_freq,
+            log_path=log_path,
+            best_model_save_path=best_model_save_path,
+            deterministic=deterministic,
+            render=render,
+            verbose=verbose,
+            warn=warn
+        )
+
+        self.mode = mode
+        self.metrics_to_save_best_on = metrics_to_save_best_on
+        self.best_metrics_results = {key: -sys.maxsize for key in self.metrics_to_save_best_on}
+
+    def _on_step(self) -> bool:
+        super()._on_step()
+
+        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+            step_mean_metrics = self.eval_env.mean_metrics
+            for metric in self.metrics_to_save_best_on:
+                metric_mean_value = step_mean_metrics[metric]
+                if metric_mean_value > self.best_metrics_results[metric]:
+                    if self.verbose > 0:
+                        print(f'New best mean {metric}!')
+                    if self.best_model_save_path is not None:
+                        self.model.save(
+                            os.path.join(self.best_model_save_path, build_best_metric_checkpoint_file_name(metric))
+                        )
+                    self.best_metrics_results[metric] = metric_mean_value
+
+        return True

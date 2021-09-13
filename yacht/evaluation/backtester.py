@@ -75,6 +75,9 @@ def build_backtester(
         mode: Mode,
         agent_from: str
 ) -> Optional[BackTester]:
+    # TODO: Implement backtesting logic for loading from multiple metrics.
+    assert len(config.meta.metrics_to_load_best_on) <= 1, 'Does not support loading from multiple metrics.'
+
     dataset = build_dataset(config, logger, storage_dir, mode=mode)
     if dataset is None:
         return None
@@ -86,7 +89,8 @@ def build_backtester(
         logger=logger,
         storage_dir=storage_dir,
         resume=True,
-        agent_from=agent_from
+        agent_from=agent_from,
+        best_metric=config.meta.metrics_to_load_best_on[0]
     )
 
     return BackTester(
