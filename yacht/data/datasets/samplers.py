@@ -50,7 +50,7 @@ class SampleAssetDataset(AssetDataset):
         self.dataset_indices = np.arange(0, len(self.datasets))
         self.current_dataset_indices_position = 0
         if self.shuffle:
-            self.seed(self.default_index)
+            self.seed(default_index)
             np.random.shuffle(self.dataset_indices)
 
         self.default_index = default_index
