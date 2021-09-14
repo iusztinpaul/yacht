@@ -208,7 +208,6 @@ class SingleAssetDataset(AssetDataset, ABC):
         if data is not None:
             self.data = data
         else:
-            self.logger.info(f'Preparing dataset... {ticker} | {start} to {end} | {intervals}')
             self.data = dict()
             for interval in self.intervals:
                 self.market.download(ticker, interval, self.start, self.end)

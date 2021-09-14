@@ -4,20 +4,22 @@ package yacht.config.proto;
 
 message TrainConfig {
   string trainer_name = 1;
-  int32 total_timesteps = 2;
-  int32 collecting_n_steps = 3;
-  double learning_rate = 4;
-  int32 batch_size = 5;
-  int32 n_epochs = 6;
-  double gamma = 7;
-  double gae_lambda = 8;
-  double clip_range = 9;
-  double entropy_coefficient = 10;
-  double vf_coefficient = 11;
-  double max_grad_norm = 12;
-  bool use_sde = 13;
-  int32 sde_sample_freq = 14;
-  int32 k_fold_splits = 15;
-  double k_fold_purge_ratio = 16;
-  double k_fold_embargo_ratio = 17;
+  string fine_tune_trainer_name = 2;
+  int32 total_timesteps = 3;
+  int32 fine_tune_total_timesteps = 4;
+  int32 collecting_n_steps = 5;
+  double learning_rate = 6;
+  int32 batch_size = 7;
+  int32 n_epochs = 8;
+  double gamma = 9;
+  double gae_lambda = 10;
+  double clip_range = 11;
+  double entropy_coefficient = 12;
+  double vf_coefficient = 13;
+  double max_grad_norm = 14;
+  bool use_sde = 15;
+  int32 sde_sample_freq = 16;
+  int32 k_fold_splits = 17;
+  double k_fold_purge_ratio = 18;
+  double k_fold_embargo_ratio = 19;
 }

@@ -8,7 +8,7 @@ from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 
-from yacht import utils
+from yacht import utils, Mode
 from yacht.logger import Logger
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
 from yacht.agents.modules import RecurrentFeatureExtractor, MultiFrequencyFeatureExtractor
@@ -84,13 +84,13 @@ def build_agent(
     if resume:
         if agent_from == 'best':
             if best_metric is None:
-                agent_from = utils.build_best_reward_checkpoint_path(storage_dir)
+                agent_from = utils.build_best_reward_checkpoint_path(storage_dir, Mode.FineTuneTrain)
                 logger.info(f'Resuming from the best reward checkpoint: {agent_from}')
             else:
-                agent_from = utils.build_best_metric_checkpoint_path(storage_dir, best_metric)
+                agent_from = utils.build_best_metric_checkpoint_path(storage_dir, Mode.FineTuneTrain, best_metric)
                 logger.info(f'Resuming from the best metric - {best_metric} - checkpoint: {agent_from}')
         elif agent_from == 'latest':
-            agent_from = utils.build_last_checkpoint_path(storage_dir)
+            agent_from = utils.build_last_checkpoint_path(storage_dir, Mode.FineTuneTrain)
             logger.info(f'Resuming from the latest checkpoint: {agent_from}')
 
         assert os.path.exists(agent_from)

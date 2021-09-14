@@ -12,14 +12,12 @@ market_registry = {
     'TechnicalIndicatorYahoo': TechnicalIndicatorYahoo,
     'TechnicalIndicatorBinance': TechnicalIndicatorBinance,
 }
-# We want only one instance of a specific market during the lifetime of the program.
-singletones = dict()
 
 
 def build_market(config: Config, logger: Logger, storage_path: str) -> Market:
     input_config = config.input
 
-    assert input_config.decision_price_feature != 0, 'You have to pick a decision_price_feature.'
+    assert input_config.decision_price_feature, 'You have to pick a decision_price_feature.'
 
     market_kwargs = {
         'features': list(input_config.features) + [input_config.decision_price_feature],
@@ -35,11 +33,7 @@ def build_market(config: Config, logger: Logger, storage_path: str) -> Market:
         market_kwargs['technical_indicators'] = list(input_config.technical_indicators)
     market_kwargs['features'] = list(set(market_kwargs['features']))
 
-    if market_name in singletones:
-        return singletones[market_name]
-
     market_class = market_registry[market_name]
     market = market_class(**market_kwargs)
-    singletones[input_config.market] = market
 
     return market

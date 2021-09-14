@@ -37,5 +37,6 @@ def run_backtest(config: Config, logger: Logger, storage_dir: str, agent_from: s
 
     if backtester_ is not None:
         backtester_.test()
+        backtester_.close()
     else:
         logger.info(f'Backtester for mode: {mode.value} is not valid.')

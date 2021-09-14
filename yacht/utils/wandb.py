@@ -6,7 +6,7 @@ from google.protobuf.json_format import MessageToDict
 from stable_baselines3.common.callbacks import BaseCallback
 
 
-from yacht import utils
+from yacht import utils, Mode
 from yacht.config import Config
 from yacht.logger import Logger
 from yacht.utils import create_project_name
@@ -81,10 +81,11 @@ class WandBLogger(Logger):
 
 
 class WandBCallback(BaseCallback):
-    def __init__(self, storage_dir: str, verbose: int = 0):
+    def __init__(self, storage_dir: str, mode: Mode, verbose: int = 0):
         super().__init__(verbose)
 
         self.storage_dir = storage_dir
+        self.mode = mode
 
     def _on_step(self) -> bool:
         return True
@@ -116,6 +117,6 @@ class WandBCallback(BaseCallback):
         )
 
         if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
-            best_model_path = utils.build_best_reward_checkpoint_path(self.storage_dir)
+            best_model_path = utils.build_best_reward_checkpoint_path(self.storage_dir, self.mode)
             if os.path.exists(best_model_path):
                 wandb.save(best_model_path)

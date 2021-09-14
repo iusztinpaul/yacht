@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Union
+from typing import List, Union, Optional
 
 import wandb
 from stable_baselines3.common.base_class import BaseAlgorithm
@@ -12,8 +12,8 @@ from yacht.agents import build_agent
 from yacht.config import Config
 from yacht.data.datasets import AssetDataset, build_dataset_wrapper, build_dataset, SampleAssetDataset
 from yacht.data.k_fold import PurgedKFold
-from yacht.environments import BaseAssetEnvironment, build_env, MetricsVecEnvWrapper
-from yacht.environments.callbacks import LoggerCallback, RewardsRenderCallback, MetricsEvalCallback
+from yacht.environments import build_env, MetricsVecEnvWrapper
+from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback
 from yacht.logger import Logger
 from yacht.utils.wandb import WandBCallback
 
@@ -29,6 +29,7 @@ class Trainer(ABC):
             train_env: VecEnv,
             validation_env: MetricsVecEnvWrapper,
             logger: Logger,
+            mode: Mode,
             save: bool = True
     ):
         self.config = config
@@ -39,6 +40,7 @@ class Trainer(ABC):
         self.train_env = train_env
         self.validation_env = validation_env
         self.logger = logger
+        self.mode = mode
         self.save = save
 
         assert self.train_dataset.storage_dir == self.validation_dataset.storage_dir
@@ -50,7 +52,7 @@ class Trainer(ABC):
         self.agent.policy.eval()
 
         if self.save is True:
-            save_path = utils.build_last_checkpoint_path(self.storage_dir)
+            save_path = utils.build_last_checkpoint_path(self.storage_dir, self.mode)
             self.agent.save(
                 path=save_path
             )
@@ -59,18 +61,30 @@ class Trainer(ABC):
             if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
                 wandb.save(save_path)
 
-    def train(self) -> BaseAlgorithm:
-        self.logger.info(f'Training for {self.config.train.total_timesteps} timesteps.')
-        self.logger.info(f'Train split length: {self.train_dataset.num_sampling_period}')
-        self.logger.info(f'Validation split length: {self.validation_dataset.num_sampling_period}\n')
+        self.train_env.close()
+        self.validation_env.close()
+        self.train_dataset.close()
+        self.validation_dataset.close()
 
+    def train(self) -> BaseAlgorithm:
+        self.before_train_log()
         self.agent = self.agent.learn(
             total_timesteps=self.config.train.total_timesteps,
             callback=self.build_callbacks(),
             log_interval=self.config.train.collecting_n_steps,
         )
+        self.after_train_log()
 
         return self.agent
+
+    def before_train_log(self):
+        self.logger.info(f'Started training with {self.__class__.__name__}.')
+        self.logger.info(f'Training for {self.config.train.total_timesteps} timesteps.')
+        self.logger.info(f'Train split length: {self.train_dataset.num_sampling_period}')
+        self.logger.info(f'Validation split length: {self.validation_dataset.num_sampling_period}.\n')
+
+    def after_train_log(self):
+        self.logger.info(f'Training finished for {self.__class__.__name__}.')
 
     def build_callbacks(self) -> List[BaseCallback]:
         callbacks = [
@@ -86,22 +100,35 @@ class Trainer(ABC):
                 n_eval_episodes=len(self.validation_dataset.datasets),
                 eval_freq=self.config.train.collecting_n_steps * 2,
                 log_path=utils.build_log_dir(self.storage_dir),
-                best_model_save_path=utils.build_best_checkpoint_dir(self.storage_dir),
+                best_model_save_path=utils.build_best_checkpoint_dir(self.storage_dir, self.mode),
                 deterministic=self.config.input.backtest.deterministic,
                 verbose=True
             ),
-            RewardsRenderCallback(
-                total_timesteps=self.config.train.total_timesteps,
-                storage_dir=self.storage_dir,
-                mode=Mode.Train
-            )
+            # RewardsRenderCallback(
+            #     total_timesteps=self.config.train.total_timesteps,
+            #     storage_dir=self.storage_dir,
+            #     mode=Mode.Train
+            # )
         ]
 
         if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
-            wandb_callback = WandBCallback(storage_dir=self.storage_dir)
+            wandb_callback = WandBCallback(storage_dir=self.storage_dir, mode=self.mode)
             callbacks.append(wandb_callback)
 
         return callbacks
+
+
+class FineTuneTrainer(Trainer):
+    def train(self) -> BaseAlgorithm:
+        self.before_train_log()
+        self.agent = self.agent.learn(
+            total_timesteps=self.config.train.fine_tune_total_timesteps,
+            callback=self.build_callbacks(),
+            log_interval=self.config.train.collecting_n_steps,
+        )
+        self.after_train_log()
+
+        return self.agent
 
 
 class KFoldTrainer(Trainer):
@@ -179,34 +206,32 @@ class KFoldTrainer(Trainer):
 
 trainer_registry = {
     'Trainer': Trainer,
+    'FineTuneTrainer': FineTuneTrainer,
     'KFoldTrainer': KFoldTrainer
 }
 
 
 def run_train(config: Config, logger: Logger, storage_dir: str, resume_training: bool):
-    train_dataset = build_dataset(config, logger, storage_dir, mode=Mode.Train)
-    train_env = build_env(config, train_dataset, logger, mode=Mode.Train)
-    validation_dataset = build_dataset(config, logger, storage_dir, mode=Mode.BacktestValidation)
-    validation_env = build_env(config, validation_dataset, logger, mode=Mode.BacktestValidation)
-
-    agent = build_agent(
-        config=config,
-        env=train_env,
-        logger=logger,
-        storage_dir=storage_dir,
-        resume=resume_training,
-        agent_from='latest'
-    )
-
     trainer = build_trainer(
         config=config,
-        agent=agent,
-        train_dataset=train_dataset,
-        validation_dataset=validation_dataset,
-        train_env=train_env,
-        validation_env=validation_env,
+        storage_dir=storage_dir,
+        resume_training=resume_training,
+        mode=Mode.Train,
         logger=logger,
         save=True
+    )
+    agent = trainer.train()
+    trainer.close()
+
+    # Fine tune agent.
+    trainer = build_trainer(
+        config=config,
+        storage_dir=storage_dir,
+        resume_training=False,
+        mode=Mode.FineTuneTrain,
+        logger=logger,
+        save=True,
+        agent=agent
     )
     trainer.train()
     trainer.close()
@@ -214,15 +239,34 @@ def run_train(config: Config, logger: Logger, storage_dir: str, resume_training:
 
 def build_trainer(
         config,
-        agent: BaseAlgorithm,
-        train_dataset: AssetDataset,
-        validation_dataset: AssetDataset,
-        train_env: Union[BaseAssetEnvironment, VecEnv],
-        validation_env: Union[BaseAssetEnvironment, VecEnv],
+        storage_dir: str,
+        resume_training: bool,
+        mode: Mode,
         logger: Logger,
-        save: bool
+        save: bool,
+        agent: Optional[BaseAlgorithm] = None
 ) -> Trainer:
-    trainer_class = trainer_registry[config.train.trainer_name]
+    assert mode.is_trainable()
+
+    train_dataset = build_dataset(config, logger, storage_dir, mode=mode)
+    train_env = build_env(config, train_dataset, logger, mode=mode)
+    validation_dataset = build_dataset(config, logger, storage_dir, mode=Mode.BacktestValidation)
+    validation_env = build_env(config, validation_dataset, logger, mode=Mode.BacktestValidation)
+
+    if agent is None:
+        agent = build_agent(
+            config=config,
+            env=train_env,
+            logger=logger,
+            storage_dir=storage_dir,
+            resume=resume_training,
+            agent_from='latest'
+        )
+    else:
+        agent.set_env(train_env)
+
+    trainer_name = config.train.fine_tune_trainer_name if mode.is_fine_tuning() else config.train.trainer_name
+    trainer_class = trainer_registry[trainer_name]
     trainer_kwargs = {
         'config': config,
         'agent': agent,
@@ -232,6 +276,7 @@ def build_trainer(
         'train_env': train_env,
         'validation_env': validation_env,
         'logger': logger,
+        'mode': mode,
         'save': save
     }
 

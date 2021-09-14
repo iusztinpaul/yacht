@@ -28,7 +28,13 @@ def build_dataset(
     global split_rendered
 
     input_config = config.input
-    tickers = input_config.tickers if mode.is_trainable() else input_config.backtest.tickers
+    if mode.is_trainable():
+        if mode.is_fine_tuning():
+            tickers = input_config.fine_tune_tickers
+        else:
+            tickers = input_config.tickers
+    else:
+        tickers = input_config.backtest.tickers
     assert len(tickers) > 0
     assert len(tickers) >= config.input.num_assets_per_dataset, 'Cannot create a dataset with less tickers than asked.'
 
@@ -88,17 +94,19 @@ def build_dataset(
         renderer.save(utils.build_graphics_path(storage_dir, 'train_test_split.png'))
         renderer.close()
 
-    logger.info(f'Train split: {train_split[0]} - {train_split[1]}')
-    logger.info(f'Validation split: {validation_split[0]} - {validation_split[1]}')
-    logger.info(f'Backtest split: {backtest_split[0]} - {backtest_split[1]}')
-
+    logger.info(f'Building datasets for: {mode.value}')
+    logger.info(f'Loading the following assets:')
+    logger.info(tickers)
     if mode.is_trainable() or mode.is_backtest_on_train():
+        logger.info(f'Train split: {train_split[0]} - {train_split[1]}')
         start = train_split[0]
         end = train_split[1]
     elif mode.is_validation():
+        logger.info(f'Validation split: {validation_split[0]} - {validation_split[1]}')
         start = validation_split[0]
         end = validation_split[1]
     else:
+        logger.info(f'Backtest split: {backtest_split[0]} - {backtest_split[1]}')
         start = backtest_split[0]
         end = backtest_split[1]
 
