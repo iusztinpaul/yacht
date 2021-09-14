@@ -5,6 +5,7 @@ input: {
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['BTC-USD', 'ETH-USD', 'LTC-USD', 'DOGE-USD', 'XRP-USD', 'DASH-USD', 'XMR-USD']
+    fine_tune_tickers: ['BTC-USD']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
@@ -69,7 +70,8 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 500000
+    total_timesteps: 350000
+    fine_tune_total_timesteps: 150000
     collecting_n_steps: 2048
     learning_rate: 0.00025
     batch_size: 512

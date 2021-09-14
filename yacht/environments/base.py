@@ -82,7 +82,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         from yacht.data.renderers import AssetEnvironmentRenderer
 
         # Choose a random ticker for every instance of the environment.
-        self.dataset.sample()
+        self.dataset.sample(seed=self.given_seed)
 
         # Rendering.
         self.renderer = AssetEnvironmentRenderer(

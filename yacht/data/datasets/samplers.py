@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 from typing import List, Optional, Dict, Union
 
@@ -49,12 +50,22 @@ class SampleAssetDataset(AssetDataset):
         self.dataset_indices = np.arange(0, len(self.datasets))
         self.current_dataset_indices_position = 0
         if self.shuffle:
+            self.seed(self.default_index)
             np.random.shuffle(self.dataset_indices)
 
         self.default_index = default_index
         self.current_dataset_index = self.sample(default_index)
+        
+    def seed(self, value: float):
+        # Seed python RNG
+        random.seed(value)
+        # Seed numpy RNG
+        np.random.seed(value)
 
-    def sample(self, idx: Optional[int] = None) -> int:
+    def sample(self, idx: Optional[int] = None, seed: Optional[float] = None) -> int:
+        if seed is not None:
+            self.seed(seed)
+            
         if idx is None:
             # Move to the next dataset by moving the map cursor.
             self.current_dataset_indices_position += 1
