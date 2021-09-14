@@ -147,9 +147,9 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
 
             self.logger.log(metrics)
         else:
-            # We don't want to clutter the board with redundant information. Log only essential metrics.
+            # We don't want to clutter the board with redundant information. Log only essential metrics for non-mean.
             metrics = self.filter_metrics(metrics, self.extra_metrics_to_log)
-            metrics = {f'{method}/{k}': v for k, v in metrics.items()}
+            metrics = {f'{method}-{k}': v for k, v in metrics.items()}
             metrics = self._prefix_keys(metrics)
 
             self.logger.log(metrics)

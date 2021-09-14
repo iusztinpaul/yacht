@@ -188,7 +188,8 @@ def build_dataset(
         mode=mode,
         logger=logger,
         window_size=input_config.window_size,
-        default_index=0
+        default_index=0,
+        shuffle=mode.is_trainable()
     )
 
 
