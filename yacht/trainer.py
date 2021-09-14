@@ -68,11 +68,17 @@ class Trainer(ABC):
 
     def train(self) -> BaseAlgorithm:
         self.before_train_log()
+
+        if self.mode.is_fine_tuning():
+            total_timesteps = self.config.train.fine_tune_total_timesteps
+        else:
+            total_timesteps = self.config.train.total_timesteps
         self.agent = self.agent.learn(
-            total_timesteps=self.config.train.total_timesteps,
+            total_timesteps=total_timesteps,
             callback=self.build_callbacks(),
             log_interval=self.config.train.collecting_n_steps,
         )
+
         self.after_train_log()
 
         return self.agent
@@ -116,19 +122,6 @@ class Trainer(ABC):
             callbacks.append(wandb_callback)
 
         return callbacks
-
-
-class FineTuneTrainer(Trainer):
-    def train(self) -> BaseAlgorithm:
-        self.before_train_log()
-        self.agent = self.agent.learn(
-            total_timesteps=self.config.train.fine_tune_total_timesteps,
-            callback=self.build_callbacks(),
-            log_interval=self.config.train.collecting_n_steps,
-        )
-        self.after_train_log()
-
-        return self.agent
 
 
 class KFoldTrainer(Trainer):
@@ -206,7 +199,6 @@ class KFoldTrainer(Trainer):
 
 trainer_registry = {
     'Trainer': Trainer,
-    'FineTuneTrainer': FineTuneTrainer,
     'KFoldTrainer': KFoldTrainer
 }
 
@@ -263,10 +255,11 @@ def build_trainer(
             agent_from='latest'
         )
     else:
+        assert mode.is_fine_tuning()
+
         agent.set_env(train_env)
 
-    trainer_name = config.train.fine_tune_trainer_name if mode.is_fine_tuning() else config.train.trainer_name
-    trainer_class = trainer_registry[trainer_name]
+    trainer_class = trainer_registry[config.train.trainer_name]
     trainer_kwargs = {
         'config': config,
         'agent': agent,

@@ -67,7 +67,6 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    fine_tune_trainer_name: 'FineTuneTrainer'
     total_timesteps: 1000
     fine_tune_total_timesteps: 1000
     collecting_n_steps: 500
