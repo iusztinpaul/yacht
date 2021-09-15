@@ -66,11 +66,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.history = None
 
         # Rendering.
-        self.renderer = AssetEnvironmentRenderer(
-            data=self.dataset.get_prices(),
-            start=dataset.start,
-            end=dataset.end
-        )
+        self.renderer = self.build_renderer()
+
+        # Metrics
         self.compute_metrics = compute_metrics
 
     def seed(self, seed=None):
@@ -85,11 +83,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.dataset.sample(seed=self.given_seed)
 
         # Rendering.
-        self.renderer = AssetEnvironmentRenderer(
-            data=self.dataset.get_prices(),
-            start=self.dataset.start,
-            end=self.dataset.end
-        )
+        self.renderer = self.build_renderer()
 
         # Ticks.
         self.start_tick = self.window_size - 1
@@ -126,8 +120,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
     def set_dataset(self, dataset: SampleAssetDataset):
         # TODO: Find a better way to reinject the dataset.
-        from yacht.data.renderers import AssetEnvironmentRenderer
-
         self.dataset = dataset
 
         # spaces
@@ -138,11 +130,26 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.end_tick = len(self.dataset) - 2
 
         # Rendering
-        self.renderer = AssetEnvironmentRenderer(
+        self.renderer = self.build_renderer()
+
+    def build_renderer(self):
+        from yacht.data.renderers import AssetEnvironmentRenderer
+
+        taking_action_start = utils.adjust_period_to_window(
+            start=self.dataset.sampled_dataset.start,
+            end=self.dataset.sampled_dataset.end,
+            window_size=self.window_size - 1,
+            action='+',
+            include_weekends=self.dataset.include_weekends
+        )[0]
+        renderer = AssetEnvironmentRenderer(
             data=self.dataset.get_prices(),
-            start=dataset.start,
-            end=dataset.end
+            start=self.dataset.sampled_dataset.start,
+            end=self.dataset.sampled_dataset.end,
+            taking_action_start=taking_action_start
         )
+
+        return renderer
 
     @property
     def is_history_initialized(self) -> bool:

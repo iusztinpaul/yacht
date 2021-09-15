@@ -238,11 +238,12 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan'
     )
 
-    def __init__(self, data: pd.DataFrame, start: datetime, end: datetime):
+    def __init__(self, data: pd.DataFrame, start: datetime, end: datetime, taking_action_start: datetime):
         super().__init__(data)
 
         self.start = start
         self.end = end
+        self.taking_action_start = taking_action_start
 
     def _render(self, title: str, save_file_path: str, **kwargs):
         tickers: List[str] = kwargs['tickers']
@@ -295,7 +296,11 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             )
 
             if render_positions_separately:
-                trading_renderer = TradingPositionRenderer(data, remove_adjacent_positions=remove_adjacent_positions)
+                trading_renderer = TradingPositionRenderer(
+                    data=data,
+                    taking_action_start=self.taking_action_start,
+                    remove_adjacent_positions=remove_adjacent_positions
+                )
                 filename, file_extension = os.path.splitext(save_file_path)
                 trading_renderer.render(
                     title=f'{ticker}',
@@ -347,6 +352,11 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             mpf.make_addplot(total_assets, panel=4, color='tab:gray', type='bar', width=1, ylabel='Assets')
         ])
 
+        vlines = dict(
+            vlines=[self.taking_action_start],
+            linewidths=(1.5, ),
+            linestyle='-.'
+        )
         fig, axes = mpf.plot(
             data=dummy_data,
             addplot=extra_plots,
@@ -359,7 +369,8 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             savefig=save_file_path,
             volume=False,
             axisoff=False,
-            returnfig=True
+            returnfig=True,
+            vlines=vlines
         )
 
         # Configure chart legend and title
@@ -369,9 +380,15 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
 
 
 class TradingPositionRenderer(MplFinanceRenderer):
-    def __init__(self, data: Union[pd.DataFrame, Dict[str, pd.DataFrame]], remove_adjacent_positions: bool):
+    def __init__(
+            self,
+            data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
+            taking_action_start: datetime,
+            remove_adjacent_positions: bool
+    ):
         super().__init__(data)
 
+        self.taking_action_start = taking_action_start
         self.remove_adjacent_positions = remove_adjacent_positions
 
     def _render(self, title: str, save_file_path: str, **kwargs):
@@ -399,6 +416,11 @@ class TradingPositionRenderer(MplFinanceRenderer):
             ),
         )
 
+        vlines = dict(
+            vlines=[self.taking_action_start],
+            linewidths=(1.5,),
+            linestyle='-.'
+        )
         mpf.plot(
             self.data,
             addplot=additional_plots,
@@ -409,7 +431,8 @@ class TradingPositionRenderer(MplFinanceRenderer):
             panel_ratios=(1, 0.75),
             figscale=1.5,
             savefig=save_file_path,
-            volume=False
+            volume=False,
+            vlines=vlines
         )
 
     @classmethod
