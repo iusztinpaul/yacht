@@ -87,5 +87,5 @@ meta: {
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
     device: 'gpu'
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

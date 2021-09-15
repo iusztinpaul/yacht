@@ -12,6 +12,8 @@ from yacht.utils import build_log_dir
 
 
 class Logger(SB3Logger):
+    ONLY_CLOUD = 'ONLY_CLOUD'
+
     logger_levels = {
         'info': INFO,
         'debug': DEBUG,
@@ -80,11 +82,12 @@ class Logger(SB3Logger):
         self.logger.debug(self.name_to_value)
 
     def _do_log(self, args) -> None:
-        for arg in args:
-            if isinstance(arg, dict):
-                arg = pprint.pformat(arg, indent=4)
+        if args[-1] != self.ONLY_CLOUD:
+            for arg in args:
+                if isinstance(arg, dict):
+                    arg = pprint.pformat(arg, indent=4)
 
-            getattr(self.logger, self.level_name)(arg)
+                getattr(self.logger, self.level_name)(arg)
 
 
 #######################################################################################################################

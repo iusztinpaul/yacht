@@ -30,7 +30,7 @@ class LoggerCallback(BaseCallback):
             self.logger.info(f'Timestep [{self.num_timesteps} / {self.total_timesteps}]')
 
             time_length_info = self.compute_time_lengths()
-            self.logger.log(time_length_info)
+            self.logger.log(time_length_info, Logger.ONLY_CLOUD)
 
         return True
 

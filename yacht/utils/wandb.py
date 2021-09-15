@@ -73,7 +73,8 @@ class WandBLogger(Logger):
         wandb.log(self.name_to_value)
 
     def _do_log(self, args) -> None:
-        super()._do_log(args)
+        if args[-1] != self.ONLY_CLOUD:
+            super()._do_log(args)
 
         for arg in args:
             if isinstance(arg, dict):
