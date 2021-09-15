@@ -55,8 +55,9 @@ class SampleAssetDataset(AssetDataset):
 
         self.default_index = default_index
         self.current_dataset_index = self.sample(default_index)
-        
-    def seed(self, value: float):
+
+    @classmethod
+    def seed(cls, value: float):
         # Seed python RNG
         random.seed(value)
         # Seed numpy RNG

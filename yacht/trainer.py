@@ -13,7 +13,7 @@ from yacht.config import Config
 from yacht.data.datasets import AssetDataset, build_dataset_wrapper, build_dataset, SampleAssetDataset
 from yacht.data.k_fold import PurgedKFold
 from yacht.environments import build_env, MetricsVecEnvWrapper
-from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback
+from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback, RewardsRenderCallback
 from yacht.logger import Logger
 from yacht.utils.wandb import WandBCallback
 
@@ -46,6 +46,11 @@ class Trainer(ABC):
         assert self.train_dataset.storage_dir == self.validation_dataset.storage_dir
         self.storage_dir = self.train_dataset.storage_dir
 
+        if self.mode.is_fine_tuning():
+            self.total_timesteps = self.config.train.fine_tune_total_timesteps
+        else:
+            self.total_timesteps = self.config.train.total_timesteps
+
         self.agent.policy.train()
 
     def close(self):
@@ -68,36 +73,30 @@ class Trainer(ABC):
 
     def train(self) -> BaseAlgorithm:
         self.before_train_log()
-
-        if self.mode.is_fine_tuning():
-            total_timesteps = self.config.train.fine_tune_total_timesteps
-        else:
-            total_timesteps = self.config.train.total_timesteps
         self.agent = self.agent.learn(
-            total_timesteps=total_timesteps,
+            total_timesteps=self.total_timesteps,
             callback=self.build_callbacks(),
             log_interval=self.config.train.collecting_n_steps,
         )
-
         self.after_train_log()
 
         return self.agent
 
     def before_train_log(self):
-        self.logger.info(f'Started training with {self.__class__.__name__}.')
+        self.logger.info(f'Started training with {self.__class__.__name__} in mode: {self.mode.value}.')
         self.logger.info(f'Training for {self.config.train.total_timesteps} timesteps.')
         self.logger.info(f'Train split length: {self.train_dataset.num_sampling_period}')
         self.logger.info(f'Validation split length: {self.validation_dataset.num_sampling_period}.\n')
 
     def after_train_log(self):
-        self.logger.info(f'Training finished for {self.__class__.__name__}.')
+        self.logger.info(f'Training finished for {self.__class__.__name__} in mode: {self.mode.value}.')
 
     def build_callbacks(self) -> List[BaseCallback]:
         callbacks = [
             LoggerCallback(
                 logger=self.logger,
                 log_frequency=self.config.meta.log_frequency_steps,
-                total_timesteps=self.config.train.total_timesteps,
+                total_timesteps=self.total_timesteps
             ),
             MetricsEvalCallback(
                 eval_env=self.validation_env,
@@ -110,11 +109,11 @@ class Trainer(ABC):
                 deterministic=self.config.input.backtest.deterministic,
                 verbose=True
             ),
-            # RewardsRenderCallback(
-            #     total_timesteps=self.config.train.total_timesteps,
-            #     storage_dir=self.storage_dir,
-            #     mode=Mode.Train
-            # )
+            RewardsRenderCallback(
+                total_timesteps=self.total_timesteps,
+                storage_dir=self.storage_dir,
+                mode=self.mode
+            )
         ]
 
         if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':

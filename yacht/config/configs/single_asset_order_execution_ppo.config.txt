@@ -13,12 +13,10 @@ input: {
     start: '1/8/2015'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 60
+    window_size: 6
     render_periods: [
-     {start: '1/8/2018', end: '1/8/2019'},
-     {start: '1/8/2019', end: '1/8/2020'},
-     {start: '1/1/2021', end: '1/2/2021'},
-     {start: '1/4/2021', end: '1/8/2021'}
+     {start: '1/3/2019', end: '1/8/2019'},
+     {start: '1/8/2020', end: '1/8/2021'}
     ]
     include_weekends: true
     validation_split_ratio: 0.40
@@ -70,8 +68,8 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 350000
-    fine_tune_total_timesteps: 150000
+    total_timesteps: 2000000
+    fine_tune_total_timesteps: 500000
     collecting_n_steps: 2048
     learning_rate: 0.00025
     batch_size: 512

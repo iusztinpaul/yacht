@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from yacht import Mode
 
@@ -33,8 +34,7 @@ def build_best_metric_checkpoint_file_name(metric: str) -> str:
 
 def build_checkpoints_path(storage_dir: str, mode: Mode, file_name: str) -> str:
     checkpoint_dir = os.path.join(storage_dir, 'checkpoints', mode.value)
-    if not os.path.exists(checkpoint_dir):
-        os.mkdir(checkpoint_dir)
+    Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
 
     return os.path.join(checkpoint_dir, file_name)
 
