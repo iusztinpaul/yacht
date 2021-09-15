@@ -29,7 +29,27 @@ class LoggerCallback(BaseCallback):
         if self.num_timesteps % self.log_frequency == 0:
             self.logger.info(f'Timestep [{self.num_timesteps} / {self.total_timesteps}]')
 
+            time_length_info = self.compute_time_lengths()
+            self.logger.log(time_length_info)
+
         return True
+
+    def compute_time_lengths(self) -> dict:
+        time_length_info = {
+            'time/data_time_length': 0,
+            'time/env_time_length': 0,
+            'time/agent_time_length': 0
+        }
+        for info in self.training_env.unwrapped.buf_infos:
+            time_length_info['time/data_time_length'] += info['data_time_length']
+            time_length_info['time/env_time_length'] += info['env_time_length']
+            time_length_info['time/agent_time_length'] += info['agent_time_length']
+
+        num_envs = self.training_env.num_envs
+        for k, v in time_length_info.items():
+            time_length_info[k] = v / num_envs
+
+        return time_length_info
 
 
 class RewardsRenderCallback(BaseCallback):

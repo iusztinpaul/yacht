@@ -1,4 +1,5 @@
 import datetime
+import time
 from abc import abstractmethod, ABC
 from copy import copy
 from typing import Dict, List, Optional, Union, Tuple
@@ -71,6 +72,12 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # Metrics
         self.compute_metrics = compute_metrics
 
+        # Time Metrics
+        self.data_time_length = np.nan
+        self.env_time_length = np.nan
+        self.env_time_end = np.nan
+        self.agent_time_length = np.nan
+
     def seed(self, seed=None):
         self.given_seed = seed
 
@@ -111,7 +118,15 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # History.
         self.history = self.initialize_history()
 
+        # Time Metrics
+        self.data_time_length = np.nan
+        self.env_time_length = np.nan
+        self.env_time_end = np.nan
+        self.agent_time_length = np.nan
+
         self._s_t = self.get_next_observation()
+
+        self.env_time_end = time.time()
 
         return self._s_t
 
@@ -166,6 +181,12 @@ class BaseAssetEnvironment(gym.Env, ABC):
             else 0
 
     def step(self, action: np.ndarray):
+        # The agent time is computed between the last time it called the environment &
+        # the start of the environment logic.
+        if np.isfinite(self.env_time_end):
+            self.agent_time_length = time.time() - self.env_time_end
+        env_start_time = time.time()
+
         if self._done is True:
             episode_metrics, report = self.on_done()
             info = {
@@ -197,6 +218,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
             # See if it is done after incrementing the tick & computing the internal state.
             self._done = self.is_done()
+
+            # The env_time_length variable does not contain the time to compute the metrics. It is not that important
+            # because the metrics are computed only at backtest.
+            self.env_time_end = time.time()
+            self.env_time_length = self.env_time_end - env_start_time
 
             # Log info for s_t.
             info = self.create_info()
@@ -246,12 +272,16 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return observation_space
 
     def get_next_observation(self) -> Dict[str, np.ndarray]:
+        start_data_time = time.time()
+
         observation = self.dataset[self.t_tick]
         # Replace the value of 'env_features' if you want to add custom data.
         # observation['env_features'] = ...
 
         observation = self._get_next_env_observation(observation)
         observation = self.scale_env_observation(observation)
+
+        self.data_time_length = time.time() - start_data_time
 
         return observation
 
@@ -298,6 +328,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
             num_longs=self._num_longs,
             num_shorts=self._num_shorts,
             num_holds=self._num_holds,
+            data_time_length=self.data_time_length,
+            env_time_length=self.env_time_length,
+            agent_time_length=self.agent_time_length,
         )
 
         info = self._create_info(info)

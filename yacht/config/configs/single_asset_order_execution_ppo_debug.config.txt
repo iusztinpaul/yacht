@@ -83,7 +83,7 @@ train: {
     sde_sample_freq: -1
 }
 meta: {
-    log_frequency_steps: 5000
+    log_frequency_steps: 100
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
     device: 'gpu'

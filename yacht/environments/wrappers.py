@@ -130,16 +130,16 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                     self.compute_metrics_statistics(metrics=self.metrics)
                 self._mean_metrics.update(self.computed_aggregated_metrics())
 
-                self.log(self._mean_metrics, method='mean')
-                self.log(self._median_metrics, method='median')
-                self.log(self._std_metrics, method='std')
-                self.log(self._third_quartile_metrics, method='quantile-75')
+                self.log_metrics(self._mean_metrics, method='mean')
+                self.log_metrics(self._median_metrics, method='median')
+                self.log_metrics(self._std_metrics, method='std')
+                self.log_metrics(self._third_quartile_metrics, method='quantile-75')
 
                 self.metrics = []
 
         return obs, reward, done, info
 
-    def log(self, metrics: Dict[str, np.ndarray], method: str = 'mean'):
+    def log_metrics(self, metrics: Dict[str, np.ndarray], method: str = 'mean'):
         assert method in ('mean', 'median', 'std', 'quantile-75')
 
         if method == 'mean':
