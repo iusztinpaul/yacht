@@ -124,6 +124,9 @@ def compute_glr_ratio(pa_values: Union[List[float], np.ndarray]) -> float:
     if negative_pa_values.size == 0:
         return 1.
 
+    if positive_pa_values.size == 0:
+        return 0.
+
     glr = positive_pa_values.mean() / np.abs(negative_pa_values.mean())
 
     return glr.item()

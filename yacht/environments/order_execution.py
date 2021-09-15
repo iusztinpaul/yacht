@@ -161,7 +161,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         }
 
     def _is_done(self) -> bool:
-        return False
+        return self._total_cash <= 1
 
     def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:
         pa = round(episode_metrics['PA'], 4)
