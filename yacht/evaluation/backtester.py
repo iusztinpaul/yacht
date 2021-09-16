@@ -47,7 +47,7 @@ class BackTester:
         )
 
         # Render backtest rewards.
-        total_timesteps = sum([buf_info['episode']['l'] for buf_info in self.env.buf_infos])
+        total_timesteps = sum([buf_info['episode']['l'] for buf_info in self.env.unwrapped.buf_infos])
         renderer = RewardsRenderer(
             total_timesteps=total_timesteps,
             storage_dir=self.dataset.storage_dir,
