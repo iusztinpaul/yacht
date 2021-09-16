@@ -13,7 +13,7 @@ input: {
     start: '1/8/2015'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 10
+    window_size: 3
     render_periods: [
      {start: '1/3/2019', end: '1/8/2019'},
      {start: '1/8/2020', end: '1/8/2021'}

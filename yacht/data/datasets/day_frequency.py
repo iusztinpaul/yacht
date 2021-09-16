@@ -56,7 +56,7 @@ class DayFrequencyDataset(SingleAssetDataset):
             '1d': spaces.Box(
                 low=-np.inf,
                 high=np.inf,
-                shape=(self.window_size, 1, len(self.features)),
+                shape=(self.window_size, 1, len(self.features)),  # (window, bar, features)
                 dtype=np.float32
             )
         }
