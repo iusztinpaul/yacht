@@ -28,7 +28,7 @@ class DiscreteActionScheme(ActionSchema):
 
     def get_action_space(self) -> Space:
         return spaces.MultiDiscrete(
-            nvec=list(len(self.possibilities) for _ in range(self.num_assets))
+            nvec=[len(self.possibilities) for _ in range(self.num_assets)]
 
         )
 

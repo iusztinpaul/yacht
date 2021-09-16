@@ -1,6 +1,7 @@
 import itertools
 
 from .base import *
+from .day_frequency import DayFrequencyDataset
 from .samplers import SampleAssetDataset
 from .multi_frequency import *
 
@@ -13,7 +14,7 @@ from ... import Mode
 
 dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
-    'IndexedDayMultiFrequencyDataset': IndexedDayMultiFrequencyDataset
+    'DayFrequencyDataset': DayFrequencyDataset
 }
 split_rendered = False
 

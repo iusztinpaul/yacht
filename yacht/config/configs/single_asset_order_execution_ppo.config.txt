@@ -1,6 +1,6 @@
 input: {
     market: 'Yahoo'
-    dataset: 'DayMultiFrequencyDataset'
+    dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
@@ -84,7 +84,7 @@ train: {
     sde_sample_freq: -1
 }
 meta: {
-    log_frequency_steps: 1000
+    log_frequency_steps: 5000
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
     device: 'gpu'

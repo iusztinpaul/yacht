@@ -8,7 +8,7 @@ from gym import spaces
 from pandas import Interval
 
 from yacht import Mode
-from yacht.data.datasets import IndexedDatasetMixin, SingleAssetDataset
+from yacht.data.datasets import SingleAssetDataset
 from yacht.data.markets import Market
 from yacht.data.scalers import Scaler
 from yacht.logger import Logger
@@ -98,7 +98,3 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
                 window_item[interval] = self.scaler.transform(window_item[interval])
 
         return window_item
-
-
-class IndexedDayMultiFrequencyDataset(IndexedDatasetMixin, DayMultiFrequencyDataset):
-    pass
