@@ -433,6 +433,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
             if self.dataset.should_render:
                 self.render_all(
+                    report=report,
                     title=self._compute_render_all_graph_title(episode_metrics),
                     name=f'{self.name}.png'
                 )
@@ -508,18 +509,18 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def render(self, mode='human', name='trades.png'):
         pass
 
-    def render_all(self, title, name='trades.png'):
+    def render_all(self, report: dict, title: str, name='trades.png'):
         renderer_kwargs = {
             'title': title,
             'save_file_path': self._build_render_path(name),
             'tickers': self.dataset.asset_tickers,
-            'actions': np.array(self.history['action'], dtype=np.float32),
-            'total_cash': np.array(self.history['total_cash'], dtype=np.float32)
+            'actions': report['action'],
+            'total_cash': report['total_cash']
         }
         if len(self.history['total_assets']) > 0:
-            renderer_kwargs['total_assets'] = np.array(self.history['total_assets'], dtype=np.float32)
+            renderer_kwargs['total_assets'] = report['total_assets']
         if len(self.history['total_units']) > 0:
-            renderer_kwargs['total_units'] = np.array(self.history['total_units'], dtype=np.float32)
+            renderer_kwargs['total_units'] = report['total_units']
 
         self.renderer.render(**renderer_kwargs)
         
