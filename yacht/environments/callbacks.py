@@ -29,12 +29,12 @@ class LoggerCallback(BaseCallback):
         if self.num_timesteps % self.log_frequency == 0:
             self.logger.info(f'Timestep [{self.num_timesteps} / {self.total_timesteps}]')
 
-            time_length_info = self.compute_time_lengths()
+            time_length_info = self.aggregate_time_lengths()
             self.logger.log(time_length_info, Logger.ONLY_CLOUD)
 
         return True
 
-    def compute_time_lengths(self) -> dict:
+    def aggregate_time_lengths(self) -> dict:
         time_length_info = {
             'time/data_time_length': 0,
             'time/env_time_length': 0,

@@ -206,6 +206,13 @@ def compute_periods(
     return periods
 
 
+def compute_period_range(start, end, include_weekends) -> List[datetime]:
+    freq = '1D' if include_weekends else '1BD'
+    period_range = list(pd.date_range(start, end, freq=freq))
+
+    return period_range
+
+
 def compute_render_periods(config_periods: List[PeriodConfig]) -> List[Interval]:
     periods = []
     for config_period in config_periods:

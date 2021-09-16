@@ -458,24 +458,51 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return title
 
     def create_report(self) -> Dict[str, Union[np.ndarray, list]]:
+        start = self.dataset.sampled_dataset.start
+        # The end_tick does not always go until the end of the dataset.
+        end = self.dataset.index_to_datetime(self.end_tick)
+        dates = utils.compute_period_range(start, end, self.dataset.include_weekends)
+
         prices = self.dataset.get_decision_prices()
-        prices = prices.loc[self.history['date']]
+        prices = prices.loc[dates]
 
         data = {
-            'date': self.history['date'],
+            'date': dates,
             'price': prices.values,
             'action': np.array(self.history['action'], dtype=np.float32),
-            'longs': self.history['num_longs'],
-            'shorts': self.history['num_shorts'],
-            'holds': self.history['num_holds'],
+            'longs': np.array(self.history['num_longs']),
+            'shorts': np.array(self.history['num_shorts']),
+            'holds': np.array(self.history['num_holds']),
             'total_cash': np.array(self.history['total_cash'], dtype=np.float64)
         }
         if len(self.history['total_units']) > 0:
             data['total_units'] = np.array(self.history['total_units'], dtype=np.float32)
         if len(self.history['total_assets']) > 0:
             data['total_assets'] = np.array(self.history['total_assets'], dtype=np.float64)
+            
+        data = self.pad_report(data)
 
         return data
+    
+    def pad_report(self, report: Dict[str, Union[np.ndarray, list]]) -> Dict[str, Union[np.ndarray, list]]:
+        edge_keys = ('total_cash', 'total_units', 'total_assets')
+        zero_keys = ('action', 'longs', 'shorts', 'holds')
+
+        remaining_period_length = self.end_tick - self.t_tick
+        padding_axis_one_dim = (0, remaining_period_length)
+        padding_axis_two_dims = ((0, remaining_period_length), (0, 0))
+        for k, v in report.items():
+            if isinstance(v, np.ndarray) and len(v.shape) == 1:
+                padding_axis = padding_axis_one_dim
+            else:
+                padding_axis = padding_axis_two_dims
+
+            if k in edge_keys:
+                report[k] = np.pad(report[k], padding_axis, mode='edge')
+            elif k in zero_keys:
+                report[k] = np.pad(report[k], padding_axis, mode='constant', constant_values=(0, ))
+
+        return report
 
     @abstractmethod
     def render(self, mode='human', name='trades.png'):

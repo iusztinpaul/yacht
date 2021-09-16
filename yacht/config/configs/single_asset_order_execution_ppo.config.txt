@@ -13,7 +13,7 @@ input: {
     start: '1/8/2015'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 6
+    window_size: 1
     render_periods: [
      {start: '1/3/2019', end: '1/8/2019'},
      {start: '1/8/2020', end: '1/8/2021'}
@@ -84,7 +84,7 @@ train: {
     sde_sample_freq: -1
 }
 meta: {
-    log_frequency_steps: 5000
+    log_frequency_steps: 1000
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
     device: 'gpu'
