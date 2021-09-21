@@ -21,5 +21,16 @@ def fib_sequence(n: int) -> List[int]:
     return values
 
 
+def convert_to_type(obj: str) -> Any:
+    if is_number(obj):
+        return float(obj)
+    if not isinstance(obj, str):
+        return obj
+    if obj.upper() == 'TRUE' or obj.upper() == 'FALSE':
+        return bool(obj)
+
+    return obj
+
+
 def is_number(obj: Any) -> bool:
-    return isinstance(obj, (int, float, complex))
+    return isinstance(obj, (int, float))
