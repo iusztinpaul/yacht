@@ -56,6 +56,17 @@ meta: {
 }
 ```
 
+# Hyperparameter Optimization
+### Weights & Biases
+* Hyperparameter optimization with weights & biases sweeps.
+* Weights & biases should work as a simple experiment tracker before using this.
+* You can use any other config from `tools/tuning/configs` or generate your own.
+
+```shell
+wandb sweep tools/tuning/configs/single_asset_order_execution_crypto.yaml
+wandb agent id-given-by-generated-sweep
+```
+
 # Data APIs
 * Currently we have support for `Binance` & `Yahoo Finance`.
 * You should set the `api keys` in the `.env` file for full support.
