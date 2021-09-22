@@ -26,8 +26,10 @@ def convert_to_type(obj: str) -> Any:
         return float(obj)
     if not isinstance(obj, str):
         return obj
-    if obj.upper() == 'TRUE' or obj.upper() == 'FALSE':
-        return bool(obj)
+    if obj.upper() == 'TRUE':
+        return True
+    if obj.upper() == 'FALSE':
+        return False
 
     return obj
 

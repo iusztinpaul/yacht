@@ -1,0 +1,243 @@
+project: yacht
+entity: yacht
+name: SingleAssetOrderExectionCrypto
+program: tools/tuning/run.py
+method: bayes
+metric:
+  goal: minimize
+  name: backtest_on_validation/PA
+parameters:
+  agent.name:
+    distribution: categorical
+    values:
+    - PPO
+  agent.policy.activationFn:
+    distribution: categorical
+    values:
+    - Tanh
+    - ReLU
+  agent.policy.featureExtractor.dropOutP:
+    distribution: uniform
+    max: 0.6
+    min: 0.0
+  agent.policy.featureExtractor.name:
+    distribution: categorical
+    values:
+    - RecurrentFeatureExtractor
+  agent.policy.featureExtractor.featuresDim:
+    distribution: categorical
+    values:
+      - [32, 32, 256]
+      - [64, 64, 512]
+      - [64, 64, 256]
+      - [128, 128, 1024]
+  agent.policy.name:
+    distribution: categorical
+    values:
+    - MlpPolicy
+  agent.policy.netArch.shared:
+    distribution: categorical
+    values:
+      - [128]
+      - [128, 128]
+      - [256]
+      - [256, 128]
+      - [512]
+      - [512, 256]
+  agent.policy.netArch.vf:
+    distribution: categorical
+    values:
+      - [16]
+      - [32]
+      - [64]
+  agent.policy.netArch.pi:
+    distribution: categorical
+    values:
+      - [16]
+      - [32]
+      - [64]
+  agent.verbose:
+    distribution: categorical
+    values:
+    - "true"
+  environment.actionSchema:
+    distribution: categorical
+    values:
+    - DiscreteActionScheme
+  environment.rewardSchemas:
+    distribution: categorical
+    values:
+      - - name: DecisionMakingRewardSchema
+        - name: ActionMagnitudeRewardSchema
+          reward_scaling: 0.01
+      - - name: DecisionMakingRewardSchema
+        - name: ActionMagnitudeRewardSchema
+          reward_scaling: 0.005
+      - - name: DecisionMakingRewardSchema
+        - name: ActionMagnitudeRewardSchema
+          reward_scaling: 0.02
+  environment.initialCashPosition:
+    distribution: int_uniform
+    max: 10000
+    min: 2500
+  environment.nEnvs:
+    distribution: int_uniform
+    max: 16
+    min: 4
+  environment.name:
+    distribution: categorical
+    values:
+    - OrderExecutionEnvironment-v0
+  environment.possibilities:
+    distribution: categorical
+    values:
+      - [0, 0.25, 0.5, 0.75, 1]
+      - [0, 0.1, 0.25, 0.5, 0.75, 1]
+      - [0, 0.05, 0.1, 0.25, 0.5, 0.75, 1]
+  input.dataset:
+    distribution: categorical
+    values:
+    - DayFrequencyDataset
+  input.decisionPriceFeature:
+    distribution: categorical
+    values:
+    - TP
+  input.embargoRatio:
+    distribution: categorical
+    values:
+    - 0.02
+  input.start:
+    distribution: categorical
+    values:
+      - 1/8/2015
+  input.end:
+    distribution: categorical
+    values:
+    - 1/8/2021
+  input.features:
+    distribution: categorical
+    values:
+      - [Close, Open, High, Low, Volume]
+      - [Close, Open, High, Low]
+      - [Close, Open]
+  input.technicalIndicators:
+    distribution: categorical
+    values:
+      - [macd, rsi_30, cci_30, dx_30]
+      - [macd, rsi_30]
+      - [macd]
+      - [rsi_30]
+      - [cci_30, dx_30]
+      - []
+  input.includeWeekends:
+    distribution: categorical
+    values:
+    - "true"
+  input.market:
+    distribution: categorical
+    values:
+    - Yahoo
+  input.numAssetsPerDataset:
+    distribution: categorical
+    values:
+    - 1
+  input.periodLength:
+    distribution: categorical
+    values:
+    - 1M
+  input.scaleOnInterval:
+    distribution: categorical
+    values:
+    - 1d
+  input.scaler:
+    distribution: categorical
+    values:
+    - MinMaxScaler
+  input.validationSplitRatio:
+    distribution: categorical
+    values:
+    - 0.4
+  input.tickers:
+    distribution: categorical
+    values:
+      - [BTC-USD, ETH-USD, LTC-USD, DOGE-USD, XRP-USD, DASH-USD, XMR-USD]
+  input.fineTuneTickers:
+    distribution: categorical
+    values:
+      - [BTC-USD]
+  input.windowSize:
+    distribution: int_uniform
+    max: 90
+    min: 1
+  meta.device:
+    distribution: categorical
+    values:
+    - gpu
+  meta.experimentTracker:
+    distribution: categorical
+    values:
+    - wandb
+  meta.logFrequencySteps:
+    distribution: categorical
+    values:
+    - 10000
+  train.batchSize:
+    distribution: int_uniform
+    max: 1024
+    min: 256
+  train.clipRange:
+    distribution: uniform
+    max: 0.4
+    min: 0.1
+  train.collectingNSteps:
+    distribution: int_uniform
+    max: 4096
+    min: 1024
+  train.entropyCoefficient:
+    distribution: uniform
+    max: 0.02
+    min: 0.005
+  train.fineTuneTotalTimesteps:
+    distribution: categorical
+    values:
+    - 250000
+  train.gaeLambda:
+    distribution: uniform
+    max: 1.25
+    min: 0.475
+  train.gamma:
+    distribution: uniform
+    max: 1.0
+    min: 0.495
+  train.learningRate:
+    distribution: uniform
+    max: 0.0005
+    min: 0.000125
+  train.maxGradNorm:
+    distribution: uniform
+    max: 1
+    min: 0.25
+  train.nEpochs:
+    distribution: int_uniform
+    max: 20
+    min: 5
+  train.useSde:
+    distribution: categorical
+    values:
+      - "false"
+  train.sdeSampleFreq:
+    distribution: int_uniform
+    max: 4096
+    min: 1024
+  train.totalTimesteps:
+    distribution: categorical
+    values:
+    - 750000
+  train.trainerName:
+    distribution: categorical
+    values:
+    - Trainer
+  train.vfCoefficient:
+    distribution: uniform
+    max: 0.75
+    min: 0.25

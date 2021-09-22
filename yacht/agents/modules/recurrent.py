@@ -35,12 +35,12 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
             nn.Linear(in_features=len(self.features) * self.num_assets, out_features=features_dim[0]),
             activation_fn()
         )
-        self.public_recurrent = nn.GRU(features_dim[0], features_dim[1], batch_first=True)
+        self.public_recurrent = nn.GRU(features_dim[0], features_dim[1], batch_first=True, dropout=drop_out_p)
         self.private_mlp = nn.Sequential(
             nn.Linear(in_features=env_features_len, out_features=features_dim[0]),
             activation_fn()
         )
-        self.private_recurrent = nn.GRU(features_dim[0], features_dim[1], batch_first=True)
+        self.private_recurrent = nn.GRU(features_dim[0], features_dim[1], batch_first=True, dropout=drop_out_p)
 
         self.output_mlp = nn.Sequential(
             nn.Linear(features_dim[1] * 2 * self.window_size, features_dim[2]),

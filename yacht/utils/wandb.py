@@ -77,15 +77,15 @@ class HyperParameterTuningWandbContext(WandBContext):
             name=self.run_name
         )
 
-    def wandb_to_proto_config(self) -> Config:
-        config = wandb.config._items
-        del config['_wandb']
-        config = self.split_keys(config)
-        default_config = MessageToDict(self.config)
-        config = self.update_nested_dict(default_config, config)
-        config = ParseDict(config, Config())
+    def get_config(self) -> Config:
+        sweep_config = wandb.config._items
+        del sweep_config['_wandb']
+        sweep_config = self.split_keys(sweep_config)
+        local_config = MessageToDict(self.config)
+        sweep_config = self.merge_configs(local_config, sweep_config)
+        sweep_config = ParseDict(sweep_config, Config())
 
-        return config
+        return sweep_config
 
     @classmethod
     def split_keys(cls, config: dict) -> dict:
@@ -109,14 +109,14 @@ class HyperParameterTuningWandbContext(WandBContext):
         return new_config
 
     @classmethod
-    def update_nested_dict(cls, main_dict: dict, extra_dict: dict) -> dict:
+    def merge_configs(cls, main_dict: dict, extra_dict: dict) -> dict:
         for new_k, new_v in extra_dict.items():
             if new_k not in main_dict:
                 main_dict[new_k] = new_v
             elif not isinstance(new_v, dict):
                 main_dict[new_k] = new_v
             else:
-                main_dict[new_k] = cls.update_nested_dict(main_dict[new_k], extra_dict[new_k])
+                main_dict[new_k] = cls.merge_configs(main_dict[new_k], extra_dict[new_k])
 
         return main_dict
 
