@@ -4,7 +4,7 @@ name: SingleAssetOrderExectionCrypto
 program: tools/tuning/run.py
 method: bayes
 metric:
-  goal: minimize
+  goal: maximize
   name: backtest_on_validation/PA
 parameters:
   agent.name:

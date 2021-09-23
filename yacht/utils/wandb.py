@@ -25,6 +25,8 @@ class WandBContext:
         self.run = None
 
     def __enter__(self):
+        Path(self.storage_dir).mkdir(parents=True, exist_ok=True)
+
         # Clear possible residuals from last runs.
         cache_experiment_tracker_name(self.storage_dir, '')
 
@@ -73,22 +75,30 @@ class HyperParameterTuningWandbContext(WandBContext):
         self.run_name = create_project_name(self.config, self.storage_dir)
         self.run = wandb.init(
             project='yacht',
-            entity='yacht',
-            name=self.run_name
+            entity='yacht'
         )
 
     def get_config(self) -> Config:
         sweep_config = wandb.config._items
         del sweep_config['_wandb']
         sweep_config = self.split_keys(sweep_config)
-        local_config = MessageToDict(self.config)
-        sweep_config = self.merge_configs(local_config, sweep_config)
+
+        default_config = MessageToDict(self.config)
+        sweep_config = utils.merge_configs(default_config, sweep_config)
         sweep_config = ParseDict(sweep_config, Config())
 
         return sweep_config
 
     @classmethod
     def split_keys(cls, config: dict) -> dict:
+        """
+        Args:
+            config: Flattened config given by wandb sweeps YAML files.
+
+        Returns:
+            Nested dict used by the protobuf protocol.
+        """
+
         new_config = dict()
         for k, v in config.items():
             possible_keys = k.split('.')
@@ -98,27 +108,15 @@ class HyperParameterTuningWandbContext(WandBContext):
             sub_config = {
                 rest_of_keys: v
             }
-
             if len(possible_keys) == 1:
                 new_config[k] = utils.convert_to_type(v)
             elif current_key in new_config:
-                new_config[current_key].update(cls.split_keys(sub_config))
+                sub_config = cls.split_keys(sub_config)
+                new_config[current_key] = utils.merge_configs(new_config[current_key], sub_config)
             else:
                 new_config[current_key] = cls.split_keys(sub_config)
 
         return new_config
-
-    @classmethod
-    def merge_configs(cls, main_dict: dict, extra_dict: dict) -> dict:
-        for new_k, new_v in extra_dict.items():
-            if new_k not in main_dict:
-                main_dict[new_k] = new_v
-            elif not isinstance(new_v, dict):
-                main_dict[new_k] = new_v
-            else:
-                main_dict[new_k] = cls.merge_configs(main_dict[new_k], extra_dict[new_k])
-
-        return main_dict
 
 
 class WandBLogger(Logger):

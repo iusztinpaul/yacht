@@ -97,6 +97,10 @@ def build_logger(level: str, storage_dir: Optional[str] = None) -> Logger:
     from yacht.utils.wandb import WandBLogger
 
     if utils.get_experiment_tracker_name(storage_dir) == 'wandb':
-        return WandBLogger(storage_dir=storage_dir, level=level)
+        logger = WandBLogger(storage_dir=storage_dir, level=level)
+    else:
+        logger = Logger(storage_dir=storage_dir, level=level)
 
-    return Logger(storage_dir=storage_dir, level=level)
+    logger.info(f'Logging with: {logger.__class__.__name__}')
+
+    return logger

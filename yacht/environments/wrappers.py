@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional
 
 import gym
 import numpy as np

@@ -25,13 +25,14 @@ if __name__ == '__main__':
 
     utils.load_env_variables(root_dir=ROOT_DIR)
     environments.register_gym_envs()
-    logger = yacht.logger.build_logger(
-        level='info',
-        storage_dir=STORAGE_DIR
-    )
     config = load_config(CONFIG_DIR)
 
     with HyperParameterTuningWandbContext(config, STORAGE_DIR) as context:
+        logger = yacht.logger.build_logger(
+            level='info',
+            storage_dir=STORAGE_DIR
+        )
+
         config = context.get_config()
         logger.info(f'Config:\n{config}')
 

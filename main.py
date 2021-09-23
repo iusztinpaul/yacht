@@ -47,7 +47,7 @@ if __name__ == '__main__':
     config = load_config(utils.build_config_path(ROOT_DIR, args.config_file_name))
     export_config(config, storage_dir)
 
-    with WandBContext(config, storage_dir):
+    with WandBContext(config, storage_dir) as e:
         logger = yacht.logger.build_logger(
             level=args.logger_level,
             storage_dir=storage_dir
