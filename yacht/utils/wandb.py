@@ -10,25 +10,21 @@ from yacht import utils, Mode
 from yacht.config import Config
 from yacht.logger import Logger
 from yacht.utils import create_project_name
-from yacht.utils.cache import cache_experiment_tracker_name
+from yacht.utils.cache import cache_experiment_tracker_name, CacheContext
 
 
-class WandBContext:
+class WandBContext(CacheContext):
     def __init__(self, config: Config, storage_dir: str):
-        assert config.meta.experiment_tracker in ('', 'wandb'), \
-            'If you are using the wandb context you should either turn it on or off.'
+        super().__init__(config=config, storage_dir=storage_dir)
 
-        self.config = config
-        self.storage_dir = storage_dir
+        assert config.meta.experiment_tracker in ('', 'wandb'), \
+            'If you are using the wandb context you should also set it from the config or at least leave it blank.'
 
         self.run_name = None
         self.run = None
 
     def __enter__(self):
-        Path(self.storage_dir).mkdir(parents=True, exist_ok=True)
-
-        # Clear possible residuals from last runs.
-        cache_experiment_tracker_name(self.storage_dir, '')
+        super().__enter__()
 
         if self.config.meta.experiment_tracker == 'wandb':
             cache_experiment_tracker_name(self.storage_dir, 'wandb')
@@ -50,7 +46,7 @@ class WandBContext:
         )
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        cache_experiment_tracker_name(self.storage_dir, '')
+        super().__exit__(exc_type, exc_val, exc_tb)
 
         if self.config.meta.experiment_tracker == 'wandb':
             wandb.finish()

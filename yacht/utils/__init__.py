@@ -24,15 +24,3 @@ def create_project_name(config: Config, storage_dir: str):
     name = f'{config.environment.name}__{config.agent.name}__{project_iteration}'
 
     return name
-
-
-def get_project_iteration(storage_dir: str, key: str = 'num_iteration') -> int:
-    num_iteration = query_cache(storage_dir, key)
-    if num_iteration is None:
-        num_iteration = 0
-    else:
-        num_iteration += 1
-
-    write_to_cache(storage_dir, key, num_iteration)
-
-    return num_iteration
