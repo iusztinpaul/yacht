@@ -122,6 +122,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         self._s_t = self.get_next_observation()
 
+        # Compute env_time_end here so we are able to calculate the agent time from the first step.
         self.env_time_end = time.time()
 
         return self._s_t

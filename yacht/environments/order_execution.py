@@ -22,11 +22,17 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     ):
         super().__init__(name, dataset, reward_schema, action_schema, seed, compute_metrics, **kwargs)
 
+        self.unadjusted_period_mean_price = None
         self.cash_used_on_last_tick = 0
 
     def _reset(self):
         super()._reset()
 
+        # We care about the mean price only in the unadjusted range.
+        self.unadjusted_period_mean_price = self.dataset.compute_mean_price(
+            start=self.dataset.sampled_dataset.unadjusted_start,
+            end=self.dataset.sampled_dataset.end
+        )
         self.cash_used_on_last_tick = 0
 
     def _get_observation_space(
@@ -114,15 +120,10 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         return actions
 
     def _get_reward_schema_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:
-        # We care about the mean only in the unadjusted range.
-        market_mean_price = self.dataset.compute_mean_price(
-            start=self.dataset.sampled_dataset.unadjusted_start,
-            end=self.dataset.sampled_dataset.end
-        ).values
         next_price = self.dataset.get_decision_prices(self.t_tick).values
 
         return {
-            'market_mean_price': market_mean_price,
+            'market_mean_price': self.unadjusted_period_mean_price.values,
             'next_price': next_price
         }
 
