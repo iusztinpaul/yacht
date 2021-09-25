@@ -111,9 +111,9 @@ def build_dataset(
         start = backtest_split[0]
         end = backtest_split[1]
 
-    start, end = utils.adjust_period_to_window(
-        start=start,
-        end=end,
+    # Datasets will expand their data range with -window_size on the left side of the interval.
+    start = utils.adjust_period_to_window(
+        datetime_point=start,
         window_size=input_config.window_size,
         action='+',
         include_weekends=input_config.include_weekends

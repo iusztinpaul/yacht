@@ -62,14 +62,18 @@ class AssetDataset(Dataset, ABC):
         self.mode = mode
         self.logger = logger
         self.window_size = window_size
-        self.start, self.end = utils.adjust_period_to_window(
-            start=start,
-            end=end,
+        self.unadjusted_start = start
+        self.unadjusted_end = end
+        # Adjust start with a 'window_size' length so we take data from the past & actually start from the given start.
+        self.start = utils.adjust_period_to_window(
+            datetime_point=start,
             window_size=window_size,
             action='-',
             include_weekends=self.include_weekends
         )
+        self.end = end
 
+        assert self.start < self.unadjusted_start
         assert set(self.features) == set(self.price_features).union(set(self.other_features)), \
             '"self.features" should be all the supported features.'
 

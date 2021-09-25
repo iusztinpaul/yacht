@@ -26,8 +26,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
             seed: int = 0,
             compute_metrics: bool = False
     ):
-        from yacht.data.renderers import AssetEnvironmentRenderer
-
         # Environment name
         self.name = name
         self.given_seed = seed
@@ -44,8 +42,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 2
 
         # Ticks.
-        self.start_tick = self.window_size - 1
-        self.end_tick = self.dataset.num_days - 2  # Another -1 because the reward is calculated with one step further.
+        self.start_tick = self.window_size - 1  # Starting from 0 & the minimum value for the window_size is 1.
+        self.end_tick = self.dataset.num_days - 1  # Index starts from 0.
         self.t_tick = None
 
         # MDP state.
@@ -84,8 +82,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         set_random_seed(seed=seed, using_cuda=True)
 
     def reset(self):
-        from yacht.data.renderers import AssetEnvironmentRenderer
-
         # Choose a random ticker for every instance of the environment.
         self.dataset.sample(seed=self.given_seed)
 
@@ -93,8 +89,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.renderer = self.build_renderer()
 
         # Ticks.
-        self.start_tick = self.window_size - 1
-        self.end_tick = self.dataset.num_days - 2  # Another -1 because the reward is calculated with one step further.
+        self.start_tick = self.window_size - 1  # Starting from 0 & the minimum value for the window_size is 1.
+        self.end_tick = self.dataset.num_days - 1  # Index starts from 0.
         self.t_tick = self.start_tick
 
         # MDP state.
@@ -142,7 +138,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
 
         # episode
-        self.end_tick = len(self.dataset) - 2
+        self.end_tick = self.dataset.num_days - 1  # Index starts from 0.
 
         # Rendering
         self.renderer = self.build_renderer()
@@ -150,18 +146,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def build_renderer(self):
         from yacht.data.renderers import AssetEnvironmentRenderer
 
-        taking_action_start = utils.adjust_period_to_window(
-            start=self.dataset.sampled_dataset.start,
-            end=self.dataset.sampled_dataset.end,
-            window_size=self.window_size - 1,
-            action='+',
-            include_weekends=self.dataset.include_weekends
-        )[0]
         renderer = AssetEnvironmentRenderer(
             data=self.dataset.get_prices(),
             start=self.dataset.sampled_dataset.start,
             end=self.dataset.sampled_dataset.end,
-            taking_action_start=taking_action_start
+            unadjusted_start=self.dataset.sampled_dataset.unadjusted_start
         )
 
         return renderer
@@ -459,12 +448,17 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return title
 
     def create_report(self) -> Dict[str, Union[np.ndarray, list]]:
+        # The whole range it is computed only for rendering purposes.
         start = self.dataset.sampled_dataset.start
-        # The end_tick does not always go until the end of the dataset.
-        end = self.dataset.index_to_datetime(self.end_tick)
+        end = self.dataset.sampled_dataset.end
+        # We really care only about the actions taken in the unadjusted range.
+        unadjusted_start = self.dataset.sampled_dataset.unadjusted_start
+
         dates = utils.compute_period_range(start, end, self.dataset.include_weekends)
+        unadjusted_dates = utils.compute_period_range(unadjusted_start, end, self.dataset.include_weekends)
 
         prices = self.dataset.get_decision_prices()
+        unadjusted_prices = prices.loc[unadjusted_dates]
         prices = prices.loc[dates]
 
         data = {
@@ -482,6 +476,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
             data['total_assets'] = np.array(self.history['total_assets'], dtype=np.float64)
             
         data = self.pad_report(data)
+
+        # Do not pad the unadjusted data.
+        data['unadjusted_dates'] = unadjusted_dates
+        data['unadjusted_prices'] = unadjusted_prices.values
+        data['unadjusted_actions'] = data['action'][self.window_size:]
 
         return data
     

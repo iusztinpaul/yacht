@@ -114,9 +114,10 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         return actions
 
     def _get_reward_schema_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:
+        # We care about the mean only in the unadjusted range.
         market_mean_price = self.dataset.compute_mean_price(
-            self.dataset.sampled_dataset.start,
-            self.dataset.sampled_dataset.end
+            start=self.dataset.sampled_dataset.unadjusted_start,
+            end=self.dataset.sampled_dataset.end
         ).values
         next_price = self.dataset.get_decision_prices(self.t_tick).values
 

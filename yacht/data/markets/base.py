@@ -60,7 +60,7 @@ class Market(ABC):
     @abstractmethod
     def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
         """
-            Returns: data within [start, end)
+            Returns: data within [start, end]
         """
 
         pass
@@ -139,12 +139,11 @@ class H5Market(Market, ABC):
 
     def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
         """
-            Returns: data within [start, end)
+            Returns: data within [start, end]
         """
 
         if not self.is_cached(ticker, interval, start, end):
             raise RuntimeError(f'Table: "{interval}" not supported')
-        end = end - timedelta(microseconds=1)
 
         if self.include_weekends:
             database_to_pandas_freq = {

@@ -49,8 +49,8 @@ def get_daily_return(total_assets_over_time: Union[np.ndarray, pd.Series]) -> pd
 
 
 def aggregate_price_advantage(report: dict, buy: bool) -> float:
-    actions = report['action']
-    prices = report['price']
+    actions = report['unadjusted_actions']
+    prices = report['unadjusted_prices']
     mean_price = np.mean(prices, axis=0)
 
     statistics: Dict[str, Union[list, np.ndarray]] = defaultdict(list)

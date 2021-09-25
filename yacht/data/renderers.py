@@ -238,12 +238,12 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan'
     )
 
-    def __init__(self, data: pd.DataFrame, start: datetime, end: datetime, taking_action_start: datetime):
+    def __init__(self, data: pd.DataFrame, start: datetime, end: datetime, unadjusted_start: datetime):
         super().__init__(data)
 
         self.start = start
         self.end = end
-        self.taking_action_start = taking_action_start
+        self.unadjusted_start = unadjusted_start
 
     def _render(self, title: str, save_file_path: str, **kwargs):
         tickers: List[str] = kwargs['tickers']
@@ -298,7 +298,7 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             if render_positions_separately:
                 trading_renderer = TradingPositionRenderer(
                     data=data,
-                    taking_action_start=self.taking_action_start,
+                    unadjusted_start=self.unadjusted_start,
                     remove_adjacent_positions=remove_adjacent_positions
                 )
                 filename, file_extension = os.path.splitext(save_file_path)
@@ -353,7 +353,7 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         ])
 
         vlines = dict(
-            vlines=[self.taking_action_start],
+            vlines=[self.unadjusted_start],
             linewidths=(1.5, ),
             linestyle='-.'
         )
@@ -383,12 +383,12 @@ class TradingPositionRenderer(MplFinanceRenderer):
     def __init__(
             self,
             data: Union[pd.DataFrame, Dict[str, pd.DataFrame]],
-            taking_action_start: datetime,
+            unadjusted_start: datetime,
             remove_adjacent_positions: bool
     ):
         super().__init__(data)
 
-        self.taking_action_start = taking_action_start
+        self.unadjusted_start = unadjusted_start
         self.remove_adjacent_positions = remove_adjacent_positions
 
     def _render(self, title: str, save_file_path: str, **kwargs):
@@ -417,7 +417,7 @@ class TradingPositionRenderer(MplFinanceRenderer):
         )
 
         vlines = dict(
-            vlines=[self.taking_action_start],
+            vlines=[self.unadjusted_start],
             linewidths=(1.5,),
             linestyle='-.'
         )

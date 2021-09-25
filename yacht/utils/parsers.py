@@ -127,30 +127,25 @@ def split(
 
 
 def adjust_period_to_window(
-        start: Union[str, datetime],
-        end: Union[str, datetime],
+        datetime_point: Union[str, datetime],
         window_size: int,
         action: str,
         include_weekends: bool
 ):
     assert action in ('+', '-')
 
-    if isinstance(start, str):
-        start = string_to_datetime(start)
-    if isinstance(end, str):
-        end = string_to_datetime(end)
+    if isinstance(datetime_point, str):
+        datetime_point = string_to_datetime(datetime_point)
 
     if include_weekends:
         if action == '+':
-            start += timedelta(days=window_size)
+            datetime_point += timedelta(days=window_size)
         else:
-            start -= timedelta(days=window_size)
+            datetime_point -= timedelta(days=window_size)
     else:
-        start = add_business_days(start, action=action, offset=window_size)
+        datetime_point = add_business_days(datetime_point, action=action, offset=window_size)
 
-    assert start < end, f'{start} - {end} interval is too small.'
-
-    return start, end
+    return datetime_point
 
 
 def compute_periods(
