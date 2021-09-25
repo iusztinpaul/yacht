@@ -7,4 +7,5 @@ message FeatureExtractorConfig {
     string name = 1;
     repeated int32 features_dim = 2;
     double drop_out_p = 3;
+    string rnn_layer_type = 4;
 }

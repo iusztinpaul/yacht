@@ -18,7 +18,7 @@ parameters:
     - ReLU
   agent.policy.featureExtractor.dropOutP:
     distribution: uniform
-    max: 0.6
+    max: 0.8
     min: 0.0
   agent.policy.featureExtractor.name:
     distribution: categorical
@@ -28,9 +28,17 @@ parameters:
     distribution: categorical
     values:
       - [32, 32, 256]
+      - [32, 32, 32, 256]
+      - [32, 32, 32, 32, 256]
       - [64, 64, 512]
       - [64, 64, 256]
+      - [64, 64, 64, 256]
       - [128, 128, 1024]
+  agent.policy.featureExtractor.rnnLayerType:
+    distribution: categorical
+    values:
+      - GRU
+      - LSTM
   agent.policy.name:
     distribution: categorical
     values:

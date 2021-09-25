@@ -114,9 +114,11 @@ def build_agent(
                 'window_size': input_config.window_size,
                 'intervals': list(input_config.intervals),
                 'features': list(input_config.features) + list(input_config.technical_indicators),
-                'num_assets': input_config.num_assets_per_dataset,
                 'env_features_len': env.envs[0].observation_env_features_len,
-                'drop_out_p': feature_extractor_config.drop_out_p
+                'num_assets': input_config.num_assets_per_dataset,
+                'drop_out_p': feature_extractor_config.drop_out_p,
+                # TODO: Remove rnn_layer_type config parameter
+                'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM
             }
 
         agent = agent_class(

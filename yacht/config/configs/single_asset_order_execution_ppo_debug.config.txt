@@ -55,8 +55,9 @@ agent: {
         activation_fn: 'Tanh',
         feature_extractor: {
             name: 'RecurrentFeatureExtractor'
-            features_dim: [64, 64, 512]
+            features_dim: [64, 64, 64, 512]
             drop_out_p: 0.5
+            rnn_layer_type: 'LSTM'
         }
         net_arch: {
             shared: [256]

@@ -19,32 +19,53 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
             env_features_len: int,
             num_assets: int,
             activation_fn: nn.Module,
+            rnn_layer_type: nn.Module,
             drop_out_p: float = 0.5
     ):
         super().__init__(observation_space, features_dim[-1])
 
-        assert len(features_dim) == 3
+        assert len(features_dim) >= 3
+        assert len(set(features_dim[1:-1])) == 1, 'The features_dim of the recurrent layers should be equal.'
 
         self.window_size = window_size
         self.intervals = intervals
         self.features = features
-        self.num_assets = num_assets
         self.env_features_len = env_features_len
+        self.num_assets = num_assets
+        self.num_rnn_layers = len(features_dim[1:-1])
 
         self.public_mlp = nn.Sequential(
             nn.Linear(in_features=len(self.features) * self.num_assets, out_features=features_dim[0]),
-            activation_fn()
+            activation_fn(),
+            nn.Dropout(p=drop_out_p)
         )
-        self.public_recurrent = nn.GRU(features_dim[0], features_dim[1], batch_first=True, dropout=drop_out_p)
+        self.public_recurrent = rnn_layer_type(
+            features_dim[0],
+            features_dim[1],
+            num_layers=self.num_rnn_layers,
+            batch_first=True,
+            dropout=drop_out_p
+        )
+        self.public_dropout = nn.Dropout(p=drop_out_p)
+
         self.private_mlp = nn.Sequential(
             nn.Linear(in_features=env_features_len, out_features=features_dim[0]),
-            activation_fn()
+            activation_fn(),
+            nn.Dropout(p=drop_out_p)
         )
-        self.private_recurrent = nn.GRU(features_dim[0], features_dim[1], batch_first=True, dropout=drop_out_p)
+        self.private_recurrent = rnn_layer_type(
+            features_dim[0],
+            features_dim[1],
+            num_layers=self.num_rnn_layers,
+            batch_first=True,
+            dropout=drop_out_p
+        )
+        self.private_dropout = nn.Dropout(p=drop_out_p)
 
         self.output_mlp = nn.Sequential(
-            nn.Linear(features_dim[1] * 2 * self.window_size, features_dim[2]),
+            nn.Linear(features_dim[1] * 2 * self.window_size, features_dim[-1]),
             activation_fn(),
+            nn.Dropout(p=drop_out_p)
         )
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
@@ -63,9 +84,11 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
 
         public_input = self.public_mlp(public_input)
         public_input = self.public_recurrent(public_input)[0]
+        public_input = self.public_dropout(public_input)
 
         private_input = self.private_mlp(private_input)
         private_input = self.private_recurrent(private_input)[0]
+        private_input = self.private_dropout(private_input)
 
         output = torch.cat([public_input, private_input], dim=-1)
         output = output.reshape(batch_size, -1)
