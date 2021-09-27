@@ -135,6 +135,7 @@ dmypy.json
 # Storage
 *.db
 *storage*
+crawl_indices_results
 
 # Experiment trackers
 wandb

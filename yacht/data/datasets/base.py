@@ -15,6 +15,25 @@ from yacht.data.scalers import Scaler
 from yacht.logger import Logger
 
 
+class DatasetPeriod:
+    def __init__(self, start: datetime, end: datetime, window_size: int, include_weekends: bool):
+        self.unadjusted_start = start
+        self.unadjusted_end = end
+        # Adjust start with a 'window_size' length so we take data from the past & actually start from the given start.
+        self.start = utils.adjust_period_to_window(
+            datetime_point=start,
+            window_size=window_size,
+            action='-',
+            include_weekends=include_weekends
+        )
+        self.end = end
+
+        self.window_size = window_size
+        self.include_weekends = include_weekends
+
+        assert self.start < self.unadjusted_start
+
+
 class AssetDataset(Dataset, ABC):
     PRICE_FEATURES = (
         'Close',
@@ -29,8 +48,7 @@ class AssetDataset(Dataset, ABC):
             intervals: List[str],
             features: List[str],
             decision_price_feature: str,
-            start: datetime,
-            end: datetime,
+            period: DatasetPeriod,
             render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
@@ -59,26 +77,32 @@ class AssetDataset(Dataset, ABC):
         self.features, self.price_features, self.other_features = self.split_features(features)
         self.decision_price_feature = decision_price_feature
         self.render_intervals = render_intervals
+        self.period = period
         self.mode = mode
         self.logger = logger
         self.window_size = window_size
-        self.unadjusted_start = start
-        self.unadjusted_end = end
-        # Adjust start with a 'window_size' length so we take data from the past & actually start from the given start.
-        self.start = utils.adjust_period_to_window(
-            datetime_point=start,
-            window_size=window_size,
-            action='-',
-            include_weekends=self.include_weekends
-        )
-        self.end = end
 
-        assert self.start < self.unadjusted_start
         assert set(self.features) == set(self.price_features).union(set(self.other_features)), \
             '"self.features" should be all the supported features.'
 
     def close(self):
         self.market.close()
+
+    @property
+    def unadjusted_start(self) -> datetime:
+        return self.period.unadjusted_start
+
+    @property
+    def unadjusted_end(self) -> datetime:
+        return self.period.unadjusted_end
+
+    @property
+    def start(self) -> datetime:
+        return self.period.start
+
+    @property
+    def end(self) -> datetime:
+        return self.period.end
 
     @property
     def storage_dir(self) -> str:
@@ -185,8 +209,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             intervals: List[str],
             features: List[str],
             decision_price_feature: str,
-            start: datetime,
-            end: datetime,
+            period: DatasetPeriod,
             render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
@@ -199,8 +222,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             intervals=intervals,
             features=features,
             decision_price_feature=decision_price_feature,
-            start=start,
-            end=end,
+            period=period,
             render_intervals=render_intervals,
             mode=mode,
             logger=logger,
@@ -279,8 +301,7 @@ class MultiAssetDataset(AssetDataset):
             intervals: List[str],
             features: List[str],
             decision_price_feature: str,
-            start: datetime,
-            end: datetime,
+            period: DatasetPeriod,
             render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
@@ -291,8 +312,7 @@ class MultiAssetDataset(AssetDataset):
             intervals=intervals,
             features=features,
             decision_price_feature=decision_price_feature,
-            start=start,
-            end=end,
+            period=period,
             render_intervals=render_intervals,
             mode=mode,
             logger=logger,

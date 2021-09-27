@@ -107,6 +107,10 @@ parameters:
     values:
       - "true"
       - "false"
+  input.backtest.tickers:
+    distribution: categorical
+    values:
+      - [AAPL]
   input.dataset:
     distribution: categorical
     values:
@@ -122,7 +126,7 @@ parameters:
   input.start:
     distribution: categorical
     values:
-      - 1/8/2015
+      - 1/1/2015
   input.end:
     distribution: categorical
     values:
@@ -138,9 +142,11 @@ parameters:
     values:
       - [macd, rsi_30, cci_30, dx_30]
       - [macd, rsi_30]
+      - [cci_30, dx_30]
       - [macd]
       - [rsi_30]
-      - [cci_30, dx_30]
+      - [cci_30]
+      - [dx_30]
       - []
   input.includeWeekends:
     distribution: categorical
@@ -173,11 +179,11 @@ parameters:
   input.tickers:
     distribution: categorical
     values:
-      - [BTC-USD, ETH-USD, LTC-USD, DOGE-USD, XRP-USD, DASH-USD, XMR-USD]
+      - [NASDAQ100]
   input.fineTuneTickers:
     distribution: categorical
     values:
-      - [BTC-USD]
+      - [AAPL]
   input.windowSize:
     distribution: int_uniform
     max: 90

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Union
 
 import pandas as pd
 
@@ -25,7 +25,13 @@ class Binance(H5Market):
 
         self.client = Client(api_key, api_secret)
 
-    def request(self, ticker: str, interval: str, start: datetime, end: datetime = None) -> List[List[Any]]:
+    def request(
+            self,
+            ticker: str,
+            interval: str,
+            start: datetime,
+            end: datetime = None
+    ) -> Union[List[List[Any]], pd.DataFrame]:
         if '-' not in ticker:
             ticker = f'{ticker}USDT'
         else:

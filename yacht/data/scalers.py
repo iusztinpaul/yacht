@@ -89,7 +89,8 @@ class Scaler(ABC):
             ticker=scaler.ticker,
             interval=interval,
             start=train_start,
-            end=train_end
+            end=train_end,
+            flexible_start=True
         )
         scaler.fit(data)
 

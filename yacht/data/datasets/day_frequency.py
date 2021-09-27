@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Dict
 
 import numpy as np
@@ -7,7 +6,7 @@ from gym import spaces
 from pandas import Interval
 
 from yacht import Mode
-from yacht.data.datasets import SingleAssetDataset
+from yacht.data.datasets import SingleAssetDataset, DatasetPeriod
 from yacht.data.markets import Market
 from yacht.data.scalers import Scaler
 from yacht.logger import Logger
@@ -21,8 +20,7 @@ class DayFrequencyDataset(SingleAssetDataset):
             intervals: List[str],
             features: List[str],
             decision_price_feature: str,
-            start: datetime,
-            end: datetime,
+            period: DatasetPeriod,
             render_intervals: List[Interval],
             mode: Mode,
             logger: Logger,
@@ -38,8 +36,7 @@ class DayFrequencyDataset(SingleAssetDataset):
             intervals=intervals,
             features=features,
             decision_price_feature=decision_price_feature,
-            start=start,
-            end=end,
+            period=period,
             render_intervals=render_intervals,
             mode=mode,
             logger=logger,

@@ -17,7 +17,7 @@ from yacht.utils.wandb import HyperParameterTuningWandbContext
 
 
 STORAGE_DIR = os.path.join(ROOT_DIR, 'storage', 'hyper_param_optimization', f'{uuid1()}')
-CONFIG_DIR = utils.build_config_path(ROOT_DIR, 'single_asset_order_execution_ppo.config.txt')
+CONFIG_DIR = utils.build_config_path(ROOT_DIR, 'single_asset_order_execution_nasdaq100_ppo.config.txt')
 
 
 if __name__ == '__main__':

@@ -1,4 +1,6 @@
 import itertools
+from copy import copy
+from typing import Set
 
 from .base import *
 from .day_frequency import DayFrequencyDataset
@@ -6,11 +8,14 @@ from .samplers import SampleAssetDataset
 from .multi_frequency import *
 
 import yacht.utils as utils
-from yacht.data.markets import build_market
-from yacht.data.scalers import build_scaler
+
 from yacht.config import Config
-from ..renderers import TrainTestSplitRenderer
-from ... import Mode
+from yacht.data import indexes
+from yacht.data.markets import build_market
+from yacht.data.renderers import TrainTestSplitRenderer
+from yacht.data.scalers import build_scaler
+from yacht import Mode
+
 
 dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
@@ -29,18 +34,10 @@ def build_dataset(
     global split_rendered
 
     input_config = config.input
-    if mode.is_trainable():
-        if mode.is_fine_tuning():
-            tickers = input_config.fine_tune_tickers
-        else:
-            tickers = input_config.tickers
-    else:
-        tickers = input_config.backtest.tickers
-    assert len(tickers) > 0
-    assert len(tickers) >= config.input.num_assets_per_dataset, 'Cannot create a dataset with less tickers than asked.'
-
-    market = build_market(config, logger, storage_dir)
     dataset_cls = dataset_registry[input_config.dataset]
+
+    tickers = build_tickers(config, mode)
+    market = build_market(config, logger, storage_dir)
 
     train_split, validation_split, backtest_split = utils.split(
         input_config.start,
@@ -68,7 +65,8 @@ def build_dataset(
                 ticker,
                 '1d',
                 utils.string_to_datetime(input_config.start),
-                utils.string_to_datetime(input_config.end)
+                utils.string_to_datetime(input_config.end),
+                flexible_start=True
             )
 
         # Render de train-test split in rescaled mode.
@@ -125,21 +123,36 @@ def build_dataset(
         period_length=input_config.period_length,
         include_edges=False
     )
+
+    total_num_periods = len(periods) * len(list(itertools.combinations(tickers, config.input.num_assets_per_dataset)))
+    logger.info('Creating datasets...')
+    logger.info(f'Total estimated num datasets: {total_num_periods}')
+
     if len(periods) == 0:
         return None
 
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
-
+    num_skipped_periods = 0
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
     for (period_start, period_end) in periods:
-        for _ in itertools.combinations(tickers, config.input.num_assets_per_dataset):
-            dataset_tickers = np.random.choice(
-                tickers,
-                config.input.num_assets_per_dataset,
-                replace=False
-            )
-            single_asset_datasets: List[SingleAssetDataset] = []
+        dataset_period = DatasetPeriod(
+            start=period_start,
+            end=period_end,
+            window_size=input_config.window_size,
+            include_weekends=input_config.include_weekends
+        )
+        for dataset_tickers in itertools.combinations(tickers, config.input.num_assets_per_dataset):
+            # If the period is cached, after a download operation was tried, it means it is available for usage.
+            tickers_validity = [
+                market.is_cached(ticker, '1d', dataset_period.start, dataset_period.end)
+                for ticker in dataset_tickers
+            ]
+            if all(tickers_validity) is False:
+                num_skipped_periods += 1
+                continue
 
+            dataset_period = copy(dataset_period)
+            single_asset_datasets: List[SingleAssetDataset] = []
             for ticker in dataset_tickers:
                 scaler = build_scaler(
                     config=config,
@@ -160,8 +173,7 @@ def build_dataset(
                         intervals=list(input_config.intervals),
                         features=list(input_config.features) + list(input_config.technical_indicators),
                         decision_price_feature=input_config.decision_price_feature,
-                        start=period_start,
-                        end=period_end,
+                        period=dataset_period,
                         render_intervals=render_intervals,
                         mode=mode,
                         logger=logger,
@@ -176,8 +188,7 @@ def build_dataset(
                 intervals=list(input_config.intervals),
                 features=list(input_config.features) + list(input_config.technical_indicators),
                 decision_price_feature=input_config.decision_price_feature,
-                start=period_start,
-                end=period_end,
+                period=dataset_period,
                 render_intervals=render_intervals,
                 mode=mode,
                 logger=logger,
@@ -185,14 +196,29 @@ def build_dataset(
             )
             datasets.append(dataset)
 
+    days_per_period = len(utils.compute_period_range(
+        start=periods[0][0],
+        end=periods[0][1],
+        include_weekends=input_config.include_weekends
+    ))
+    usable_num_datasets = total_num_periods - num_skipped_periods
+    logger.info(f'Skipped {num_skipped_periods} / {total_num_periods} datasets.')
+    logger.info(f'A total of {usable_num_datasets} datasets were created.')
+    logger.info(f'Which is equal to a total of {usable_num_datasets * days_per_period} timesteps.')
+
+    sample_dataset_period = DatasetPeriod(
+        start=start,
+        end=end,
+        window_size=input_config.window_size,
+        include_weekends=input_config.include_weekends
+    )
     return SampleAssetDataset(
         datasets=datasets,
         market=market,
         intervals=list(input_config.intervals),
         features=list(input_config.features) + list(input_config.technical_indicators),
         decision_price_feature=input_config.decision_price_feature,
-        start=start,
-        end=end,
+        period=sample_dataset_period,
         render_intervals=render_intervals,
         mode=mode,
         logger=logger,
@@ -200,6 +226,33 @@ def build_dataset(
         default_index=0,
         shuffle=mode.is_trainable()
     )
+
+
+def build_tickers(config: Config, mode: Mode) -> Set[str]:
+    input_config = config.input
+
+    if mode.is_trainable():
+        if mode.is_fine_tuning():
+            tickers = list(input_config.fine_tune_tickers)
+        else:
+            tickers = list(input_config.tickers)
+    else:
+        tickers = list(input_config.backtest.tickers)
+
+    assert len(tickers) > 0
+    assert len(tickers) >= config.input.num_assets_per_dataset, 'Cannot create a dataset with less tickers than asked.'
+
+    if 'S&P500' in tickers:
+        tickers.remove('S&P500')
+        tickers.extend(indexes.SP_500_TICKERS)
+    if 'NASDAQ100' in tickers:
+        tickers.remove('NASDAQ100')
+        tickers.extend(indexes.NASDAQ_100_TICKERS)
+    if 'DOW30' in tickers:
+        tickers.remove('DOW30')
+        tickers.extend(indexes.DOW_30_TICKERS)
+
+    return set(tickers)
 
 
 def build_dataset_wrapper(dataset: AssetDataset, indices: List[int]) -> Union[IndexedDatasetMixin, AssetDataset]:

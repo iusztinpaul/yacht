@@ -16,31 +16,31 @@ def get_experiment_tracker_name(storage_dir: str) -> str:
 
 
 def get_project_iteration(storage_dir: str) -> int:
-    num_iteration = CacheContext.query_cache(storage_dir, 'num_iteration')
-    if num_iteration is None:
-        num_iteration = 0
-    else:
-        num_iteration += 1
-
-    CacheContext.write_to_cache(storage_dir, 'num_iteration', num_iteration)
-
-    return num_iteration
+    return CacheContext.query_cache(storage_dir, 'num_iteration')
 
 
 class CacheContext:
     def __init__(self, config: Config, storage_dir: str):
         self.config = config
         self.storage_dir = storage_dir
+        self.num_iteration = None
 
     def __enter__(self):
         Path(self.storage_dir).mkdir(parents=True, exist_ok=True)
         self.write_to_cache(self.storage_dir, 'initialized', True, check_context=False)
+
+        self.num_iteration = self.query_cache(self.storage_dir, 'num_iteration')
+        if self.num_iteration is None:
+            self.num_iteration = 0
         # Clear possible residuals from last runs.
         cache_experiment_tracker_name(self.storage_dir, '')
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        # Increment num_iteration for the next run.
+        self.write_to_cache(self.storage_dir, 'num_iteration', self.num_iteration + 1)
+        # Clear any possible residuals.
         cache_experiment_tracker_name(self.storage_dir, '')
         # After initialized is set to 'False' no more operations should be done on the cache.
         self.write_to_cache(self.storage_dir, 'initialized', False)
@@ -75,6 +75,8 @@ class CacheContext:
 
         if check_context and not os.path.exists(cache_file_path):
             raise RuntimeError(f'{cls.__class__.__name__} is not initialized.')
+        elif not os.path.exists(cache_file_path):
+            return dict()
 
         with open(cache_file_path, 'r') as f:
             local_cache = json.load(f)

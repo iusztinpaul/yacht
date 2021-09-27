@@ -202,7 +202,7 @@ def compute_periods(
 
 
 def compute_period_range(start, end, include_weekends) -> List[datetime]:
-    freq = '1D' if include_weekends else '1BD'
+    freq = '1D' if include_weekends else '1B'
     period_range = list(pd.date_range(start, end, freq=freq))
 
     return period_range

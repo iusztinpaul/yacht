@@ -21,8 +21,14 @@ class Yahoo(H5Market):
     ):
         super().__init__(features, logger, api_key, api_secret, storage_dir, 'yahoo.h5', include_weekends)
 
-    def request(self, ticker: str, interval: str, start: datetime, end: datetime = None) -> List[List[Any]]:
-        assert interval == '1d', 'Yahoo Finance supports only interval"1d".'
+    def request(
+            self,
+            ticker: str,
+            interval: str,
+            start: datetime,
+            end: datetime = None
+    ) -> Union[List[List[Any]], pd.DataFrame]:
+        assert interval == '1d', 'Yahoo Finance supports only interval = "1d".'
 
         ticker_data = yfinance.download(
             tickers=[ticker],
@@ -32,8 +38,6 @@ class Yahoo(H5Market):
             auto_adjust=True,
             prepost=False
         )
-
-        assert len(ticker_data) > 0
 
         return ticker_data
 

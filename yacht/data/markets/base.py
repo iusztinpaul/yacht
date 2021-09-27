@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Union, List, Any
+from typing import Union, List, Any, Optional, Iterable
 
 import pandas as pd
 
@@ -58,9 +58,17 @@ class Market(ABC):
         pass
 
     @abstractmethod
-    def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
+    def get(
+            self,
+            ticker: str,
+            interval: str,
+            start: datetime,
+            end: datetime,
+            flexible_start: bool = False
+    ) -> pd.DataFrame:
         """
-            Returns: data within [start, end]
+            Returns: data within [start, end] and fills nan values.
+            If flexible_start = True, it should return [data.index.sort()[0], end] with nan values filled.
         """
 
         pass
@@ -87,26 +95,52 @@ class Market(ABC):
     def cache_request(self, ticker: str, interval: str, data: pd.DataFrame):
         pass
 
-    def download(self, tickers: Union[str, List[str]], interval: str, start: datetime, end: datetime = None):
+    def download(self, tickers: Union[str, Iterable[str]], interval: str, start: datetime, end: datetime):
         if isinstance(tickers, str):
             tickers = [tickers]
 
         for ticker in tickers:
             self._download(ticker, interval, start, end)
 
-    def _download(self, ticker: str, interval: str, start: datetime, end: datetime = None):
-        if self.is_cached(ticker, interval, start, end):
+    def _download(self, ticker: str, interval: str, start: datetime, end: datetime):
+        if self.is_cached(ticker, interval, start, end,):
             return
 
         self.logger.info(f'[{interval}] - {ticker} - Downloading from "{start}" to "{end}"')
 
         data = self.request(ticker, interval, start, end)
+        assert self.check_downloaded_data(data, interval, start, end), \
+            f'[{ticker}] Download data did not passed the download checks.'
         data = self.process_request(data)
 
         assert self.MANDATORY_FEATURES.intersection(set(data.columns)) == self.MANDATORY_FEATURES, \
             'Some mandatory features are missing.'
 
         self.cache_request(ticker, interval, data)
+
+    def check_downloaded_data(
+            self,
+            data: Union[List[List[Any]], pd.DataFrame],
+            interval: str,
+            start: datetime,
+            end: datetime
+    ) -> bool:
+        return len(data) > 0
+
+    def interval_to_pd_freq(self, interval: str) -> str:
+        if self.include_weekends:
+            database_to_pandas_freq = {
+                'd': 'd',
+                'h': 'h',
+                'm': 'min'
+            }
+            freq = interval[:-1] + database_to_pandas_freq[interval[-1].lower()]
+        else:
+            # TODO: Adapt the business days logic to other intervals.
+            assert interval == '1d'
+            freq = 'B'
+
+        return freq
 
 
 class H5Market(Market, ABC):
@@ -121,6 +155,8 @@ class H5Market(Market, ABC):
             include_weekends: bool
     ):
         self.storage_file = os.path.join(storage_dir, storage_filename)
+        # The is_cached operation is called multiple times. So we cache the data state for faster usage.
+        self.is_cached_cache = dict()
 
         super().__init__(features, logger, api_key, api_secret, storage_dir, include_weekends)
 
@@ -137,38 +173,55 @@ class H5Market(Market, ABC):
     def create_key(cls, ticker: str, interval: str) -> str:
         return f'/{ticker}/{interval}'
 
-    def get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
+    @classmethod
+    def create_is_cached_key(cls, ticker: str, start: datetime, end: datetime) -> str:
+        return f'{ticker}@{start}@{end}'
+
+    def get(
+            self,
+            ticker: str,
+            interval: str,
+            start: datetime,
+            end: datetime,
+            flexible_start: bool = False
+    ) -> pd.DataFrame:
         """
-            Returns: data within [start, end]
+            Returns: data within [start, end] and fills nan values.
+            If flexible_start = True, it should return [data.index.sort()[0], end] with nan values filled.
         """
+
+        # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
+        if flexible_start:
+            ticker_key = self.create_key(ticker, interval)
+            new_start = self.connection[ticker_key].index[0]
+            if new_start > start:
+                start = new_start
+                assert start < end
 
         if not self.is_cached(ticker, interval, start, end):
-            raise RuntimeError(f'Table: "{interval}" not supported')
+            raise RuntimeError(f'[{ticker}]: "{interval}" not supported for {start} - {end}')
 
-        if self.include_weekends:
-            database_to_pandas_freq = {
-                'd': 'd',
-                'h': 'h',
-                'm': 'min'
-            }
-            freq = interval[:-1] + database_to_pandas_freq[interval[-1].lower()]
-        else:
-            # TODO: Adapt the business days logic to other intervals.
-            assert interval == '1d'
-            freq = 'B'
+        data_slice = self._get(ticker, interval, start, end)
+        data_slice.fillna(method='bfill', inplace=True, axis=0)
+        data_slice.fillna(method='ffill', inplace=True, axis=0)
+
+        assert data_slice.notna().all().all(), 'Data from the market is not valid.'
+
+        return data_slice
+
+    def _get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
+        """
+            Returns: data within [start, end].
+        """
 
         # Create the desired data span because there are missing values. In this way we will know exactly what data is
         # missing and at what index.
+        freq = self.interval_to_pd_freq(interval)
         date_time_index = pd.date_range(start=start, end=end, freq=freq)
         final_data = pd.DataFrame(index=date_time_index, columns=self.features)
 
         piece_of_data = self.connection[self.create_key(ticker, interval)].loc[start:end]
         final_data.update(piece_of_data)
-
-        final_data.fillna(method='bfill', inplace=True, axis=0)
-        final_data.fillna(method='ffill', inplace=True, axis=0)
-
-        assert final_data.notna().all().all(), 'Data from the market is not valid.'
 
         return final_data
 
@@ -177,12 +230,11 @@ class H5Market(Market, ABC):
         if key not in self.connection:
             return False
 
-        freq_mappings = {
-            'd': 'D',
-            'h': 'H',
-            'm': 'min'
-        }
-        freq = f'{interval[:-1]}{freq_mappings[interval[-1]]}'
+        is_cached_key = self.create_is_cached_key(ticker, start, end)
+        if is_cached_key in self.is_cached_cache:
+            return self.is_cached_cache[is_cached_key]
+
+        freq = self.interval_to_pd_freq(interval)
         time_series = pd.date_range(start, end, freq=freq)
         # Query how much of the requested time series is in the cache.
         valid_values = time_series[time_series.isin(self.connection[key].index)]
@@ -190,7 +242,10 @@ class H5Market(Market, ABC):
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
         # Also stocks have data only in the work days.
-        return len(valid_values) >= 0.68 * len(time_series)
+        is_cached_state = len(valid_values) >= 0.8 * len(time_series)
+        self.is_cached_cache[is_cached_key] = is_cached_state
+
+        return is_cached_state
 
     def cache_request(self, ticker: str, interval: str, data: pd.DataFrame):
         key = self.create_key(ticker, interval)

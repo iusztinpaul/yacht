@@ -18,7 +18,13 @@ class TechnicalIndicatorMixin:
         self.data_features = self.features
         self.features = self.technical_indicators + self.features
 
-    def is_cached(self, ticker: str, interval: str, start: datetime, end: datetime) -> bool:
+    def is_cached(
+            self,
+            ticker: str,
+            interval: str,
+            start: datetime,
+            end: datetime
+    ) -> bool:
         value = super().is_cached(ticker, interval, start, end)
 
         if value is False:
