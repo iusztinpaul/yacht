@@ -85,8 +85,6 @@ class Trainer(ABC):
     def before_train_log(self):
         self.logger.info(f'Started training with {self.__class__.__name__} in mode: {self.mode.value}.')
         self.logger.info(f'Training for {self.config.train.total_timesteps} timesteps.')
-        self.logger.info(f'Train split length: {self.train_dataset.num_sampling_period}')
-        self.logger.info(f'Validation split length: {self.validation_dataset.num_sampling_period}.\n')
 
     def after_train_log(self):
         self.logger.info(f'Training finished for {self.__class__.__name__} in mode: {self.mode.value}.')
