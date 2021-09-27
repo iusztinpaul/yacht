@@ -251,6 +251,9 @@ def build_tickers(config: Config, mode: Mode) -> Set[str]:
     if 'DOW30' in tickers:
         tickers.remove('DOW30')
         tickers.extend(indexes.DOW_30_TICKERS)
+    if 'RUSSELL2000' in tickers:
+        tickers.remove('RUSSELL2000')
+        tickers.extend(indexes.RUSSELL_2000_TICKERS)
 
     return set(tickers)
 
