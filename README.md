@@ -70,3 +70,12 @@ wandb agent id-given-by-generated-sweep
 # Data APIs
 * Currently we have support for `Binance` & `Yahoo Finance`.
 * You should set the `api keys` in the `.env` file for full support.
+
+# Datasets
+* S&P 500
+* Dow 30
+* Nasdaq 100
+* Russell 2000
+
+Just set `tickers: ['NASDAQ100']` in the configuration file and all the tickers will be downloaded.
+You can also set something like `['NASDQ100, RUSSELL2000, AAPL]` or any combination you like.
