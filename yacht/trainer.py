@@ -101,7 +101,7 @@ class Trainer(ABC):
                 metrics_to_save_best_on=list(self.config.meta.metrics_to_save_best_on),
                 mode=Mode.BacktestValidation,
                 n_eval_episodes=len(self.validation_dataset.datasets),
-                eval_freq=self.config.train.collecting_n_steps * 2,
+                eval_freq=self.config.train.collecting_n_steps * self.config.environment.n_envs,
                 log_path=utils.build_log_dir(self.storage_dir),
                 best_model_save_path=utils.build_best_checkpoint_dir(self.storage_dir, self.mode),
                 deterministic=self.config.input.backtest.deterministic,

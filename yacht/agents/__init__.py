@@ -132,6 +132,7 @@ def build_agent(
             gamma=train_config.gamma,
             gae_lambda=train_config.gae_lambda,
             clip_range=train_config.clip_range,
+            clip_range_vf=train_config.vf_clip_range,
             ent_coef=train_config.entropy_coefficient,
             vf_coef=train_config.vf_coefficient,
             max_grad_norm=train_config.max_grad_norm,

@@ -1,4 +1,5 @@
 import itertools
+import time
 from copy import copy
 from typing import Set
 
@@ -21,17 +22,15 @@ dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
     'DayFrequencyDataset': DayFrequencyDataset
 }
-split_rendered = False
 
 
 def build_dataset(
         config: Config,
         logger: Logger,
         storage_dir,
-        mode: Mode,
-        render_split: bool = True
+        mode: Mode
 ) -> Optional[SampleAssetDataset]:
-    global split_rendered
+    start_building_data_time = time.time()
 
     input_config = config.input
     dataset_cls = dataset_registry[input_config.dataset]
@@ -53,12 +52,11 @@ def build_dataset(
         tickers,
         interval='1d',
         start=utils.string_to_datetime(input_config.start),
-        end=utils.string_to_datetime(input_config.end)
+        end=utils.string_to_datetime(input_config.end),
+        flexible_start=True
     )
-    # Render the split only once. It is computationally useless to rendered it multiple times.
-    if not split_rendered and render_split:
-        split_rendered = True
-
+    # Render split only for backtest tickers.
+    if not mode.is_trainable():
         data = dict()
         for ticker in tickers:
             data[ticker] = market.get(
@@ -78,7 +76,7 @@ def build_dataset(
             rescale=True
         )
         renderer.render()
-        renderer.save(utils.build_graphics_path(storage_dir, 'train_test_split_rescaled.png'))
+        renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split_rescaled.png'))
         renderer.close()
 
         # Render de train-test split with original values.
@@ -90,7 +88,7 @@ def build_dataset(
             rescale=False
         )
         renderer.render()
-        renderer.save(utils.build_graphics_path(storage_dir, 'train_test_split.png'))
+        renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split.png'))
         renderer.close()
 
     logger.info(f'Building datasets for: {mode.value}')
@@ -205,6 +203,10 @@ def build_dataset(
     logger.info(f'Skipped {num_skipped_periods} / {total_num_periods} datasets.')
     logger.info(f'A total of {usable_num_datasets} datasets were created.')
     logger.info(f'Which is equal to a total of {usable_num_datasets * days_per_period} timesteps.')
+    logger.info(f'Datasets built in {time.time() - start_building_data_time:.2f} seconds.')
+
+    if usable_num_datasets == 0:
+        return None
 
     sample_dataset_period = DatasetPeriod(
         start=start,

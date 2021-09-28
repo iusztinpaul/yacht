@@ -13,12 +13,13 @@ message TrainConfig {
   double gamma = 8;
   double gae_lambda = 9;
   double clip_range = 10;
-  double entropy_coefficient = 11;
-  double vf_coefficient = 12;
-  double max_grad_norm = 13;
-  bool use_sde = 14;
-  int32 sde_sample_freq = 15;
-  int32 k_fold_splits = 16;
-  double k_fold_purge_ratio = 17;
-  double k_fold_embargo_ratio = 18;
+  double vf_clip_range = 11;
+  double entropy_coefficient = 12;
+  double vf_coefficient = 13;
+  double max_grad_norm = 14;
+  bool use_sde = 15;
+  int32 sde_sample_freq = 16;
+  int32 k_fold_splits = 17;
+  double k_fold_purge_ratio = 18;
+  double k_fold_embargo_ratio = 19;
 }

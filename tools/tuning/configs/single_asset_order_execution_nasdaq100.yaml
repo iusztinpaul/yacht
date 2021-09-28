@@ -6,11 +6,16 @@ method: bayes
 metric:
   goal: maximize
   name: backtest_on_validation/PA
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - "--config_file_name"
+  - "single_asset_order_execution_nasdaq100_ppo.config.txt"
 parameters:
   agent.name:
-    distribution: categorical
-    values:
-    - PPO
+    distribution: constant
+    value: PPO
   agent.policy.activationFn:
     distribution: categorical
     values:
@@ -21,9 +26,8 @@ parameters:
     max: 0.8
     min: 0.0
   agent.policy.featureExtractor.name:
-    distribution: categorical
-    values:
-    - RecurrentFeatureExtractor
+    distribution: constant
+    value: RecurrentFeatureExtractor
   agent.policy.featureExtractor.featuresDim:
     distribution: categorical
     values:
@@ -65,13 +69,11 @@ parameters:
       - [32]
       - [64]
   agent.verbose:
-    distribution: categorical
-    values:
-    - "true"
+    distribution: constant
+    value: "true"
   environment.actionSchema:
-    distribution: categorical
-    values:
-    - DiscreteActionScheme
+    distribution: constant
+    value: DiscreteActionScheme
   environment.rewardSchemas:
     distribution: categorical
     values:
@@ -85,17 +87,16 @@ parameters:
         - name: ActionMagnitudeRewardSchema
           reward_scaling: 0.02
   environment.initialCashPosition:
-    distribution: int_uniform
-    max: 10000
-    min: 2500
+    distribution: normal
+    mu: 5000
+    sigma: 1000
   environment.nEnvs:
     distribution: int_uniform
     max: 16
     min: 4
   environment.name:
-    distribution: categorical
-    values:
-    - OrderExecutionEnvironment-v0
+    distribution: constant
+    value: OrderExecutionEnvironment-v0
   environment.possibilities:
     distribution: categorical
     values:
@@ -112,25 +113,23 @@ parameters:
     values:
       - [AAPL]
   input.dataset:
-    distribution: categorical
-    values:
-    - DayFrequencyDataset
+    distribution: constant
+    value: DayFrequencyDataset
   input.decisionPriceFeature:
-    distribution: categorical
-    values:
-    - TP
+    distribution: constant
+    value: TP
   input.embargoRatio:
-    distribution: categorical
-    values:
-    - 0.02
+    distribution: constant
+    value: 0.03
+  input.validationSplitRatio:
+    distribution: constant
+    value: 0.4
   input.start:
-    distribution: categorical
-    values:
-      - 1/1/2015
+    distribution: constant
+    value: 1/8/2016
   input.end:
-    distribution: categorical
-    values:
-    - 1/8/2021
+    distribution: constant
+    value: 1/8/2021
   input.features:
     distribution: categorical
     values:
@@ -149,114 +148,99 @@ parameters:
       - [dx_30]
       - []
   input.includeWeekends:
-    distribution: categorical
-    values:
-    - "true"
+    distribution: constant
+    value: "false"
   input.market:
-    distribution: categorical
-    values:
-    - Yahoo
+    distribution: constant
+    value: Yahoo
   input.numAssetsPerDataset:
-    distribution: categorical
-    values:
-    - 1
+    distribution: constant
+    value: 1
   input.periodLength:
-    distribution: categorical
-    values:
-    - 1M
+    distribution: constant
+    value: 1M
   input.scaleOnInterval:
-    distribution: categorical
-    values:
-    - 1d
+    distribution: constant
+    value: 1d
   input.scaler:
-    distribution: categorical
-    values:
-    - MinMaxScaler
-  input.validationSplitRatio:
-    distribution: categorical
-    values:
-    - 0.4
+    distribution: constant
+    value: MinMaxScaler
   input.tickers:
-    distribution: categorical
-    values:
-      - [NASDAQ100]
+    distribution: constant
+    value: [NASDAQ100]
   input.fineTuneTickers:
-    distribution: categorical
-    values:
-      - [AAPL]
+    distribution: constant
+    value: [AAPL]
   input.windowSize:
     distribution: int_uniform
     max: 90
     min: 1
   meta.device:
-    distribution: categorical
-    values:
-    - gpu
+    distribution: constant
+    value: gpu
   meta.experimentTracker:
-    distribution: categorical
-    values:
-    - wandb
+    distribution: constant
+    value: wandb
   meta.logFrequencySteps:
-    distribution: categorical
-    values:
-    - 10000
+    distribution: constant
+    value: 10000
   train.batchSize:
-    distribution: int_uniform
-    max: 1024
-    min: 256
+    distribution: q_normal
+    mu: 1024
+    sigma: 256
   train.clipRange:
-    distribution: uniform
-    max: 0.4
-    min: 0.1
+    distribution: normal
+    mu: 0.3
+    sigma: 0.1
+  train.vfClipRange:
+    distribution: normal
+    mu: 0.3
+    sigma: 0.1
   train.collectingNSteps:
     distribution: int_uniform
-    max: 4096
-    min: 1024
+    max: 10240
+    min: 2048
   train.entropyCoefficient:
     distribution: uniform
     max: 0.02
     min: 0.005
+  train.totalTimesteps:
+    distribution: constant
+    value: 1300000
   train.fineTuneTotalTimesteps:
-    distribution: categorical
-    values:
-    - 250000
+    distribution: constant
+    value: 200000
   train.gaeLambda:
     distribution: uniform
-    max: 1.25
-    min: 0.475
+    max: 1.
+    min: 0.9
   train.gamma:
     distribution: uniform
     max: 1.0
-    min: 0.495
+    min: 0.9
   train.learningRate:
     distribution: uniform
     max: 0.0005
-    min: 0.000125
+    min: 0.00005
   train.maxGradNorm:
     distribution: uniform
     max: 1
     min: 0.25
   train.nEpochs:
     distribution: int_uniform
-    max: 20
-    min: 5
+    max: 10
+    min: 3
   train.useSde:
-    distribution: categorical
-    values:
-      - "false"
+    distribution: constant
+    value: "false"
   train.sdeSampleFreq:
     distribution: int_uniform
     max: 4096
     min: 1024
-  train.totalTimesteps:
-    distribution: categorical
-    values:
-    - 750000
   train.trainerName:
-    distribution: categorical
-    values:
-    - Trainer
+    distribution: constant
+    value: Trainer
   train.vfCoefficient:
-    distribution: uniform
-    max: 0.75
-    min: 0.25
+    distribution: normal
+    mu: 1.
+    sigma: 0.5

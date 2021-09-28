@@ -78,4 +78,4 @@ wandb agent id-given-by-generated-sweep
 * Russell 2000
 
 Just set `tickers: ['NASDAQ100']` in the configuration file and all the tickers will be downloaded.
-You can also set something like `['NASDQ100, RUSSELL2000, AAPL]` or any combination you like.
+You can also set something like `['NASDQ100', 'RUSSELL2000', 'AAPL']` or any combination you like.

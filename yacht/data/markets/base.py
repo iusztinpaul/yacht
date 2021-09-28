@@ -95,15 +95,26 @@ class Market(ABC):
     def cache_request(self, ticker: str, interval: str, data: pd.DataFrame):
         pass
 
-    def download(self, tickers: Union[str, Iterable[str]], interval: str, start: datetime, end: datetime):
+    def download(
+            self,
+            tickers: Union[str, Iterable[str]],
+            interval: str,
+            start: datetime,
+            end: datetime,
+            flexible_start: bool = False
+    ):
         if isinstance(tickers, str):
             tickers = [tickers]
 
         for ticker in tickers:
-            self._download(ticker, interval, start, end)
+            self._download(ticker, interval, start, end, flexible_start)
 
-    def _download(self, ticker: str, interval: str, start: datetime, end: datetime):
-        if self.is_cached(ticker, interval, start, end,):
+    def _download(self, ticker: str, interval: str, start: datetime, end: datetime, flexible_start: bool = False):
+        # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
+        if flexible_start:
+            start = self.move_start(ticker, interval, start, end)
+
+        if self.is_cached(ticker, interval, start, end):
             return
 
         self.logger.info(f'[{interval}] - {ticker} - Downloading from "{start}" to "{end}"')
@@ -118,6 +129,10 @@ class Market(ABC):
 
         self.cache_request(ticker, interval, data)
 
+    @abstractmethod
+    def move_start(self, ticker: str, interval: str, start: datetime, end: datetime) -> datetime:
+        pass
+    
     def check_downloaded_data(
             self,
             data: Union[List[List[Any]], pd.DataFrame],
@@ -187,16 +202,13 @@ class H5Market(Market, ABC):
     ) -> pd.DataFrame:
         """
             Returns: data within [start, end] and fills nan values.
-            If flexible_start = True, it should return [data.index.sort()[0], end] with nan values filled.
+            If flexible_start = True, it should return [data.index.sort()[0] (=new_start), end],
+                only if new_start > given_start, with nan values filled.
         """
 
         # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
         if flexible_start:
-            ticker_key = self.create_key(ticker, interval)
-            new_start = self.connection[ticker_key].index[0]
-            if new_start > start:
-                start = new_start
-                assert start < end
+            start = self.move_start(ticker, interval, start, end)
 
         if not self.is_cached(ticker, interval, start, end):
             raise RuntimeError(f'[{ticker}]: "{interval}" not supported for {start} - {end}')
@@ -224,6 +236,16 @@ class H5Market(Market, ABC):
         final_data.update(piece_of_data)
 
         return final_data
+
+    def move_start(self, ticker: str, interval: str, start: datetime, end: datetime) -> datetime:
+        ticker_key = self.create_key(ticker, interval)
+        if ticker_key in self.connection:
+            new_start = self.connection[ticker_key].index[0]
+            if new_start > start:
+                start = new_start
+                assert start < end, 'Cannot move start after the end period.'
+
+        return start
 
     def is_cached(self, ticker: str, interval: str, start: datetime, end: datetime) -> bool:
         key = self.create_key(ticker, interval)
