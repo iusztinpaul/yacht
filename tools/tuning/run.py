@@ -25,7 +25,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--storage_dir',
-    default=os.path.join('hyper_param_optimization', f'{uuid1()}'),
+    default=os.path.join('storage', 'hyper_param_optimization', f'{uuid1()}'),
     help='Directory where your model & logs will be saved.'
 )
 parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 'warn'))
