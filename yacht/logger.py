@@ -12,7 +12,7 @@ from yacht.utils import build_log_dir
 
 
 class Logger(SB3Logger):
-    ONLY_CLOUD = 'ONLY_CLOUD'
+    SKIP_COUT = 'ONLY_CLOUD'
 
     logger_levels = {
         'info': INFO,
@@ -82,7 +82,7 @@ class Logger(SB3Logger):
         self.logger.debug(self.name_to_value)
 
     def _do_log(self, args) -> None:
-        if args[-1] != self.ONLY_CLOUD:
+        if args[-1] != self.SKIP_COUT:
             for arg in args:
                 if isinstance(arg, dict):
                     arg = pprint.pformat(arg, indent=4)

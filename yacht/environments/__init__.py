@@ -49,9 +49,14 @@ def build_env(
         'include_weekends': config.input.include_weekends
     }
 
+    if mode.is_trainable() or config.input.backtest.deterministic is False:
+        n_envs = env_config.n_envs
+    else:
+        # If we build a environment for backtest & it is deterministic it is redundant to use multiple envs.
+        n_envs = 1
     env = make_vec_env(
         env_id=env_config.name,
-        n_envs=env_config.n_envs,
+        n_envs=n_envs,
         seed=0,
         start_index=0,
         monitor_dir=utils.build_monitor_dir(dataset.storage_dir, mode),

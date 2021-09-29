@@ -116,17 +116,28 @@ class HyperParameterTuningWandbContext(WandBContext):
 
 
 class WandBLogger(Logger):
-    def dump(self, step: int = 0) -> None:
+    def dump(self, step: int = -1) -> None:
         super().dump(step)
 
-        wandb.log(self.name_to_value)
+        if step == -1:
+            wandb.log(self.name_to_value)
+        else:
+            wandb.log(self.name_to_value, step=step)
 
     def _do_log(self, args) -> None:
         super()._do_log(args)
 
+        if 'step=' in args[0]:
+            step = int(args[0][5:])  # step=X
+        else:
+            step = None
+
         for arg in args:
             if isinstance(arg, dict):
-                wandb.log(arg)
+                if step is None:
+                    wandb.log(arg)
+                else:
+                    wandb.log(arg, step=step)
 
 
 class WandBCallback(BaseCallback):

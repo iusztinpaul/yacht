@@ -3,6 +3,8 @@ import time
 from copy import copy
 from typing import Set
 
+from tqdm import tqdm
+
 from .base import *
 from .day_frequency import DayFrequencyDataset
 from .samplers import SampleAssetDataset
@@ -132,7 +134,7 @@ def build_dataset(
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
     num_skipped_periods = 0
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
-    for (period_start, period_end) in periods:
+    for (period_start, period_end) in tqdm(periods, desc='Num periods'):
         dataset_period = DatasetPeriod(
             start=period_start,
             end=period_end,

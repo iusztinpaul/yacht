@@ -1,6 +1,6 @@
 project: yacht
 entity: yacht
-name: SingleAssetOrderExectionCrypto
+name: SingleAssetOrderExectionNasdaq100
 program: tools/tuning/run.py
 method: bayes
 metric:

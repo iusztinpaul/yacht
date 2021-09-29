@@ -1,6 +1,6 @@
 from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 import gym
 import numpy as np
@@ -87,27 +87,28 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
         self.extra_metrics_to_log = extra_metrics_to_log
 
         self.metrics: List[dict] = []
-
-        self._mean_metrics = dict()
-        self._median_metrics = dict()
-        self._std_metrics = dict()
-        self._third_quartile_metrics = dict()
+        self.metric_statistics = {
+            'mean': dict(),
+            'median': dict(),
+            'std': dict(),
+            'third_quartile': dict()
+        }
 
     @property
     def mean_metrics(self) -> dict:
-        return self._mean_metrics
+        return self.metric_statistics['mean']
 
     @property
     def median_metrics(self) -> dict:
-        return self._median_metrics
+        return self.metric_statistics['median']
 
     @property
     def std_metrics(self) -> dict:
-        return self._std_metrics
+        return self.metric_statistics['std']
 
     @property
     def third_quartile_metrics(self) -> dict:
-        return self._third_quartile_metrics
+        return self.metric_statistics['third_quartile']
 
     def reset(self) -> np.ndarray:
         return self.venv.reset()
@@ -126,33 +127,15 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                     self.metrics.append(self.extract_metrics(info=info[idx]))
 
             if len(self.metrics) >= self.n_metrics_episodes:
-                self._mean_metrics, self._median_metrics, self._std_metrics, self._third_quartile_metrics = \
-                    self.compute_metrics_statistics(metrics=self.metrics)
-                self._mean_metrics.update(self.computed_aggregated_metrics())
+                self.metric_statistics = self.compute_metrics_statistics(metrics=self.metrics)
+                self.metric_statistics['mean'].update(self.computed_aggregated_metrics())
 
-                self.log_metrics(self._mean_metrics, method='mean')
-                self.log_metrics(self._median_metrics, method='median')
-                self.log_metrics(self._std_metrics, method='std')
-                self.log_metrics(self._third_quartile_metrics, method='quantile-75')
+                metric_statistics = self.flatten_dict(self.metric_statistics)
+                self.logger.log(metric_statistics)
 
                 self.metrics = []
 
         return obs, reward, done, info
-
-    def log_metrics(self, metrics: Dict[str, np.ndarray], method: str = 'mean'):
-        assert method in ('mean', 'median', 'std', 'quantile-75')
-
-        if method == 'mean':
-            metrics = self._prefix_keys(metrics)
-
-            self.logger.log(metrics)
-        else:
-            # We don't want to clutter the board with redundant information. Log only essential metrics for non-mean.
-            metrics = self.filter_metrics(metrics, self.extra_metrics_to_log)
-            metrics = {f'{method}-{k}': v for k, v in metrics.items()}
-            metrics = self._prefix_keys(metrics)
-
-            self.logger.log(metrics)
 
     def computed_aggregated_metrics(self) -> dict:
         """
@@ -168,24 +151,16 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             'GLR': glr_ratio
         }
 
-    def _prefix_keys(self, metrics_to_log: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def flatten_dict(self, metrics_to_log: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
         flattened_dict = dict()
-        for metric_name, metric_value in metrics_to_log.items():
-            flattened_dict[self._prefix_key(metric_name)] = metric_value
+        for per_statistic_values in metrics_to_log.values():
+            for metric_name, metric_value in per_statistic_values.items():
+                flattened_dict[self._prefix_key(metric_name)] = metric_value
 
         return flattened_dict
 
     def _prefix_key(self, key: str) -> str:
         return f'{self.mode.value}/{key}'
-
-    @classmethod
-    def filter_metrics(cls, metrics: Dict[str, np.ndarray], keys: Optional[List[str]] = None) -> Dict[str, np.ndarray]:
-        if keys is None:
-            return metrics
-
-        return {
-            k: v for k, v in metrics.items() if k in keys
-        }
 
     @classmethod
     def extract_metrics(cls, info: dict) -> dict:
@@ -206,23 +181,26 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
 
         return metrics_to_log
 
-    @classmethod
-    def compute_metrics_statistics(cls, metrics: List[dict]):
+    def compute_metrics_statistics(self, metrics: List[dict]) -> Dict[str, dict]:
         aggregated_metrics: Dict[str, list] = defaultdict(list)
         for env_metrics in metrics:
             for metric_name, metric_value in env_metrics.items():
                 aggregated_metrics[metric_name].append(metric_value)
 
-        mean_metrics: Dict[str, np.ndarray] = dict()
-        median_metrics: Dict[str, np.ndarray] = dict()
-        std_metrics: Dict[str, np.ndarray] = dict()
-        third_quartile_metrics: Dict[str, np.ndarray] = dict()
+        metric_statistics = {
+            'mean': dict(),
+            'median': dict(),
+            'std': dict(),
+            'third_quartile': dict()
+        }
         for metric_name, metric_values in aggregated_metrics.items():
             metric_values = np.array(metric_values, dtype=np.float32)
 
-            mean_metrics[metric_name] = np.mean(metric_values)
-            median_metrics[metric_name] = np.median(metric_values)
-            std_metrics[metric_name] = np.std(metric_values)
-            third_quartile_metrics[metric_name] = np.quantile(metric_values, 0.75)
+            metric_statistics['mean'][metric_name] = np.mean(metric_values)
+            # We don't want to clutter the board with redundant information. Log only essential metrics for non-mean.
+            if metric_name in self.extra_metrics_to_log:
+                metric_statistics['median'][f'median-{metric_name}'] = np.median(metric_values)
+                metric_statistics['std'][f'std-{metric_name}'] = np.std(metric_values)
+                metric_statistics['third_quartile'][f'quantile-75-{metric_name}'] = np.quantile(metric_values, 0.75)
 
-        return mean_metrics, median_metrics, std_metrics, third_quartile_metrics
+        return metric_statistics
