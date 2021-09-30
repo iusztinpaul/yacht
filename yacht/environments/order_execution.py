@@ -107,7 +107,11 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     def _buy_asset(self, ticker: str, cash_ratio_to_use: float):
         if self._total_cash > 0:
             cash_to_use = abs(cash_ratio_to_use) * self._initial_cash_position
-            cash_to_use = min(cash_to_use, self._total_cash)
+            if cash_to_use > self._total_cash:
+                cash_to_use = self._total_cash
+                # Change the action to log the real value taken because of the lack of cash.
+                action_index = np.where(self._total_units.index == ticker)[0]
+                self._a_t[action_index] = self._total_cash / self._initial_cash_position
             asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
 
             num_units_to_buy = cash_to_use / asset_price

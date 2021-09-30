@@ -13,9 +13,9 @@ input: {
     start: '1/4/2019'
     end: '1/1/2020'
     period_length: '1M'
-    window_size: 10
+    window_size: 1
     render_periods: [
-     {start: '3/1/2016', end: '22/1/2017'}
+     {start: '1/4/2019', end: '1/1/2020'}
     ]
     include_weekends: false
     validation_split_ratio: 0.3
@@ -55,22 +55,22 @@ agent: {
         activation_fn: 'Tanh',
         feature_extractor: {
             name: 'RecurrentFeatureExtractor'
-            features_dim: [64, 64, 64, 512]
+            features_dim: [32, 32, 32]
             drop_out_p: 0.5
             rnn_layer_type: 'LSTM'
         }
         net_arch: {
-            shared: [256]
-            vf: [64]
-            pi: [64]
+            shared: [32]
+            vf: [16]
+            pi: [16]
         }
     }
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 50000
-    fine_tune_total_timesteps: 10000
-    collecting_n_steps: 500
+    total_timesteps: 5000
+    fine_tune_total_timesteps: 1000
+    collecting_n_steps: 100
     learning_rate: 0.00025
     batch_size: 500
     n_epochs: 10
@@ -89,5 +89,5 @@ meta: {
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
     device: 'gpu'
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

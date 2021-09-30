@@ -134,7 +134,7 @@ def build_dataset(
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
     num_skipped_periods = 0
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
-    for (period_start, period_end) in tqdm(periods, desc='Num periods'):
+    for (period_start, period_end) in tqdm(periods, desc='Num periods / Tickers'):
         dataset_period = DatasetPeriod(
             start=period_start,
             end=period_end,

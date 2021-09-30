@@ -1,4 +1,5 @@
 import os
+import warnings
 from pathlib import Path
 
 import wandb
@@ -44,6 +45,22 @@ class WandBContext(CacheContext):
             name=self.run_name,
             config=config
         )
+        self._define_custom_step_metrics()
+
+    def _define_custom_step_metrics(self):
+        to_watch_metrics = set(self.config.meta.metrics_to_save_best_on). \
+            union(set(self.config.meta.metrics_to_load_best_on))
+        for mode in Mode:
+            if not mode.is_trainable():
+                wandb.define_metric(mode.to_step_key())
+                wandb.define_metric(f'{mode.value}/*', step_metric=mode.to_step_key())
+
+                for to_watch_metric in to_watch_metrics:
+                    wandb.define_metric(f'{mode.value}/{to_watch_metric}', summary='max')
+                    wandb.define_metric(f'{mode.value}/{to_watch_metric}', summary='min')
+                    wandb.define_metric(f'{mode.value}/{to_watch_metric}', summary='mean')
+                    wandb.define_metric(f'{mode.value}/{to_watch_metric}', summary='best')
+        wandb.define_metric('timings_step')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
@@ -73,6 +90,7 @@ class HyperParameterTuningWandbContext(WandBContext):
             project='yacht',
             entity='yacht'
         )
+        self._define_custom_step_metrics()
 
     def get_config(self) -> Config:
         sweep_config = wandb.config._items
@@ -116,28 +134,19 @@ class HyperParameterTuningWandbContext(WandBContext):
 
 
 class WandBLogger(Logger):
-    def dump(self, step: int = -1) -> None:
+    def dump(self, step: int = 0) -> None:
         super().dump(step)
 
-        if step == -1:
-            wandb.log(self.name_to_value)
-        else:
-            wandb.log(self.name_to_value, step=step)
+        wandb.log(self.name_to_value)
 
     def _do_log(self, args) -> None:
         super()._do_log(args)
 
-        if 'step=' in args[0]:
-            step = int(args[0][5:])  # step=X
-        else:
-            step = None
-
         for arg in args:
             if isinstance(arg, dict):
-                if step is None:
-                    wandb.log(arg)
-                else:
-                    wandb.log(arg, step=step)
+                wandb.log(arg)
+            else:
+                warnings.warn('Use logger.record() & logger.dump() for data types different than "dict()".')
 
 
 class WandBCallback(BaseCallback):

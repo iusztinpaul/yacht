@@ -93,6 +93,8 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             'std': dict(),
             'third_quartile': dict()
         }
+        # Define an internal step to be able to compare metrics easier.
+        self.num_step = 0
 
     @property
     def mean_metrics(self) -> dict:
@@ -131,9 +133,12 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
                 self.metric_statistics['mean'].update(self.computed_aggregated_metrics())
 
                 metric_statistics = self.flatten_dict(self.metric_statistics)
+                metric_statistics[self.mode.to_step_key()] = self.num_step
                 self.logger.log(metric_statistics)
 
                 self.metrics = []
+
+        self.num_step += self.venv.num_envs
 
         return obs, reward, done, info
 
@@ -151,7 +156,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
             'GLR': glr_ratio
         }
 
-    def flatten_dict(self, metrics_to_log: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    def flatten_dict(self, metrics_to_log: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
         flattened_dict = dict()
         for per_statistic_values in metrics_to_log.values():
             for metric_name, metric_value in per_statistic_values.items():
