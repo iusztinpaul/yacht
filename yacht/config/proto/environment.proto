@@ -16,6 +16,9 @@ message EnvironmentConfig {
   repeated RewardSchemaConfig reward_schemas = 7;
   double reward_scaling = 8;
   string action_schema = 9;
-  int32 action_scaling_factor = 10;
-  repeated double possibilities = 11;
+  bool use_action_noise = 10;
+  double action_noise_mean = 11;
+  double action_noise_sigma = 12;
+  int32 action_scaling_factor = 13;
+  repeated double possibilities = 14;
 }

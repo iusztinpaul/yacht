@@ -35,7 +35,7 @@ def build_env(
 
     env_config: EnvironmentConfig = config.environment
 
-    action_schema = build_action_schema(config, dataset)
+    action_schema = build_action_schema(config, dataset, mode)
     reward_schema = build_reward_schema(config)
     env_kwargs = {
         'name': mode.value,
@@ -68,7 +68,7 @@ def build_env(
         wrapper_kwargs=None
     )
     env = MetricsVecEnvWrapper(
-        env=env,
+        venv=env,
         n_metrics_episodes=len(dataset.datasets),
         logger=logger,
         mode=mode,

@@ -1,6 +1,5 @@
-from abc import ABC
 from collections import defaultdict
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 import gym
 import numpy as np
@@ -70,16 +69,16 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         return flattened_observation
 
 
-class MetricsVecEnvWrapper(VecEnvWrapper, ABC):
+class MetricsVecEnvWrapper(VecEnvWrapper):
     def __init__(
             self,
-            env: VecEnv,
+            venv: VecEnv,
             n_metrics_episodes: int,
             logger: Logger,
             mode: Mode,
             extra_metrics_to_log: List[str]
     ):
-        super().__init__(env)
+        super().__init__(venv)
 
         self.n_metrics_episodes = n_metrics_episodes
         self.logger = logger

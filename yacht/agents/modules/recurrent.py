@@ -83,11 +83,11 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
         private_input = observations['env_features']
 
         public_input = self.public_mlp(public_input)
-        public_input = self.public_recurrent(public_input)[0]
+        public_input, _ = self.public_recurrent(public_input)
         public_input = self.public_dropout(public_input)
 
         private_input = self.private_mlp(private_input)
-        private_input = self.private_recurrent(private_input)[0]
+        private_input, _ = self.private_recurrent(private_input)
         private_input = self.private_dropout(private_input)
 
         output = torch.cat([public_input, private_input], dim=-1)

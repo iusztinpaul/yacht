@@ -1,6 +1,17 @@
 from enum import Enum
 
 
+__author__ = "Iusztin Paul-Emil"
+__copyright__ = "Copyright 2007, Yacht"
+__credits__ = ["Iusztin Paul-Emil"]
+
+__license__ = "Apache-2.0"
+__version__ = "1.0.0"
+__maintainer__ = "Iusztin Paul-Emil"
+__email__ = "p.e.iusztin@gmail.com"
+__status__ = "Development"
+
+
 class Mode(Enum):
     Train = 'train'
     FineTuneTrain = 'fine_tune_train'

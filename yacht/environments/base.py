@@ -88,6 +88,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # Rendering.
         self.renderer = self.build_renderer()
 
+        # Actions.
+        self.action_schema.reset()
+
         # Ticks.
         self.start_tick = self.window_size - 1  # Starting from 0 & the minimum value for the window_size is 1.
         self.end_tick = self.dataset.num_days - 1  # Index starts from 0.
