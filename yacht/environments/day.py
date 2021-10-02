@@ -24,8 +24,8 @@ class DayForecastEnvironment(BaseAssetEnvironment):
 
         return observation_space
 
-    def get_next_observation(self) -> Dict[str, np.array]:
-        observation = super().get_next_observation()
+    def get_observation(self) -> Dict[str, np.array]:
+        observation = super().get_observation()
         observation['env_features'] = self._total_value
 
         return observation

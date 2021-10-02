@@ -80,6 +80,14 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
         return list(self.INTERVAL_TO_DAY_BAR_UNITS.keys())
 
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
+        """
+        Args:
+            day_index: The relative index the data will be given from.
+
+        Returns:
+            The data features within the [day_index - window_size + 1, day_index] interval.
+        """
+
         window_item: Dict[str, Union[list, np.ndarray]] = defaultdict(list)
         for i in reversed(range(self.window_size)):
             for interval in self.intervals:

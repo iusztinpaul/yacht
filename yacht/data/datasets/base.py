@@ -175,6 +175,13 @@ class AssetDataset(Dataset, ABC):
 
     @abstractmethod
     def __getitem__(self, current_index: int) -> Dict[str, np.array]:
+        """
+        Args:
+            current_index: The relative index the data will be given from.
+
+        Returns:
+            The data features within the [current_index - window_size + 1, current_index] interval.
+        """
         pass
 
     @abstractmethod

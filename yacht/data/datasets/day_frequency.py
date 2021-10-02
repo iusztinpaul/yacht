@@ -59,6 +59,14 @@ class DayFrequencyDataset(SingleAssetDataset):
         }
 
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
+        """
+        Args:
+            day_index: The relative index the data will be given from.
+
+        Returns:
+            The data features within the [day_index - window_size + 1, day_index] interval.
+        """
+
         day_features = self.data['1d'][self.features]
         start_index = day_index - self.window_size + 1
         end_index = day_index

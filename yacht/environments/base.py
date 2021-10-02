@@ -123,7 +123,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.env_time_end = np.nan
         self.agent_time_length = np.nan
 
-        self._s_t = self.get_next_observation()
+        self._s_t = self.get_observation()
 
         # Compute env_time_end here so we are able to calculate the agent time from the first step.
         self.env_time_end = time.time()
@@ -190,17 +190,19 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
             return self._s_t, self._r_t, self._done, info
         else:
+            self.t_tick += 1
+
             self._a_t = self.action_schema.get_value(action)
             self._a_t = self._filter_actions(self._a_t)
 
             # Update internal state after (s_t, a_t).
-            self.t_tick += 1
             changes = self.update_internal_state(self._a_t)
             # Update history with the internal changes so the next observation can be computed.
             self.update_history(changes)
 
             # Get next observation only to compute the reward. Do not update the env state yet.
-            next_state = self.get_next_observation()
+            # The next observation should be computed only after updating the internal state to the history.
+            next_state = self.get_observation()
 
             # For a_t compute r_t.
             reward_schema_kwargs = self._get_reward_schema_kwargs(next_state)
@@ -264,21 +266,21 @@ class BaseAssetEnvironment(gym.Env, ABC):
     ) -> Dict[str, Optional[spaces.Space]]:
         return observation_space
 
-    def get_next_observation(self) -> Dict[str, np.ndarray]:
+    def get_observation(self) -> Dict[str, np.ndarray]:
         start_data_time = time.time()
 
         observation = self.dataset[self.t_tick]
         # Replace the value of 'env_features' if you want to add custom data.
         # observation['env_features'] = ...
 
-        observation = self._get_next_env_observation(observation)
+        observation = self._get_env_observation(observation)
         observation = self.scale_env_observation(observation)
 
         self.data_time_length = time.time() - start_data_time
 
         return observation
 
-    def _get_next_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    def _get_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         return observation
 
     def scale_env_observation(self, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
@@ -313,7 +315,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         info = dict(
             # MDP information.
-            step=self.t_tick - 1,  # Already incremented the tick at the start of the step() method.
+            step=self.t_tick - self.window_size,
             action=action,
             reward=self._r_t,
             # Interval state information.
@@ -338,7 +340,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return np.sign(action)
 
     def update_history(self, changes: dict):
-        # Update date at any time for the current self._tick_t
+        # Update date at any the first call for the current self._tick_t
         changes['date'] = None
         if self._should_update_history(key='date', changes=changes):
             # Map index_t to its corresponding date.

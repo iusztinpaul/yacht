@@ -47,20 +47,13 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
         return observation_space
 
-    def _get_next_env_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
+    def _get_env_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
         assert self.is_history_initialized
 
-        # The slicing method does not work for window_size == 1.
-        if self.window_size > 1:
-            past_used_positions = self.history['used_position'][-(self.window_size - 1):]
-            past_used_time = self.history['used_time'][-(self.window_size - 1):]
-        else:
-            past_used_positions = []
-            past_used_time = []
-
-        used_positions = past_used_positions + [self._compute_used_position()]
+        used_positions = self.history['used_position'][-self.window_size:]
         used_positions = np.array(used_positions, dtype=np.float32).reshape(-1, 1)
-        used_time = past_used_time + [self._compute_used_time_ratio()]
+
+        used_time = self.history['used_time'][-self.window_size:]
         used_time = np.array(used_time, dtype=np.float32).reshape(-1, 1)
 
         observation['env_features'] = np.concatenate([used_positions, used_time], axis=-1)
@@ -70,15 +63,14 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     def _initialize_history(self, history: dict) -> dict:
         history = super()._initialize_history(history)
 
-        history['used_position'] = self.window_size * [self._compute_used_position()]
-        history['used_time'] = [
-            self._compute_used_time_ratio(i) for i in range(self.window_size)
-        ]
+        history['used_position'] = self.window_size * [0]
+        history['used_time'] = self.window_size * [0]
 
         return history
 
     def update_internal_state(self, action: np.ndarray) -> dict:
         if self.is_done():
+            # TODO: Move this logic to _filter_actions() for consistency.
             # Make a copy to keep it for metrics.
             self.cash_used_on_last_tick = copy(self._total_cash)
 
@@ -105,15 +97,17 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         return changes
 
     def _buy_asset(self, ticker: str, cash_ratio_to_use: float):
+        # TODO: Don't use the super() logic for faster computation. Now is encoding & decoding just for compatibility.
         if self._total_cash > 0:
             cash_to_use = abs(cash_ratio_to_use) * self._initial_cash_position
+            # Change the action to log the real value taken because of the lack of cash.
+            # TODO: Should I move this logic to _filter_actions() for consistency ?
             if cash_to_use > self._total_cash:
                 cash_to_use = self._total_cash
-                # Change the action to log the real value taken because of the lack of cash.
                 action_index = np.where(self._total_units.index == ticker)[0]
                 self._a_t[action_index] = self._total_cash / self._initial_cash_position
-            asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
 
+            asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
             num_units_to_buy = cash_to_use / asset_price
             super()._buy_asset(ticker=ticker, num_units_to_buy=num_units_to_buy)
 
@@ -148,7 +142,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             t_tick = self.t_tick
 
         t_datetime = self.dataset.index_to_datetime(t_tick)
-        start = self.dataset.sampled_dataset.start
+        start = self.dataset.sampled_dataset.unadjusted_start
         end = self.dataset.sampled_dataset.end
 
         # Decrement one day, because t_month_period.right is not included in the interval.
@@ -156,7 +150,9 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         days_until_end_of_month = (end - t_datetime).days
         days_in_month = (end - start).days
 
-        ratio = (days_in_month - days_until_end_of_month) / days_in_month
+        # Add +1 to differentiate between the initialized history &
+        # the steps that the agent could actually do something.
+        ratio = (days_in_month - days_until_end_of_month + 1) / (days_in_month + 1)
         assert 0 <= ratio <= 1, 't_tick / t_datetime it is not within the current month'
 
         return ratio
