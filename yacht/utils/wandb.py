@@ -145,8 +145,6 @@ class WandBLogger(Logger):
         for arg in args:
             if isinstance(arg, dict):
                 wandb.log(arg)
-            else:
-                warnings.warn('Use logger.record() & logger.dump() for data types different than "dict()".')
 
 
 class WandBCallback(BaseCallback):

@@ -46,13 +46,12 @@ class SampleAssetDataset(AssetDataset):
 
         # Keep a map of the dataset sampling order.
         self.dataset_indices = np.arange(0, len(self.datasets))
-        self.current_dataset_indices_position = 0
+        self.current_dataset_indices_position = -1
         if self.shuffle:
             self.seed(default_index)
             np.random.shuffle(self.dataset_indices)
 
-        self.default_index = default_index
-        self.current_dataset_index = self.sample(default_index)
+        self.current_dataset_index = default_index
 
     @classmethod
     def seed(cls, value: float):
@@ -61,7 +60,7 @@ class SampleAssetDataset(AssetDataset):
         # Seed numpy RNG
         np.random.seed(value)
 
-    def sample(self, idx: Optional[int] = None, seed: Optional[float] = None) -> int:
+    def sample(self, idx: Optional[int] = None, seed: Optional[float] = None):
         if seed is not None:
             self.seed(seed)
             
@@ -77,8 +76,6 @@ class SampleAssetDataset(AssetDataset):
             idx = self.dataset_indices[self.current_dataset_indices_position]
 
         self.current_dataset_index = idx
-
-        return idx
 
     @property
     def sampled_dataset(self) -> Union[SingleAssetDataset, MultiAssetDataset]:
