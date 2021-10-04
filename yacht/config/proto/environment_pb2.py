@@ -13,6 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 from yacht.config.proto import reward_schema_pb2 as yacht_dot_config_dot_proto_dot_reward__schema__pb2
+from yacht.config.proto import action_noise_pb2 as yacht_dot_config_dot_proto_dot_action__noise__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -20,9 +21,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n$yacht/config/proto/environment.proto\x12\x12yacht.config.proto\x1a&yacht/config/proto/reward_schema.proto\"\x9c\x03\n\x11\x45nvironmentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06n_envs\x18\x02 \x01(\x05\x12#\n\x1b\x65nvs_on_different_processes\x18\x03 \x01(\x08\x12\x16\n\x0e\x62uy_commission\x18\x04 \x01(\x01\x12\x17\n\x0fsell_commission\x18\x05 \x01(\x01\x12\x1d\n\x15initial_cash_position\x18\x06 \x01(\x01\x12>\n\x0ereward_schemas\x18\x07 \x03(\x0b\x32&.yacht.config.proto.RewardSchemaConfig\x12\x16\n\x0ereward_scaling\x18\x08 \x01(\x01\x12\x15\n\raction_schema\x18\t \x01(\t\x12\x18\n\x10use_action_noise\x18\n \x01(\x08\x12\x19\n\x11\x61\x63tion_noise_mean\x18\x0b \x01(\x01\x12\x1a\n\x12\x61\x63tion_noise_sigma\x18\x0c \x01(\x01\x12\x1d\n\x15\x61\x63tion_scaling_factor\x18\r \x01(\x05\x12\x15\n\rpossibilities\x18\x0e \x03(\x01\x62\x06proto3')
+  serialized_pb=_b('\n$yacht/config/proto/environment.proto\x12\x12yacht.config.proto\x1a&yacht/config/proto/reward_schema.proto\x1a%yacht/config/proto/action_noise.proto\"\x83\x03\n\x11\x45nvironmentConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06n_envs\x18\x02 \x01(\x05\x12#\n\x1b\x65nvs_on_different_processes\x18\x03 \x01(\x08\x12\x16\n\x0e\x62uy_commission\x18\x04 \x01(\x01\x12\x17\n\x0fsell_commission\x18\x05 \x01(\x01\x12\x1d\n\x15initial_cash_position\x18\x06 \x01(\x01\x12>\n\x0ereward_schemas\x18\x07 \x03(\x0b\x32&.yacht.config.proto.RewardSchemaConfig\x12\x16\n\x0ereward_scaling\x18\x08 \x01(\x01\x12\x15\n\raction_schema\x18\t \x01(\t\x12\x18\n\x10use_action_noise\x18\n \x01(\x08\x12;\n\x0c\x61\x63tion_noise\x18\x0b \x01(\x0b\x32%.yacht.config.proto.ActionNoiseConfig\x12\x15\n\rpossibilities\x18\x0c \x03(\x01\x62\x06proto3')
   ,
-  dependencies=[yacht_dot_config_dot_proto_dot_reward__schema__pb2.DESCRIPTOR,])
+  dependencies=[yacht_dot_config_dot_proto_dot_reward__schema__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_action__noise__pb2.DESCRIPTOR,])
 
 
 
@@ -105,29 +106,15 @@ _ENVIRONMENTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='action_noise_mean', full_name='yacht.config.proto.EnvironmentConfig.action_noise_mean', index=10,
-      number=11, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
+      name='action_noise', full_name='yacht.config.proto.EnvironmentConfig.action_noise', index=10,
+      number=11, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='action_noise_sigma', full_name='yacht.config.proto.EnvironmentConfig.action_noise_sigma', index=11,
-      number=12, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='action_scaling_factor', full_name='yacht.config.proto.EnvironmentConfig.action_scaling_factor', index=12,
-      number=13, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='possibilities', full_name='yacht.config.proto.EnvironmentConfig.possibilities', index=13,
-      number=14, type=1, cpp_type=5, label=3,
+      name='possibilities', full_name='yacht.config.proto.EnvironmentConfig.possibilities', index=11,
+      number=12, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -144,11 +131,12 @@ _ENVIRONMENTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=101,
-  serialized_end=513,
+  serialized_start=140,
+  serialized_end=527,
 )
 
 _ENVIRONMENTCONFIG.fields_by_name['reward_schemas'].message_type = yacht_dot_config_dot_proto_dot_reward__schema__pb2._REWARDSCHEMACONFIG
+_ENVIRONMENTCONFIG.fields_by_name['action_noise'].message_type = yacht_dot_config_dot_proto_dot_action__noise__pb2._ACTIONNOISECONFIG
 DESCRIPTOR.message_types_by_name['EnvironmentConfig'] = _ENVIRONMENTCONFIG
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 

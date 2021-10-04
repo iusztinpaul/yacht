@@ -4,21 +4,21 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['NASDAQ100']
+    tickers: ['AAPL']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
-    start: '1/4/2019'
+    start: '1/1/2019'
     end: '1/1/2020'
     period_length: '1M'
     window_size: 15
     render_periods: [
-     {start: '1/4/2019', end: '1/1/2020'}
+     {start: '1/8/2019', end: '1/1/2020'}
     ]
     include_weekends: false
-    validation_split_ratio: 0.3
+    validation_split_ratio: 0.5
     backtest_split_ratio: 0.0
     embargo_ratio: 0.02
     backtest: {
@@ -45,8 +45,12 @@ environment: {
     ]
     action_schema: 'DiscreteActionScheme'
     use_action_noise: true
-    action_noise_mean: 0.01
-    action_noise_sigma: 0.02
+    action_noise: {
+        name: 'OrnsteinUhlenbeckActionNoise'
+        mean: 0.01
+        sigma: 0.02
+        theta: 0.15
+    }
     possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
 agent: {

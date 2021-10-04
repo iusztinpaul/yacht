@@ -13,7 +13,7 @@ input: {
     start: '1/8/2016'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 3
+    window_size: 80
     render_periods: [
      {start: '1/8/2019', end: '1/3/2020'},
      {start: '1/8/2020', end: '1/3/2021'}
@@ -24,13 +24,13 @@ input: {
     embargo_ratio: 0.03
     backtest: {
         run: false
-        deterministic: false
+        deterministic: true
         tickers: ['AAPL']
     }
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 8
+    n_envs: 4
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -41,14 +41,14 @@ environment: {
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.01
+        reward_scaling: 0.05
     }
     ]
     action_schema: 'DiscreteActionScheme'
-    use_action_noise: true
+    use_action_noise: false
     action_noise_mean: 0.01
     action_noise_sigma: 0.02
-    possibilities: [0, 0.25, 0.5, 0.75, 1]
+    possibilities: [0, 0.1, 0.25, 0.5, 0.75, 1]
 }
 agent: {
     name: 'PPO'
@@ -59,31 +59,32 @@ agent: {
         activation_fn: 'Tanh',
         feature_extractor: {
             name: 'RecurrentFeatureExtractor'
-            features_dim: [64, 64, 512]
-            drop_out_p: 0.5
+            features_dim: [64, 64, 64, 64, 1024]
+            drop_out_p: 0.25,
+            rnn_layer_type: 'LSTM'
         }
         net_arch: {
-            shared: [256]
-            vf: [64]
-            pi: [64]
+            shared: [512, 128]
+            vf: [32]
+            pi: [32]
         }
     }
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 2000000
-    fine_tune_total_timesteps: 500000
-    collecting_n_steps: 2048
-    learning_rate: 0.00025
-    batch_size: 512
-    n_epochs: 10
-    gamma: 0.99
-    gae_lambda: 0.95
+    total_timesteps: 4000000
+    fine_tune_total_timesteps: 400000
+    collecting_n_steps: 10240
+    learning_rate: 0.0001
+    batch_size: 1024
+    n_epochs: 5
+    gamma: 0.94
+    gae_lambda: 0.93
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 0.01,
-    vf_coefficient: 0.5
-    max_grad_norm: 0.5
+    entropy_coefficient: 0.006,
+    vf_coefficient: 0.01
+    max_grad_norm: 1.
     use_sde: false
     sde_sample_freq: -1
 }

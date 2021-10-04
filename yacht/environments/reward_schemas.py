@@ -13,6 +13,7 @@ from yacht.data.datasets import AssetDataset
 #########################################################
 #################### INTERFACES #########################
 #########################################################
+from yacht.utils import build_from_protobuf
 
 
 class RewardSchema(ABC):
@@ -191,25 +192,12 @@ reward_schema_registry = {
 
 def build_reward_schema(config: Config):
     env_config: EnvironmentConfig = config.environment
-    reward_schemas = []
+    reward_schemas: List[RewardSchema] = []
     for reward_schema_config in env_config.reward_schemas:
         reward_schema_class = reward_schema_registry[reward_schema_config.name]
+        reward_schema: RewardSchema = build_from_protobuf(reward_schema_class, reward_schema_config)
 
-        # Create kwargs for specific class.
-        possible_class_kwargs = {
-            'reward_scaling': reward_schema_config.reward_scaling,
-            'density_thresholds': list(reward_schema_config.density_thresholds)
-        }
-        class_signature = inspect.signature(reward_schema_class.__init__)
-        class_constructor_parameters = class_signature.parameters.keys()
-        class_kwargs = {}
-        for k, v in possible_class_kwargs.items():
-            if k in class_constructor_parameters:
-                class_kwargs[k] = v
-
-        reward_schemas.append(
-            reward_schema_class(**class_kwargs)
-        )
+        reward_schemas.append(reward_schema)
 
     return RewardSchemaAggregator(
         reward_schemas=reward_schemas

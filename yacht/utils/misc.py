@@ -1,4 +1,9 @@
+import inspect
 from typing import List, Any
+
+from google.protobuf.json_format import MessageToDict
+
+from .parsers import camel_to_snake
 
 
 def compute_max_score(num_days: int, action_max_score: int):
@@ -61,3 +66,16 @@ def merge_configs(default_dict: dict, overriding_dict: dict) -> dict:
             )
 
     return default_dict
+
+
+def build_from_protobuf(class_type: type, config):
+    config: dict = MessageToDict(config)
+    config = {camel_to_snake(k): v for k, v in config.items()}
+    class_signature = inspect.signature(class_type.__init__)
+
+    kwargs = {}
+    for parameter_key in class_signature.parameters.keys():
+        if parameter_key in config:
+            kwargs[parameter_key] = config[parameter_key]
+
+    return class_type(**kwargs)

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package yacht.config.proto;
+
+
+message ActionNoiseConfig {
+    string name = 1;
+    double mean = 2;
+    double sigma = 3;
+    double theta = 4;
+}

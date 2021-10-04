@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime, timedelta
 from functools import reduce
 from typing import Union, List, Tuple
@@ -236,3 +237,9 @@ def add_business_days(obj: Union[datetime, pd.Timestamp], action: str, offset: i
 
 def english_title_to_snake_case(string: str):
     return reduce(lambda x, y: x + ('_' if y == ' ' else y), string).lower()
+
+
+def camel_to_snake(string : str):
+    string = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
+
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', string).lower()

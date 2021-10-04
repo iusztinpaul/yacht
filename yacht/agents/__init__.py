@@ -12,8 +12,10 @@ from yacht import utils, Mode
 from yacht.logger import Logger
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
 from yacht.agents.modules import RecurrentFeatureExtractor, MultiFrequencyFeatureExtractor
+from yacht.agents import schedulers
 from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
+
 from ..environments import BaseAssetEnvironment
 
 reinforcement_learning_agents = {
@@ -126,6 +128,8 @@ def build_agent(
             env=env,
             verbose=1 if agent_config.verbose else 0,
             learning_rate=train_config.learning_rate,
+            # learning_rate=schedulers.linear_schedule(train_config.learning_rate),
+            # learning_rate=schedulers.step_schedule(train_config.learning_rate, [0.33, 0.66]),
             batch_size=train_config.batch_size,
             n_steps=train_config.collecting_n_steps,
             n_epochs=train_config.n_epochs,

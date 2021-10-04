@@ -32,6 +32,8 @@ class CacheContext:
         self.num_iteration = self.query_cache(self.storage_dir, 'num_iteration')
         if self.num_iteration is None:
             self.num_iteration = 0
+            self.write_to_cache(self.storage_dir, 'num_iteration', self.num_iteration)
+
         # Clear possible residuals from last runs.
         cache_experiment_tracker_name(self.storage_dir, '')
 
