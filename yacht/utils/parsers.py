@@ -235,11 +235,11 @@ def add_business_days(obj: Union[datetime, pd.Timestamp], action: str, offset: i
     return obj.to_pydatetime()
 
 
-def english_title_to_snake_case(string: str):
+def english_title_to_snake_case(string: str) -> str:
     return reduce(lambda x, y: x + ('_' if y == ' ' else y), string).lower()
 
 
-def camel_to_snake(string : str):
+def camel_to_snake(string: str) -> str:
     string = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
 
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', string).lower()

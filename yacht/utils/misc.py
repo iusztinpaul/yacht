@@ -1,6 +1,7 @@
 import inspect
 from typing import List, Any
 
+import numpy as np
 from google.protobuf.json_format import MessageToDict
 
 from .parsers import camel_to_snake
@@ -68,7 +69,7 @@ def merge_configs(default_dict: dict, overriding_dict: dict) -> dict:
     return default_dict
 
 
-def build_from_protobuf(class_type: type, config):
+def build_from_protobuf(class_type: type, config, to_numpy: bool = False):
     config: dict = MessageToDict(config)
     config = {camel_to_snake(k): v for k, v in config.items()}
     class_signature = inspect.signature(class_type.__init__)
@@ -76,6 +77,10 @@ def build_from_protobuf(class_type: type, config):
     kwargs = {}
     for parameter_key in class_signature.parameters.keys():
         if parameter_key in config:
-            kwargs[parameter_key] = config[parameter_key]
+            value = config[parameter_key]
+            if to_numpy and is_number(value):
+                kwargs[parameter_key] = np.array(value)
+            else:
+                kwargs[parameter_key] = value
 
     return class_type(**kwargs)

@@ -19,7 +19,8 @@ message TrainConfig {
   double max_grad_norm = 14;
   bool use_sde = 15;
   int32 sde_sample_freq = 16;
-  int32 k_fold_splits = 17;
-  double k_fold_purge_ratio = 18;
-  double k_fold_embargo_ratio = 19;
+  string learning_rate_scheduler = 17;
+  int32 k_fold_splits = 18;
+  double k_fold_purge_ratio = 19;
+  double k_fold_embargo_ratio = 20;
 }

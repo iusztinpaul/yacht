@@ -1,11 +1,34 @@
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 import pandas as pd
+
+from yacht import utils
+
+
+def constant_schedule(initial_value: float) -> Callable[[float], float]:
+    """
+    Constant rate schedule.
+
+    :param initial_value: Initial learning rate.
+    :return: schedule that computes
+      current learning rate depending on remaining progress
+    """
+
+    def func(progress_remaining: float) -> float:
+        """
+        Progress will decrease from 1 (beginning) to 0.
+
+        :param progress_remaining:
+        :return: current learning rate
+        """
+        return initial_value
+
+    return func
 
 
 def linear_schedule(initial_value: float) -> Callable[[float], float]:
     """
-    Linear learning rate schedule.
+    Linear rate schedule.
 
     :param initial_value: Initial learning rate.
     :return: schedule that computes
@@ -59,3 +82,23 @@ def step_schedule(initial_value: float, drop_steps: List[float]) -> Callable[[fl
         return 10**power * initial_value
 
     return func
+
+
+#######################################################################################################################
+
+
+schedulers_registry = {
+    'constant_schedule': constant_schedule,
+    'linear_schedule': linear_schedule,
+    'step_schedule': step_schedule
+}
+
+
+def build_scheduler(name: Optional[str], initial_value: float) -> Callable[[float], float]:
+    if not name:
+        name = 'constant_schedule'
+
+    name = utils.camel_to_snake(name)
+    scheduler = schedulers_registry[name]
+
+    return scheduler(initial_value)
