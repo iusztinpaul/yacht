@@ -1,4 +1,4 @@
-from typing import List, Callable, Optional
+from typing import Callable, Optional, Tuple
 
 import pandas as pd
 
@@ -47,7 +47,7 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
     return func
 
 
-def step_schedule(initial_value: float, drop_steps: List[float]) -> Callable[[float], float]:
+def step_schedule(initial_value: float, drop_steps: Tuple[float] = (0.33, 0.66)) -> Callable[[float], float]:
     """
     Step rate schedule.
 
@@ -56,8 +56,11 @@ def step_schedule(initial_value: float, drop_steps: List[float]) -> Callable[[fl
     :return: schedule that computes
       current learning rate depending on remaining progress
     """
+
     if 0.0 not in drop_steps:
-        drop_steps.insert(0, 0.0)
+        drop_steps = (0.0, *drop_steps)
+    if 1.0 not in drop_steps:
+        drop_steps = (*drop_steps, 1.0)
 
     intervals = []
     for i in range(len(drop_steps) - 1):

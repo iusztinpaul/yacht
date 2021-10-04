@@ -90,6 +90,7 @@ train: {
     max_grad_norm: 0.5
     use_sde: false
     sde_sample_freq: 500
+    learning_rate_scheduler: 'StepSchedule'
 }
 meta: {
     log_frequency_steps: 100
