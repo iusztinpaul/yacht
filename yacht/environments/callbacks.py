@@ -1,5 +1,6 @@
 import os
 import sys
+from collections import Counter
 from typing import List
 
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
@@ -77,6 +78,7 @@ class MetricsEvalCallback(EvalCallback):
             self,
             eval_env: MetricsVecEnvWrapper,
             metrics_to_save_best_on: List[str],
+            plateau_max_n_steps: int,
             mode: Mode,
             n_eval_episodes: int = 5,
             eval_freq: int = 10000,
@@ -102,7 +104,9 @@ class MetricsEvalCallback(EvalCallback):
 
         self.mode = mode
         self.metrics_to_save_best_on = metrics_to_save_best_on
+        self.plateau_max_n_steps = plateau_max_n_steps
         self.best_metrics_results = {key: -sys.maxsize for key in self.metrics_to_save_best_on}
+        self.plateau_metrics_counter = Counter()
 
     def _on_step(self) -> bool:
         super()._on_step()
@@ -113,11 +117,19 @@ class MetricsEvalCallback(EvalCallback):
                 metric_mean_value = step_mean_metrics[metric]
                 if metric_mean_value > self.best_metrics_results[metric]:
                     if self.verbose > 0:
-                        print(f'New best mean {metric}!')
+                        print(f'New best mean for: {metric}!')
                     if self.best_model_save_path is not None:
                         self.model.save(
                             os.path.join(self.best_model_save_path, build_best_metric_checkpoint_file_name(metric))
                         )
                     self.best_metrics_results[metric] = metric_mean_value
+                else:
+                    self.plateau_metrics_counter[metric] += 1
+
+            # If any metric we are listing to did not had a new best value for 'max_n_steps' end training.
+            metrics_plateau = [
+                plateau_steps <= self.plateau_max_n_steps for plateau_steps in self.plateau_metrics_counter.values()
+            ]
+            return all(metrics_plateau)
 
         return True

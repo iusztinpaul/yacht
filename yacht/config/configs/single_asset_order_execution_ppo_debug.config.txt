@@ -96,6 +96,7 @@ meta: {
     log_frequency_steps: 100
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
+    plateau_max_n_steps: 10
     device: 'gpu'
     experiment_tracker: ''
 }
