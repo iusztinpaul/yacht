@@ -76,16 +76,16 @@ agent: {
 train: {
     trainer_name: 'Trainer'
     total_timesteps: 5000
-    fine_tune_total_timesteps: 1000
+    fine_tune_total_timesteps: 5000
     collecting_n_steps: 100
-    learning_rate: 0.00025
+    learning_rate: 0.0003
     batch_size: 500
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 0.01,
+    entropy_coefficient: 1.,
     vf_coefficient: 0.5
     max_grad_norm: 0.5
     use_sde: false
@@ -98,5 +98,5 @@ meta: {
     metrics_to_load_best_on: ['PA']
     plateau_max_n_steps: 10
     device: 'gpu'
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

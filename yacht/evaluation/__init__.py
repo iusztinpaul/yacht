@@ -8,28 +8,12 @@ from yacht.logger import Logger
 def run_backtest(config: Config, logger: Logger, storage_dir: str, agent_from: str, mode: Mode):
     logger.info(f'Backtesting on {mode}')
 
-    if mode == Mode.BacktestTrain:
+    if mode.is_backtestable():
         backtester_ = build_backtester(
             config=config,
             logger=logger,
             storage_dir=storage_dir,
-            mode=Mode.BacktestTrain,
-            agent_from=agent_from
-        )
-    elif mode == Mode.BacktestValidation:
-        backtester_ = build_backtester(
-            config=config,
-            logger=logger,
-            storage_dir=storage_dir,
-            mode=Mode.BacktestValidation,
-            agent_from=agent_from
-        )
-    elif mode == Mode.Backtest:
-        backtester_ = build_backtester(
-            config=config,
-            logger=logger,
-            storage_dir=storage_dir,
-            mode=Mode.Backtest,
+            mode=mode,
             agent_from=agent_from
         )
     else:

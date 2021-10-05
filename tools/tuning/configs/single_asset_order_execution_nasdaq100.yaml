@@ -82,14 +82,13 @@ parameters:
           reward_scaling: 0.01
       - - name: DecisionMakingRewardSchema
         - name: ActionMagnitudeRewardSchema
-          reward_scaling: 0.005
+          reward_scaling: 0.02
       - - name: DecisionMakingRewardSchema
         - name: ActionMagnitudeRewardSchema
-          reward_scaling: 0.02
+          reward_scaling: 0.005
   environment.initialCashPosition:
-    distribution: normal
-    mu: 5000
-    sigma: 1000
+    distribution: constant
+    value: 5000
   environment.nEnvs:
     distribution: int_uniform
     max: 16

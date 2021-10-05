@@ -38,6 +38,9 @@ class Mode(Enum):
     def is_validation(self) -> bool:
         return self == self.BacktestValidation
 
+    def is_backtestable(self) -> bool:
+        return self in {self.BacktestTrain, self.BacktestValidation, self.Backtest}
+
     def is_trainval(self) -> bool:
         return any([self.is_trainable(), self.is_validation()])
 
