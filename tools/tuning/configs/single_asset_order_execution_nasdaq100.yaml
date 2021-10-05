@@ -31,13 +31,22 @@ parameters:
   agent.policy.featureExtractor.featuresDim:
     distribution: categorical
     values:
+      - [16, 16, 128]
+      - [16, 16, 256]
+      - [16, 16, 16, 128]
+      - [16, 16, 16, 256]
+      - [16, 16, 16, 16, 128]
+      - [16, 16, 16, 16, 256]
       - [32, 32, 256]
+      - [32, 32, 512]
       - [32, 32, 32, 256]
-      - [32, 32, 32, 32, 256]
-      - [64, 64, 512]
+      - [32, 32, 32, 512]
       - [64, 64, 256]
+      - [64, 64, 512]
+      - [64, 64, 1024]
       - [64, 64, 64, 256]
-      - [128, 128, 1024]
+      - [64, 64, 64, 512]
+      - [64, 64, 64, 1024]
   agent.policy.featureExtractor.rnnLayerType:
     distribution: categorical
     values:
@@ -50,8 +59,9 @@ parameters:
   agent.policy.netArch.shared:
     distribution: categorical
     values:
+      - [64, 32]
       - [128]
-      - [128, 128]
+      - [128, 64]
       - [256]
       - [256, 128]
       - [512]
@@ -82,17 +92,22 @@ parameters:
           reward_scaling: 0.01
       - - name: DecisionMakingRewardSchema
         - name: ActionMagnitudeRewardSchema
-          reward_scaling: 0.02
+          reward_scaling: 0.05
       - - name: DecisionMakingRewardSchema
         - name: ActionMagnitudeRewardSchema
-          reward_scaling: 0.005
+          reward_scaling: 0.1
+      - - name: DecisionMakingRewardSchema
+        - name: ActionMagnitudeRewardSchema
+          reward_scaling: 0.5
+      - - name: DecisionMakingRewardSchema
+        - name: ActionMagnitudeRewardSchema
+          reward_scaling: 1.
   environment.initialCashPosition:
     distribution: constant
     value: 5000
   environment.nEnvs:
-    distribution: int_uniform
-    max: 16
-    min: 4
+    distribution: constant
+    value: 6
   environment.name:
     distribution: constant
     value: OrderExecutionEnvironment-v0
@@ -101,12 +116,9 @@ parameters:
     values:
       - [0, 0.25, 0.5, 0.75, 1]
       - [0, 0.1, 0.25, 0.5, 0.75, 1]
-      - [0, 0.05, 0.1, 0.25, 0.5, 0.75, 1]
   input.backtest.deterministic:
-    distribution: categorical
-    values:
-      - "true"
-      - "false"
+    distribution: constant
+    value: "true"
   input.backtest.tickers:
     distribution: categorical
     values:
@@ -184,9 +196,9 @@ parameters:
     distribution: constant
     value: 10000
   train.batchSize:
-    distribution: q_normal
-    mu: 1024
-    sigma: 256
+    distribution: int_uniform
+    max: 1024
+    min: 64
   train.clipRange:
     distribution: normal
     mu: 0.3
@@ -196,13 +208,12 @@ parameters:
     mu: 0.3
     sigma: 0.1
   train.collectingNSteps:
-    distribution: int_uniform
-    max: 10240
-    min: 2048
+    distribution: constant
+    value: 6144
   train.entropyCoefficient:
     distribution: uniform
-    max: 0.02
-    min: 0.005
+    max: 1.
+    min: 0.0
   train.totalTimesteps:
     distribution: constant
     value: 1300000
@@ -219,27 +230,23 @@ parameters:
     min: 0.9
   train.learningRate:
     distribution: uniform
-    max: 0.0005
-    min: 0.00005
+    max: 0.01
+    min: 0.0001
   train.maxGradNorm:
     distribution: uniform
-    max: 1
-    min: 0.25
+    max: 100
+    min: 0.5
   train.nEpochs:
     distribution: int_uniform
     max: 10
-    min: 3
+    min: 5
   train.useSde:
     distribution: constant
     value: "false"
-  train.sdeSampleFreq:
-    distribution: int_uniform
-    max: 4096
-    min: 1024
   train.trainerName:
     distribution: constant
     value: Trainer
   train.vfCoefficient:
-    distribution: normal
-    mu: 1.
-    sigma: 0.5
+    distribution: uniform
+    max: 1.
+    min: 0.5
