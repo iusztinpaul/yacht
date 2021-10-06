@@ -12,6 +12,10 @@ command:
   - ${program}
   - "--config_file_name"
   - "single_asset_order_execution_nasdaq100_ppo.config.txt"
+early_terminate:
+  type: hyperband
+  min_iter: 4
+  eta: 2
 parameters:
   agent.name:
     distribution: constant
@@ -146,7 +150,8 @@ parameters:
     values:
       - [Close, Open, High, Low, Volume]
       - [Close, Open, High, Low]
-      - [Close, Open]
+      - [Open, Volume]
+      - [Close, Volume]
   input.technicalIndicators:
     distribution: categorical
     values:
@@ -196,9 +201,10 @@ parameters:
     distribution: constant
     value: 10000
   train.batchSize:
-    distribution: int_uniform
+    distribution: q_uniform
     max: 1024
     min: 64
+    q: 64
   train.clipRange:
     distribution: normal
     mu: 0.3
@@ -223,7 +229,7 @@ parameters:
   train.gaeLambda:
     distribution: uniform
     max: 1.
-    min: 0.9
+    min: 0.
   train.gamma:
     distribution: uniform
     max: 1.0

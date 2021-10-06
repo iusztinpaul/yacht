@@ -92,6 +92,13 @@ class HyperParameterTuningWandbContext(WandBContext):
         )
         self._define_custom_step_metrics()
 
+    def _define_custom_step_metrics(self):
+        for mode in Mode:
+            if not mode.is_trainable():
+                wandb.define_metric(mode.to_step_key())
+                wandb.define_metric(f'{mode.value}/*', step_metric=mode.to_step_key())
+        wandb.define_metric('timings_step')
+
     def get_config(self) -> Config:
         sweep_config = wandb.config._items
         del sweep_config['_wandb']

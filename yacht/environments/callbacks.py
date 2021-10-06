@@ -104,6 +104,7 @@ class MetricsEvalCallback(EvalCallback):
 
         self.mode = mode
         self.metrics_to_save_best_on = metrics_to_save_best_on
+        self.apply_plateau = plateau_max_n_steps > 0
         self.plateau_max_n_steps = plateau_max_n_steps
         self.best_metrics_results = {key: -sys.maxsize for key in self.metrics_to_save_best_on}
         self.plateau_metrics_counter = Counter()
@@ -116,6 +117,8 @@ class MetricsEvalCallback(EvalCallback):
             for metric in self.metrics_to_save_best_on:
                 metric_mean_value = step_mean_metrics[metric]
                 if metric_mean_value > self.best_metrics_results[metric]:
+                    self.plateau_metrics_counter[metric] = 0
+
                     if self.verbose > 0:
                         print(f'New best mean for: {metric}!')
                     if self.best_model_save_path is not None:
@@ -126,10 +129,11 @@ class MetricsEvalCallback(EvalCallback):
                 else:
                     self.plateau_metrics_counter[metric] += 1
 
-            # If any metric we are listing to did not had a new best value for 'max_n_steps' end training.
-            metrics_plateau = [
-                plateau_steps <= self.plateau_max_n_steps for plateau_steps in self.plateau_metrics_counter.values()
-            ]
-            return all(metrics_plateau)
+            if self.apply_plateau:
+                # If any metric we are listing to did not had a new best value for 'max_n_steps' end training.
+                metrics_plateau = [
+                    plateau_steps <= self.plateau_max_n_steps for plateau_steps in self.plateau_metrics_counter.values()
+                ]
+                return all(metrics_plateau)
 
         return True
