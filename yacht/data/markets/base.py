@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from typing import Union, List, Any, Optional, Iterable
+from datetime import datetime
+from typing import Union, List, Any, Iterable
 
 import pandas as pd
 
@@ -31,13 +31,15 @@ class Market(ABC):
             api_key,
             api_secret,
             storage_dir: str,
-            include_weekends: bool
+            include_weekends: bool,
+            read_only: bool
     ):
         self.features = list(set(features).union(self.MANDATORY_FEATURES))
         self.logger = logger
         self.api_key = api_key
         self.api_secret = api_secret
         self.include_weekends = include_weekends
+        self.read_only = read_only
 
         self.storage_dir = storage_dir
         if not os.path.exists(self.storage_dir):
@@ -166,17 +168,19 @@ class H5Market(Market, ABC):
             api_key,
             api_secret,
             storage_dir: str,
-            storage_filename: str,
-            include_weekends: bool
+            storage_file: str,
+            include_weekends: bool,
+            read_only: bool
     ):
-        self.storage_file = os.path.join(storage_dir, storage_filename)
+        self.storage_file = os.path.join(storage_dir, storage_file)
         # The is_cached operation is called multiple times. So we cache the data state for faster usage.
+        # We cache in memory the disk cache state.
         self.is_cached_cache = dict()
 
-        super().__init__(features, logger, api_key, api_secret, storage_dir, include_weekends)
+        super().__init__(features, logger, api_key, api_secret, storage_dir, include_weekends, read_only)
 
     def open(self) -> pd.HDFStore:
-        return pd.HDFStore(self.storage_file)
+        return pd.HDFStore(self.storage_file, mode='r' if self.read_only else 'a')
 
     def close(self):
         self.connection.close()

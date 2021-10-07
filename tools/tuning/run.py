@@ -28,6 +28,12 @@ parser.add_argument(
     default=os.path.join('storage', 'hyper_param_optimization', f'{uuid1()}'),
     help='Directory where your model & logs will be saved.'
 )
+parser.add_argument(
+    '--market_storage_dir',
+    default=None,
+    help='Optional directory where you want to save your dataset. If not specified it will be saved in "--storage_dir".'
+         'If this parameter is specified than the market is read only for parallel trainings.'
+)
 parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 'warn'))
 
 
@@ -35,10 +41,11 @@ if __name__ == '__main__':
     matplotlib.use('Agg')
 
     args = parser.parse_args()
-    if '.' == args.storage_dir[0]:
-        storage_dir = os.path.join(ROOT_DIR, args.storage_dir[2:])
+    storage_dir = utils.adjust_relative_path(ROOT_DIR, args.storage_dir)
+    if args.market_storage_dir is not None:
+        market_storage_dir = utils.adjust_relative_path(ROOT_DIR, args.market_storage_dir)
     else:
-        storage_dir = args.storage_dir
+        market_storage_dir = None
 
     utils.load_env_variables(root_dir=ROOT_DIR)
     environments.register_gym_envs()
@@ -58,5 +65,6 @@ if __name__ == '__main__':
             config=config,
             logger=logger,
             storage_dir=storage_dir,
-            resume_training=False
+            resume_training=False,
+            market_storage_dir=market_storage_dir
         )

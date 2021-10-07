@@ -27,6 +27,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             self,
             ticker: str,
             market: Market,
+            storage_dir: str,
             intervals: List[str],
             features: List[str],
             decision_price_feature: str,
@@ -43,6 +44,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
         super().__init__(
             ticker=ticker,
             market=market,
+            storage_dir=storage_dir,
             intervals=intervals,
             features=features,
             decision_price_feature=decision_price_feature,

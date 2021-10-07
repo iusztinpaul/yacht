@@ -45,6 +45,7 @@ class AssetDataset(Dataset, ABC):
     def __init__(
             self,
             market: Market,
+            storage_dir: str,
             intervals: List[str],
             features: List[str],
             decision_price_feature: str,
@@ -56,6 +57,7 @@ class AssetDataset(Dataset, ABC):
     ):
         """
             market:
+            storage_dir:
             ticker:
             intervals: data bars frequency
             features: observation data features
@@ -73,6 +75,7 @@ class AssetDataset(Dataset, ABC):
         assert window_size >= 1
 
         self.market = market
+        self.storage_dir = storage_dir
         self.intervals = intervals
         self.features, self.price_features, self.other_features = self.split_features(features)
         self.decision_price_feature = decision_price_feature
@@ -103,10 +106,6 @@ class AssetDataset(Dataset, ABC):
     @property
     def end(self) -> datetime:
         return self.period.end
-
-    @property
-    def storage_dir(self) -> str:
-        return self.market.storage_dir
 
     @property
     def include_weekends(self) -> bool:
@@ -213,6 +212,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             self,
             ticker: str,
             market: Market,
+            storage_dir: str,
             intervals: List[str],
             features: List[str],
             decision_price_feature: str,
@@ -226,6 +226,7 @@ class SingleAssetDataset(AssetDataset, ABC):
     ):
         super().__init__(
             market=market,
+            storage_dir=storage_dir,
             intervals=intervals,
             features=features,
             decision_price_feature=decision_price_feature,
@@ -304,6 +305,7 @@ class MultiAssetDataset(AssetDataset):
     def __init__(
             self,
             datasets: List[SingleAssetDataset],
+            storage_dir: str,
             market: Market,
             intervals: List[str],
             features: List[str],
@@ -316,6 +318,7 @@ class MultiAssetDataset(AssetDataset):
     ):
         super().__init__(
             market=market,
+            storage_dir=storage_dir,
             intervals=intervals,
             features=features,
             decision_price_feature=decision_price_feature,

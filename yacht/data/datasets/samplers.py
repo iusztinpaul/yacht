@@ -18,6 +18,7 @@ class SampleAssetDataset(AssetDataset):
             self,
             datasets: List[Union[SingleAssetDataset, MultiAssetDataset]],
             market: Market,
+            storage_dir: str,
             intervals: List[str],
             features: List[str],
             decision_price_feature: str,
@@ -31,6 +32,7 @@ class SampleAssetDataset(AssetDataset):
     ):
         super().__init__(
             market=market,
+            storage_dir=storage_dir,
             intervals=intervals,
             features=features,
             decision_price_feature=decision_price_feature,

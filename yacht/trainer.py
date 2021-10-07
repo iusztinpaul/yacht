@@ -201,14 +201,21 @@ trainer_registry = {
 }
 
 
-def run_train(config: Config, logger: Logger, storage_dir: str, resume_training: bool):
+def run_train(
+        config: Config,
+        logger: Logger,
+        storage_dir: str,
+        resume_training: bool,
+        market_storage_dir: Optional[str] = None
+):
     trainer = build_trainer(
         config=config,
         storage_dir=storage_dir,
         resume_training=resume_training,
         mode=Mode.Train,
         logger=logger,
-        save=True
+        save=True,
+        market_storage_dir=market_storage_dir
     )
     agent = trainer.train()
     trainer.close()
@@ -221,7 +228,8 @@ def run_train(config: Config, logger: Logger, storage_dir: str, resume_training:
         mode=Mode.FineTuneTrain,
         logger=logger,
         save=True,
-        agent=agent
+        agent=agent,
+        market_storage_dir=market_storage_dir
     )
     trainer.train()
     trainer.close()
@@ -234,13 +242,26 @@ def build_trainer(
         mode: Mode,
         logger: Logger,
         save: bool,
-        agent: Optional[BaseAlgorithm] = None
+        agent: Optional[BaseAlgorithm] = None,
+        market_storage_dir: Optional[str] = None
 ) -> Trainer:
     assert mode.is_trainable()
 
-    train_dataset = build_dataset(config, logger, storage_dir, mode=mode)
+    train_dataset = build_dataset(
+        config,
+        logger,
+        storage_dir,
+        mode=mode,
+        market_storage_dir=market_storage_dir
+    )
     train_env = build_env(config, train_dataset, logger, mode=mode)
-    validation_dataset = build_dataset(config, logger, storage_dir, mode=Mode.BacktestValidation)
+    validation_dataset = build_dataset(
+        config,
+        logger,
+        storage_dir,
+        mode=Mode.BacktestValidation,
+        market_storage_dir=market_storage_dir
+    )
     validation_env = build_env(config, validation_dataset, logger, mode=Mode.BacktestValidation)
 
     if agent is None:

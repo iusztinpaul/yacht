@@ -62,8 +62,13 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
         )
         self.private_dropout = nn.Dropout(p=drop_out_p)
 
+        # self.output_mlp = nn.Sequential(
+        #     nn.Linear(features_dim[1] * 2 * self.window_size, features_dim[-1]),
+        #     activation_fn(),
+        #     nn.Dropout(p=drop_out_p)
+        # )
         self.output_mlp = nn.Sequential(
-            nn.Linear(features_dim[1] * 2 * self.window_size, features_dim[-1]),
+            nn.Linear(features_dim[1] * 2, features_dim[-1]),
             activation_fn(),
             nn.Dropout(p=drop_out_p)
         )
@@ -84,10 +89,12 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
 
         public_input = self.public_mlp(public_input)
         public_input, _ = self.public_recurrent(public_input)
+        public_input = public_input[:, -1, :]
         public_input = self.public_dropout(public_input)
 
         private_input = self.private_mlp(private_input)
         private_input, _ = self.private_recurrent(private_input)
+        private_input = private_input[:, -1, :]
         private_input = self.private_dropout(private_input)
 
         output = torch.cat([public_input, private_input], dim=-1)

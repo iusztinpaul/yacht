@@ -1,3 +1,5 @@
+from typing import Optional
+
 from yacht import Mode
 from yacht.evaluation.backtester import build_backtester
 from yacht.evaluation.metrics import *
@@ -5,7 +7,14 @@ from yacht.config import Config
 from yacht.logger import Logger
 
 
-def run_backtest(config: Config, logger: Logger, storage_dir: str, agent_from: str, mode: Mode):
+def run_backtest(
+        config: Config,
+        logger: Logger,
+        storage_dir: str,
+        agent_from: str,
+        mode: Mode,
+        market_storage_dir: Optional[str] = None
+):
     logger.info(f'Backtesting on {mode}')
 
     if mode.is_backtestable():
@@ -14,7 +23,8 @@ def run_backtest(config: Config, logger: Logger, storage_dir: str, agent_from: s
             logger=logger,
             storage_dir=storage_dir,
             mode=mode,
-            agent_from=agent_from
+            agent_from=agent_from,
+            market_storage_dir=market_storage_dir
         )
     else:
         raise RuntimeError(f'Wrong mode for backtesting: {mode}')

@@ -29,8 +29,9 @@ dataset_registry = {
 def build_dataset(
         config: Config,
         logger: Logger,
-        storage_dir,
-        mode: Mode
+        storage_dir: str,
+        mode: Mode,
+        market_storage_dir: Optional[str] = None
 ) -> Optional[SampleAssetDataset]:
     start_building_data_time = time.time()
 
@@ -38,7 +39,12 @@ def build_dataset(
     dataset_cls = dataset_registry[input_config.dataset]
 
     tickers = build_tickers(config, mode)
-    market = build_market(config, logger, storage_dir)
+    market = build_market(
+        config=config,
+        logger=logger,
+        storage_dir=market_storage_dir if market_storage_dir is not None else storage_dir,
+        read_only=market_storage_dir is not None
+    )
 
     train_split, validation_split, backtest_split = utils.split(
         input_config.start,
@@ -170,6 +176,7 @@ def build_dataset(
                     dataset_cls(
                         ticker=ticker,
                         market=market,
+                        storage_dir=storage_dir,
                         intervals=list(input_config.intervals),
                         features=list(input_config.features) + list(input_config.technical_indicators),
                         decision_price_feature=input_config.decision_price_feature,
@@ -185,6 +192,7 @@ def build_dataset(
             dataset = MultiAssetDataset(
                 datasets=single_asset_datasets,
                 market=market,
+                storage_dir=storage_dir,
                 intervals=list(input_config.intervals),
                 features=list(input_config.features) + list(input_config.technical_indicators),
                 decision_price_feature=input_config.decision_price_feature,
@@ -219,6 +227,7 @@ def build_dataset(
     return SampleAssetDataset(
         datasets=datasets,
         market=market,
+        storage_dir=storage_dir,
         intervals=list(input_config.intervals),
         features=list(input_config.features) + list(input_config.technical_indicators),
         decision_price_feature=input_config.decision_price_feature,

@@ -63,14 +63,14 @@ agent: {
         activation_fn: 'ReLU',
         feature_extractor: {
             name: 'RecurrentFeatureExtractor'
-            features_dim: [16,16,16,16,256]
+            features_dim: [16,16,16,16,64]
             drop_out_p: 0.5,
             rnn_layer_type: 'GRU'
         }
         net_arch: {
-            shared: [256,128]
-            vf: [16]
-            pi: [64]
+            shared: [64,32]
+            vf: [4]
+            pi: [16]
         }
     }
 }
@@ -78,7 +78,7 @@ train: {
     trainer_name: 'Trainer'
     total_timesteps: 1300000
     fine_tune_total_timesteps: 200000
-    collecting_n_steps: 5120
+    collecting_n_steps: 6144
     learning_rate: 0.0007
     batch_size: 64
     n_epochs: 10
@@ -97,7 +97,7 @@ meta: {
     log_frequency_steps: 5000
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
-    plateau_max_n_steps: 15
+    plateau_max_n_steps: 10
     device: 'gpu'
     experiment_tracker: 'wandb'
 }

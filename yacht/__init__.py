@@ -13,6 +13,7 @@ __status__ = "Development"
 
 
 class Mode(Enum):
+    Download = 'download'
     Train = 'train'
     FineTuneTrain = 'fine_tune_train'
     BacktestTrain = 'backtest_on_train'

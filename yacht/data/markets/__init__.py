@@ -14,7 +14,7 @@ market_registry = {
 }
 
 
-def build_market(config: Config, logger: Logger, storage_path: str) -> Market:
+def build_market(config: Config, logger: Logger, storage_dir: str, read_only: bool) -> Market:
     input_config = config.input
 
     assert input_config.decision_price_feature, 'You have to pick a decision_price_feature.'
@@ -24,8 +24,9 @@ def build_market(config: Config, logger: Logger, storage_path: str) -> Market:
         'logger': logger,
         'api_key': os.environ['MARKET_API_KEY'],
         'api_secret': os.environ['MARKET_API_SECRET'],
-        'storage_dir': storage_path,
-        'include_weekends': input_config.include_weekends
+        'storage_dir': storage_dir,
+        'include_weekends': input_config.include_weekends,
+        'read_only': read_only
     }
     market_name = input_config.market
     if len(input_config.technical_indicators) > 0:

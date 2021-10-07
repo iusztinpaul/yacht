@@ -4,6 +4,13 @@ from pathlib import Path
 from yacht import Mode
 
 
+def adjust_relative_path(root_dir: str, relative_path: str) -> str:
+    if '.' == relative_path[0]:
+        return os.path.join(root_dir, relative_path[2:])
+    else:
+        return relative_path
+
+
 def build_config_path(project_root_dir: str, config_name: str) -> str:
     return os.path.join(project_root_dir, 'yacht', 'config', 'configs', config_name)
 
