@@ -244,7 +244,11 @@ def build_dataset(
 def build_tickers(config: Config, mode: Mode) -> Set[str]:
     input_config = config.input
 
-    if mode.is_trainable():
+    if mode.is_download():
+        tickers = set(input_config.fine_tune_tickers).union(set(input_config.tickers))
+        tickers = tickers.union(set(input_config.backtest.tickers))
+        tickers = list(tickers)
+    elif mode.is_trainable():
         if mode.is_fine_tuning():
             tickers = list(input_config.fine_tune_tickers)
         else:

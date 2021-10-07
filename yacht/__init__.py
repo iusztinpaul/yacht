@@ -45,5 +45,8 @@ class Mode(Enum):
     def is_trainval(self) -> bool:
         return any([self.is_trainable(), self.is_validation()])
 
+    def is_download(self) -> bool:
+        return self == self.Download
+
     def to_step_key(self) -> str:
         return f'{self.value}_step'

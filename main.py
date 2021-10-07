@@ -2,7 +2,6 @@ import argparse
 import os
 
 import matplotlib
-from tqdm import tqdm
 
 import yacht.logger
 from yacht.config import load_config, export_config
@@ -119,7 +118,7 @@ if __name__ == '__main__':
             )
         elif mode == Mode.Download:
             storage_dir = market_storage_dir if market_storage_dir is not None else storage_dir
-            logger.info(f'Downloading files to: {storage_dir}')
+            logger.info(f'Downloading to: {storage_dir}')
 
             market = build_market(
                 config=config,
@@ -128,8 +127,7 @@ if __name__ == '__main__':
                 read_only=False
             )
             tickers = build_tickers(config, mode)
-
-            for interval in tqdm(config.input.intervals):
+            for interval in config.input.intervals:
                 market.download(
                     tickers,
                     interval=interval,
@@ -137,3 +135,5 @@ if __name__ == '__main__':
                     end=utils.string_to_datetime(config.input.end),
                     flexible_start=True
                 )
+
+            logger.info(f'Downloading finished')
