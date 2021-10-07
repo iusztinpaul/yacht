@@ -72,7 +72,8 @@ def build_env(
         n_metrics_episodes=len(dataset.datasets),
         logger=logger,
         mode=mode,
-        extra_metrics_to_log=list(config.meta.metrics_to_save_best_on)
+        metrics_to_log=list(config.meta.metrics_to_log),
+        extra_stats_metrics=list(config.meta.metrics_to_save_best_on)
     )
 
     return env

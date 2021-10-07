@@ -76,14 +76,16 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
             n_metrics_episodes: int,
             logger: Logger,
             mode: Mode,
-            extra_metrics_to_log: List[str]
+            metrics_to_log: List[str],
+            extra_stats_metrics: List[str]
     ):
         super().__init__(venv)
 
         self.n_metrics_episodes = n_metrics_episodes
         self.logger = logger
         self.mode = mode
-        self.extra_metrics_to_log = extra_metrics_to_log
+        self.metrics_to_log = metrics_to_log
+        self.extra_metrics_to_log = extra_stats_metrics
 
         self.metrics: List[dict] = []
         self.metric_statistics = {
@@ -166,22 +168,16 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
     def _prefix_key(self, key: str) -> str:
         return f'{self.mode.value}/{key}'
 
-    @classmethod
-    def extract_metrics(cls, info: dict) -> dict:
+    def extract_metrics(self, info: dict) -> dict:
         episode_metrics = info['episode_metrics']
         episode_data = info['episode']
 
         metrics_to_log = {
             'reward': episode_data['r'],
-            'annual_return': episode_metrics['annual_return'],
-            'cumulative_returns': episode_metrics['cumulative_returns'],
-            'sharpe_ratio': episode_metrics['sharpe_ratio'],
-            'max_drawdown': episode_metrics['max_drawdown'],
         }
-        if episode_metrics.get('PA') is not None:
-            metrics_to_log['PA'] = episode_metrics['PA']
-        if episode_metrics.get('cash_used_on_last_tick') is not None:
-            metrics_to_log['cash_used_on_last_tick'] = episode_metrics['cash_used_on_last_tick']
+        for metric in self.metrics_to_log:
+            if episode_metrics.get(metric) is not None:
+                metrics_to_log[metric] = episode_metrics[metric]
 
         return metrics_to_log
 

@@ -36,6 +36,7 @@ def compute_backtest_metrics(
 
     strategy_metrics['PA'] = aggregate_price_advantage(report, buy=buy)
     strategy_metrics['LSR'] = compute_longs_shorts_ratio(report)
+    strategy_metrics.update(compute_action_distance(report))
 
     return strategy_metrics, report
 
@@ -139,3 +140,30 @@ def compute_longs_shorts_ratio(report: dict) -> float:
     longs_shorts_ratio = final_num_longs / (final_num_shorts + 1e-17)
 
     return longs_shorts_ratio
+
+
+def compute_action_distance(report: dict) -> dict:
+    actions = report['unadjusted_actions']
+
+    differences = []
+    differences_start = []
+    differences_end = []
+    for asset_idx in range(actions.shape[1]):
+        action_indices = np.where(actions[..., asset_idx] != 0)[0]
+
+        if len(action_indices) <= 1:
+            differences.append(action_indices)
+        else:
+            left_interval = action_indices[:-1]
+            right_interval = action_indices[1:]
+            difference = np.abs(left_interval - right_interval)
+            differences.append(difference.mean())
+
+        differences_start.append(action_indices.min())
+        differences_end.append(actions.shape[0] - action_indices.max())
+
+    return {
+        'AD': np.array(differences, dtype=np.float32).mean().item(),
+        'ADS': np.array(differences_start, dtype=np.float32).mean().item(),
+        'ADE': np.array(differences_end, dtype=np.float32).mean().item(),
+    }
