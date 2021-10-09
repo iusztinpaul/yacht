@@ -13,7 +13,7 @@ input: {
     start: '1/1/2019'
     end: '1/1/2020'
     period_length: '1M'
-    window_size: 15
+    window_size: 12
     render_periods: [
      {start: '1/8/2019', end: '1/1/2020'}
     ]
@@ -61,7 +61,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'RecurrentFeatureExtractor'
+            name: 'RecurrentNPeriodsFeatureExtractor'
             features_dim: [16, 64, 64,32]
             drop_out_p: 0.5
             rnn_layer_type: 'LSTM'
@@ -94,7 +94,7 @@ train: {
 }
 meta: {
     log_frequency_steps: 100
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'sharpe_ratio']
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'sharpe_ratio', 'num_actions']
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
     plateau_max_n_steps: -1

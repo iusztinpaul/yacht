@@ -11,7 +11,7 @@ from torch import nn
 from yacht import utils, Mode
 from yacht.logger import Logger
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
-from yacht.agents.modules import RecurrentFeatureExtractor, MultiFrequencyFeatureExtractor
+from yacht.agents import modules
 from yacht.agents import schedulers
 from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
@@ -33,8 +33,9 @@ policy_registry = {
 }
 
 feature_extractor_registry = {
-    'MultiFrequencyFeatureExtractor': MultiFrequencyFeatureExtractor,
-    'RecurrentFeatureExtractor': RecurrentFeatureExtractor,
+    'MultiFrequencyFeatureExtractor': modules.MultiFrequencyFeatureExtractor,
+    'RecurrentFeatureExtractor': modules.RecurrentFeatureExtractor,
+    'RecurrentNPeriodsFeatureExtractor': modules.RecurrentNPeriodsFeatureExtractor,
     '': None,
     None: None
 }
@@ -114,6 +115,7 @@ def build_agent(
                 'features_dim': list(feature_extractor_config.features_dim),
                 'activation_fn': activation_fn_class,
                 'window_size': input_config.window_size,
+                'num_periods': input_config.num_periods,
                 'intervals': list(input_config.intervals),
                 'features': list(input_config.features) + list(input_config.technical_indicators),
                 'env_features_len': env.envs[0].observation_env_features_len,
@@ -122,6 +124,11 @@ def build_agent(
                 # TODO: Remove rnn_layer_type config parameter
                 'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM
             }
+            policy_kwargs['features_extractor_kwargs'] = utils.filter_class_kwargs(
+                feature_extractor_class,
+                policy_kwargs['features_extractor_kwargs'],
+                to_numpy=False
+            )
 
         agent = agent_class(
             policy=policy_class,

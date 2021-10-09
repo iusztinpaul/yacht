@@ -151,8 +151,8 @@ def compute_action_distance(report: dict) -> dict:
     num_actions = []
     for asset_idx in range(actions.shape[1]):
         action_indices = np.where(actions[..., asset_idx] != 0)[0]
-        num_actions = action_indices[action_indices > 0].shape[0]
-        num_actions.append(num_actions)
+        asset_num_actions = action_indices.shape[0]
+        num_actions.append(asset_num_actions)
 
         if len(action_indices) <= 1:
             differences.append(action_indices)

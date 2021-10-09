@@ -3,6 +3,7 @@ from typing import List, Any
 
 import numpy as np
 from google.protobuf.json_format import MessageToDict
+from google.protobuf.message import Message
 
 from .parsers import camel_to_snake
 
@@ -69,9 +70,20 @@ def merge_configs(default_dict: dict, overriding_dict: dict) -> dict:
     return default_dict
 
 
-def build_from_protobuf(class_type: type, config, to_numpy: bool = False):
+def build_from_protobuf(class_type: type, config: Message, to_numpy: bool = False):
     config: dict = MessageToDict(config)
     config = {camel_to_snake(k): v for k, v in config.items()}
+
+    return build_from_kwargs(class_type, config, to_numpy)
+
+
+def build_from_kwargs(class_type: type, config: dict, to_numpy: bool = False):
+    kwargs = filter_class_kwargs(class_type, config, to_numpy)
+
+    return class_type(**kwargs)
+
+
+def filter_class_kwargs(class_type: type, config: dict, to_numpy: bool = False):
     class_signature = inspect.signature(class_type.__init__)
 
     kwargs = {}
@@ -82,5 +94,7 @@ def build_from_protobuf(class_type: type, config, to_numpy: bool = False):
                 kwargs[parameter_key] = np.array(value)
             else:
                 kwargs[parameter_key] = value
+        else:
+            raise RuntimeError(f'Config does not contain: "{parameter_key}" for class_type: {class_type}.')
 
-    return class_type(**kwargs)
+    return kwargs

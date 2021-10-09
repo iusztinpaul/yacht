@@ -13,7 +13,8 @@ input: {
     start: '1/8/2016'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 14
+    window_size: 80
+    num_periods: 8
     render_periods: [
      {start: '1/8/2019', end: '1/3/2020'},
      {start: '1/8/2020', end: '1/3/2021'}
@@ -62,7 +63,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'ReLU',
         feature_extractor: {
-            name: 'RecurrentFeatureExtractor'
+            name: 'RecurrentNPeriodsFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.25,
             rnn_layer_type: 'LSTM'

@@ -62,11 +62,6 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
         )
         self.private_dropout = nn.Dropout(p=drop_out_p)
 
-        # self.output_mlp = nn.Sequential(
-        #     nn.Linear(features_dim[1] * 2 * self.window_size, features_dim[-1]),
-        #     activation_fn(),
-        #     nn.Dropout(p=drop_out_p)
-        # )
         self.output_mlp = nn.Sequential(
             nn.Linear(features_dim[1] * 2, features_dim[-1]),
             activation_fn(),
@@ -99,6 +94,111 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
 
         output = torch.cat([public_input, private_input], dim=-1)
         output = output.reshape(batch_size, -1)
+        output = self.output_mlp(output)
+
+        return output
+
+
+class RecurrentNPeriodsFeatureExtractor(BaseFeaturesExtractor):
+    def __init__(
+            self,
+            observation_space: gym.Space,
+            features_dim: List[int],
+            window_size: int,
+            num_periods: int,
+            intervals: List[str],
+            features: List[str],
+            env_features_len: int,
+            num_assets: int,
+            activation_fn: nn.Module,
+            rnn_layer_type: nn.Module,
+            drop_out_p: float = 0.5
+    ):
+        super().__init__(observation_space, features_dim[-1])
+
+        assert len(features_dim) >= 3
+        assert len(set(features_dim[1:-1])) == 1, 'The features_dim of the recurrent layers should be equal.'
+        assert window_size % num_periods == 0
+
+        self.window_size = window_size
+        self.num_periods = num_periods
+        self.period_length = self.window_size // self.num_periods
+        self.intervals = intervals
+        self.features = features
+        self.env_features_len = env_features_len
+        self.num_assets = num_assets
+        self.num_rnn_layers = len(features_dim[1:-1])
+
+        cnn_out_num_channels = len(self.features) // 2
+        kernel_size = 3
+        self.public_cnn = nn.Sequential(
+            nn.Conv1d(in_channels=len(self.features), out_channels=cnn_out_num_channels, kernel_size=(kernel_size, )),
+            activation_fn()
+        )
+        mlp_in_num_channels = cnn_out_num_channels * (self.period_length - (kernel_size - 1))
+        self.public_mlp = nn.Sequential(
+            nn.Linear(in_features=mlp_in_num_channels, out_features=features_dim[0]),
+            activation_fn(),
+            nn.Dropout(p=drop_out_p)
+        )
+        self.public_recurrent = rnn_layer_type(
+            features_dim[0],
+            features_dim[1],
+            num_layers=self.num_rnn_layers,
+            batch_first=True,
+            dropout=drop_out_p
+        )
+        self.public_dropout = nn.Dropout(p=drop_out_p)
+
+        self.private_mlp = nn.Sequential(
+            nn.Linear(in_features=env_features_len * self.period_length, out_features=features_dim[0]),
+            activation_fn(),
+            nn.Dropout(p=drop_out_p)
+        )
+        self.private_recurrent = rnn_layer_type(
+            features_dim[0],
+            features_dim[1],
+            num_layers=self.num_rnn_layers,
+            batch_first=True,
+            dropout=drop_out_p
+        )
+        self.private_dropout = nn.Dropout(p=drop_out_p)
+
+        self.output_mlp = nn.Sequential(
+            nn.Linear(features_dim[1] * 2, features_dim[-1]),
+            activation_fn(),
+            nn.Dropout(p=drop_out_p)
+        )
+
+    def forward(self, observations: torch.Tensor) -> torch.Tensor:
+        observations = unflatten_observations(
+            observations=observations,
+            intervals=self.intervals,
+            num_env_features=self.env_features_len,
+            num_assets=self.num_assets
+        )
+        batch_size, window_size, bar_size, num_assets_size, features_size = observations['1d'].shape
+        public_input = observations['1d']
+        public_input = public_input.reshape(batch_size * self.num_periods, window_size // self.num_periods, -1)
+        public_input = public_input.transpose(1, 2)
+
+        batch_size, window_size, env_features = observations['env_features'].shape
+        private_input = observations['env_features']
+
+        public_input = self.public_cnn(public_input)
+        public_input = public_input.reshape(batch_size, self.num_periods, -1)
+        public_input = self.public_mlp(public_input)
+        public_input, _ = self.public_recurrent(public_input)
+        public_input = public_input[:, -1, :]
+        public_input = self.public_dropout(public_input)
+
+        private_input = private_input.reshape(batch_size, self.num_periods, -1)
+        private_input = self.private_mlp(private_input)
+        private_input, _ = self.private_recurrent(private_input)
+        private_input = private_input[:, -1, :]
+        private_input = self.private_dropout(private_input)
+
+        output = torch.cat([public_input, private_input], dim=-1)
         output = self.output_mlp(output)
 
         return output

@@ -1,2 +1,2 @@
 from .multi_frequency import MultiFrequencyFeatureExtractor
-from .recurrent import RecurrentFeatureExtractor
+from .recurrent import RecurrentFeatureExtractor, RecurrentNPeriodsFeatureExtractor
