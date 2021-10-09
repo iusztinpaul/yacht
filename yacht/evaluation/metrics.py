@@ -148,8 +148,11 @@ def compute_action_distance(report: dict) -> dict:
     differences = []
     differences_start = []
     differences_end = []
+    num_actions = []
     for asset_idx in range(actions.shape[1]):
         action_indices = np.where(actions[..., asset_idx] != 0)[0]
+        num_actions = action_indices[action_indices > 0].shape[0]
+        num_actions.append(num_actions)
 
         if len(action_indices) <= 1:
             differences.append(action_indices)
@@ -166,4 +169,5 @@ def compute_action_distance(report: dict) -> dict:
         'AD': np.array(differences, dtype=np.float32).mean().item(),
         'ADS': np.array(differences_start, dtype=np.float32).mean().item(),
         'ADE': np.array(differences_end, dtype=np.float32).mean().item(),
+        'num_actions': np.array(num_actions, dtype=np.float32).mean().item()
     }

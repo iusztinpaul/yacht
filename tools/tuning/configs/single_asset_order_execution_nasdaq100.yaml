@@ -13,7 +13,7 @@ command:
   - "--config_file_name"
   - "single_asset_order_execution_nasdaq100_ppo.config.txt"
   - "--market_storage_dir"
-  - "./storage/yahoo.h5"
+  - "./storage"
 early_terminate:
   type: hyperband
   min_iter: 5
@@ -183,7 +183,7 @@ parameters:
     value: [AAPL]
   input.windowSize:
     distribution: int_uniform
-    max: 90
+    max: 45
     min: 1
   meta.device:
     distribution: constant
@@ -196,27 +196,27 @@ parameters:
     value: 10000
   train.batchSize:
     distribution: q_uniform
-    max: 512
-    min: 64
+    max: 640
+    min: 128
     q: 64
   train.clipRange:
     distribution: normal
-    mu: 0.3
-    sigma: 0.1
+    mu: 0.35
+    sigma: 0.15
   train.vfClipRange:
     distribution: normal
     mu: 0.35
-    sigma: 0.15
+    sigma: 0.2
   train.collectingNSteps:
     distribution: constant
     value: 4096
   train.entropyCoefficient:
     distribution: uniform
     max: 1.
-    min: 0.1
+    min: 0.25
   train.totalTimesteps:
     distribution: constant
-    value: 1300000
+    value: 1000000
   train.fineTuneTotalTimesteps:
     distribution: constant
     value: 200000
@@ -227,18 +227,18 @@ parameters:
   train.gamma:
     distribution: uniform
     max: 1.0
-    min: 0.92
+    min: 0.95
   train.learningRate:
     distribution: uniform
-    max: 0.01
-    min: 0.0001
+    max: 0.001
+    min: 0.00005
   train.maxGradNorm:
     distribution: uniform
-    max: 100
+    max: 75
     min: 25
   train.nEpochs:
     distribution: int_uniform
-    max: 15
+    max: 20
     min: 8
   train.useSde:
     distribution: constant
@@ -248,5 +248,5 @@ parameters:
     value: Trainer
   train.vfCoefficient:
     distribution: uniform
-    max: 1.
+    max: 0.85
     min: 0.4

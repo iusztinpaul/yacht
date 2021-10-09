@@ -134,6 +134,10 @@ class MetricsEvalCallback(EvalCallback):
                 metrics_plateau = [
                     plateau_steps <= self.plateau_max_n_steps for plateau_steps in self.plateau_metrics_counter.values()
                 ]
-                return all(metrics_plateau)
+                continue_training = all(metrics_plateau)
+                if continue_training is False:
+                    print('Stopped training because of plateauing metrics...')
+
+                return continue_training
 
         return True
