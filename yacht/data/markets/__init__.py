@@ -1,16 +1,19 @@
 import os
 
 from .base import Market
-from .binance import Binance, TechnicalIndicatorBinance
-from .yahoo import Yahoo, TechnicalIndicatorYahoo
+from yacht.data.markets.binance import Binance
+from yacht.data.markets.yahoo import Yahoo
+from yacht.data.markets import mixins
 from ...config import Config
 from ...logger import Logger
 
 market_registry = {
     'Binance': Binance,
-    'Yahoo': Yahoo,
-    'TechnicalIndicatorYahoo': TechnicalIndicatorYahoo,
-    'TechnicalIndicatorBinance': TechnicalIndicatorBinance,
+    'Yahoo': Yahoo
+}
+mixins_registry = {
+    'LogDifferenceMixin': mixins.LogDifferenceMixin,
+    'TargetPriceMixin': mixins.TargetPriceMixin
 }
 
 
@@ -20,7 +23,7 @@ def build_market(config: Config, logger: Logger, storage_dir: str, read_only: bo
     assert input_config.decision_price_feature, 'You have to pick a decision_price_feature.'
 
     market_kwargs = {
-        'features': list(input_config.features) + [input_config.decision_price_feature],
+        'get_features': list(input_config.features) + [input_config.decision_price_feature],
         'logger': logger,
         'api_key': os.environ['MARKET_API_KEY'],
         'api_secret': os.environ['MARKET_API_SECRET'],
@@ -28,13 +31,16 @@ def build_market(config: Config, logger: Logger, storage_dir: str, read_only: bo
         'include_weekends': input_config.include_weekends,
         'read_only': read_only
     }
-    market_name = input_config.market
+    market_class = market_registry[input_config.market]
+    market_mixins = [mixins_registry[name] for name in input_config.market_mixins]
     if len(input_config.technical_indicators) > 0:
-        market_name = f'TechnicalIndicator{market_name}'
+        market_mixins.append(mixins.TechnicalIndicatorMixin)
         market_kwargs['technical_indicators'] = list(input_config.technical_indicators)
-    market_kwargs['features'] = list(set(market_kwargs['features']))
+    market_class = type('EnhancedMarket', tuple(market_mixins) + (market_class, ), {})
 
-    market_class = market_registry[market_name]
+    # Remove possible duplicates features.
+    market_kwargs['get_features'] = list(set(market_kwargs['get_features']))
+
     market = market_class(**market_kwargs)
 
     return market

@@ -1,5 +1,6 @@
 input: {
     market: 'Yahoo'
+    market_mixins: ['LogDifferenceMixin', 'TargetPriceMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'

@@ -7,14 +7,13 @@ from binance.client import Client
 from binance.exceptions import BinanceAPIException
 
 from yacht.data.markets.base import H5Market
-from yacht.data.markets.mixins import TechnicalIndicatorMixin, TargetPriceMixin
 from yacht.logger import Logger
 
 
 class Binance(H5Market):
     def __init__(
             self,
-            features: List[str],
+            get_features: List[str],
             logger: Logger,
             api_key,
             api_secret,
@@ -22,7 +21,7 @@ class Binance(H5Market):
             include_weekends: bool,
             read_only: bool
     ):
-        super().__init__(features, logger, api_key, api_secret, storage_dir, 'binance.h5', include_weekends, read_only)
+        super().__init__(get_features, logger, api_key, api_secret, storage_dir, 'binance.h5', include_weekends, read_only)
 
         self.client = Client(api_key, api_secret)
 
@@ -84,7 +83,3 @@ class Binance(H5Market):
         df = df.set_index('Open time')
 
         return df
-
-
-class TechnicalIndicatorBinance(TechnicalIndicatorMixin, TargetPriceMixin, Binance):
-    pass

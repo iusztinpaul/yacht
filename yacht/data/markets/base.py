@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Union, List, Any, Iterable
+from typing import Union, List, Any, Iterable, Optional
 
 import pandas as pd
 
@@ -16,7 +16,7 @@ class Market(ABC):
             to check the data correctness &
             to fill missing values
     """
-    MANDATORY_FEATURES = {
+    DOWNLOAD_MANDATORY_FEATURES = {
         'Close',
         'Open',
         'High',
@@ -26,7 +26,7 @@ class Market(ABC):
 
     def __init__(
             self,
-            features: List[str],
+            get_features: List[str],
             logger: Logger,
             api_key,
             api_secret,
@@ -34,7 +34,7 @@ class Market(ABC):
             include_weekends: bool,
             read_only: bool
     ):
-        self.features = list(set(features).union(self.MANDATORY_FEATURES))
+        self.features = list(set(get_features).union(self.DOWNLOAD_MANDATORY_FEATURES))
         self.logger = logger
         self.api_key = api_key
         self.api_secret = api_secret
@@ -66,6 +66,7 @@ class Market(ABC):
             interval: str,
             start: datetime,
             end: datetime,
+            features: Optional[List[str]] = None,
             flexible_start: bool = False
     ) -> pd.DataFrame:
         """
@@ -126,8 +127,8 @@ class Market(ABC):
             f'[{ticker}] Download data did not passed the download checks.'
         data = self.process_request(data)
 
-        assert self.MANDATORY_FEATURES.intersection(set(data.columns)) == self.MANDATORY_FEATURES, \
-            'Some mandatory features are missing.'
+        assert self.DOWNLOAD_MANDATORY_FEATURES.intersection(set(data.columns)) == self.DOWNLOAD_MANDATORY_FEATURES, \
+            f'Some mandatory features are missing after downloading: {ticker}.'
 
         self.cache_request(ticker, interval, data)
 
@@ -163,7 +164,7 @@ class Market(ABC):
 class H5Market(Market, ABC):
     def __init__(
             self,
-            features: List[str],
+            get_features: List[str],
             logger: Logger,
             api_key,
             api_secret,
@@ -177,7 +178,7 @@ class H5Market(Market, ABC):
         # We cache in memory the disk cache state.
         self.is_cached_cache = dict()
 
-        super().__init__(features, logger, api_key, api_secret, storage_dir, include_weekends, read_only)
+        super().__init__(get_features, logger, api_key, api_secret, storage_dir, include_weekends, read_only)
 
     def open(self) -> pd.HDFStore:
         return pd.HDFStore(self.storage_file, mode='r' if self.read_only else 'a')
@@ -202,6 +203,7 @@ class H5Market(Market, ABC):
             interval: str,
             start: datetime,
             end: datetime,
+            features: Optional[List[str]] = None,
             flexible_start: bool = False
     ) -> pd.DataFrame:
         """
@@ -217,7 +219,7 @@ class H5Market(Market, ABC):
         if not self.is_cached(ticker, interval, start, end):
             raise RuntimeError(f'[{ticker}]: "{interval}" not supported for {start} - {end}')
 
-        data_slice = self._get(ticker, interval, start, end)
+        data_slice = self._get(ticker, interval, start, end, features)
         data_slice.fillna(method='bfill', inplace=True, axis=0)
         data_slice.fillna(method='ffill', inplace=True, axis=0)
 
@@ -225,7 +227,14 @@ class H5Market(Market, ABC):
 
         return data_slice
 
-    def _get(self, ticker: str, interval: str, start: datetime, end: datetime) -> pd.DataFrame:
+    def _get(
+            self,
+            ticker: str,
+            interval: str,
+            start: datetime,
+            end: datetime,
+            features: Optional[List[str]] = None
+    ) -> pd.DataFrame:
         """
             Returns: data within [start, end].
         """
@@ -234,7 +243,9 @@ class H5Market(Market, ABC):
         # missing and at what index.
         freq = self.interval_to_pd_freq(interval)
         date_time_index = pd.date_range(start=start, end=end, freq=freq)
-        final_data = pd.DataFrame(index=date_time_index, columns=self.features)
+        if features is None:
+            features = self.features
+        final_data = pd.DataFrame(index=date_time_index, columns=features)
 
         piece_of_data = self.connection[self.create_key(ticker, interval)].loc[start:end]
         final_data.update(piece_of_data)

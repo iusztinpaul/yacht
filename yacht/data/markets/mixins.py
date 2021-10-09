@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Any
 
+import numpy as np
 import pandas as pd
 from stockstats import StockDataFrame
 
@@ -59,3 +60,25 @@ class TargetPriceMixin:
         # Because there is no VWAP field in the yahoo data,
         # a method similar to Simpson integration is used to approximate VWAP.
         return (row['Open'] + 2 * row['High'] + 2 * row['Low'] + row['Close']) / 6
+
+
+class LogDifferenceMixin:
+    def process_request(self, data: List[List[Any]]) -> pd.DataFrame:
+        df = super().process_request(data)
+
+        for column in self.DOWNLOAD_MANDATORY_FEATURES:
+            df[f'{column}Diff'] = self.compute_log_diff(df[column])
+
+        return df
+
+    @classmethod
+    def compute_log_diff(cls, column: pd.Series):
+        column.fillna(method='bfill', inplace=True, axis=0)
+        column.fillna(method='ffill', inplace=True, axis=0)
+
+        data = column.values
+        data = np.log(data)
+        # Append the first item to keep consistency in data length.
+        data = np.diff(data, prepend=data[0])
+
+        return data

@@ -84,12 +84,14 @@ class Scaler(ABC):
             train_start: datetime,
             train_end: datetime,
             interval: str,
+            features: List[str]
     ):
         data = market.get(
             ticker=scaler.ticker,
             interval=interval,
             start=train_start,
             end=train_end,
+            features=features,
             flexible_start=True
         )
         scaler.fit(data)

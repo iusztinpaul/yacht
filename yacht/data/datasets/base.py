@@ -71,22 +71,20 @@ class AssetDataset(Dataset, ABC):
                     from the market.
         """
         assert '1d' == intervals[0], 'One day bar interval is mandatory to exist & index=0 in input.intervals config.'
-        assert 'Close' == features[0], 'Close feature/column is mandatory & index=0 in input.features config.'
+        assert 'Close' == features[0] or 'CloseDiff', \
+            'Close feature/column is mandatory & index=0 in input.features config.'
         assert window_size >= 1
 
         self.market = market
         self.storage_dir = storage_dir
         self.intervals = intervals
-        self.features, self.price_features, self.other_features = self.split_features(features)
+        self.features = features
         self.decision_price_feature = decision_price_feature
         self.render_intervals = render_intervals
         self.period = period
         self.mode = mode
         self.logger = logger
         self.window_size = window_size
-
-        assert set(self.features) == set(self.price_features).union(set(self.other_features)), \
-            '"self.features" should be all the supported features.'
 
     def close(self):
         self.market.close()
@@ -112,14 +110,6 @@ class AssetDataset(Dataset, ABC):
         return self.market.include_weekends
 
     @property
-    def num_price_features(self) -> int:
-        return len(self.price_features)
-
-    @property
-    def num_other_features(self) -> int:
-        return len(self.other_features)
-
-    @property
     def should_render(self) -> bool:
         # Because it is not efficient to render all the environments, we choose over some desired logic what to render.
         for render_interval in self.render_intervals:
@@ -127,23 +117,6 @@ class AssetDataset(Dataset, ABC):
                 return True
 
         return False
-
-    @classmethod
-    def split_features(cls, features: List[str]) -> Tuple[List[str], List[str], List[str]]:
-        price_features = []
-        for price_feature in cls.PRICE_FEATURES:
-            if price_feature in features:
-                price_features.append(price_feature)
-
-        other_features = []
-        for feature in features:
-            if feature not in cls.PRICE_FEATURES:
-                other_features.append(feature)
-
-        # Always move price features at the beginning of the list, with `Close` price as the first one.
-        features = price_features + other_features
-
-        return features, price_features, other_features
 
     @property
     @abstractmethod
@@ -245,7 +218,13 @@ class SingleAssetDataset(AssetDataset, ABC):
             self.data = dict()
             for interval in self.intervals:
                 self.market.download(ticker, interval, self.start, self.end)
-                self.data[interval] = self.market.get(ticker, interval, self.start, self.end)
+                self.data[interval] = self.market.get(
+                    ticker=ticker,
+                    interval=interval,
+                    start=self.start,
+                    end=self.end,
+                    features=self.features + [self.decision_price_feature]
+                )
         self.prices = self.get_prices()
 
     def __str__(self) -> str:
@@ -270,7 +249,13 @@ class SingleAssetDataset(AssetDataset, ABC):
         return self.data['1d'].index[integer_index].to_pydatetime()
 
     def get_prices(self) -> pd.DataFrame:
-        return self.data['1d']
+        return self.market.get(
+            ticker=self.ticker,
+            interval='1d',
+            start=self.start,
+            end=self.end,
+            features=list(self.market.DOWNLOAD_MANDATORY_FEATURES) + [self.decision_price_feature]
+        )
 
     def get_decision_prices(self, t_tick: Optional[int] = None, **kwargs) -> pd.Series:
         if t_tick is None:
@@ -497,7 +482,7 @@ class IndexedDatasetMixin:
         """
         delta = np.diff(indices)
         # Shift items one unit to the right for consistency between delta & indices.
-        delta = np.concatenate([np.ones(shape=(1, )), delta], axis=0)
+        delta = np.concatenate([np.ones(shape=(1,)), delta], axis=0)
         discontinuity_starting_point = np.where(delta != 1)[0]
 
         assert len(discontinuity_starting_point) in (0, 1), 'No more than 1 discontinuity point is supported'
@@ -507,7 +492,7 @@ class IndexedDatasetMixin:
         discontinuity_starting_point = discontinuity_starting_point[0]
         indices = np.concatenate([
             indices[:discontinuity_starting_point], indices[(discontinuity_starting_point + 1 + self.window_size):]
-            ], axis=-1)
+        ], axis=-1)
 
         return indices
 

@@ -94,7 +94,5 @@ def filter_class_kwargs(class_type: type, config: dict, to_numpy: bool = False):
                 kwargs[parameter_key] = np.array(value)
             else:
                 kwargs[parameter_key] = value
-        else:
-            raise RuntimeError(f'Config does not contain: "{parameter_key}" for class_type: {class_type}.')
 
     return kwargs

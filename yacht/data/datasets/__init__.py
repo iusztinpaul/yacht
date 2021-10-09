@@ -169,7 +169,8 @@ def build_dataset(
                     market=market,
                     train_start=train_split[0],
                     train_end=train_split[1],
-                    interval=config.input.scale_on_interval
+                    interval=config.input.scale_on_interval,
+                    features=list(input_config.features) + list(input_config.technical_indicators)
                 )
 
                 single_asset_datasets.append(
