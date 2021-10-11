@@ -1,14 +1,13 @@
 input: {
     market: 'Yahoo'
     dataset: 'DayFrequencyDataset'
-    market_mixins: ['LogDifferenceMixin', 'TargetPriceMixin']
     num_assets_per_dataset: 1
     scaler: 'IdentityScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
-    features: ['CloseDiff', 'OpenDiff', 'HighDiff', 'LowDiff', 'VolumeDiff']
+    features: ['Close', 'Open', 'High', 'Low']
     decision_price_feature: 'TP'
     technical_indicators: []
     start: '1/8/2016'
@@ -31,7 +30,7 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 4
+    n_envs: 6
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -78,8 +77,8 @@ agent: {
 train: {
     trainer_name: 'Trainer'
     total_timesteps: 1300000
-    fine_tune_total_timesteps: 500000
-    collecting_n_steps: 1024
+    fine_tune_total_timesteps: 200000
+    collecting_n_steps: 4096
     learning_rate: 0.0007
     batch_size: 512
     n_epochs: 20

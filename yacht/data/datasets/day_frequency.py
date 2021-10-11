@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -9,6 +9,7 @@ from yacht import Mode
 from yacht.data.datasets import SingleAssetDataset, DatasetPeriod
 from yacht.data.markets import Market
 from yacht.data.scalers import Scaler
+from yacht.data.transforms import RelativeNormalization, Compose
 from yacht.logger import Logger
 
 
@@ -26,6 +27,7 @@ class DayFrequencyDataset(SingleAssetDataset):
             mode: Mode,
             logger: Logger,
             scaler: Scaler,
+            window_transforms: Optional[Compose] = None,
             window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
@@ -43,6 +45,7 @@ class DayFrequencyDataset(SingleAssetDataset):
             mode=mode,
             logger=logger,
             scaler=scaler,
+            window_transforms=window_transforms,
             window_size=window_size,
             data=data
         )
@@ -76,6 +79,8 @@ class DayFrequencyDataset(SingleAssetDataset):
         day_features = day_features.iloc[start_index:end_index + 1]
         day_features = self.scaler.transform(day_features)
         day_features = np.expand_dims(day_features, axis=1)
+        if self.window_transforms is not None:
+            day_features = self.window_transforms(day_features)
 
         return {
             '1d': day_features

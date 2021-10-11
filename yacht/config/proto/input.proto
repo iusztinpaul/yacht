@@ -24,11 +24,12 @@ message InputConfig {
   string end = 15;
   string period_length = 16;
   int32 window_size = 17;
-  int32 num_periods = 18;
-  repeated PeriodConfig render_periods = 19;
-  bool include_weekends = 20;
-  double validation_split_ratio = 21;
-  double backtest_split_ratio = 22;
-  double embargo_ratio = 23;
-  BacktestConfig backtest = 24;
+  repeated string window_transforms = 18;
+  int32 num_periods = 19;
+  repeated PeriodConfig render_periods = 20;
+  bool include_weekends = 21;
+  double validation_split_ratio = 22;
+  double backtest_split_ratio = 23;
+  double embargo_ratio = 24;
+  BacktestConfig backtest = 25;
 }

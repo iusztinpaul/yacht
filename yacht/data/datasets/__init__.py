@@ -18,7 +18,7 @@ from yacht.data.markets import build_market
 from yacht.data.renderers import TrainTestSplitRenderer
 from yacht.data.scalers import build_scaler
 from yacht import Mode
-
+from ..transforms import build_transforms
 
 dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
@@ -173,6 +173,7 @@ def build_dataset(
                     features=list(input_config.features) + list(input_config.technical_indicators)
                 )
 
+                transforms = build_transforms(config)
                 single_asset_datasets.append(
                     dataset_cls(
                         ticker=ticker,
@@ -186,6 +187,7 @@ def build_dataset(
                         mode=mode,
                         logger=logger,
                         scaler=scaler,
+                        window_transforms=transforms,
                         window_size=input_config.window_size
                     )
                 )

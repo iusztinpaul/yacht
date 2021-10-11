@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ from yacht import Mode
 from yacht.data.datasets import SingleAssetDataset, DatasetPeriod
 from yacht.data.markets import Market
 from yacht.data.scalers import Scaler
+from yacht.data.transforms import Compose
 from yacht.logger import Logger
 
 
@@ -36,6 +37,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             mode: Mode,
             logger: Logger,
             scaler: Scaler,
+            window_transforms: Optional[Compose] = None,
             window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
@@ -53,6 +55,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             mode=mode,
             logger=logger,
             scaler=scaler,
+            window_transforms=window_transforms,
             window_size=window_size,
             data=data
         )
@@ -103,5 +106,7 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             for interval in self.intervals:
                 window_item[interval] = np.stack(window_item[interval])
                 window_item[interval] = self.scaler.transform(window_item[interval])
+                if self.window_transforms is not None:
+                    window_item[interval] = self.window_transforms(window_item[interval])
 
         return window_item

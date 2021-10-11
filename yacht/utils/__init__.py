@@ -21,6 +21,6 @@ def load_env_variables(root_dir: str):
 
 def create_project_name(config: Config, storage_dir: str):
     project_iteration = get_project_iteration(storage_dir)
-    name = f'{config.environment.name}__{config.agent.name}__{project_iteration}'
+    name = f'{os.path.basename(storage_dir)}_{project_iteration}'
 
     return name

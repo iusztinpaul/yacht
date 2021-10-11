@@ -20,6 +20,7 @@ message TrainConfig {
   bool use_sde = 15;
   int32 sde_sample_freq = 16;
   string learning_rate_scheduler = 17;
+  string clip_range_scheduler = 18;
   int32 k_fold_splits = 19;
   double k_fold_purge_ratio = 20;
   double k_fold_embargo_ratio = 21;

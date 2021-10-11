@@ -12,6 +12,7 @@ from torch.utils.data import Dataset
 from yacht import Mode, utils
 from yacht.data.markets import Market
 from yacht.data.scalers import Scaler
+from yacht.data.transforms import Compose
 from yacht.logger import Logger
 
 
@@ -71,6 +72,7 @@ class AssetDataset(Dataset, ABC):
                     from the market.
         """
         assert '1d' == intervals[0], 'One day bar interval is mandatory to exist & index=0 in input.intervals config.'
+        # TODO: Check if this assert is needed anymore.
         assert 'Close' == features[0] or 'CloseDiff', \
             'Close feature/column is mandatory & index=0 in input.features config.'
         assert window_size >= 1
@@ -194,6 +196,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             mode: Mode,
             logger: Logger,
             scaler: Scaler,
+            window_transforms: Optional[Compose] = None,
             window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
@@ -212,6 +215,7 @@ class SingleAssetDataset(AssetDataset, ABC):
 
         self.ticker = ticker
         self.scaler = scaler
+        self.window_transforms = window_transforms
         if data is not None:
             self.data = data
         else:

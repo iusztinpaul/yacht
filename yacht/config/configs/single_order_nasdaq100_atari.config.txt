@@ -1,20 +1,20 @@
 input: {
     market: 'Yahoo'
     dataset: 'DayFrequencyDataset'
-    market_mixins: ['LogDifferenceMixin', 'TargetPriceMixin']
     num_assets_per_dataset: 1
-    scaler: 'IdentityScaler'
+    scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
-    features: ['CloseDiff', 'OpenDiff', 'HighDiff', 'LowDiff', 'VolumeDiff']
+    features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
-    technical_indicators: []
+    technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/8/2016'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 14
+    window_size: 80
+    num_periods: 8
     render_periods: [
      {start: '1/8/2019', end: '1/3/2020'},
      {start: '1/8/2020', end: '1/3/2021'}
@@ -31,7 +31,7 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 4
+    n_envs: 8
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -63,7 +63,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'ReLU',
         feature_extractor: {
-            name: 'RecurrentFeatureExtractor'
+            name: 'RecurrentNPeriodsFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.25,
             rnn_layer_type: 'LSTM'
@@ -78,21 +78,22 @@ agent: {
 train: {
     trainer_name: 'Trainer'
     total_timesteps: 1300000
-    fine_tune_total_timesteps: 500000
-    collecting_n_steps: 1024
-    learning_rate: 0.0007
+    fine_tune_total_timesteps: 200000
+    collecting_n_steps: 128
+    learning_rate: 0.00025
     batch_size: 512
-    n_epochs: 20
-    gamma: 0.98
-    gae_lambda: 0.65
-    clip_range: 0.25
-    vf_clip_range: 0.52
-    entropy_coefficient: 0.85,
-    vf_coefficient: 0.82
+    n_epochs: 3
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.1
+    vf_clip_range: 0.1
+    entropy_coefficient: 0.01,
+    vf_coefficient: 1.
     max_grad_norm: 50
     use_sde: false
     sde_sample_freq: -1
-    learning_rate_scheduler: 'ConstantSchedule'
+    learning_rate_scheduler: 'LinearSchedule'
+    clip_range_scheduler: 'LinearSchedule'
 }
 meta: {
     log_frequency_steps: 5000
