@@ -1,27 +1,29 @@
 input: {
     market: 'Yahoo'
+    market_mixins: ['LogDifferenceMixin', 'TargetPriceMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
-    scaler: 'MinMaxScaler'
+    scaler: 'IdentityScaler'
     scale_on_interval: '1d'
-    tickers: ['NASDAQ100']
+    tickers: ['AAPL']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
-    start: '1/8/2016'
-    end: '1/8/2021'
+    start: '1/1/2019'
+    end: '1/1/2020'
     period_length: '1M'
-    window_size: 14
+    window_size: 20
+    window_transforms: ['RelativeNormalization']
+    num_periods: 5
     render_periods: [
-     {start: '1/8/2019', end: '1/3/2020'},
-     {start: '1/8/2020', end: '1/3/2021'}
+     {start: '1/8/2019', end: '1/1/2020'}
     ]
     include_weekends: false
-    validation_split_ratio: 0.40
+    validation_split_ratio: 0.5
     backtest_split_ratio: 0.0
-    embargo_ratio: 0.03
+    embargo_ratio: 0.02
     backtest: {
         run: false
         deterministic: true
@@ -30,22 +32,23 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 6
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
-    initial_cash_position: 5000
+    initial_cash_position: 30000
     reward_schemas: [
     {
         name: 'DecisionMakingRewardSchema'
+        reward_scaling: 30
     },
     {
-        name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.5
+        name: 'ActionMagnitudeRewardSchema'
+        reward_scaling: 1
     }
     ]
     action_schema: 'DiscreteActionScheme'
-    use_action_noise: false
+    use_action_noise: true
     action_noise: {
         name: 'OrnsteinUhlenbeckActionNoise'
         mean: 0.01
@@ -60,45 +63,45 @@ agent: {
     verbose: true
     policy: {
         name: 'MlpPolicy'
-        activation_fn: 'ReLU',
+        activation_fn: 'Tanh',
         feature_extractor: {
             name: 'RecurrentFeatureExtractor'
-            features_dim: [64,64,128]
-            drop_out_p: 0.25,
+            features_dim: [16, 64, 64,32]
+            drop_out_p: 0.5
             rnn_layer_type: 'LSTM'
         }
         net_arch: {
-            shared: [32, 16]
-            vf: [64]
-            pi: [4]
+            shared: [32]
+            vf: [16]
+            pi: [16]
         }
     }
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1300000
-    fine_tune_total_timesteps: 200000
-    collecting_n_steps: 2048
+    total_timesteps: 5000
+    fine_tune_total_timesteps: 5000
+    collecting_n_steps: 100
     learning_rate: 0.0003
-    batch_size: 64
+    batch_size: 500
     n_epochs: 10
     gamma: 0.99
     gae_lambda: 0.95
-    clip_range: 0.2
-    vf_clip_range: 0.2
-    entropy_coefficient: 0.85,
-    vf_coefficient: 0.82
-    max_grad_norm: 50
+    clip_range: 0.3
+    vf_clip_range: 0.3
+    entropy_coefficient: 1.,
+    vf_coefficient: 0.5
+    max_grad_norm: 0.5
     use_sde: false
-    sde_sample_freq: -1
-    learning_rate_scheduler: 'ConstantSchedule'
+    sde_sample_freq: 500
+    learning_rate_scheduler: 'StepSchedule'
 }
 meta: {
-    log_frequency_steps: 5000
+    log_frequency_steps: 100
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'sharpe_ratio', 'num_actions']
     metrics_to_save_best_on: ['PA']
     metrics_to_load_best_on: ['PA']
-    plateau_max_n_steps: 10
-    device: 'gpu'
-    experiment_tracker: 'wandb'
+    plateau_max_n_steps: -1
+    device: 'cpu'
+    experiment_tracker: ''
 }

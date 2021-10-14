@@ -75,19 +75,7 @@ def build_dataset(
                 flexible_start=True
             )
 
-        # Render de train-test split in rescaled mode.
-        renderer = TrainTestSplitRenderer(
-            data=data,
-            train_split=train_split,
-            validation_split=validation_split,
-            backtest_split=backtest_split,
-            rescale=True
-        )
-        renderer.render()
-        renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split_rescaled.png'))
-        renderer.close()
-
-        # Render de train-test split with original values.
+        # Render de train-test split with their original values.
         renderer = TrainTestSplitRenderer(
             data=data,
             train_split=train_split,
@@ -98,6 +86,19 @@ def build_dataset(
         renderer.render()
         renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split.png'))
         renderer.close()
+
+        # If there are more tickers also render the train-test split in rescaled mode.
+        if len(data) > 1:
+            renderer = TrainTestSplitRenderer(
+                data=data,
+                train_split=train_split,
+                validation_split=validation_split,
+                backtest_split=backtest_split,
+                rescale=True
+            )
+            renderer.render()
+            renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split_rescaled.png'))
+            renderer.close()
 
     logger.info(f'Building datasets for: {mode.value}')
     logger.info(f'Loading the following assets:')

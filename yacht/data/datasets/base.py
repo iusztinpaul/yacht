@@ -72,9 +72,6 @@ class AssetDataset(Dataset, ABC):
                     from the market.
         """
         assert '1d' == intervals[0], 'One day bar interval is mandatory to exist & index=0 in input.intervals config.'
-        # TODO: Check if this assert is needed anymore.
-        assert 'Close' == features[0] or 'CloseDiff', \
-            'Close feature/column is mandatory & index=0 in input.features config.'
         assert window_size >= 1
 
         self.market = market

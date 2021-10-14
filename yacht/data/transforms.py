@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
-import numpy as np
+import pandas as pd
 
 from yacht.config import Config
 
@@ -24,8 +24,13 @@ class Compose(Transform):
 
 
 class RelativeNormalization:
-    def __call__(self, data: np.ndarray) -> np.ndarray:
-        data = data / data[-1, :, 0]
+    PRICE_COLUMNS = ['Close', 'Open', 'High', 'Low']
+
+    def __call__(self, data: pd.DataFrame) -> pd.DataFrame:
+        other_columns = list(set(data.columns) - set(self.PRICE_COLUMNS))
+        data[self.PRICE_COLUMNS] = data[self.PRICE_COLUMNS].values / data['Close'].iloc[-1]
+        if len(other_columns) > 0:
+            data[other_columns] = data[other_columns].values / data[other_columns].values[-1, :]
 
         return data
 

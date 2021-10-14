@@ -96,7 +96,7 @@ def build_agent(
             agent_from = utils.build_last_checkpoint_path(storage_dir, Mode.FineTuneTrain)
             logger.info(f'Resuming from the latest checkpoint: {agent_from}')
 
-        assert os.path.exists(agent_from)
+        assert os.path.exists(agent_from), f'Path does not exist: {agent_from}'
 
         return agent_class.load(agent_from)
     else:

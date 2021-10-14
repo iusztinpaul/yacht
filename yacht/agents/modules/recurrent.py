@@ -46,6 +46,7 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
             batch_first=True,
             dropout=drop_out_p
         )
+        # self.public_bn = nn.BatchNorm1d(num_features=features_dim[1])
         self.public_dropout = nn.Dropout(p=drop_out_p)
 
         self.private_mlp = nn.Sequential(
@@ -60,6 +61,7 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
             batch_first=True,
             dropout=drop_out_p
         )
+        # self.private_bn = nn.BatchNorm1d(num_features=features_dim[1])
         self.private_dropout = nn.Dropout(p=drop_out_p)
 
         self.output_mlp = nn.Sequential(
@@ -84,11 +86,21 @@ class RecurrentFeatureExtractor(BaseFeaturesExtractor):
 
         public_input = self.public_mlp(public_input)
         public_input, _ = self.public_recurrent(public_input)
+
+        # public_input = public_input.reshape(batch_size * window_size, -1)
+        # public_input = self.public_bn(public_input)
+        # public_input = public_input.reshape(batch_size, window_size, -1)
+
         public_input = public_input[:, -1, :]
         public_input = self.public_dropout(public_input)
 
         private_input = self.private_mlp(private_input)
         private_input, _ = self.private_recurrent(private_input)
+
+        # private_input = private_input.reshape(batch_size * window_size, -1)
+        # private_input = self.public_bn(private_input)
+        # private_input = private_input.reshape(batch_size, window_size, -1)
+
         private_input = private_input[:, -1, :]
         private_input = self.private_dropout(private_input)
 

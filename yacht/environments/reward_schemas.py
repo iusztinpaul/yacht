@@ -67,14 +67,14 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
 #################### ORDER EXECUTION #########################
 ##############################################################
 
-class DecisionMakingRewardSchema(RewardSchema):
+class DecisionMakingRewardSchema(ScaledRewardSchema):
     def calculate_reward(self, action: np.ndarray, *args, **kwargs):
         # TODO: Adapt for sell execution
         market_mean_price = kwargs['market_mean_price']
         next_price = kwargs['next_price']
 
         price_advantage = (1 - next_price / market_mean_price)
-        reward = action * price_advantage
+        reward = self.reward_scaling * action * price_advantage
 
         return reward.item()
 
