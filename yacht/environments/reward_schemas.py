@@ -1,4 +1,4 @@
-import inspect
+import warnings
 from abc import ABC, abstractmethod
 from typing import Union, List
 
@@ -22,8 +22,17 @@ class RewardSchema(ABC):
         pass
 
 
-class RewardSchemaAggregator(RewardSchema):
-    def __init__(self, reward_schemas: List[RewardSchema]):
+class ScaledRewardSchema(RewardSchema, ABC):
+    def __init__(self, reward_scaling: float):
+        assert 0 < reward_scaling, '"reward_scaling" should be positive.'
+
+        self.reward_scaling = reward_scaling
+
+
+class RewardSchemaAggregator(ScaledRewardSchema):
+    def __init__(self, reward_schemas: List[RewardSchema], reward_scaling: float):
+        super().__init__(reward_scaling=reward_scaling)
+
         self.reward_schemas = reward_schemas
 
     def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
@@ -31,15 +40,10 @@ class RewardSchemaAggregator(RewardSchema):
             reward_schema.calculate_reward(action, *args, **kwargs)
             for reward_schema in self.reward_schemas
         ]
+        rewards = sum(rewards)
+        rewards *= self.reward_scaling
 
-        return sum(rewards)
-
-
-class ScaledRewardSchema(RewardSchema, ABC):
-    def __init__(self, reward_scaling: float):
-        assert 0 < reward_scaling, '"reward_scaling" should be positive.'
-
-        self.reward_scaling = reward_scaling
+        return rewards
 
 
 ######################################################
@@ -53,9 +57,9 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
         next_state = kwargs['next_state']
 
         begin_total_assets = current_state['env_features'][-1][0] + \
-            (current_state['env_features'][-1][1:] * current_state['1d'][-1, 0, :, 1]).sum()
+                             (current_state['env_features'][-1][1:] * current_state['1d'][-1, 0, :, 1]).sum()
         end_total_assets = next_state['env_features'][-1][0] + \
-            (next_state['env_features'][-1][1:] * next_state['1d'][-1, 0, :, 1]).sum()
+                           (next_state['env_features'][-1][1:] * next_state['1d'][-1, 0, :, 1]).sum()
 
         reward = end_total_assets - begin_total_assets
         reward = reward * self.reward_scaling
@@ -199,6 +203,16 @@ def build_reward_schema(config: Config):
 
         reward_schemas.append(reward_schema)
 
+    if env_config.global_reward_scaling == 0:
+        warnings.warn(
+            '"config.env.global_reward_scaling=0" -> it will set all rewards to 0. '
+            'Because of this we will force it to be equal to "=1".'
+        )
+        global_reward_scaling = 1
+    else:
+        global_reward_scaling = env_config.global_reward_scaling
+
     return RewardSchemaAggregator(
-        reward_schemas=reward_schemas
+        reward_schemas=reward_schemas,
+        reward_scaling=global_reward_scaling
     )

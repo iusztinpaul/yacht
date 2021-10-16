@@ -155,7 +155,7 @@ def compute_action_distance(report: dict) -> dict:
         num_actions.append(asset_num_actions)
 
         if len(action_indices) <= 1:
-            differences.append(action_indices)
+            differences.append(np.zeros_like(action_indices))
         else:
             left_interval = action_indices[:-1]
             right_interval = action_indices[1:]

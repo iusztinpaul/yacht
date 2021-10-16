@@ -15,7 +15,7 @@ message EnvironmentConfig {
   double sell_commission = 5;
   double initial_cash_position = 6;
   repeated RewardSchemaConfig reward_schemas = 7;
-  double reward_scaling = 8;
+  double global_reward_scaling = 8;
   string action_schema = 9;
   bool use_action_noise = 10;
   ActionNoiseConfig action_noise = 11;

@@ -157,7 +157,7 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         self.train_split = train_split
         self.validation_split = validation_split
         self.backtest_split = backtest_split
-        self.has_backtest_split = not (validation_split[1] == backtest_split[0] == backtest_split[1])
+        self.has_backtest_split = (backtest_split[1] - backtest_split[0]) > datetime.timedelta(days=1)
 
     def _get_prices(self, rescale) -> Dict[str, pd.Series]:
         prices = dict()
@@ -191,24 +191,30 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         y_min *= 0.9
         y_max *= 1.1
 
-        self.ax.set_xticks([
-            self.train_split[0],
-            (self.validation_split[0] - self.train_split[1]) / 2 + self.train_split[1],
-            (self.backtest_split[0] - self.validation_split[1]) / 2 + self.validation_split[1],
-            self.backtest_split[1]
-        ])
-
         if self.has_backtest_split:
             splits = (
                     (self.train_split, 'Train'),
                     (self.validation_split, 'Validation'),
                     (self.backtest_split, 'Backtest')
             )
+            self.ax.set_xticks([
+                self.train_split[0],
+                (self.validation_split[0] - self.train_split[1]) / 2 + self.train_split[1],
+                (self.backtest_split[0] - self.validation_split[1]) / 2 + self.validation_split[1],
+                self.backtest_split[1]
+            ])
         else:
             splits = (
                 (self.train_split, 'Train'),
                 (self.validation_split, 'Validation')
             )
+            self.ax.set_xticks([
+                self.train_split[0],
+                self.train_split[0] + (self.train_split[1] - self.train_split[0]) / 2,
+                (self.validation_split[0] - self.train_split[1]) / 2 + self.train_split[1],
+                self.validation_split[0] + (self.validation_split[1] - self.validation_split[0]) / 2,
+                self.validation_split[1]
+            ])
         for split, name in splits:
             self.ax.text(
                 x=(split[1] - split[0]) / 4 + split[0],

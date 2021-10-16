@@ -190,8 +190,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
         metric_statistics = {
             'mean': dict(),
             'median': dict(),
-            'std': dict(),
-            'third_quartile': dict()
+            'std': dict()
         }
         for metric_name, metric_values in aggregated_metrics.items():
             metric_values = np.array(metric_values, dtype=np.float32)
@@ -201,6 +200,5 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
             if metric_name in self.extra_metrics_to_log:
                 metric_statistics['median'][f'median-{metric_name}'] = np.median(metric_values)
                 metric_statistics['std'][f'std-{metric_name}'] = np.std(metric_values)
-                metric_statistics['third_quartile'][f'quantile-75-{metric_name}'] = np.quantile(metric_values, 0.75)
 
         return metric_statistics
