@@ -27,6 +27,7 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
 
         env_features_space = current_observation_space['env_features']
         env_features_size = env_features_space.shape[1] if env_features_space is not None else 0
+        env_features_size += 1  # Add 1 because of the padding meta information.
 
         return spaces.Box(
             low=-np.inf,
@@ -61,6 +62,17 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
             env_features,
             (1, flattened_observation.shape[1], 1)
         )
+
+        # Pad env_features in the case that window_size_data != window_size_env e.g.
+        # Add that metadata to the env_features.
+        padding_size = flattened_observation.shape[0] - env_features.shape[0]
+        env_features = np.pad(env_features, ((0, padding_size), (0, 0), (0, 0)))
+        padding_size = np.full(shape=(flattened_observation.shape[0], 1, 1), fill_value=padding_size, dtype=np.int32)
+        env_features = np.concatenate([
+            env_features,
+            padding_size
+        ], axis=-1)
+
         flattened_observation = np.concatenate([
             flattened_observation,
             env_features

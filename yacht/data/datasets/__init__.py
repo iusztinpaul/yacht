@@ -6,7 +6,7 @@ from typing import Set
 from tqdm import tqdm
 
 from .base import *
-from .day_frequency import DayFrequencyDataset
+from .day_frequency import DayFrequencyDataset, TeacherDayFrequencyDataset
 from .samplers import SampleAssetDataset
 from .multi_frequency import *
 
@@ -22,7 +22,8 @@ from ..transforms import build_transforms
 
 dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
-    'DayFrequencyDataset': DayFrequencyDataset
+    'DayFrequencyDataset': DayFrequencyDataset,
+    'TeacherDayFrequencyDataset': TeacherDayFrequencyDataset
 }
 
 

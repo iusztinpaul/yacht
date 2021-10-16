@@ -25,6 +25,9 @@ def unflatten_observations(
     # env_features are tiled along the others dimensions to be concatenated, but they have a global value so it is
     # save to be taken only once from a random window and features
 
+    # Add +1 because of the padding meta inforamtion.
+    num_env_features += 1
+
     unflattened_observation = dict()
     current_index = 0
     for interval in intervals:
@@ -46,5 +49,11 @@ def unflatten_observations(
 
     # Env features are the same for every bar. So take only the ones from index 0.
     unflattened_observation['env_features'] = observations[..., 0, -num_env_features:]
+    # Remove extra padding.
+    padding_size = int(unflattened_observation['env_features'][0, 0, -1])
+    if padding_size > 0:
+        unflattened_observation['env_features'] = unflattened_observation['env_features'][:, :-padding_size, :-1]
+    else:
+        unflattened_observation['env_features'] = unflattened_observation['env_features'][..., :-1]
 
     return unflattened_observation
