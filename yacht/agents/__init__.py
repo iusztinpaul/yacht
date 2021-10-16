@@ -36,6 +36,7 @@ feature_extractor_registry = {
     'MultiFrequencyFeatureExtractor': modules.MultiFrequencyFeatureExtractor,
     'RecurrentFeatureExtractor': modules.RecurrentFeatureExtractor,
     'RecurrentNPeriodsFeatureExtractor': modules.RecurrentNPeriodsFeatureExtractor,
+    'RecurrentAttentionFeatureExtractor': modules.RecurrentAttentionFeatureExtractor,
     '': None,
     None: None
 }
