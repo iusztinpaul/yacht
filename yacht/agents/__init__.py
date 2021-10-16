@@ -37,6 +37,7 @@ feature_extractor_registry = {
     'RecurrentFeatureExtractor': modules.RecurrentFeatureExtractor,
     'RecurrentNPeriodsFeatureExtractor': modules.RecurrentNPeriodsFeatureExtractor,
     'RecurrentAttentionFeatureExtractor': modules.RecurrentAttentionFeatureExtractor,
+    'TransformerFeatureExtractor': modules.TransformerFeatureExtractor,
     '': None,
     None: None
 }

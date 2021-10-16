@@ -139,7 +139,7 @@ class RecurrentAttentionFeatureExtractor(BaseFeaturesExtractor):
         )
         self.public_attention = nn.MultiheadAttention(
             embed_dim=features_dim[1],
-            num_heads=features_dim[1] // 8,
+            num_heads=8,
             dropout=drop_out_p
         )
 
@@ -157,7 +157,7 @@ class RecurrentAttentionFeatureExtractor(BaseFeaturesExtractor):
         )
         self.private_attention = nn.MultiheadAttention(
             embed_dim=features_dim[1],
-            num_heads=features_dim[1] // 8,
+            num_heads=8,
             dropout=drop_out_p
         )
 
