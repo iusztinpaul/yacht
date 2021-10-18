@@ -157,7 +157,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
         return ratio
 
-    def _on_done(self) -> dict:
+    def _on_done(self, report: Optional[dict] = None) -> dict:
         return {
             'cash_used_on_last_tick': self.cash_used_on_last_tick
         }
@@ -177,3 +177,14 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
                 f'Max Drawdown={max_drawdown}'
 
         return title
+
+
+class TeacherOrderExecutionEnvironment(OrderExecutionEnvironment):
+    def _on_done(self, report: Optional[dict] = None) -> dict:
+        if report is not None:
+            self.persist_actions(report['unadjusted_actions'])
+
+        return dict()
+
+    def persist_actions(self, actions: np.ndarray):
+        pass

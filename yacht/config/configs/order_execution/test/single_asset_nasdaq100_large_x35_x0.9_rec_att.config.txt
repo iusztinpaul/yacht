@@ -67,12 +67,12 @@ agent: {
         activation_fn: 'ReLU',
         feature_extractor: {
             name: 'RecurrentAttentionFeatureExtractor'
-            features_dim: [64,64,128]
+            features_dim: [64,64,64]
             drop_out_p: 0.25,
             rnn_layer_type: 'LSTM'
         }
         net_arch: {
-            shared: [64, 64]
+            shared: [64]
             vf: [32]
             pi: [32]
         }

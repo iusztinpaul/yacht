@@ -88,6 +88,8 @@ class DayFrequencyDataset(SingleAssetDataset):
 
 
 class TeacherDayFrequencyDataset(DayFrequencyDataset):
+    is_teacher = True
+
     def __init__(
             self,
             ticker: str,
@@ -124,16 +126,6 @@ class TeacherDayFrequencyDataset(DayFrequencyDataset):
 
         self.cached_teacher_data = None
 
-    def get_external_observation_space(self) -> Dict[str, spaces.Space]:
-        return {
-            '1d': spaces.Box(
-                low=-np.inf,
-                high=np.inf,
-                shape=(len(self), 1, len(self.features)),  # (window, bar, features)
-                dtype=np.float32
-            )
-        }
-
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
         """
         Args:
@@ -148,7 +140,14 @@ class TeacherDayFrequencyDataset(DayFrequencyDataset):
             day_features = self.scaler.transform(day_features)
             if self.window_transforms is not None:
                 day_features = self.window_transforms(day_features)
-            self.cached_teacher_data = np.expand_dims(day_features, axis=1)
+            day_features = np.pad(
+                day_features,
+                ((0, self.window_size - day_features.shape[0]), (0, 0)),
+                mode='edge'
+            )
+            day_features = np.expand_dims(day_features, axis=1)
+
+            self.cached_teacher_data = day_features
 
         return {
             '1d': self.cached_teacher_data

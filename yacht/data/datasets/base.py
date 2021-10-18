@@ -17,7 +17,16 @@ from yacht.logger import Logger
 
 
 class DatasetPeriod:
-    def __init__(self, start: datetime, end: datetime, window_size: int, include_weekends: bool):
+    def __init__(
+            self,
+            start: datetime,
+            end: datetime,
+            window_size: int,
+            include_weekends: bool,
+            frequency: str = 'days'
+    ):
+        assert frequency in ('days', )
+
         self.unadjusted_start = start
         self.unadjusted_end = end
         # Adjust start with a 'window_size' length so we take data from the past & actually start from the given start.
@@ -31,8 +40,16 @@ class DatasetPeriod:
 
         self.window_size = window_size
         self.include_weekends = include_weekends
+        self.frequency = frequency
 
         assert self.start < self.unadjusted_start
+
+    def __len__(self) -> int:
+        return utils.len_period_range(
+            start=self.start,
+            end=self.end,
+            include_weekends=self.include_weekends
+        )
 
 
 class AssetDataset(Dataset, ABC):
@@ -42,6 +59,7 @@ class AssetDataset(Dataset, ABC):
         'High',
         'Low'
     )
+    is_teacher = False
 
     def __init__(
             self,
@@ -87,6 +105,15 @@ class AssetDataset(Dataset, ABC):
 
     def close(self):
         self.market.close()
+
+    @property
+    def first_observation_index(self) -> int:
+        # Starting from 0 & the minimum value for the window_size is 1.
+        return self.period.window_size - 1
+
+    @property
+    def last_observation_index(self) -> int:
+        return self.first_observation_index + self.num_days
 
     @property
     def unadjusted_start(self) -> datetime:
@@ -236,7 +263,11 @@ class SingleAssetDataset(AssetDataset, ABC):
 
     @property
     def num_days(self) -> int:
-        return len(self.data['1d'])
+        return utils.len_period_range(
+            start=self.unadjusted_start,
+            end=self.unadjusted_end,
+            include_weekends=self.include_weekends
+        )
 
     @property
     def num_assets(self) -> int:

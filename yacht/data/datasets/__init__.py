@@ -137,7 +137,24 @@ def build_dataset(
     logger.info(f'Total estimated num datasets: {total_num_periods}')
 
     if len(periods) == 0:
+        logger.info(f'Num periods equal to 0. Dataset could not be created.')
+
         return None
+
+    if dataset_cls.is_teacher:
+        # In a teacher setup the agent will take the data from the whole period.
+        # Make the window_size the maximum period length for observation size consistency.
+        # TODO: Map this logic to more frequencies than days.
+        max_period_length = max([
+            utils.len_period_range(
+                start=period[0],
+                end=period[1],
+                include_weekends=input_config.include_weekends
+            ) for period in periods
+        ])
+        window_size = input_config.window_size + max_period_length
+    else:
+        window_size = input_config.window_size
 
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
     num_skipped_periods = 0
@@ -147,7 +164,8 @@ def build_dataset(
             start=period_start,
             end=period_end,
             window_size=input_config.window_size,
-            include_weekends=input_config.include_weekends
+            include_weekends=input_config.include_weekends,
+            frequency='days'
         )
         for dataset_tickers in itertools.combinations(tickers, config.input.num_assets_per_dataset):
             # If the period is cached, after a download operation was tried, it means it is available for usage.
@@ -190,7 +208,7 @@ def build_dataset(
                         logger=logger,
                         scaler=scaler,
                         window_transforms=transforms,
-                        window_size=input_config.window_size
+                        window_size=window_size
                     )
                 )
 
@@ -205,7 +223,7 @@ def build_dataset(
                 render_intervals=render_intervals,
                 mode=mode,
                 logger=logger,
-                window_size=input_config.window_size
+                window_size=window_size
             )
             datasets.append(dataset)
 
@@ -227,7 +245,8 @@ def build_dataset(
         start=start,
         end=end,
         window_size=input_config.window_size,
-        include_weekends=input_config.include_weekends
+        include_weekends=input_config.include_weekends,
+        frequency='days'
     )
     return SampleAssetDataset(
         datasets=datasets,
@@ -240,7 +259,7 @@ def build_dataset(
         render_intervals=render_intervals,
         mode=mode,
         logger=logger,
-        window_size=input_config.window_size,
+        window_size=window_size,
         default_index=0,
         shuffle=mode.is_trainable()
     )

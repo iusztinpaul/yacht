@@ -13,7 +13,7 @@ input: {
     start: '1/8/2016'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 14
+    window_size: 7
     render_periods: [
      # For the train period plot a bigger interval, because it is rendered only once.
      {start: '1/1/2018', end: '1/1/2020'},
@@ -41,11 +41,11 @@ environment: {
     reward_schemas: [
     {
         name: 'DecisionMakingRewardSchema',
-        reward_scaling: 40
+        reward_scaling: 35
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.75
+        reward_scaling: 0.9
     }
     ]
     action_schema: 'DiscreteActionScheme'
@@ -68,7 +68,8 @@ agent: {
         feature_extractor: {
             name: 'TransformerFeatureExtractor'
             features_dim: [64,64,128]
-            drop_out_p: 0.25
+            drop_out_p: 0.25,
+            rnn_layer_type: 'LSTM'
         }
         net_arch: {
             shared: [64, 64]
@@ -79,8 +80,8 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 750000
-    fine_tune_total_timesteps: 100000
+    total_timesteps: 1350000
+    fine_tune_total_timesteps: 150000
     collecting_n_steps: 2048
     learning_rate: 0.0007
     batch_size: 512

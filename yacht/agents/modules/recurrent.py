@@ -161,8 +161,13 @@ class RecurrentAttentionFeatureExtractor(BaseFeaturesExtractor):
             dropout=drop_out_p
         )
 
+        self.output_attention = nn.MultiheadAttention(
+            embed_dim=features_dim[1],
+            num_heads=8,
+            dropout=drop_out_p,
+        )
         self.output_mlp = nn.Sequential(
-            nn.Linear(features_dim[1] * 2, features_dim[-1]),
+            nn.Linear(features_dim[1], features_dim[-1]),
             activation_fn(),
             nn.Dropout(p=drop_out_p)
         )
@@ -185,16 +190,19 @@ class RecurrentAttentionFeatureExtractor(BaseFeaturesExtractor):
         public_input, _ = self.public_recurrent(public_input)
         public_input = public_input.transpose(0, 1)
         public_input, _ = self.public_attention(public_input, public_input, public_input)
-        public_input = public_input[-1, :, :]
+        # public_input = public_input[-1, :, :]
 
         private_input = self.private_mlp(private_input)
         private_input, _ = self.private_recurrent(private_input)
         private_input = private_input.transpose(0, 1)
         private_input, _ = self.private_attention(private_input, private_input, private_input)
-        private_input = private_input[-1, :, :]
+        # private_input = private_input[-1, :, :]
 
-        output = torch.cat([public_input, private_input], dim=-1)
-        output = output.reshape(batch_size, -1)
+        output = public_input + private_input
+        output, _ = self.output_attention(output, output, output)
+        # output = torch.cat([public_input, private_input], dim=-1)
+        output = output[-1, :, :]
+        # output = output.reshape(batch_size, -1)
         output = self.output_mlp(output)
 
         return output

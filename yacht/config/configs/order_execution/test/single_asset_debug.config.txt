@@ -1,7 +1,7 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['LogDifferenceMixin', 'TargetPriceMixin']
-    dataset: 'DayFrequencyDataset'
+    dataset: 'TeacherDayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'IdentityScaler'
     scale_on_interval: '1d'
@@ -14,7 +14,7 @@ input: {
     start: '1/1/2019'
     end: '1/1/2020'
     period_length: '1M'
-    window_size: 20
+    window_size: 50
     window_transforms: ['RelativeNormalization']
     num_periods: 5
     render_periods: [
@@ -65,7 +65,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'TransformerFeatureExtractor'
+            name: 'RecurrentFeatureExtractor'
             features_dim: [16,64,32]
             drop_out_p: 0.5
             rnn_layer_type: 'LSTM'

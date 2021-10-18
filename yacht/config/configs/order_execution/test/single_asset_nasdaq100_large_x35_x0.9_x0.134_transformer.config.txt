@@ -41,13 +41,14 @@ environment: {
     reward_schemas: [
     {
         name: 'DecisionMakingRewardSchema',
-        reward_scaling: 40
+        reward_scaling: 35
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.75
+        reward_scaling: 0.9
     }
     ]
+    global_reward_scaling: 0.134
     action_schema: 'DiscreteActionScheme'
     use_action_noise: false
     action_noise: {
@@ -68,7 +69,8 @@ agent: {
         feature_extractor: {
             name: 'TransformerFeatureExtractor'
             features_dim: [64,64,128]
-            drop_out_p: 0.25
+            drop_out_p: 0.25,
+            rnn_layer_type: 'LSTM'
         }
         net_arch: {
             shared: [64, 64]

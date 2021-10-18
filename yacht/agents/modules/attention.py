@@ -89,6 +89,13 @@ class TransformerFeatureExtractor(BaseFeaturesExtractor):
                 nhead=8,
                 activation_fn=activation_fn,
                 dropout=drop_out_p
+            ),
+            SlimTransformerEncoderLayer(
+                features_in=features_dim[1],
+                features_out=features_dim[1],
+                nhead=8,
+                activation_fn=activation_fn,
+                dropout=drop_out_p
             )
         )
         self.private_transformer = nn.Sequential(
@@ -98,16 +105,31 @@ class TransformerFeatureExtractor(BaseFeaturesExtractor):
                 nhead=1,
                 activation_fn=activation_fn,
                 dropout=drop_out_p
-            )
-        )
-        self.shared_transformer = nn.Sequential(
+            ),
             SlimTransformerEncoderLayer(
                 features_in=features_dim[1],
-                features_out=features_dim[2],
-                nhead=8,
+                features_out=features_dim[1],
+                nhead=1,
                 activation_fn=activation_fn,
                 dropout=drop_out_p
             )
+        )
+        # self.shared_transformer = nn.Sequential(
+        #     SlimTransformerEncoderLayer(
+        #         features_in=features_dim[1],
+        #         features_out=features_dim[2],
+        #         nhead=8,
+        #         activation_fn=activation_fn,
+        #         dropout=drop_out_p
+        #     )
+        # )
+        self.shared_mlp = nn.Sequential(
+            nn.Linear(
+                in_features=2*features_dim[1],
+                out_features=features_dim[2]
+            ),
+            activation_fn(),
+            nn.Dropout(p=drop_out_p)
         )
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
@@ -128,9 +150,12 @@ class TransformerFeatureExtractor(BaseFeaturesExtractor):
         private_input = private_input.transpose(0, 1)
 
         public_input = self.public_transformer(public_input)
+        public_input = public_input[-1, :, :]
         private_input = self.private_transformer(private_input)
+        private_input = private_input[-1, :, :]
 
-        shared_input = public_input + private_input
-        shared_input = self.shared_transformer(shared_input)
+        shared = torch.cat([public_input, private_input], dim=-1)
+        # shared_input = self.shared_transformer(shared_input)
+        shared = self.shared_mlp(shared)
 
-        return shared_input[-1]
+        return shared

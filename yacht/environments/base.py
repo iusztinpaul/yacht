@@ -32,7 +32,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         # Environment general requirements.
         self.dataset = copy(dataset)  # Copy the dataset, so every instance of the env will choose a different ticker.
-        self.window_size = dataset.window_size
+        # TODO: Find a more explicit way to access the window_size
+        self.window_size = dataset.period.window_size
         self.reward_schema = reward_schema
         self.action_schema = action_schema
 
@@ -42,8 +43,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 2
 
         # Ticks.
-        self.start_tick = self.window_size - 1  # Starting from 0 & the minimum value for the window_size is 1.
-        self.end_tick = self.dataset.num_days - 1  # Index starts from 0.
+        self.start_tick = self.dataset.first_observation_index
+        self.end_tick = self.dataset.last_observation_index
         self.t_tick = None
 
         # MDP state.
@@ -92,8 +93,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.action_schema.reset()
 
         # Ticks.
-        self.start_tick = self.window_size - 1  # Starting from 0 & the minimum value for the window_size is 1.
-        self.end_tick = self.dataset.num_days - 1  # Index starts from 0.
+        self.start_tick = self.dataset.first_observation_index
+        self.end_tick = self.dataset.last_observation_index
         self.t_tick = self.start_tick
 
         # MDP state.
@@ -132,20 +133,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
     def _reset(self):
         pass
-
-    def set_dataset(self, dataset: SampleAssetDataset):
-        # TODO: Find a better way to reinject the dataset.
-        self.dataset = dataset
-
-        # spaces
-        self.observation_space = spaces.Dict(self.get_observation_space())
-        assert self.observation_space['env_features'] is None or len(self.observation_space['env_features'].shape) == 1
-
-        # episode
-        self.end_tick = self.dataset.num_days - 1  # Index starts from 0.
-
-        # Rendering
-        self.renderer = self.build_renderer()
 
     def build_renderer(self):
         from yacht.data.renderers import AssetEnvironmentRenderer
@@ -401,7 +388,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return history
 
     def is_done(self) -> bool:
-        is_end_sequence = self.t_tick == self.end_tick
+        is_end_sequence = self.t_tick >= self.end_tick
 
         return is_end_sequence or self._is_done()
 
@@ -423,7 +410,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
                 total_assets_col_name='total_assets',
             )
             episode_metrics.update(
-                self._on_done()
+                self._on_done(report)
             )
 
             if self.dataset.should_render:
@@ -437,7 +424,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         return self._on_done(), dict()
 
-    def _on_done(self) -> dict:
+    def _on_done(self, report: Optional[dict] = None) -> dict:
         return dict()
 
     def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:
