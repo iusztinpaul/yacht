@@ -14,7 +14,7 @@ input: {
     start: '1/1/2019'
     end: '1/1/2020'
     period_length: '1M'
-    window_size: 10
+    window_size: 14
     window_transforms: ['RelativeNormalization']
     num_periods: 5
     render_periods: [

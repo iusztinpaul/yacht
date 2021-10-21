@@ -18,7 +18,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('mode', choices=('train', 'backtest', 'download'))
+parser.add_argument('mode', choices=('train', 'backtest', 'download', 'export_actions'))
 parser.add_argument(
     '--config_file_name',
     required=True,
@@ -147,3 +147,12 @@ if __name__ == '__main__':
                 )
 
             logger.info(f'Downloading finished')
+        elif mode == Mode.ExportActions:
+            run_backtest(
+                config=config,
+                logger=logger,
+                storage_dir=storage_dir,
+                agent_from=args.agent_from,
+                mode=Mode.BacktestTrain,
+                market_storage_dir=market_storage_dir
+            )

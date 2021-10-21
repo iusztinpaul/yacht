@@ -470,7 +470,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
             
         data = self.pad_report(data)
 
-        # Do not pad the unadjusted data.
         data['unadjusted_dates'] = unadjusted_dates
         data['unadjusted_prices'] = unadjusted_prices.values
         data['unadjusted_actions'] = data['action'][self.window_size:]

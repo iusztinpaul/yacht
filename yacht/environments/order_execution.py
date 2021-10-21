@@ -1,7 +1,9 @@
+import os
 from copy import copy
 from typing import Optional, Dict
 
 import numpy as np
+import pandas as pd
 from gym import spaces
 
 from yacht.data.datasets import SampleAssetDataset
@@ -180,11 +182,39 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
 
 class TeacherOrderExecutionEnvironment(OrderExecutionEnvironment):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.actions_store = pd.HDFStore(
+            path=os.path.join(self.dataset.market.storage_dir, 'teacher_actions.h5'),
+            mode='w'
+        )
+
+    def close(self):
+        super().close()
+
+        self.actions_store.close()
+
     def _on_done(self, report: Optional[dict] = None) -> dict:
+        results = super()._on_done(report)
+
         if report is not None:
-            self.persist_actions(report['unadjusted_actions'])
+            self.persist_actions(report)
 
-        return dict()
+        return results
 
-    def persist_actions(self, actions: np.ndarray):
-        pass
+    def persist_actions(self, report: dict):
+        key = self.create_key()
+        df = pd.DataFrame(
+            index=report['unadjusted_dates'],
+            columns=self.dataset.asset_tickers,
+            data=report['unadjusted_actions']
+        )
+
+        if key in self.actions_store:
+            self.actions_store[key] = self.actions_store[key].combine_first(df)
+        else:
+            self.actions_store[key] = df
+
+    def create_key(self) -> str:
+        return '-'.join(self.dataset.asset_tickers)

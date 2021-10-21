@@ -14,6 +14,7 @@ __status__ = "Development"
 
 class Mode(Enum):
     Download = 'download'
+    ExportActions = 'export_actions'
     Train = 'train'
     FineTuneTrain = 'fine_tune_train'
     BacktestTrain = 'backtest_on_train'
