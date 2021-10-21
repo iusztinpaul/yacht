@@ -2,7 +2,7 @@ from enum import Enum
 
 
 __author__ = "Iusztin Paul-Emil"
-__copyright__ = "Copyright 2007, Yacht"
+__copyright__ = "Copyright 2021, Yacht"
 __credits__ = ["Iusztin Paul-Emil"]
 
 __license__ = "Apache-2.0"
@@ -18,7 +18,10 @@ class Mode(Enum):
     FineTuneTrain = 'fine_tune_train'
     BacktestTrain = 'backtest_on_train'
     BacktestValidation = 'backtest_on_validation'
-    Backtest = 'backtest_on_test'
+    BacktestTest = 'backtest_on_test'
+    BestMetricBacktestTrain = 'best_backtest_on_train'
+    BestMetricBacktestValidation = 'best_backtest_on_validation'
+    BestMetricBacktestTest = 'best_backtest_on_test'
 
     @classmethod
     def from_string(cls, value: str) -> 'Mode':
@@ -37,10 +40,17 @@ class Mode(Enum):
         return self == self.BacktestTrain
 
     def is_validation(self) -> bool:
-        return self == self.BacktestValidation
+        return self in {self.BacktestValidation, self.BestMetricBacktestValidation}
 
     def is_backtestable(self) -> bool:
-        return self in {self.BacktestTrain, self.BacktestValidation, self.Backtest}
+        return self in {
+            self.BacktestTrain,
+            self.BacktestValidation,
+            self.BacktestTest,
+            self.BestMetricBacktestTrain,
+            self.BestMetricBacktestValidation,
+            self.BestMetricBacktestTest,
+        }
 
     def is_trainval(self) -> bool:
         return any([self.is_trainable(), self.is_validation()])

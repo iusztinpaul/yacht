@@ -13,13 +13,13 @@ input: {
     start: '1/8/2016'
     end: '1/8/2021'
     period_length: '1M'
-    window_size: 14
+    window_size: 30
     render_periods: [
-     # For the train period plot a bigger interval, because it is rendered only once.
-     {start: '1/1/2018', end: '1/1/2020'},
-     # For the validation period be more greedy, because it is rendered a lot of times during training.
-     {start: '1/1/2020', end: '1/4/2020'},
-     {start: '1/8/2020', end: '1/4/2021'}
+    # For the train period plot a bigger interval, because it is rendered only once.
+     {start: '1/1/2018', end: '1/7/2019'},
+    # For the validation period be more greedy, because it is rendered a lot of times during training.
+     {start: '15/9/2019', end: '15/6/2020'},
+     {start: '15/7/2020', end: '15/4/2021'}
     ]
     include_weekends: false
     validation_split_ratio: 0.3
@@ -48,6 +48,7 @@ environment: {
         reward_scaling: 0.75
     }
     ]
+    global_reward_scaling: 1.
     action_schema: 'DiscreteActionScheme'
     use_action_noise: false
     action_noise: {
@@ -66,9 +67,10 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'ReLU',
         feature_extractor: {
-            name: 'TransformerFeatureExtractor'
+            name: 'RecurrentFeatureExtractor'
             features_dim: [64,64,128]
-            drop_out_p: 0.25
+            drop_out_p: 0.25,
+            rnn_layer_type: 'LSTM'
         }
         net_arch: {
             shared: [64, 64]
@@ -79,29 +81,29 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 750000
+    total_timesteps: 900000
     fine_tune_total_timesteps: 100000
     collecting_n_steps: 2048
-    learning_rate: 0.0007
-    batch_size: 512
-    n_epochs: 20
-    gamma: 0.98
-    gae_lambda: 0.65
-    clip_range: 0.25
-    vf_clip_range: 0.52
-    entropy_coefficient: 0.85,
-    vf_coefficient: 0.82
-    max_grad_norm: 50
+    learning_rate: 0.0001
+    batch_size: 1024
+    n_epochs: 5
+    gamma: 1.
+    gae_lambda: 1.
+    clip_range: 0.3
+    vf_clip_range: 0.3
+    entropy_coefficient: 0.7
+    vf_coefficient: 1.
+    max_grad_norm: 100
     use_sde: false
     sde_sample_freq: -1
     learning_rate_scheduler: 'ConstantSchedule'
 }
 meta: {
     log_frequency_steps: 5000
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'sharpe_ratio', 'num_actions']
-    metrics_to_save_best_on: ['PA']
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
+    metrics_to_save_best_on: ['PA', 'GLR']
     metrics_to_load_best_on: ['PA']
-    plateau_max_n_steps: 100
+    plateau_max_n_steps: 10
     device: 'gpu'
     experiment_tracker: 'wandb'
 }

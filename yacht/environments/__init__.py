@@ -52,7 +52,7 @@ def build_env(
     if mode.is_trainable() or config.input.backtest.deterministic is False:
         n_envs = env_config.n_envs
     else:
-        # If we build a environment for backtest & it is deterministic it is redundant to use multiple envs.
+        # If we build an environment for backtest & it is deterministic it is redundant to use multiple envs.
         n_envs = 1
     env = make_vec_env(
         env_id=env_config.name,
@@ -88,6 +88,12 @@ def register_gym_envs():
         },
         'OrderExecutionEnvironment-v0': {
             'entry_point': 'yacht.environments.order_execution:OrderExecutionEnvironment',
+            'kwargs': {
+
+            }
+        },
+        'TeacherOrderExecutionEnvironment-v0': {
+            'entry_point': 'yacht.environments.order_execution:TeacherOrderExecutionEnvironment',
             'kwargs': {
 
             }

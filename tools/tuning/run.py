@@ -6,11 +6,13 @@ from uuid import uuid1
 
 import matplotlib
 
+from yacht.evaluation import run_backtest
+
 ROOT_DIR = str(Path(os.path.abspath(__file__)).parent.parent.parent)
 sys.path.append(ROOT_DIR)
 
 import yacht.logger
-from yacht import utils
+from yacht import utils, Mode
 from yacht import environments
 from yacht.config import load_config
 from yacht.trainer import run_train
@@ -66,5 +68,23 @@ if __name__ == '__main__':
             logger=logger,
             storage_dir=storage_dir,
             resume_training=False,
+            market_storage_dir=market_storage_dir
+        )
+
+        # Run a backtest on the train-val split to see the best results more explicitly.
+        run_backtest(
+            config=config,
+            logger=logger,
+            storage_dir=storage_dir,
+            agent_from=args.agent_from,
+            mode=Mode.BestMetricBacktestTrain,
+            market_storage_dir=market_storage_dir
+        )
+        run_backtest(
+            config=config,
+            logger=logger,
+            storage_dir=storage_dir,
+            agent_from=args.agent_from,
+            mode=Mode.BestMetricBacktestValidation,
             market_storage_dir=market_storage_dir
         )

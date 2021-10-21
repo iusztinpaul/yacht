@@ -14,10 +14,10 @@ command:
   - "order_execution/single_asset_nasdaq100.config.txt"
   - "--market_storage_dir"
   - "./storage"
-early_terminate:
-  type: hyperband
-  min_iter: 5
-  eta: 2
+#early_terminate:
+#  type: hyperband
+#  min_iter: 5
+#  eta: 2
 parameters:
   agent.name:
     distribution: constant

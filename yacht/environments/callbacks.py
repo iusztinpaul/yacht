@@ -132,7 +132,6 @@ class MetricsEvalCallback(EvalCallback):
                     if self.verbose > 0:
                         self.logger.log(f'New best mean for: {metric}!')
                         self.logger.record(f'{self.mode.value}-max/{metric}', metric_mean_value)
-                        self.logger.record(f'{self.mode.value}-max/{metric}-step', self.n_calls)
                     if self.best_model_save_path is not None:
                         self.model.save(
                             os.path.join(self.best_model_save_path, build_best_metric_checkpoint_file_name(metric))
@@ -162,9 +161,7 @@ class MetricsEvalCallback(EvalCallback):
         state = super()._on_event()
 
         self.found_any_new = True
-
         self.logger.log(f'New best mean for: reward!')
         self.logger.record(f'{self.mode.value}-max/reward', self.best_mean_reward)
-        self.logger.record(f'{self.mode.value}-max/reward-step', self.n_calls)
 
         return state

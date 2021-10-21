@@ -72,12 +72,22 @@ if __name__ == '__main__':
                 resume_training=args.resume_training,
                 market_storage_dir=market_storage_dir
             )
+
+            # Run a backtest on the train-val split to see the best results more explicitly.
             run_backtest(
                 config=config,
                 logger=logger,
                 storage_dir=storage_dir,
                 agent_from=args.agent_from,
-                mode=Mode.BacktestTrain,
+                mode=Mode.BestMetricBacktestTrain,
+                market_storage_dir=market_storage_dir
+            )
+            run_backtest(
+                config=config,
+                logger=logger,
+                storage_dir=storage_dir,
+                agent_from=args.agent_from,
+                mode=Mode.BestMetricBacktestValidation,
                 market_storage_dir=market_storage_dir
             )
 
@@ -87,11 +97,11 @@ if __name__ == '__main__':
                     logger=logger,
                     storage_dir=storage_dir,
                     agent_from=args.agent_from,
-                    mode=Mode.Backtest,
+                    mode=Mode.BacktestTest,
                     market_storage_dir=market_storage_dir
                 )
 
-        elif mode == Mode.Backtest:
+        elif mode.is_backtestable():
             run_backtest(
                 config=config,
                 logger=logger,
@@ -113,7 +123,7 @@ if __name__ == '__main__':
                 logger=logger,
                 storage_dir=storage_dir,
                 agent_from=args.agent_from,
-                mode=Mode.Backtest,
+                mode=Mode.BacktestTest,
                 market_storage_dir=market_storage_dir
             )
         elif mode == Mode.Download:
