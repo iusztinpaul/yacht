@@ -5,13 +5,13 @@ program: tools/tuning/run.py
 method: bayes
 metric:
   goal: maximize
-  name: backtest_on_validation/PA
+  name: backtest_on_validation-max/PA
 command:
   - ${env}
   - ${interpreter}
   - ${program}
   - "--config_file_name"
-  - "single_asset_order_execution_nasdaq100_ppo.config.txt"
+  - "order_execution/single_asset_nasdaq100.config.txt"
   - "--market_storage_dir"
   - "./storage"
 early_terminate:
@@ -35,58 +35,25 @@ parameters:
     distribution: constant
     value: RecurrentFeatureExtractor
   agent.policy.featureExtractor.featuresDim:
-    distribution: categorical
-    values:
-      - [16, 16, 16]
-      - [16, 16, 32]
-      - [16, 16, 16, 16]
-      - [16, 16, 16, 32]
-      - [16, 16, 16, 16, 16]
-      - [16, 16, 16, 16, 32]
-      - [32, 32, 32]
-      - [32, 32, 64]
-      - [32, 32, 32, 32]
-      - [32, 32, 32, 64]
-      - [64, 64, 32]
-      - [64, 64, 64]
-      - [64, 64, 128]
-      - [64, 64, 64, 32]
-      - [64, 64, 64, 64]
-      - [64, 64, 64, 128]
+    distribution: constant
+    value: [64,64,128]
   agent.policy.featureExtractor.rnnLayerType:
     distribution: categorical
     values:
       - GRU
       - LSTM
   agent.policy.name:
-    distribution: categorical
-    values:
-    - MlpPolicy
+    distribution: constant
+    value: MlpPolicy
   agent.policy.netArch.shared:
-    distribution: categorical
-    values:
-      - []
-      - [16]
-      - [32]
-      - [64]
-      - [128]
-      - [32, 16]
-      - [64, 32]
-      - [128, 64]
+    distribution: constant
+    value: [64, 64]
   agent.policy.netArch.vf:
-    distribution: categorical
-    values:
-      - [4]
-      - [16]
-      - [32]
-      - [64]
+    distribution: constant
+    value: [32]
   agent.policy.netArch.pi:
-    distribution: categorical
-    values:
-      - [4]
-      - [16]
-      - [32]
-      - [64]
+    distribution: constant
+    value: [32]
   agent.verbose:
     distribution: constant
     value: "true"
@@ -94,23 +61,15 @@ parameters:
     distribution: constant
     value: DiscreteActionScheme
   environment.rewardSchemas:
-    distribution: categorical
-    values:
-      - - name: DecisionMakingRewardSchema
-        - name: ActionMagnitudeRewardSchema
-          reward_scaling: 0.01
-      - - name: DecisionMakingRewardSchema
-        - name: ActionMagnitudeRewardSchema
-          reward_scaling: 0.05
-      - - name: DecisionMakingRewardSchema
-        - name: ActionMagnitudeRewardSchema
-          reward_scaling: 0.1
-      - - name: DecisionMakingRewardSchema
-        - name: ActionMagnitudeRewardSchema
-          reward_scaling: 0.5
-      - - name: DecisionMakingRewardSchema
-        - name: ActionMagnitudeRewardSchema
-          reward_scaling: 1.
+    distribution: constant
+    value:
+      - name: DecisionMakingRewardSchema
+        reward_scaling: 40
+      - name: ActionMagnitudeRewardSchema
+        reward_scaling: 0.75
+  environment.globalRewardScaling:
+    distribution: constant
+    value: 1.
   environment.initialCashPosition:
     distribution: constant
     value: 5000
@@ -127,9 +86,8 @@ parameters:
     distribution: constant
     value: "true"
   input.backtest.tickers:
-    distribution: categorical
-    values:
-      - [AAPL]
+    distribution: constant
+    value: [AAPL]
   input.dataset:
     distribution: constant
     value: DayFrequencyDataset
@@ -138,10 +96,10 @@ parameters:
     value: TP
   input.embargoRatio:
     distribution: constant
-    value: 0.03
+    value: 0.025
   input.validationSplitRatio:
     distribution: constant
-    value: 0.4
+    value: 0.3
   input.start:
     distribution: constant
     value: 1/8/2016
@@ -152,11 +110,8 @@ parameters:
     distribution: constant
     value: [Close, Open, High, Low, Volume]
   input.technicalIndicators:
-    distribution: categorical
-    values:
-      - [macd, rsi_30, cci_30, dx_30]
-      - [macd, rsi_30]
-      - []
+    distribution: constant
+    value: [macd, rsi_30, cci_30, dx_30]
   input.includeWeekends:
     distribution: constant
     value: "false"
@@ -183,7 +138,7 @@ parameters:
     value: [AAPL]
   input.windowSize:
     distribution: int_uniform
-    max: 45
+    max: 90
     min: 1
   meta.device:
     distribution: constant
@@ -196,34 +151,34 @@ parameters:
     value: 10000
   train.batchSize:
     distribution: q_uniform
-    max: 640
+    max: 1024
     min: 128
     q: 64
   train.clipRange:
-    distribution: normal
-    mu: 0.35
-    sigma: 0.15
+    distribution: uniform
+    min: 0.1
+    max: 0.5
   train.vfClipRange:
-    distribution: normal
-    mu: 0.35
-    sigma: 0.2
+    distribution: uniform
+    min: 0.1
+    max: 0.5
   train.collectingNSteps:
     distribution: constant
-    value: 4096
+    value: 2048
   train.entropyCoefficient:
     distribution: uniform
     max: 1.
     min: 0.25
   train.totalTimesteps:
     distribution: constant
-    value: 1000000
+    value: 750000
   train.fineTuneTotalTimesteps:
     distribution: constant
-    value: 200000
+    value: -1
   train.gaeLambda:
     distribution: uniform
     max: 1.
-    min: 0.
+    min: 0.5
   train.gamma:
     distribution: uniform
     max: 1.0
@@ -231,15 +186,15 @@ parameters:
   train.learningRate:
     distribution: uniform
     max: 0.001
-    min: 0.00005
+    min: 0.00001
   train.maxGradNorm:
     distribution: uniform
-    max: 75
+    max: 100
     min: 25
   train.nEpochs:
     distribution: int_uniform
-    max: 20
-    min: 8
+    max: 30
+    min: 5
   train.useSde:
     distribution: constant
     value: "false"
@@ -248,5 +203,5 @@ parameters:
     value: Trainer
   train.vfCoefficient:
     distribution: uniform
-    max: 0.85
+    max: 1.
     min: 0.4

@@ -106,7 +106,8 @@ class Trainer(ABC):
                 log_path=utils.build_log_dir(self.storage_dir),
                 best_model_save_path=utils.build_best_checkpoint_dir(self.storage_dir, self.mode),
                 deterministic=self.config.input.backtest.deterministic,
-                verbose=True
+                logger=self.logger,
+                verbose=1
             ),
             RewardsRenderCallback(
                 total_timesteps=self.total_timesteps,
@@ -220,19 +221,20 @@ def run_train(
     agent = trainer.train()
     trainer.close()
 
-    # Fine tune agent.
-    trainer = build_trainer(
-        config=config,
-        storage_dir=storage_dir,
-        resume_training=False,
-        mode=Mode.FineTuneTrain,
-        logger=logger,
-        save=True,
-        agent=agent,
-        market_storage_dir=market_storage_dir
-    )
-    trainer.train()
-    trainer.close()
+    if config.train.fine_tune_total_timesteps >= config.train.collecting_n_steps:
+        # Fine tune agent.
+        trainer = build_trainer(
+            config=config,
+            storage_dir=storage_dir,
+            resume_training=False,
+            mode=Mode.FineTuneTrain,
+            logger=logger,
+            save=True,
+            agent=agent,
+            market_storage_dir=market_storage_dir
+        )
+        trainer.train()
+        trainer.close()
 
 
 def build_trainer(

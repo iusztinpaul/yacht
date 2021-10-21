@@ -46,6 +46,8 @@ class BackTester:
             warn=False
         )
 
+        assert np.all(self.env.buf_dones), 'Cannot compute metrics on undone environments.'
+
         # Render backtest rewards.
         total_timesteps = sum([buf_info['episode']['l'] for buf_info in self.env.unwrapped.buf_infos])
         renderer = RewardsRenderer(
@@ -55,8 +57,6 @@ class BackTester:
         )
         renderer.render()
         renderer.save(utils.build_rewards_path(self.dataset.storage_dir, self.mode))
-
-        assert np.all(self.env.buf_dones), 'Cannot compute metrics on undone environments.'
 
         return self.env.mean_metrics, self.env.std_metrics
 

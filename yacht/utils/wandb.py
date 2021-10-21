@@ -1,5 +1,4 @@
 import os
-import warnings
 from pathlib import Path
 
 import wandb
@@ -49,11 +48,13 @@ class WandBContext(CacheContext):
 
     def _define_custom_step_metrics(self):
         to_watch_metrics = set(self.config.meta.metrics_to_save_best_on). \
-            union(set(self.config.meta.metrics_to_load_best_on))
+            union(set(self.config.meta.metrics_to_load_best_on)).\
+            union(set(self.config.meta.metrics_to_log))
         for mode in Mode:
             if not mode.is_trainable():
                 wandb.define_metric(mode.to_step_key())
                 wandb.define_metric(f'{mode.value}/*', step_metric=mode.to_step_key())
+                wandb.define_metric(f'{mode.value}-max/*', step_metric=mode.to_step_key())
 
                 for to_watch_metric in to_watch_metrics:
                     wandb.define_metric(f'{mode.value}/{to_watch_metric}', summary='max')
@@ -97,6 +98,7 @@ class HyperParameterTuningWandbContext(WandBContext):
             if not mode.is_trainable():
                 wandb.define_metric(mode.to_step_key())
                 wandb.define_metric(f'{mode.value}/*', step_metric=mode.to_step_key())
+                wandb.define_metric(f'{mode.value}-max/*', step_metric=mode.to_step_key())
         wandb.define_metric('timings_step')
 
     def get_config(self) -> Config:

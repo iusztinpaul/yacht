@@ -87,15 +87,19 @@ def build_agent(
         )
 
     if resume:
+        if config.train.fine_tune_total_timesteps >= config.train.collecting_n_steps:
+            mode = Mode.FineTuneTrain
+        else:
+            mode = Mode.Train
         if agent_from == 'best':
             if best_metric is None:
-                agent_from = utils.build_best_reward_checkpoint_path(storage_dir, Mode.FineTuneTrain)
+                agent_from = utils.build_best_reward_checkpoint_path(storage_dir, mode)
                 logger.info(f'Resuming from the best reward checkpoint: {agent_from}')
             else:
-                agent_from = utils.build_best_metric_checkpoint_path(storage_dir, Mode.FineTuneTrain, best_metric)
+                agent_from = utils.build_best_metric_checkpoint_path(storage_dir, mode, best_metric)
                 logger.info(f'Resuming from the best metric - {best_metric} - checkpoint: {agent_from}')
         elif agent_from == 'latest':
-            agent_from = utils.build_last_checkpoint_path(storage_dir, Mode.FineTuneTrain)
+            agent_from = utils.build_last_checkpoint_path(storage_dir, mode)
             logger.info(f'Resuming from the latest checkpoint: {agent_from}')
 
         assert os.path.exists(agent_from), f'Path does not exist: {agent_from}'

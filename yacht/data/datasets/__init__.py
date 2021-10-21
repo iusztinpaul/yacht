@@ -102,12 +102,17 @@ def build_dataset(
             renderer.close()
 
     logger.info(f'Building datasets for: {mode.value}')
-    logger.info(f'Loading the following assets:')
+    logger.info(f'Loading the following assets [ num = {len(tickers)} ]:')
     logger.info(tickers)
     if mode.is_trainable() or mode.is_backtest_on_train():
-        logger.info(f'Train split: {train_split[0]} - {train_split[1]}')
-        start = train_split[0]
-        end = train_split[1]
+        if dataset_cls.is_teacher:
+            # In teacher mode, train over all the data. It is ok because it is used just to generate GT.
+            start = utils.string_to_datetime(input_config.start)
+            end = utils.string_to_datetime(input_config.end)
+        else:
+            start = train_split[0]
+            end = train_split[1]
+        logger.info(f'Train split: {start} - {end}')
     elif mode.is_validation():
         logger.info(f'Validation split: {validation_split[0]} - {validation_split[1]}')
         start = validation_split[0]

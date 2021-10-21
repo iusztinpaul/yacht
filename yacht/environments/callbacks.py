@@ -1,7 +1,7 @@
 import os
 import sys
 from collections import Counter
-from typing import List
+from typing import List, Optional
 
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 
@@ -74,6 +74,10 @@ class RewardsRenderCallback(BaseCallback):
 
 
 class MetricsEvalCallback(EvalCallback):
+    class DummyCallback(BaseCallback):
+        def _on_step(self) -> bool:
+            return True
+
     def __init__(
             self,
             eval_env: MetricsVecEnvWrapper,
@@ -86,12 +90,16 @@ class MetricsEvalCallback(EvalCallback):
             best_model_save_path: str = None,
             deterministic: bool = True,
             render: bool = False,
+            logger: Optional[Logger] = None,
             verbose: int = 1,
             warn: bool = True,
     ):
+        if verbose:
+            assert logger is not None, 'If "verbose=1" you should pass the "logger" argument.'
+
         super().__init__(
             eval_env=eval_env,
-            callback_on_new_best=None,
+            callback_on_new_best=self.DummyCallback(),
             n_eval_episodes=n_eval_episodes,
             eval_freq=eval_freq,
             log_path=log_path,
@@ -108,6 +116,7 @@ class MetricsEvalCallback(EvalCallback):
         self.plateau_max_n_steps = plateau_max_n_steps
         self.best_metrics_results = {key: -sys.maxsize for key in self.metrics_to_save_best_on}
         self.plateau_metrics_counter = Counter()
+        self.found_any_new = False
 
     def _on_step(self) -> bool:
         super()._on_step()
@@ -117,10 +126,13 @@ class MetricsEvalCallback(EvalCallback):
             for metric in self.metrics_to_save_best_on:
                 metric_mean_value = step_mean_metrics[metric]
                 if metric_mean_value > self.best_metrics_results[metric]:
+                    self.found_any_new = True
                     self.plateau_metrics_counter[metric] = 0
 
                     if self.verbose > 0:
-                        print(f'New best mean for: {metric}!')
+                        self.logger.log(f'New best mean for: {metric}!')
+                        self.logger.record(f'{self.mode.value}-max/{metric}', metric_mean_value)
+                        self.logger.record(f'{self.mode.value}-max/{metric}-step', self.n_calls)
                     if self.best_model_save_path is not None:
                         self.model.save(
                             os.path.join(self.best_model_save_path, build_best_metric_checkpoint_file_name(metric))
@@ -129,15 +141,30 @@ class MetricsEvalCallback(EvalCallback):
                 else:
                     self.plateau_metrics_counter[metric] += 1
 
+            if self.verbose > 0 and self.found_any_new is True:
+                self.logger.dump()
+                self.found_any_new = False
+
             if self.apply_plateau:
                 # If any metric we are listing to did not had a new best value for 'max_n_steps' end training.
                 metrics_plateau = [
                     plateau_steps <= self.plateau_max_n_steps for plateau_steps in self.plateau_metrics_counter.values()
                 ]
-                continue_training = all(metrics_plateau)
+                continue_training = any(metrics_plateau)
                 if continue_training is False:
-                    print('Stopped training because of plateauing metrics...')
+                    self.logger.info('Stopped training because of plateauing metrics...')
 
                 return continue_training
 
         return True
+
+    def _on_event(self) -> bool:
+        state = super()._on_event()
+
+        self.found_any_new = True
+
+        self.logger.log(f'New best mean for: reward!')
+        self.logger.record(f'{self.mode.value}-max/reward', self.best_mean_reward)
+        self.logger.record(f'{self.mode.value}-max/reward-step', self.n_calls)
+
+        return state

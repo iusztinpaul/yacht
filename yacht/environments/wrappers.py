@@ -103,8 +103,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
         self.metric_statistics = {
             'mean': dict(),
             'median': dict(),
-            'std': dict(),
-            'third_quartile': dict()
+            'std': dict()
         }
         # Define an internal step to be able to compare metrics easier.
         self.num_step = 0
