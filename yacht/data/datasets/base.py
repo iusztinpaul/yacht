@@ -59,7 +59,6 @@ class AssetDataset(Dataset, ABC):
         'High',
         'Low'
     )
-    is_teacher = False
 
     def __init__(
             self,
@@ -319,6 +318,8 @@ class SingleAssetDataset(AssetDataset, ABC):
 
 
 class MultiAssetDataset(AssetDataset):
+    # TODO: Implement the multi-asset dependency within a DataFrame for faster processing.
+
     def __init__(
             self,
             datasets: List[SingleAssetDataset],

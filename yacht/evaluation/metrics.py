@@ -123,7 +123,7 @@ def compute_glr_ratio(pa_values: Union[List[float], np.ndarray]) -> float:
     negative_pa_values = pa_values[pa_values < 0]
 
     if negative_pa_values.size == 0:
-        return 1.
+        return positive_pa_values.shape[0]
 
     if positive_pa_values.size == 0:
         return 0.

@@ -6,7 +6,8 @@ from typing import Set
 from tqdm import tqdm
 
 from .base import *
-from .day_frequency import DayFrequencyDataset, TeacherDayFrequencyDataset
+from .day_frequency import DayFrequencyDataset
+from .teacher import TeacherDayFrequencyDataset
 from .samplers import SampleAssetDataset
 from .multi_frequency import *
 
@@ -18,6 +19,7 @@ from yacht.data.markets import build_market
 from yacht.data.renderers import TrainTestSplitRenderer
 from yacht.data.scalers import build_scaler
 from yacht import Mode
+from .student import StudentMultiAssetDataset
 from ..transforms import build_transforms
 
 dataset_registry = {
@@ -38,6 +40,7 @@ def build_dataset(
 
     input_config = config.input
     dataset_cls = dataset_registry[input_config.dataset]
+    multi_asset_dataset_cls = StudentMultiAssetDataset if config.agent.is_student else MultiAssetDataset
 
     tickers = build_tickers(config, mode)
     market = build_market(
@@ -105,7 +108,7 @@ def build_dataset(
     logger.info(f'Loading the following assets [ num = {len(tickers)} ]:')
     logger.info(tickers)
     if mode.is_trainable() or mode.is_backtest_on_train():
-        if dataset_cls.is_teacher:
+        if config.agent.is_teacher:
             # In teacher mode, train over all the data. It is ok because it is used just to generate GT.
             start = utils.string_to_datetime(input_config.start)
             end = utils.string_to_datetime(input_config.end)
@@ -146,7 +149,7 @@ def build_dataset(
 
         return None
 
-    if dataset_cls.is_teacher:
+    if config.agent.is_teacher:
         # In a teacher setup the agent will take the data from the whole period.
         # Make the window_size the maximum period length for observation size consistency.
         # TODO: Map this logic to more frequencies than days.
@@ -217,7 +220,7 @@ def build_dataset(
                     )
                 )
 
-            dataset = MultiAssetDataset(
+            dataset = multi_asset_dataset_cls(
                 datasets=single_asset_datasets,
                 market=market,
                 storage_dir=storage_dir,

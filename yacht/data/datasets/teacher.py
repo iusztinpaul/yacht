@@ -1,19 +1,18 @@
-from typing import List, Dict, Optional
+from typing import List, Optional, Dict
 
 import numpy as np
 import pandas as pd
-from gym import spaces
 from pandas import Interval
 
 from yacht import Mode
-from yacht.data.datasets import SingleAssetDataset, DatasetPeriod
+from yacht.data.datasets import DayFrequencyDataset, DatasetPeriod
 from yacht.data.markets import Market
 from yacht.data.scalers import Scaler
 from yacht.data.transforms import Compose
 from yacht.logger import Logger
 
 
-class DayFrequencyDataset(SingleAssetDataset):
+class TeacherDayFrequencyDataset(DayFrequencyDataset):
     def __init__(
             self,
             ticker: str,
@@ -31,8 +30,6 @@ class DayFrequencyDataset(SingleAssetDataset):
             window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
-        assert set(intervals) == {'1d'}, 'Requested intervals are not supported.'
-
         super().__init__(
             ticker=ticker,
             market=market,
@@ -50,18 +47,7 @@ class DayFrequencyDataset(SingleAssetDataset):
             data=data
         )
 
-    def __len__(self):
-        return len(self.data['1d'])
-
-    def get_external_observation_space(self) -> Dict[str, spaces.Space]:
-        return {
-            '1d': spaces.Box(
-                low=-np.inf,
-                high=np.inf,
-                shape=(self.window_size, 1, len(self.features)),  # (window, bar, features)
-                dtype=np.float32
-            )
-        }
+        self.cached_teacher_data = None
 
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
         """
@@ -69,19 +55,23 @@ class DayFrequencyDataset(SingleAssetDataset):
             day_index: The relative index the data will be given from.
 
         Returns:
-            The data features within the [day_index - window_size + 1, day_index] interval.
+            All the data within the [start, end] interval. Practically it will always return the same item.
         """
 
-        day_features = self.data['1d'][self.features]
-        start_index = day_index - self.window_size + 1
-        end_index = day_index
+        if self.cached_teacher_data is None:
+            day_features = self.data['1d'][self.features]
+            day_features = self.scaler.transform(day_features)
+            if self.window_transforms is not None:
+                day_features = self.window_transforms(day_features)
+            day_features = np.pad(
+                day_features,
+                ((0, self.window_size - day_features.shape[0]), (0, 0)),
+                mode='edge'
+            )
+            day_features = np.expand_dims(day_features, axis=1)
 
-        day_features = day_features.iloc[start_index:end_index + 1]
-        day_features = self.scaler.transform(day_features)
-        if self.window_transforms is not None:
-            day_features = self.window_transforms(day_features)
-        day_features = np.expand_dims(day_features, axis=1)
+            self.cached_teacher_data = day_features
 
         return {
-            '1d': day_features
+            '1d': self.cached_teacher_data
         }
