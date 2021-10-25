@@ -1,7 +1,7 @@
 import os
 import sys
 from collections import Counter
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 
@@ -28,30 +28,33 @@ class LoggerCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         if self.num_timesteps % self.log_frequency == 0:
-            self.logger.info(f'Timestep [{self.num_timesteps} / {self.total_timesteps}]')
+            dict_time_length_info, str_time_length_info = self.aggregate_time_lengths()
+            dict_time_length_info['timings_step'] = self.num_timesteps
+            self.logger.log(dict_time_length_info, Logger.SKIP_COUT)
 
-            time_length_info = self.aggregate_time_lengths()
-            time_length_info['timings_step'] = self.num_timesteps
-            self.logger.log(time_length_info, Logger.SKIP_COUT)
+            self.logger.info(f'[{self.num_timesteps} / {self.total_timesteps}] - [{str_time_length_info}]')
 
         return True
 
-    def aggregate_time_lengths(self) -> dict:
-        time_length_info = {
+    def aggregate_time_lengths(self) -> Tuple[dict, str]:
+        dict_time_length_info = {
             'time/data_time_length': 0,
             'time/env_time_length': 0,
             'time/agent_time_length': 0
         }
         for info in self.training_env.unwrapped.buf_infos:
-            time_length_info['time/data_time_length'] += info['data_time_length']
-            time_length_info['time/env_time_length'] += info['env_time_length']
-            time_length_info['time/agent_time_length'] += info['agent_time_length']
+            dict_time_length_info['time/data_time_length'] += info['data_time_length']
+            dict_time_length_info['time/env_time_length'] += info['env_time_length']
+            dict_time_length_info['time/agent_time_length'] += info['agent_time_length']
 
         num_envs = self.training_env.num_envs
-        for k, v in time_length_info.items():
-            time_length_info[k] = v / num_envs
+        for k, v in dict_time_length_info.items():
+            dict_time_length_info[k] = v / num_envs
 
-        return time_length_info
+        str_time_length_info = [f'{k}: {v:.4f}s' for k, v in dict_time_length_info.items()]
+        str_time_length_info = ' '.join(str_time_length_info)
+
+        return dict_time_length_info, str_time_length_info
 
 
 class RewardsRenderCallback(BaseCallback):
