@@ -92,7 +92,7 @@ def build_agent(
         else:
             mode = Mode.Train
         if agent_from == 'best':
-            if best_metric is None:
+            if best_metric is None or best_metric == 'reward':
                 agent_from = utils.build_best_reward_checkpoint_path(storage_dir, mode)
                 logger.info(f'Resuming from the best reward checkpoint: {agent_from}')
             else:
@@ -127,7 +127,6 @@ def build_agent(
                 'env_features_len': env.envs[0].observation_env_features_len,
                 'num_assets': input_config.num_assets_per_dataset,
                 'drop_out_p': feature_extractor_config.drop_out_p,
-                # TODO: Remove rnn_layer_type config parameter
                 'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM
             }
             policy_kwargs['features_extractor_kwargs'] = utils.filter_class_kwargs(

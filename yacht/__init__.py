@@ -53,6 +53,13 @@ class Mode(Enum):
             self.BestMetricBacktestTest,
         }
 
+    def is_best_metric(self) -> bool:
+        return self in {
+            self.BestMetricBacktestTrain,
+            self.BestMetricBacktestValidation,
+            self.BestMetricBacktestTest
+        }
+
     def is_trainval(self) -> bool:
         return any([self.is_trainable(), self.is_validation()])
 

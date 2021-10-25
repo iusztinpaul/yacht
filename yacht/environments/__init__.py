@@ -22,7 +22,11 @@ def build_env(
         dataset: SampleAssetDataset,
         logger: Logger,
         mode: Mode,
+        load_best_metric: Optional[str] = None
 ) -> MetricsVecEnvWrapper:
+    if mode.is_best_metric():
+        assert load_best_metric is not None
+
     def _wrappers(env: Union[Monitor, BaseAssetEnvironment]) -> gym.Env:
         if isinstance(env, Monitor):
             assert isinstance(env.env, BaseAssetEnvironment), f'Wrong env type: {type(env.env)}.'
@@ -38,7 +42,7 @@ def build_env(
     action_schema = build_action_schema(config, dataset, mode)
     reward_schema = build_reward_schema(config)
     env_kwargs = {
-        'name': mode.value,
+        'name': f'{mode.value}-{load_best_metric}' if mode.is_best_metric() else mode.value,
         'dataset': dataset,
         'reward_schema': reward_schema,
         'action_schema': action_schema,
@@ -73,7 +77,8 @@ def build_env(
         logger=logger,
         mode=mode,
         metrics_to_log=list(config.meta.metrics_to_log),
-        extra_stats_metrics=list(config.meta.metrics_to_save_best_on)
+        extra_stats_metrics=list(config.meta.metrics_to_save_best_on),
+        load_best_metric=load_best_metric
     )
 
     return env

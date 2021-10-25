@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 import gym
 import numpy as np
@@ -89,8 +89,12 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
             logger: Logger,
             mode: Mode,
             metrics_to_log: List[str],
-            extra_stats_metrics: List[str]
+            extra_stats_metrics: List[str],
+            load_best_metric: Optional[str] = None
     ):
+        if mode.is_best_metric():
+            assert load_best_metric is not None
+
         super().__init__(venv)
 
         self.n_metrics_episodes = n_metrics_episodes
@@ -98,6 +102,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
         self.mode = mode
         self.metrics_to_log = metrics_to_log
         self.extra_metrics_to_log = extra_stats_metrics
+        self.load_best_metric = load_best_metric
 
         self.metrics: List[dict] = []
         self.metric_statistics = {
@@ -177,6 +182,9 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
         return flattened_dict
 
     def _prefix_key(self, key: str) -> str:
+        if self.mode.is_best_metric():
+            return f'{self.mode.value}-{self.load_best_metric}/{key}'
+
         return f'{self.mode.value}/{key}'
 
     def extract_metrics(self, info: dict) -> dict:

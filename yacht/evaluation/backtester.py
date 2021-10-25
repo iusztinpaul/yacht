@@ -1,19 +1,30 @@
-from typing import Optional
+from abc import ABC, abstractmethod
+from copy import deepcopy
+from typing import Optional, List
 
 import numpy as np
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.evaluation import evaluate_policy
 
-from yacht import Mode, utils
+from yacht import Mode
 from yacht.agents import build_agent
 from yacht.config import Config
 from yacht.data.datasets import build_dataset, SampleAssetDataset
-from yacht.data.renderers import RewardsRenderer
 from yacht.environments import build_env, MetricsVecEnvWrapper
 from yacht.logger import Logger
 
 
-class BackTester:
+class BackTester(ABC):
+    @abstractmethod
+    def test(self):
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
+
+class SimpleBackTester(BackTester):
     def __init__(
             self,
             config: Config,
@@ -48,21 +59,26 @@ class BackTester:
 
         assert np.all(self.env.buf_dones), 'Cannot compute metrics on undone environments.'
 
-        # Render backtest rewards.
-        total_timesteps = sum([buf_info['episode']['l'] for buf_info in self.env.unwrapped.buf_infos])
-        renderer = RewardsRenderer(
-            total_timesteps=total_timesteps,
-            storage_dir=self.dataset.storage_dir,
-            mode=self.mode
-        )
-        renderer.render()
-        renderer.save(utils.build_rewards_path(self.dataset.storage_dir, self.mode))
-
         return self.env.mean_metrics, self.env.std_metrics
 
     def close(self):
         self.env.close()
         self.dataset.close()
+
+
+class ListBackTester(BackTester):
+    def __init__(
+            self,
+            backtesters: List[BackTester]
+    ):
+        self.backtesters = backtesters
+
+    def test(self):
+        return [b.test() for b in self.backtesters]
+
+    def close(self):
+        for b in self.backtesters:
+            b.close()
 
 
 #######################################################################################################################
@@ -76,29 +92,41 @@ def build_backtester(
         agent_from: str,
         market_storage_dir: Optional[str]
 ) -> Optional[BackTester]:
-    # TODO: Implement backtesting logic for loading from multiple metrics.
-    assert len(config.meta.metrics_to_load_best_on) <= 1, 'Does not support loading from multiple metrics.'
+    if mode.is_best_metric():
+        if 'reward' not in config.meta.metrics_to_load_best_on:
+            config.meta.metrics_to_load_best_on.append('reward')
+    else:
+        assert len(config.meta.metrics_to_load_best_on) <= 1, 'Cannot load from multiple metrics in the current setup.'
 
-    dataset = build_dataset(config, logger, storage_dir, mode=mode, market_storage_dir=market_storage_dir)
-    if dataset is None:
-        return None
+    backtesters = []
+    for metric in config.meta.metrics_to_load_best_on:
+        dataset = build_dataset(config, logger, storage_dir, mode=mode, market_storage_dir=market_storage_dir)
+        if dataset is None:
+            logger.info('Could not create the dataset.')
+            return None
 
-    env = build_env(config, dataset, logger, mode=mode)
-    agent = build_agent(
-        config,
-        env,
-        logger=logger,
-        storage_dir=storage_dir,
-        resume=True,
-        agent_from=agent_from,
-        best_metric=config.meta.metrics_to_load_best_on[0]
-    )
+        env = build_env(config, dataset, logger, mode=mode, load_best_metric=metric)
+        agent = build_agent(
+            config,
+            env,
+            logger=logger,
+            storage_dir=storage_dir,
+            resume=True,
+            agent_from=agent_from,
+            best_metric=metric
+        )
 
-    return BackTester(
-        config=config,
-        dataset=dataset,
-        env=env,
-        agent=agent,
-        logger=logger,
-        mode=mode,
+        backtesters.append(
+            SimpleBackTester(
+                config=config,
+                dataset=dataset,
+                env=env,
+                agent=agent,
+                logger=logger,
+                mode=mode,
+            )
+        )
+
+    return ListBackTester(
+        backtesters=backtesters
     )

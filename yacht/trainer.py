@@ -109,11 +109,11 @@ class Trainer(ABC):
                 logger=self.logger,
                 verbose=1
             ),
-            RewardsRenderCallback(
-                total_timesteps=self.total_timesteps,
-                storage_dir=self.storage_dir,
-                mode=self.mode
-            )
+            # RewardsRenderCallback(
+            #     total_timesteps=self.total_timesteps,
+            #     storage_dir=self.storage_dir,
+            #     mode=self.mode
+            # )
         ]
 
         if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
@@ -235,6 +235,12 @@ def run_train(
         )
         trainer.train()
         trainer.close()
+    else:
+        logger.info(
+            f'Fine tuning is stopped:'
+            f'fine_tune_total_timesteps [{config.train.fine_tune_total_timesteps}] < '
+            f'collecting_n_steps [{config.train.collecting_n_steps}]'
+        )
 
 
 def build_trainer(
