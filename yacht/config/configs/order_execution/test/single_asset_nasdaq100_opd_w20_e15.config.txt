@@ -15,11 +15,10 @@ input: {
     period_length: '1M'
     window_size: 20
     render_periods: [
-    # For the train period plot a bigger interval, because it is rendered only once.
-     {start: '1/1/2018', end: '1/7/2019'},
-    # For the validation period be more greedy, because it is rendered a lot of times during training.
-     {start: '15/9/2019', end: '15/6/2020'},
-     {start: '15/7/2020', end: '15/4/2021'}
+        # For the train period plot a bigger interval, because it is rendered only once.
+         {start: '1/1/2018', end: '1/7/2019'},
+        # For the validation period be more greedy, because it is rendered a lot of times during training.
+         {start: '1/1/2020', end: '15/10/2020'}
     ]
     include_weekends: false
     validation_split_ratio: 0.3

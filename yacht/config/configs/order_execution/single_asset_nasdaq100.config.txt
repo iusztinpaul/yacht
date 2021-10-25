@@ -11,15 +11,14 @@ input: {
     decision_price_feature: 'TP'
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/8/2016'
-    end: '1/8/2021'
+    end: '15/10/2021'
     period_length: '1M'
     window_size: 14
     render_periods: [
     # For the train period plot a bigger interval, because it is rendered only once.
      {start: '1/1/2018', end: '1/7/2019'},
     # For the validation period be more greedy, because it is rendered a lot of times during training.
-     {start: '15/9/2019', end: '15/6/2020'},
-     {start: '15/7/2020', end: '15/4/2021'}
+     {start: '1/1/2020', end: '15/10/2020'}
     ]
     include_weekends: false
     validation_split_ratio: 0.3
