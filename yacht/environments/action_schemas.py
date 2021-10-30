@@ -33,6 +33,10 @@ class ActionSchema(ABC):
     def get_value(self, action: np.ndarray) -> np.ndarray:
         pass
 
+    @abstractmethod
+    def get_action(self, value: np.ndarray) -> np.ndarray:
+        pass
+
     def reset(self):
         if self.apply_noise:
             self.action_noise.reset()
@@ -47,7 +51,7 @@ class DiscreteActionScheme(ActionSchema):
     ):
         super().__init__(num_assets=num_assets, action_noise=action_noise)
 
-        self.possibilities = np.array(possibilities)
+        self.possibilities = np.array(possibilities, dtype=np.float32)
 
     def get_action_space(self) -> Space:
         return spaces.MultiDiscrete(
@@ -62,6 +66,16 @@ class DiscreteActionScheme(ActionSchema):
             action = np.clip(action, a_min=np.min(self.possibilities), a_max=np.max(self.possibilities))
 
         return action
+
+    def get_action(self, value: np.ndarray) -> np.ndarray:
+        if self.apply_noise:
+            raise NotImplementedError()
+
+        # TODO: Is this working for multiple assets ?
+        indices = np.where(value == self.possibilities)
+        indices = indices[1]
+
+        return self.possibilities[indices]
 
 
 class ContinuousFloatActionSchema(ActionSchema):
@@ -85,6 +99,9 @@ class ContinuousFloatActionSchema(ActionSchema):
             action = np.clip(action, a_min=-1, a_max=1)
 
         return action
+
+    def get_action(self, value: np.ndarray) -> np.ndarray:
+        return value / self.action_scaling_factor
 
 
 class ContinuousIntegerActionSchema(ContinuousFloatActionSchema):

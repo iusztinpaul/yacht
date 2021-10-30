@@ -165,7 +165,7 @@ def run_train(
         trainer.close()
     else:
         logger.info(
-            f'Fine tuning is stopped:'
+            f'Fine tuning is stopped: '
             f'fine_tune_total_timesteps [{config.train.fine_tune_total_timesteps}] < '
             f'collecting_n_steps [{config.train.collecting_n_steps}]'
         )

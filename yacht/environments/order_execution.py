@@ -205,10 +205,12 @@ class TeacherOrderExecutionEnvironment(OrderExecutionEnvironment):
 
     def persist_actions(self, report: dict):
         key = self.create_key()
+        actions = report['unadjusted_actions']
+        action_indices = self.action_schema.get_action(actions)
         df = pd.DataFrame(
             index=report['unadjusted_dates'],
             columns=self.dataset.asset_tickers,
-            data=report['unadjusted_actions']
+            data=action_indices
         )
 
         if key in self.actions_store:

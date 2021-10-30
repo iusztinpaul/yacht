@@ -82,6 +82,9 @@ def step_schedule(initial_value: float, drop_steps: Tuple[float] = (0.33, 0.66))
                 power = -i
                 break
 
+        if power is None:
+            power = -len(intervals)
+
         return 10**power * initial_value
 
     return func
