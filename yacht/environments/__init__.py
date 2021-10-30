@@ -77,7 +77,6 @@ def build_env(
         logger=logger,
         mode=mode,
         metrics_to_log=list(config.meta.metrics_to_log),
-        extra_stats_metrics=list(config.meta.metrics_to_save_best_on),
         load_best_metric=load_best_metric
     )
 

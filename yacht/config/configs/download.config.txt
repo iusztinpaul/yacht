@@ -5,14 +5,14 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['NASDAQ100']
+    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/8/2016'
-    end: '1/8/2021'
+    end: '15/10/2021'
     period_length: '1M'
     window_size: 7
     render_periods: [

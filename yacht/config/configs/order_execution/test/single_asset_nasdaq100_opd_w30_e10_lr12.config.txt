@@ -4,21 +4,21 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['NASDAQ100']
+    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/8/2016'
-    end: '1/8/2021'
+    end: '15/10/2021'
     period_length: '1M'
-    window_size: 10
+    window_size: 30
     render_periods: [
         # For the train period plot a bigger interval, because it is rendered only once.
          {start: '1/1/2018', end: '1/7/2019'},
         # For the validation period be more greedy, because it is rendered a lot of times during training.
-         {start: '1/1/2020', end: '15/10/2020'}
+         {start: '15/12/2020', end: '15/8/2021'}
     ]
     include_weekends: false
     validation_split_ratio: 0.3
@@ -68,7 +68,7 @@ agent: {
         feature_extractor: {
             name: 'RecurrentFeatureExtractor'
             features_dim: [64,64,128]
-            drop_out_p: 0.25,
+            drop_out_p: 0.,
             rnn_layer_type: 'GRU'
         }
         net_arch: {
@@ -83,9 +83,9 @@ train: {
     total_timesteps: 1000000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
-    learning_rate: 0.0006
+    learning_rate: 0.0012
     batch_size: 1024
-    n_epochs: 15
+    n_epochs: 10
     gamma: 1.
     gae_lambda: 1.
     clip_range: 0.3
@@ -95,13 +95,13 @@ train: {
     max_grad_norm: 100
     use_sde: false
     sde_sample_freq: -1
-    learning_rate_scheduler: 'ConstantSchedule'
+    learning_rate_scheduler: 'linear_schedule'
 }
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
     metrics_to_save_best_on: ['PA', 'GLR']
-    metrics_to_load_best_on: ['PA']
+    metrics_to_load_best_on: ['PA', 'GLR']
     plateau_max_n_steps: 10
     device: 'gpu'
     experiment_tracker: 'wandb'

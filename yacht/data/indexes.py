@@ -163,7 +163,6 @@ SP_500_TICKERS = [
     "GOOG",
     "MO",
     "AMZN",
-    "AMCR",
     "AEE",
     "AAL",
     "AEP",

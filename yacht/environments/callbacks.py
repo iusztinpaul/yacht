@@ -32,7 +32,7 @@ class LoggerCallback(BaseCallback):
             dict_time_length_info['timings_step'] = self.num_timesteps
             self.logger.log(dict_time_length_info, Logger.SKIP_COUT)
 
-            self.logger.info(f'[{self.num_timesteps} / {self.total_timesteps}] - [{str_time_length_info}]')
+            self.logger.info(f'[{self.num_timesteps} / {self.total_timesteps}] - {str_time_length_info}')
 
         return True
 

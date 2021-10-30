@@ -89,7 +89,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
             logger: Logger,
             mode: Mode,
             metrics_to_log: List[str],
-            extra_stats_metrics: List[str],
+            extra_stats_metrics: Optional[List[str]] = None,
             load_best_metric: Optional[str] = None
     ):
         if mode.is_best_metric():
@@ -101,7 +101,7 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
         self.logger = logger
         self.mode = mode
         self.metrics_to_log = metrics_to_log
-        self.extra_metrics_to_log = extra_stats_metrics
+        self.extra_metrics_to_log = extra_stats_metrics if extra_stats_metrics is not None else []
         self.load_best_metric = load_best_metric
 
         self.metrics: List[dict] = []
