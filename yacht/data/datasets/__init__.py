@@ -60,13 +60,22 @@ def build_dataset(
     )
 
     # Download the whole requested interval in one shot for further processing & rendering.
+    start = utils.string_to_datetime(input_config.start)
+    end = utils.string_to_datetime(input_config.end)
     market.download(
         tickers,
         interval='1d',
-        start=utils.string_to_datetime(input_config.start),
-        end=utils.string_to_datetime(input_config.end),
+        start=start,
+        end=end,
         flexible_start=True
     )
+    # Clean dataset from the tickers that are too sparse.
+    num_tickers = len(tickers)
+    tickers = clean_tickers(tickers, market, interval='1d', start=start, end=end)
+    logger.info(f'Dropped {num_tickers - len(tickers)} corrupted tickers.')
+    if len(tickers) == 0:
+        raise RuntimeError('No valid tickers to train on.')
+
     # Render split only for backtest tickers.
     if not mode.is_trainable():
         data = dict()
@@ -110,11 +119,10 @@ def build_dataset(
     if mode.is_trainable() or mode.is_backtest_on_train():
         if config.agent.is_teacher:
             # In teacher mode, train over all the data. It is ok because it is used just to generate GT.
-            start = utils.string_to_datetime(input_config.start)
-            end = utils.string_to_datetime(input_config.end)
-        else:
-            start = train_split[0]
-            end = train_split[1]
+            train_split = utils.string_to_datetime(input_config.start), utils.string_to_datetime(input_config.end)
+
+        start = train_split[0]
+        end = train_split[1]
         logger.info(f'Train split: {start} - {end}')
     elif mode.is_validation():
         logger.info(f'Validation split: {validation_split[0]} - {validation_split[1]}')
@@ -235,7 +243,7 @@ def build_dataset(
             )
             datasets.append(dataset)
 
-    days_per_period = len(utils.compute_period_range(
+    period_length = len(utils.compute_period_range(
         start=periods[0][0],
         end=periods[0][1],
         include_weekends=input_config.include_weekends
@@ -243,7 +251,7 @@ def build_dataset(
     usable_num_datasets = total_num_periods - num_skipped_periods
     logger.info(f'Skipped {num_skipped_periods} / {total_num_periods} datasets.')
     logger.info(f'A total of {usable_num_datasets} datasets were created.')
-    logger.info(f'Which is equal to a total of {usable_num_datasets * days_per_period} timesteps.')
+    logger.info(f'Which is equal to a total of {usable_num_datasets * period_length} timesteps.')
     logger.info(f'Datasets built in {time.time() - start_building_data_time:.2f} seconds.')
 
     if usable_num_datasets == 0:
@@ -307,21 +315,10 @@ def build_tickers(config: Config, mode: Mode) -> Set[str]:
     return set(tickers)
 
 
-def build_dataset_wrapper(dataset: AssetDataset, indices: List[int]) -> Union[IndexedDatasetMixin, AssetDataset]:
-    dataset_class_name = dataset.__class__.__name__
-    dataset_class_name = f'Indexed{dataset_class_name}'
-    dataset_class = dataset_registry[dataset_class_name]
+def clean_tickers(tickers: set, market: Market, interval: str, start: datetime, end: datetime) -> set:
+    valid_tickers = set()
+    for ticker in tickers:
+        if market.is_cached(ticker, interval, start, end):
+            valid_tickers.add(ticker)
 
-    return dataset_class(
-        dataset.market,
-        dataset.ticker,
-        dataset.intervals,
-        dataset.features,
-        dataset.start,
-        dataset.end,
-        dataset.price_normalizer,
-        dataset.other_normalizer,
-        dataset.window_size,
-        dataset.data,
-        indices
-    )
+    return valid_tickers

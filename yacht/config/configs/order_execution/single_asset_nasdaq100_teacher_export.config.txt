@@ -1,5 +1,6 @@
 input: {
     market: 'Yahoo'
+    market_mixins: ['TargetPriceMixin']
     dataset: 'TeacherDayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
@@ -62,6 +63,7 @@ environment: {
 agent: {
     name: 'PPO'
     is_classic_method: false
+    is_teacher: true
     verbose: true
     policy: {
         name: 'MlpPolicy'

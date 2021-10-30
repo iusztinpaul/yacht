@@ -5,6 +5,7 @@ from typing import Union, List, Any, Iterable, Optional
 
 import pandas as pd
 
+from yacht import utils
 from yacht.logger import Logger
 
 
@@ -71,7 +72,10 @@ class Market(ABC):
     ) -> pd.DataFrame:
         """
             Returns: data within [start, end] and fills nan values.
-            If flexible_start = True, it should return [data.index.sort()[0], end] with nan values filled.
+            If flexible_start = True, it should return [data.index.sort()[0] (=new_start), end],
+                only if start <= new_start <= end, with nan values filled.
+                The point of this is that some assets don't have data on the whole interval.
+                This will move the starting point from where the data starts.
         """
 
         pass
@@ -145,21 +149,6 @@ class Market(ABC):
     ) -> bool:
         return len(data) > 0
 
-    def interval_to_pd_freq(self, interval: str) -> str:
-        if self.include_weekends:
-            database_to_pandas_freq = {
-                'd': 'd',
-                'h': 'h',
-                'm': 'min'
-            }
-            freq = interval[:-1] + database_to_pandas_freq[interval[-1].lower()]
-        else:
-            # TODO: Adapt the business days logic to other intervals.
-            assert interval == '1d'
-            freq = 'B'
-
-        return freq
-
 
 class H5Market(Market, ABC):
     def __init__(
@@ -209,10 +198,11 @@ class H5Market(Market, ABC):
         """
             Returns: data within [start, end] and fills nan values.
             If flexible_start = True, it should return [data.index.sort()[0] (=new_start), end],
-                only if new_start > given_start, with nan values filled.
+                only if start <= new_start <= end, with nan values filled.
+                The point of this is that some assets don't have data on the whole interval.
+                This will move the starting point from where the data starts.
         """
 
-        # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
         if flexible_start:
             start = self.move_start(ticker, interval, start, end)
 
@@ -223,7 +213,8 @@ class H5Market(Market, ABC):
         data_slice.fillna(method='bfill', inplace=True, axis=0)
         data_slice.fillna(method='ffill', inplace=True, axis=0)
 
-        assert data_slice.notna().all().all(), 'Data from the market is not valid.'
+        assert data_slice.notna().all().all(), \
+            f'Data from the market is not valid for: [{ticker}${interval}] {start} - {end}'
 
         return data_slice
 
@@ -241,8 +232,7 @@ class H5Market(Market, ABC):
 
         # Create the desired data span because there are missing values. In this way we will know exactly what data is
         # missing and at what index.
-        freq = self.interval_to_pd_freq(interval)
-        date_time_index = pd.date_range(start=start, end=end, freq=freq)
+        date_time_index = utils.compute_period_range(start, end, self.include_weekends, interval)
         if features is None:
             features = self.features
         final_data = pd.DataFrame(index=date_time_index, columns=features)
@@ -255,10 +245,15 @@ class H5Market(Market, ABC):
     def move_start(self, ticker: str, interval: str, start: datetime, end: datetime) -> datetime:
         ticker_key = self.create_key(ticker, interval)
         if ticker_key in self.connection:
-            new_start = self.connection[ticker_key].index[0]
+            indices = self.connection[ticker_key].loc[start:end].index
+            if len(indices) == 0:
+                return start
+
+            new_start = indices[0]
             if new_start > start:
                 start = new_start
-                assert start < end, 'Cannot move start after the end period.'
+                assert start <= end, \
+                    f'Cannot move start after the end period: {start} > {end}'
 
         return start
 
@@ -271,15 +266,14 @@ class H5Market(Market, ABC):
         if is_cached_key in self.is_cached_cache:
             return self.is_cached_cache[is_cached_key]
 
-        freq = self.interval_to_pd_freq(interval)
-        time_series = pd.date_range(start, end, freq=freq)
+        time_series = utils.compute_period_range(start, end, self.include_weekends, interval)
         # Query how much of the requested time series is in the cache.
-        valid_values = time_series[time_series.isin(self.connection[key].index)]
+        valid_values = self.connection[key].loc[start:end].index
 
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
         # Also stocks have data only in the work days.
-        is_cached_state = len(valid_values) >= 0.8 * len(time_series)
+        is_cached_state = len(valid_values) >= 0.75 * len(time_series)
         self.is_cached_cache[is_cached_key] = is_cached_state
 
         return is_cached_state

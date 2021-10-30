@@ -1,5 +1,6 @@
 input: {
     market: 'Yahoo'
+    market_mixins: ['TargetPriceMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
@@ -80,12 +81,12 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1000000
-    fine_tune_total_timesteps: -1
+    total_timesteps: 2300000
+    fine_tune_total_timesteps: 200000
     collecting_n_steps: 2048
-    learning_rate: 0.0012
+    learning_rate: 0.0005
     batch_size: 1024
-    n_epochs: 10
+    n_epochs: 5
     gamma: 1.
     gae_lambda: 1.
     clip_range: 0.3
@@ -100,8 +101,8 @@ train: {
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR']
-    metrics_to_load_best_on: ['PA', 'GLR']
+    metrics_to_save_best_on: ['PA', 'GLR', 'AD']
+    metrics_to_load_best_on: ['PA', 'GLR', 'AD']
     plateau_max_n_steps: 10
     device: 'gpu'
     experiment_tracker: 'wandb'

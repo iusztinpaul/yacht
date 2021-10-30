@@ -206,12 +206,27 @@ def len_period_range(start, end, include_weekends) -> int:
     return len(compute_period_range(start, end, include_weekends))
 
 
-def compute_period_range(start, end, include_weekends) -> List[datetime]:
-    # TODO: Adjust to more frequencies than days
-    freq = '1D' if include_weekends else '1B'
+def compute_period_range(start, end, include_weekends, interval: str = '1d') -> List[datetime]:
+    freq = interval_to_pd_freq(interval=interval, include_weekends=include_weekends)
     period_range = list(pd.date_range(start, end, freq=freq))
 
     return period_range
+
+
+def interval_to_pd_freq(interval: str, include_weekends: bool) -> str:
+    if include_weekends:
+        database_to_pandas_freq = {
+            'd': 'd',
+            'h': 'h',
+            'm': 'min'
+        }
+        freq = interval[:-1] + database_to_pandas_freq[interval[-1].lower()]
+    else:
+        # TODO: Adapt the business days logic to other intervals.
+        assert interval == '1d'
+        freq = 'B'
+
+    return freq
 
 
 def compute_render_periods(config_periods: List[PeriodConfig]) -> List[Interval]:

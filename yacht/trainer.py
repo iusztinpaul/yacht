@@ -10,10 +10,10 @@ from tqdm import tqdm
 from yacht import utils, Mode
 from yacht.agents import build_agent
 from yacht.config import Config
-from yacht.data.datasets import AssetDataset, build_dataset_wrapper, build_dataset, SampleAssetDataset
+from yacht.data.datasets import AssetDataset, build_dataset, SampleAssetDataset
 from yacht.data.k_fold import PurgedKFold
 from yacht.environments import build_env, MetricsVecEnvWrapper
-from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback, RewardsRenderCallback
+from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback
 from yacht.logger import Logger
 from yacht.utils.wandb import WandBCallback
 
@@ -123,82 +123,10 @@ class Trainer(ABC):
         return callbacks
 
 
-class KFoldTrainer(Trainer):
-    def __init__(
-            self,
-            config: Config,
-            name: str,
-            agent: BaseAlgorithm,
-            dataset: AssetDataset,
-            train_env: VecEnv,
-            validation_env: VecEnv,
-            logger: Logger,
-            k_fold: PurgedKFold,
-            save: bool = True,
-    ):
-
-        super().__init__(
-            config=config,
-            name=name,
-            agent=agent,
-            dataset=dataset,
-            train_env=train_env,
-            validation_env=validation_env,
-            logger=logger,
-            save=save
-        )
-
-        self.k_fold = k_fold
-
-    def close(self):
-        self.k_fold.close()
-
-    def train(self) -> BaseAlgorithm:
-        self.logger.info(
-            f'Training for {self.config.train.total_timesteps} timesteps, '
-            f'with a k_fold {self.k_fold.n_splits} splits.'
-        )
-        progress_bar = tqdm(total=self.config.train.collect_n_times)
-        print()
-        for k, (train_indices, val_indices) in enumerate(self.k_fold.split(X=self.train_dataset.get_prices())):
-            k_fold_split_timesteps = self.config.train.total_timesteps // self.k_fold.n_splits
-
-            self.logger.info(f'Training for {k_fold_split_timesteps} timesteps.')
-            self.logger.info(f'Train split length: {len(train_indices)}')
-            self.logger.info(f'Validation split length: {len(val_indices)}\n')
-
-            self.k_fold.render(self.storage_dir)
-
-            train_dataset = build_dataset_wrapper(self.train_dataset, indices=train_indices)
-            val_dataset = build_dataset_wrapper(self.train_dataset, indices=val_indices)
-            self.train_env.set_dataset(train_dataset)
-            self.validation_env.set_dataset(val_dataset)
-
-            self.agent = self.agent.learn(
-                total_timesteps=k_fold_split_timesteps,
-                callback=self.build_callbacks(),
-                tb_log_name=self.name,
-                log_interval=self.config.train.collecting_n_steps,
-                eval_env=self.validation_env,
-                eval_freq=self.config.train.collecting_n_steps,
-                n_eval_episodes=1,
-                eval_log_path=self.storage_dir,
-                reset_num_timesteps=True
-            )
-
-            progress_bar.update(n=self.config.train.collect_n_times // self.k_fold.n_splits)
-            print()
-
-        progress_bar.close()
-
-        return self.agent
-
-
 #######################################################################################################################
 
 trainer_registry = {
     'Trainer': Trainer,
-    'KFoldTrainer': KFoldTrainer
 }
 
 

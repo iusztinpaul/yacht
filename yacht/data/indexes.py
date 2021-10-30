@@ -107,7 +107,6 @@ NASDAQ_100_TICKERS = [
     "NVDA",
     "NXPI",
     "ORLY",
-    "OKTA",
     "PCAR",
     "PAYX",
     "PYPL",
