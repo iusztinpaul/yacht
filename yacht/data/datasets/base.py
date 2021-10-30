@@ -21,7 +21,7 @@ class DatasetPeriod:
             self,
             start: datetime,
             end: datetime,
-            window_size: int,
+            past_window_size: int,
             include_weekends: bool,
             frequency: str = 'days'
     ):
@@ -32,13 +32,13 @@ class DatasetPeriod:
         # Adjust start with a 'window_size' length so we take data from the past & actually start from the given start.
         self.start = utils.adjust_period_to_window(
             datetime_point=start,
-            window_size=window_size,
+            window_size=past_window_size,
             action='-',
             include_weekends=include_weekends
         )
         self.end = end
 
-        self.window_size = window_size
+        self.past_window_size = past_window_size
         self.include_weekends = include_weekends
         self.frequency = frequency
 
@@ -106,9 +106,13 @@ class AssetDataset(Dataset, ABC):
         self.market.close()
 
     @property
+    def past_window_size(self) -> int:
+        return self.period.past_window_size
+
+    @property
     def first_observation_index(self) -> int:
         # Starting from 0 & the minimum value for the window_size is 1.
-        return self.period.window_size - 1
+        return self.period.past_window_size - 1
 
     @property
     def last_observation_index(self) -> int:

@@ -86,15 +86,16 @@ class Scaler(ABC):
             interval: str,
             features: List[str]
     ):
-        data = market.get(
-            ticker=scaler.ticker,
-            interval=interval,
-            start=train_start,
-            end=train_end,
-            features=features,
-            flexible_start=True
-        )
-        scaler.fit(data)
+        if not scaler.is_fitted:
+            data = market.get(
+                ticker=scaler.ticker,
+                interval=interval,
+                start=train_start,
+                end=train_end,
+                features=features,
+                flexible_start=True
+            )
+            scaler.fit(data)
 
 
 class IdentityScaler(Scaler):

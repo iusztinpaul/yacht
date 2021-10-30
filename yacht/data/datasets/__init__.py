@@ -74,7 +74,9 @@ def build_dataset(
     tickers = clean_tickers(tickers, market, interval='1d', start=start, end=end)
     logger.info(f'Dropped {num_tickers - len(tickers)} corrupted tickers.')
     if len(tickers) == 0:
-        raise RuntimeError('No valid tickers to train on.')
+        logger.error('No valid tickers to train on.')
+
+        return None
 
     # Render split only for backtest tickers.
     if not mode.is_trainable():
@@ -153,7 +155,7 @@ def build_dataset(
     logger.info(f'Total estimated num datasets: {total_num_periods}')
 
     if len(periods) == 0:
-        logger.info(f'Num periods equal to 0. Dataset could not be created.')
+        logger.error(f'Num periods equal to 0. Dataset could not be created.')
 
         return None
 
@@ -170,7 +172,7 @@ def build_dataset(
         ])
         window_size = input_config.window_size + max_period_length
     else:
-        window_size = input_config.window_size
+        window_size = input_config.indow_size
 
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
     num_skipped_periods = 0
@@ -179,7 +181,7 @@ def build_dataset(
         dataset_period = DatasetPeriod(
             start=period_start,
             end=period_end,
-            window_size=input_config.window_size,
+            past_window_size=input_config.window_size,
             include_weekends=input_config.include_weekends,
             frequency='days'
         )
@@ -260,7 +262,7 @@ def build_dataset(
     sample_dataset_period = DatasetPeriod(
         start=start,
         end=end,
-        window_size=input_config.window_size,
+        past_window_size=input_config.window_size,
         include_weekends=input_config.include_weekends,
         frequency='days'
     )

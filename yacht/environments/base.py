@@ -32,8 +32,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         # Environment general requirements.
         self.dataset = copy(dataset)  # Copy the dataset, so every instance of the env will choose a different ticker.
-        # TODO: Find a more explicit way to access the window_size
-        self.window_size = dataset.period.window_size
+        self.window_size = dataset.past_window_size
         self.reward_schema = reward_schema
         self.action_schema = action_schema
 
