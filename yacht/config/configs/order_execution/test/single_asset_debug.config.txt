@@ -82,9 +82,9 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1000
-    fine_tune_total_timesteps: -1
-    collecting_n_steps: 100
+    total_timesteps: 100000
+    fine_tune_total_timesteps: 50000
+    collecting_n_steps: 500
     learning_rate: 0.0003
     batch_size: 500
     n_epochs: 10

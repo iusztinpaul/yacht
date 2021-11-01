@@ -226,7 +226,7 @@ def build_trainer(
             logger=logger,
             storage_dir=storage_dir,
             resume=resume_training,
-            agent_from='latest'
+            agent_from='latest-train'
         )
     else:
         assert mode.is_fine_tuning()
