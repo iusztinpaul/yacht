@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from pandas import Interval
 
-from yacht import Mode
+from yacht import Mode, utils
 from yacht.data.datasets import MultiAssetDataset, SingleAssetDataset, DatasetPeriod
 from yacht.data.markets import Market
 from yacht.logger import Logger
@@ -44,6 +44,23 @@ class StudentMultiAssetDataset(MultiAssetDataset):
             path=os.path.join(self.market.storage_dir, 'teacher_actions.h5'),
             mode='r'
         )
+        self.actions = self.get_teacher_actions()
+
+    def get_teacher_actions(self) -> pd.DataFrame:
+        from yacht.environments.order_execution import TeacherOrderExecutionEnvironment
+
+        teacher_actions = self.actions_store[TeacherOrderExecutionEnvironment.create_key(self)]
+        # Firstly, create a template with the desired dates in case any actions are missing within the past window_size.
+        start = self.datasets[0].start
+        end = self.datasets[0].end
+        include_weekends = self.datasets[0].include_weekends
+        index = utils.compute_period_range(start, end, include_weekends)
+        template_actions = pd.DataFrame(index=index, columns=teacher_actions.columns)
+        # Update the template with the known teacher values within the dataset [start:end] interval.
+        teacher_actions = teacher_actions.loc[start:end]
+        template_actions.update(teacher_actions)
+
+        return template_actions
 
     def close(self):
         super().close()
@@ -52,6 +69,7 @@ class StudentMultiAssetDataset(MultiAssetDataset):
 
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
         data = super().__getitem__(day_index)
-        data['action'] = self.actions_store.iloc[day_index].values
+        # For data within window [t - window_size + 1; t] the action is taken at t + 1.
+        data['action'] = self.actions.iloc[day_index + 1].values
 
         return data

@@ -33,7 +33,7 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 1
+    n_envs: 6
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -63,7 +63,7 @@ agent: {
     name: 'PPO'
     is_classic_method: false
     is_teacher: false
-    is_student: false
+    is_student: true
     verbose: true
     policy: {
         name: 'MlpPolicy'
@@ -83,9 +83,9 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 10000
-    fine_tune_total_timesteps: 5000
-    collecting_n_steps: 100
+    total_timesteps: 100000
+    fine_tune_total_timesteps: 50000
+    collecting_n_steps: 500
     learning_rate: 0.0003
     batch_size: 500
     n_epochs: 10

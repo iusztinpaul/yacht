@@ -204,7 +204,7 @@ class TeacherOrderExecutionEnvironment(OrderExecutionEnvironment):
         return results
 
     def persist_actions(self, report: dict):
-        key = self.create_key()
+        key = self.create_key(self.dataset)
         actions = report['unadjusted_actions']
         action_indices = self.action_schema.get_action(actions)
         df = pd.DataFrame(
@@ -218,5 +218,6 @@ class TeacherOrderExecutionEnvironment(OrderExecutionEnvironment):
         else:
             self.actions_store[key] = df
 
-    def create_key(self) -> str:
-        return '-'.join(self.dataset.asset_tickers)
+    @staticmethod
+    def create_key(dataset: 'MultiAssetDataset') -> str:
+        return '-'.join(dataset.asset_tickers)

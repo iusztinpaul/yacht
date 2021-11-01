@@ -8,6 +8,7 @@ from tqdm import tqdm
 from .base import *
 from .day_frequency import DayFrequencyDataset
 from .teacher import TeacherDayFrequencyDataset
+from .student import StudentMultiAssetDataset
 from .samplers import SampleAssetDataset
 from .multi_frequency import *
 
@@ -18,9 +19,9 @@ from yacht.data import indexes
 from yacht.data.markets import build_market
 from yacht.data.renderers import TrainTestSplitRenderer
 from yacht.data.scalers import build_scaler
+from yacht.data.transforms import build_transforms
 from yacht import Mode
-from .student import StudentMultiAssetDataset
-from ..transforms import build_transforms
+
 
 dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
@@ -174,7 +175,7 @@ def build_dataset(
         ])
         window_size = input_config.window_size + max_period_length
     else:
-        window_size = input_config.indow_size
+        window_size = input_config.window_size
 
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
     num_skipped_periods = 0

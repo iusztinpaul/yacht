@@ -326,11 +326,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return np.sign(action)
 
     def update_history(self, changes: dict):
-        # Update date at any the first call for the current self._tick_t
+        # Update date at any first call for the current self._tick_t
         changes['date'] = None
         if self._should_update_history(key='date', changes=changes):
             # Map index_t to its corresponding date.
-            current_date = self.dataset.index_to_datetime(self.t_tick - 1)
+            current_date = self.dataset.index_to_datetime(self.t_tick)
             self.history['date'].append(current_date)
 
         for key, value in changes.items():
