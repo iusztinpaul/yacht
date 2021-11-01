@@ -65,13 +65,18 @@ def build_agent(
         logger:
         storage_dir:
         resume:
-        agent_from: choose from (latest checkpoint, best checkpoint, absolute_path to the checkpoint)
+        agent_from: latest-training, best-training,
+                    latest-fine-tune, best-fine-tune checkpoint or
+                    absolute_path to the checkpoint
         best_metric: The metric you want to resume the agent from. If it is none it will be resumed based on the best
-            reward. You have to choose `agent_from=best`.
+            reward. You have to choose `agent_from=best-*` to have any effect, otherwise it will be ignored.
 
     Returns:
-
+        A stable-baselines3 RL agent.
     """
+
+    if not os.path.exists(agent_from):
+        assert agent_from in ('latest-train', 'best-train', 'latest-fine-tune', 'best-fine-tune')
 
     agent_config = config.agent
     policy_config = config.agent.policy
@@ -87,18 +92,21 @@ def build_agent(
         )
 
     if resume:
-        if config.train.fine_tune_total_timesteps >= config.train.collecting_n_steps:
+        if 'train' in agent_from:
+            mode = Mode.Train
+        elif 'fine-tune' in agent_from:
             mode = Mode.FineTuneTrain
         else:
-            mode = Mode.Train
-        if agent_from == 'best':
+            mode = None
+
+        if 'best' in agent_from:
             if best_metric is None or best_metric == 'reward':
                 agent_from = utils.build_best_reward_checkpoint_path(storage_dir, mode)
                 logger.info(f'Resuming from the best reward checkpoint: {agent_from}')
             else:
                 agent_from = utils.build_best_metric_checkpoint_path(storage_dir, mode, best_metric)
                 logger.info(f'Resuming from the best metric - {best_metric} - checkpoint: {agent_from}')
-        elif agent_from == 'latest':
+        elif 'latest' in agent_from:
             agent_from = utils.build_last_checkpoint_path(storage_dir, mode)
             logger.info(f'Resuming from the latest checkpoint: {agent_from}')
 

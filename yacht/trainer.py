@@ -14,6 +14,7 @@ from yacht.data.datasets import AssetDataset, build_dataset, SampleAssetDataset
 from yacht.data.k_fold import PurgedKFold
 from yacht.environments import build_env, MetricsVecEnvWrapper
 from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback
+from yacht.evaluation import run_backtest
 from yacht.logger import Logger
 from yacht.utils.wandb import WandBCallback
 
@@ -148,6 +149,15 @@ def run_train(
     )
     agent = trainer.train()
     trainer.close()
+    # Run a backtest on the validation split to see the best results more explicitly for the main training.
+    run_backtest(
+        config=config,
+        logger=logger,
+        storage_dir=storage_dir,
+        agent_from='best-train',
+        mode=Mode.BestMetricBacktestValidation,
+        market_storage_dir=market_storage_dir
+    )
 
     if config.train.fine_tune_total_timesteps >= config.train.collecting_n_steps:
         # Fine tune agent.
@@ -163,6 +173,15 @@ def run_train(
         )
         trainer.train()
         trainer.close()
+        # Run a backtest on the validation split to see the best results more explicitly for fine-tuning.
+        run_backtest(
+            config=config,
+            logger=logger,
+            storage_dir=storage_dir,
+            agent_from='best-fine-tune',
+            mode=Mode.BestMetricBacktestValidation,
+            market_storage_dir=market_storage_dir
+        )
     else:
         logger.info(
             f'Fine tuning is stopped: '

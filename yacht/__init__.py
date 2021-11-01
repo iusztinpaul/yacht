@@ -32,16 +32,19 @@ class Mode(Enum):
         return cls(value.lower())
 
     def is_trainable(self) -> bool:
-        return self == self.Train or self == self.FineTuneTrain
+        return self in {self.Train, self.FineTuneTrain}
 
     def is_fine_tuning(self) -> bool:
         return self == self.FineTuneTrain
 
     def is_backtest_on_train(self) -> bool:
-        return self == self.BacktestTrain
+        return self in {self.BacktestTrain, self.BestMetricBacktestTrain}
 
     def is_validation(self) -> bool:
         return self in {self.BacktestValidation, self.BestMetricBacktestValidation}
+
+    def is_test(self) -> bool:
+        return self in {self.BacktestTest, self.BestMetricBacktestTest}
 
     def is_backtestable(self) -> bool:
         return self in {

@@ -27,7 +27,7 @@ parser.add_argument(
 parser.add_argument('--resume_training', default=False, action='store_true', help='Resume training or not.')
 parser.add_argument(
     '--agent_from',
-    default='best',
+    default='best-train',
     help='File path to the *.zip file that you want to resume from. If None it will resume from the best checkpoint.'
 )
 parser.add_argument('--storage_dir', required=True, help='Directory where your model & logs will be saved.')
@@ -72,16 +72,6 @@ if __name__ == '__main__':
                 resume_training=args.resume_training,
                 market_storage_dir=market_storage_dir
             )
-
-            # Run a backtest on the validation split to see the best results more explicitly.
-            run_backtest(
-                config=config,
-                logger=logger,
-                storage_dir=storage_dir,
-                agent_from=args.agent_from,
-                mode=Mode.BestMetricBacktestValidation,
-                market_storage_dir=market_storage_dir
-            )
             if config.input.backtest.run:
                 run_backtest(
                     config=config,
@@ -98,7 +88,7 @@ if __name__ == '__main__':
                 logger=logger,
                 storage_dir=storage_dir,
                 agent_from=args.agent_from,
-                mode=Mode.BacktestTrain,
+                mode=Mode.BestMetricBacktestTrain,
                 market_storage_dir=market_storage_dir
             )
             run_backtest(
@@ -106,7 +96,7 @@ if __name__ == '__main__':
                 logger=logger,
                 storage_dir=storage_dir,
                 agent_from=args.agent_from,
-                mode=Mode.BacktestValidation,
+                mode=Mode.BestMetricBacktestValidation,
                 market_storage_dir=market_storage_dir
             )
             run_backtest(
@@ -114,7 +104,7 @@ if __name__ == '__main__':
                 logger=logger,
                 storage_dir=storage_dir,
                 agent_from=args.agent_from,
-                mode=Mode.BacktestTest,
+                mode=Mode.BestMetricBacktestTest,
                 market_storage_dir=market_storage_dir
             )
         elif mode == Mode.Download:

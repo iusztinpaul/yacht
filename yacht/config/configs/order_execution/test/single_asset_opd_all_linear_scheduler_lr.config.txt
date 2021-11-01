@@ -1,11 +1,11 @@
 input: {
     market: 'Yahoo'
-    dataset: 'TeacherDayFrequencyDataset'
     market_mixins: ['TargetPriceMixin']
+    dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['AAPL']
+    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
@@ -62,7 +62,6 @@ environment: {
 agent: {
     name: 'PPO'
     is_classic_method: false
-    is_teacher: true
     verbose: true
     policy: {
         name: 'MlpPolicy'
@@ -82,29 +81,29 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1000
-    fine_tune_total_timesteps: -1
-    collecting_n_steps: 100
-    learning_rate: 0.0003
-    batch_size: 500
-    n_epochs: 10
-    gamma: 0.99
-    gae_lambda: 0.95
+    total_timesteps: 2400000
+    fine_tune_total_timesteps: 100000
+    collecting_n_steps: 2048
+    learning_rate: 0.0001
+    batch_size: 1024
+    n_epochs: 5
+    gamma: 1.
+    gae_lambda: 1.
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 1.,
-    vf_coefficient: 0.5
-    max_grad_norm: 0.5
+    entropy_coefficient: 0.7
+    vf_coefficient: 1.
+    max_grad_norm: 100
     use_sde: false
-    sde_sample_freq: 500
-    learning_rate_scheduler: 'ConstantSchedule'
+    sde_sample_freq: -1
+    learning_rate_scheduler: 'linear_schedule'
 }
 meta: {
-    log_frequency_steps: 100
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'sharpe_ratio', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR']
-    metrics_to_load_best_on: ['PA', 'GLR']
-    plateau_max_n_steps: -1
-    device: 'cpu'
-    experiment_tracker: ''
+    log_frequency_steps: 5000
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
+    metrics_to_save_best_on: ['PA', 'GLR', 'AD']
+    metrics_to_load_best_on: ['PA', 'GLR', 'AD']
+    plateau_max_n_steps: 10
+    device: 'gpu'
+    experiment_tracker: 'wandb'
 }

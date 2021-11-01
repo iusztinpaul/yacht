@@ -130,10 +130,12 @@ def build_dataset(
         logger.info(f'Validation split: {validation_split[0]} - {validation_split[1]}')
         start = validation_split[0]
         end = validation_split[1]
-    else:
+    elif mode.is_test():
         logger.info(f'Backtest split: {backtest_split[0]} - {backtest_split[1]}')
         start = backtest_split[0]
         end = backtest_split[1]
+    else:
+        raise RuntimeError(f'Invalid mode for creating a split: {mode}')
 
     # Datasets will expand their data range with -window_size on the left side of the interval.
     start = utils.adjust_period_to_window(

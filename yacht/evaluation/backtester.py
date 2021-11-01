@@ -103,6 +103,7 @@ def build_backtester(
         dataset = build_dataset(config, logger, storage_dir, mode=mode, market_storage_dir=market_storage_dir)
         if dataset is None:
             logger.info('Could not create the dataset.')
+
             return None
 
         env = build_env(config, dataset, logger, mode=mode, load_best_metric=metric)
