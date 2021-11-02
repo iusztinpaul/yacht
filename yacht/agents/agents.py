@@ -42,7 +42,8 @@ class StudentPPO(PPO):
             return actions, values, log_prob, distribution.distribution[0].logits
 
     def __init__(self, **kwargs):
-        assert 'policy' not in kwargs
+        assert kwargs['policy'] == 'MlpPolicy'
+        del kwargs['policy']
 
         super().__init__(
             policy=self.StudentActorCriticPolicy,
@@ -86,7 +87,7 @@ class StudentPPO(PPO):
             with th.no_grad():
                 # Convert to pytorch tensor or to TensorDict
                 obs_tensor = obs_as_tensor(self._last_obs, self.device)
-                actions, values, log_probs = self.policy.forward(obs_tensor)
+                actions, values, log_probs, logits = self.policy.forward(obs_tensor)
             actions = actions.cpu().numpy()
 
             # Rescale and perform action
