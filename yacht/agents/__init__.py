@@ -20,6 +20,7 @@ from ..environments import BaseAssetEnvironment
 
 reinforcement_learning_agents = {
     'PPO': PPO,
+    'StudentPPO': StudentPPO,
     'SAC': SAC
 }
 classic_agents = {
@@ -75,7 +76,7 @@ def build_agent(
         A stable-baselines3 RL agent.
     """
 
-    if not os.path.exists(agent_from):
+    if bool(agent_from) and not os.path.exists(agent_from):
         assert agent_from in ('latest-train', 'best-train', 'latest-fine-tune', 'best-fine-tune')
 
     agent_config = config.agent
@@ -112,7 +113,11 @@ def build_agent(
 
         assert os.path.exists(agent_from), f'Path does not exist: {agent_from}'
 
-        return agent_class.load(agent_from)
+        agent = agent_class.load(agent_from)
+        agent.set_env(env)
+        agent.set_logger(logger)
+
+        return agent
     else:
         # The agent has a policy.
         policy_class = policy_registry[policy_config.name]

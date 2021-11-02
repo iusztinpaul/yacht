@@ -1,7 +1,7 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'DayFrequencyDataset'
+    dataset: 'TeacherDayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
@@ -62,6 +62,7 @@ environment: {
 agent: {
     name: 'PPO'
     is_classic_method: false
+    is_teacher: true
     verbose: true
     policy: {
         name: 'MlpPolicy'
@@ -81,8 +82,8 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 2400000
-    fine_tune_total_timesteps: 100000
+    total_timesteps: 1000000
+    fine_tune_total_timesteps: 250000
     collecting_n_steps: 2048
     learning_rate: 0.0001
     batch_size: 1024
@@ -91,12 +92,12 @@ train: {
     gae_lambda: 1.
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 0.7
+    entropy_coefficient: 0.25
     vf_coefficient: 1.
     max_grad_norm: 100
     use_sde: false
     sde_sample_freq: -1
-    learning_rate_scheduler: 'linear_schedule'
+    learning_rate_scheduler: 'ConstantSchedule'
 }
 meta: {
     log_frequency_steps: 5000

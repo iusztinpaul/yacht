@@ -81,8 +81,8 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 2400000
-    fine_tune_total_timesteps: 100000
+    total_timesteps: 1000000
+    fine_tune_total_timesteps: 250000
     collecting_n_steps: 2048
     learning_rate: 0.0001
     batch_size: 1024
@@ -96,8 +96,7 @@ train: {
     max_grad_norm: 100
     use_sde: false
     sde_sample_freq: -1
-    learning_rate_scheduler: 'linear_schedule'
-    clip_range_scheduler: 'linear_schedule'
+    learning_rate_scheduler: 'ConstantSchedule'
 }
 meta: {
     log_frequency_steps: 5000

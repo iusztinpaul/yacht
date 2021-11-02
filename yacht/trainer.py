@@ -141,13 +141,13 @@ def run_train(
     trainer = build_trainer(
         config=config,
         storage_dir=storage_dir,
-        resume_training=resume_training,
+        resume=resume_training,
         mode=Mode.Train,
         logger=logger,
         save=True,
         market_storage_dir=market_storage_dir
     )
-    agent = trainer.train()
+    trainer.train()
     trainer.close()
     # Run a backtest on the validation split to see the best results more explicitly for the main training.
     run_backtest(
@@ -164,11 +164,11 @@ def run_train(
         trainer = build_trainer(
             config=config,
             storage_dir=storage_dir,
-            resume_training=False,
+            resume=True,
             mode=Mode.FineTuneTrain,
             logger=logger,
             save=True,
-            agent=agent,
+            agent_from='best-train',
             market_storage_dir=market_storage_dir
         )
         trainer.train()
@@ -193,14 +193,17 @@ def run_train(
 def build_trainer(
         config,
         storage_dir: str,
-        resume_training: bool,
+        resume: bool,
         mode: Mode,
         logger: Logger,
         save: bool,
+        agent_from: Optional[str] = None,
         agent: Optional[BaseAlgorithm] = None,
         market_storage_dir: Optional[str] = None
 ) -> Trainer:
     assert mode.is_trainable()
+    if resume:
+        assert bool(agent_from) or bool(agent)
 
     train_dataset = build_dataset(
         config,
@@ -220,17 +223,24 @@ def build_trainer(
     validation_env = build_env(config, validation_dataset, logger, mode=Mode.BacktestValidation)
 
     if agent is None:
+        best_metrics_to_load = config.meta.metrics_to_load_best_on
+        if len(best_metrics_to_load) > 1:
+            best_metric = best_metrics_to_load[0]
+        else:
+            best_metric = 'reward'
+        if resume:
+            logger.info(f'Loading agent from best metric: {best_metric}')
+
         agent = build_agent(
             config=config,
             env=train_env,
             logger=logger,
             storage_dir=storage_dir,
-            resume=resume_training,
-            agent_from='latest-train'
+            resume=resume,
+            agent_from=agent_from,
+            best_metric=best_metric
         )
     else:
-        assert mode.is_fine_tuning()
-
         agent.set_env(train_env)
 
     trainer_class = trainer_registry[config.train.trainer_name]
