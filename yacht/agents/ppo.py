@@ -1,8 +1,9 @@
-from typing import Tuple
+from typing import Tuple, Union, Optional, Any, Dict, Type
 
 import gym
 import numpy as np
 import torch as th
+from stable_baselines3.common.type_aliases import Schedule, GymEnv
 from torch.nn import functional as F
 from gym import spaces
 
@@ -32,7 +33,7 @@ class StudentPPO(PPO):
 
             :param obs: Observation
             :param deterministic: Whether to sample or use deterministic actions
-            :return: action, value, log probability of the action, logits of the action
+            :return: action, value, log probability of the action, probabilities of the action
             """
             latent_pi, latent_vf, latent_sde = self._get_latent(obs)
             # Evaluate the values for the given observations
@@ -41,14 +42,70 @@ class StudentPPO(PPO):
             actions = distribution.get_actions(deterministic=deterministic)
             log_prob = distribution.log_prob(actions)
 
-            # TODO: "distribution.distribution[0].probs" works only for one ticker envs
-            return actions, values, log_prob, distribution.distribution[0].probs
+            probabilities = th.cat([th.unsqueeze(d.probs, dim=-1) for d in distribution.distribution], dim=-1)
 
-    def __init__(self, **kwargs):
-        assert kwargs['policy'] == 'MlpPolicy'
-        kwargs['policy'] = self.StudentActorCriticPolicy
+            return actions, values, log_prob, probabilities
 
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        policy: Union[str, Type[ActorCriticPolicy]],
+        env: Union[GymEnv, str],
+        learning_rate: Union[float, Schedule] = 3e-4,
+        n_steps: int = 2048,
+        batch_size: Optional[int] = 64,
+        n_epochs: int = 10,
+        gamma: float = 0.99,
+        gae_lambda: float = 0.95,
+        clip_range: Union[float, Schedule] = 0.2,
+        clip_range_vf: Union[None, float, Schedule] = None,
+        ent_coef: float = 0.0,
+        vf_coef: float = 0.5,
+        max_grad_norm: float = 0.5,
+        use_sde: bool = False,
+        sde_sample_freq: int = -1,
+        target_kl: Optional[float] = None,
+        tensorboard_log: Optional[str] = None,
+        create_eval_env: bool = False,
+        policy_kwargs: Optional[Dict[str, Any]] = None,
+        verbose: int = 0,
+        seed: Optional[int] = None,
+        device: Union[th.device, str] = "auto",
+        _init_setup_model: bool = True,
+        distillation_loss_weights: Optional[list] = None
+    ):
+        assert policy == 'MlpPolicy'
+        policy = self.StudentActorCriticPolicy
+
+        super(PPO, self).__init__(
+            policy,
+            env,
+            learning_rate=learning_rate,
+            n_steps=n_steps,
+            batch_size=batch_size,
+            n_epochs=n_epochs,
+            gamma=gamma,
+            gae_lambda=gae_lambda,
+            clip_range=clip_range,
+            clip_range_vf=clip_range_vf,
+            ent_coef=ent_coef,
+            vf_coef=vf_coef,
+            max_grad_norm=max_grad_norm,
+            use_sde=use_sde,
+            sde_sample_freq=sde_sample_freq,
+            target_kl=target_kl,
+            tensorboard_log=tensorboard_log,
+            policy_kwargs=policy_kwargs,
+            verbose=verbose,
+            device=device,
+            create_eval_env=create_eval_env,
+            seed=seed,
+            _init_setup_model=_init_setup_model,
+        )
+
+        if distillation_loss_weights is not None:
+            self.distillation_loss_weights = th.tensor(distillation_loss_weights, dtype=th.float32)
+        else:
+            self.distillation_loss_weights = None
 
     def _setup_model(self):
         super()._setup_model()
@@ -226,11 +283,14 @@ class StudentPPO(PPO):
                 entropy_losses.append(entropy_loss.item())
 
                 # Policy distillation loss.
-                logits = rollout_data.action_logits
-                # TODO: Workaround until multi assets support
-                teacher_actions = rollout_data.teacher_actions.reshape(-1)
+                probabilities = rollout_data.action_probabilities
+                teacher_actions = rollout_data.teacher_actions
                 assert teacher_actions[teacher_actions == -1].shape[0] == 0
-                distillation_loss = F.nll_loss(logits.log(), teacher_actions)
+                distillation_loss = F.nll_loss(
+                    input=probabilities.log(),
+                    target=teacher_actions,
+                    weight=self.distillation_loss_weights
+                )
                 distillation_losses.append(distillation_loss.item())
 
                 loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss + distillation_loss

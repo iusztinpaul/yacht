@@ -15,7 +15,7 @@ class StudentRolloutBufferSamples(NamedTuple):
     advantages: th.Tensor
     returns: th.Tensor
     teacher_actions: th.Tensor
-    action_logits: th.Tensor
+    action_probabilities: th.Tensor
 
 
 class StudentRolloutBuffer(RolloutBuffer):
@@ -23,11 +23,16 @@ class StudentRolloutBuffer(RolloutBuffer):
         super().__init__(*args, **kwargs)
 
         self.teacher_actions = None
-        self.action_logits = None
+        self.action_probabilities = None
 
     def reset(self) -> None:
+        # (buffer_size, n_envs, num_assets)
         self.teacher_actions = np.zeros((self.buffer_size, self.n_envs, self.action_dim), dtype=np.int_)
-        self.action_logits = np.zeros((self.buffer_size, self.n_envs, *self.action_space.nvec), dtype=np.float32)
+        # (buffer_size, n_envs, num_action_possibilities, num_assets)
+        self.action_probabilities = np.zeros(
+            (self.buffer_size, self.n_envs, *self.action_space.nvec, self.action_dim),
+            dtype=np.float32
+        )
 
         super().reset()
 
@@ -40,10 +45,10 @@ class StudentRolloutBuffer(RolloutBuffer):
             value: th.Tensor,
             log_prob: th.Tensor,
             teacher_action: np.ndarray,
-            action_logits: th.Tensor
+            action_probabilities: th.Tensor
     ) -> None:
         self.teacher_actions[self.pos] = np.array(teacher_action, dtype=np.int_).copy()
-        self.action_logits[self.pos] = action_logits.clone().cpu().numpy()
+        self.action_probabilities[self.pos] = action_probabilities.clone().cpu().numpy()
 
         super().add(
             obs,
@@ -68,7 +73,7 @@ class StudentRolloutBuffer(RolloutBuffer):
                 "advantages",
                 "returns",
                 "teacher_actions",
-                "action_logits"
+                "action_probabilities"
             ]
 
             for tensor in _tensor_names:
@@ -88,7 +93,7 @@ class StudentRolloutBuffer(RolloutBuffer):
         sample = super()._get_samples(batch_inds, env)
         additional_sample = (
             self.teacher_actions[batch_inds],
-            self.action_logits[batch_inds]
+            self.action_probabilities[batch_inds]
         )
         additional_sample = tuple(map(self.to_torch, additional_sample))
         sample = sample + additional_sample

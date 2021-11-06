@@ -24,4 +24,5 @@ message TrainConfig {
   int32 k_fold_splits = 19;
   double k_fold_purge_ratio = 20;
   double k_fold_embargo_ratio = 21;
+  repeated double distillation_loss_weights = 22;
 }

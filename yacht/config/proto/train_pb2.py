@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1eyacht/config/proto/train.proto\x12\x12yacht.config.proto\"\x8c\x04\n\x0bTrainConfig\x12\x14\n\x0ctrainer_name\x18\x01 \x01(\t\x12\x17\n\x0ftotal_timesteps\x18\x02 \x01(\x05\x12!\n\x19\x66ine_tune_total_timesteps\x18\x03 \x01(\x05\x12\x1a\n\x12\x63ollecting_n_steps\x18\x04 \x01(\x05\x12\x15\n\rlearning_rate\x18\x05 \x01(\x01\x12\x12\n\nbatch_size\x18\x06 \x01(\x05\x12\x10\n\x08n_epochs\x18\x07 \x01(\x05\x12\r\n\x05gamma\x18\x08 \x01(\x01\x12\x12\n\ngae_lambda\x18\t \x01(\x01\x12\x12\n\nclip_range\x18\n \x01(\x01\x12\x15\n\rvf_clip_range\x18\x0b \x01(\x01\x12\x1b\n\x13\x65ntropy_coefficient\x18\x0c \x01(\x01\x12\x16\n\x0evf_coefficient\x18\r \x01(\x01\x12\x15\n\rmax_grad_norm\x18\x0e \x01(\x01\x12\x0f\n\x07use_sde\x18\x0f \x01(\x08\x12\x17\n\x0fsde_sample_freq\x18\x10 \x01(\x05\x12\x1f\n\x17learning_rate_scheduler\x18\x11 \x01(\t\x12\x1c\n\x14\x63lip_range_scheduler\x18\x12 \x01(\t\x12\x15\n\rk_fold_splits\x18\x13 \x01(\x05\x12\x1a\n\x12k_fold_purge_ratio\x18\x14 \x01(\x01\x12\x1c\n\x14k_fold_embargo_ratio\x18\x15 \x01(\x01\x62\x06proto3')
+  serialized_pb=_b('\n\x1eyacht/config/proto/train.proto\x12\x12yacht.config.proto\"\xaf\x04\n\x0bTrainConfig\x12\x14\n\x0ctrainer_name\x18\x01 \x01(\t\x12\x17\n\x0ftotal_timesteps\x18\x02 \x01(\x05\x12!\n\x19\x66ine_tune_total_timesteps\x18\x03 \x01(\x05\x12\x1a\n\x12\x63ollecting_n_steps\x18\x04 \x01(\x05\x12\x15\n\rlearning_rate\x18\x05 \x01(\x01\x12\x12\n\nbatch_size\x18\x06 \x01(\x05\x12\x10\n\x08n_epochs\x18\x07 \x01(\x05\x12\r\n\x05gamma\x18\x08 \x01(\x01\x12\x12\n\ngae_lambda\x18\t \x01(\x01\x12\x12\n\nclip_range\x18\n \x01(\x01\x12\x15\n\rvf_clip_range\x18\x0b \x01(\x01\x12\x1b\n\x13\x65ntropy_coefficient\x18\x0c \x01(\x01\x12\x16\n\x0evf_coefficient\x18\r \x01(\x01\x12\x15\n\rmax_grad_norm\x18\x0e \x01(\x01\x12\x0f\n\x07use_sde\x18\x0f \x01(\x08\x12\x17\n\x0fsde_sample_freq\x18\x10 \x01(\x05\x12\x1f\n\x17learning_rate_scheduler\x18\x11 \x01(\t\x12\x1c\n\x14\x63lip_range_scheduler\x18\x12 \x01(\t\x12\x15\n\rk_fold_splits\x18\x13 \x01(\x05\x12\x1a\n\x12k_fold_purge_ratio\x18\x14 \x01(\x01\x12\x1c\n\x14k_fold_embargo_ratio\x18\x15 \x01(\x01\x12!\n\x19\x64istillation_loss_weights\x18\x16 \x03(\x01\x62\x06proto3')
 )
 
 
@@ -179,6 +179,13 @@ _TRAINCONFIG = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='distillation_loss_weights', full_name='yacht.config.proto.TrainConfig.distillation_loss_weights', index=21,
+      number=22, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -192,7 +199,7 @@ _TRAINCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=55,
-  serialized_end=579,
+  serialized_end=614,
 )
 
 DESCRIPTOR.message_types_by_name['TrainConfig'] = _TRAINCONFIG

@@ -148,7 +148,7 @@ def build_agent(
                 to_numpy=False
             )
 
-        agent = agent_class(
+        agent_kwargs = dict(
             policy=policy_class,
             env=env,
             verbose=1 if agent_config.verbose else 0,
@@ -166,8 +166,15 @@ def build_agent(
             use_sde=train_config.use_sde,
             sde_sample_freq=train_config.sde_sample_freq,
             policy_kwargs=policy_kwargs,
-            device='cuda' if config.meta.device == 'gpu' else config.meta.device
+            device='cuda' if config.meta.device == 'gpu' else config.meta.device,
+            distillation_loss_weights=train_config.distillation_loss_weights
         )
+        agent_kwargs = utils.filter_class_kwargs(
+                agent_class,
+                agent_kwargs,
+                to_numpy=False
+            )
+        agent = agent_class(**agent_kwargs)
         agent.set_logger(logger)
 
         return agent
