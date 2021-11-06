@@ -5,7 +5,8 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
+    #tickers: ['NASDAQ100', 'S&P500', 'DOW30']
+    tickers: ['DOW30']
     fine_tune_tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']

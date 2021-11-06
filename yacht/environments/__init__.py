@@ -53,7 +53,7 @@ def build_env(
         'include_weekends': config.input.include_weekends
     }
 
-    if env_config.name == 'ExportTeacherActionsOrderExecutionEnvironment':
+    if 'EXPORT' in env_config.name.upper():
         assert env_config.n_envs == 1, 'Export can be done only with x1 envs.'
 
     if mode.is_trainable() or config.input.backtest.deterministic is False:

@@ -91,6 +91,32 @@ class ActionMagnitudeRewardSchema(ScaledRewardSchema):
         return reward.item()
 
 
+class ActionDistanceRewardSchema(ScaledRewardSchema):
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
+        actions = np.array(kwargs['actions'], dtype=np.float32)
+        max_distance = kwargs['max_distance']
+
+        action_indices = np.where(actions != 0)[0]
+        num_actions = action_indices.shape[0]
+        if num_actions <= 1:
+            return 0.
+
+        # TODO: Adapt for multi-assets.
+        # Compute the absolute mean difference between an action and every action before it.
+        action_indices = np.tile(action_indices, reps=(num_actions, 1))
+        diag_action_indices = np.expand_dims(np.diag(action_indices), axis=1)
+        difference = action_indices - diag_action_indices
+        difference = np.tril(difference)
+        difference = difference[difference != 0]
+        difference = np.abs(difference)
+        difference = np.mean(difference)
+
+        reward = difference / max_distance
+        reward *= self.reward_scaling
+
+        return reward.item()
+
+
 ###########################################################
 #################### SCORE BASED  #########################
 ############################################################
@@ -190,6 +216,7 @@ reward_schema_registry = {
     'AssetsPriceChangeRewardSchema': AssetsPriceChangeRewardSchema,
     'DecisionMakingRewardSchema': DecisionMakingRewardSchema,
     'ActionMagnitudeRewardSchema': ActionMagnitudeRewardSchema,
+    'ActionDistanceRewardSchema': ActionDistanceRewardSchema,
     'LeaderBoardRewardSchema': LeaderBoardRewardSchema
 }
 

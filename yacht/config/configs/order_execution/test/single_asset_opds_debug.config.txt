@@ -33,20 +33,24 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 1
+    n_envs: 6
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
     initial_cash_position: 5000
     reward_schemas: [
-    {
-        name: 'DecisionMakingRewardSchema',
-        reward_scaling: 40
-    },
-    {
-        name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.75
-    }
+        {
+            name: 'DecisionMakingRewardSchema',
+            reward_scaling: 40
+        },
+        {
+            name: 'ActionMagnitudeRewardSchema',
+            reward_scaling: 0.75
+        },
+        {
+            name: 'ActionDistanceRewardSchema',
+            reward_scaling: 1.
+        }
     ]
     global_reward_scaling: 1.
     action_schema: 'DiscreteActionScheme'
@@ -83,29 +87,28 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 100
-    fine_tune_total_timesteps: 1000
-    collecting_n_steps: 100
-    learning_rate: 0.0003
-    batch_size: 500
-    n_epochs: 10
-    gamma: 0.99
-    gae_lambda: 0.95
+    total_timesteps: 100000
+    fine_tune_total_timesteps: -1
+    collecting_n_steps: 250
+    learning_rate: 0.0001
+    batch_size: 250
+    n_epochs: 5
+    gamma: 1.
+    gae_lambda: 1.
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 1.,
-    vf_coefficient: 0.5
-    max_grad_norm: 0.5
+    entropy_coefficient: 0.7,
+    vf_coefficient: 1.
+    max_grad_norm: 100
     use_sde: false
-    sde_sample_freq: 500
     learning_rate_scheduler: 'ConstantSchedule'
 }
 meta: {
     log_frequency_steps: 100
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'sharpe_ratio', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR']
-    metrics_to_load_best_on: ['PA', 'GLR']
-    plateau_max_n_steps: -1
-    device: 'cpu'
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick']
+    metrics_to_save_best_on: ['PA', 'GLR', 'AD']
+    metrics_to_load_best_on: ['PA', 'GLR', 'AD']
+    plateau_max_n_steps: 10
+    device: 'gpu'
     experiment_tracker: ''
 }

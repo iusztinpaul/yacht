@@ -133,7 +133,9 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
         return {
             'market_mean_price': self.unadjusted_period_mean_price.values,
-            'next_price': next_price
+            'next_price': next_price,
+            'actions': self.history['action'][self.window_size:],
+            'max_distance': len(self.dataset) - self.window_size
         }
 
     def _compute_used_position(self) -> float:
