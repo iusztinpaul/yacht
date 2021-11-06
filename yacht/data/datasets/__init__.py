@@ -80,41 +80,17 @@ def build_dataset(
         return None
 
     # Render split only for backtest tickers.
-    if not mode.is_trainable():
-        data = dict()
-        for ticker in tickers:
-            data[ticker] = market.get(
-                ticker,
-                '1d',
-                utils.string_to_datetime(input_config.start),
-                utils.string_to_datetime(input_config.end),
-                flexible_start=True
-            )
-
-        # Render de train-test split with their original values.
-        renderer = TrainTestSplitRenderer(
-            data=data,
+    if not mode.is_trainable() and config.meta.render_data_split:
+        render_split(
+            tickers=tickers,
+            market=market,
+            config=config,
             train_split=train_split,
             validation_split=validation_split,
             backtest_split=backtest_split,
-            rescale=False
+            storage_dir=storage_dir,
+            mode=mode
         )
-        renderer.render()
-        renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split.png'))
-        renderer.close()
-
-        # If there are more tickers also render the train-test split in rescaled mode.
-        if len(data) > 1:
-            renderer = TrainTestSplitRenderer(
-                data=data,
-                train_split=train_split,
-                validation_split=validation_split,
-                backtest_split=backtest_split,
-                rescale=True
-            )
-            renderer.render()
-            renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split_rescaled.png'))
-            renderer.close()
 
     logger.info(f'Building datasets for: {mode.value}')
     logger.info(f'Loading the following assets [ num = {len(tickers)} ]:')
@@ -327,3 +303,52 @@ def clean_tickers(tickers: set, market: Market, interval: str, start: datetime, 
             valid_tickers.add(ticker)
 
     return valid_tickers
+
+
+def render_split(
+        tickers: set,
+        market: Market,
+        config: Config,
+        train_split: tuple,
+        validation_split: tuple,
+        backtest_split: tuple,
+        storage_dir: str,
+        mode: Mode
+):
+    input_config = config.input
+
+    data = dict()
+    for ticker in tickers:
+        data[ticker] = market.get(
+            ticker,
+            '1d',
+            utils.string_to_datetime(input_config.start),
+            utils.string_to_datetime(input_config.end),
+            flexible_start=True
+        )
+
+    # Render de train-test split with their original values.
+    renderer = TrainTestSplitRenderer(
+        data=data,
+        train_split=train_split,
+        validation_split=validation_split,
+        backtest_split=backtest_split,
+        rescale=False
+    )
+    renderer.render()
+    renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split.png'))
+    renderer.close()
+
+    # If there are more tickers also render the train-test split in rescaled mode.
+    if len(data) > 1:
+        renderer = TrainTestSplitRenderer(
+            data=data,
+            train_split=train_split,
+            validation_split=validation_split,
+            backtest_split=backtest_split,
+            rescale=True
+        )
+        renderer.render()
+        renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split_rescaled.png'))
+        renderer.close()
+
