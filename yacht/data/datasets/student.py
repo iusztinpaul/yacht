@@ -3,7 +3,7 @@ from typing import List, Dict
 
 import numpy as np
 import pandas as pd
-from pandas import Interval
+from pandas import Interval, HDFStore
 
 from yacht import Mode, utils
 from yacht.data.datasets import MultiAssetDataset, SingleAssetDataset, DatasetPeriod
@@ -40,16 +40,17 @@ class StudentMultiAssetDataset(MultiAssetDataset):
             window_size=window_size,
         )
 
-        self.actions_store = pd.HDFStore(
+        actions_store = pd.HDFStore(
             path=os.path.join(self.market.storage_dir, 'teacher_actions.h5'),
             mode='r'
         )
-        self.actions = self.get_teacher_actions()
+        self.actions = self.get_teacher_actions(actions_store)
+        actions_store.close()
 
-    def get_teacher_actions(self) -> pd.DataFrame:
+    def get_teacher_actions(self, actions_store: HDFStore) -> pd.DataFrame:
         from yacht.environments.order_execution import ExportTeacherActionsOrderExecutionEnvironment
 
-        teacher_actions = self.actions_store[ExportTeacherActionsOrderExecutionEnvironment.create_key(self)]
+        teacher_actions = actions_store[ExportTeacherActionsOrderExecutionEnvironment.create_key(self)]
         # Firstly, create a template with the desired dates in case any actions are missing within the past window_size.
         start = self.datasets[0].start
         end = self.datasets[0].end
@@ -59,13 +60,9 @@ class StudentMultiAssetDataset(MultiAssetDataset):
         # Update the template with the known teacher values within the dataset [start:end] interval.
         teacher_actions = teacher_actions.loc[start:end]
         template_actions.update(teacher_actions)
+        template_actions = template_actions.fillna(0)
 
         return template_actions
-
-    def close(self):
-        super().close()
-
-        self.actions_store.close()
 
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
         data = super().__getitem__(day_index)

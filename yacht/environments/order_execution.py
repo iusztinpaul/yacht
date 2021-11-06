@@ -20,8 +20,11 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             action_schema: ActionSchema,
             seed: int = 0,
             compute_metrics: bool = False,
+            add_action_features: bool = False,
             **kwargs
     ):
+        self.add_action_features = add_action_features
+
         super().__init__(name, dataset, reward_schema, action_schema, seed, compute_metrics, **kwargs)
 
         self.unadjusted_period_mean_price = None
@@ -44,7 +47,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         observation_space['env_features'] = spaces.Box(
             low=-np.inf,
             high=np.inf,
-            shape=(self.window_size, 2)
+            shape=(self.window_size, 3 if self.add_action_features else 2)
         )
 
         return observation_space
@@ -58,7 +61,13 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         used_time = self.history['used_time'][-self.window_size:]
         used_time = np.array(used_time, dtype=np.float32).reshape(-1, 1)
 
-        observation['env_features'] = np.concatenate([used_positions, used_time], axis=-1)
+        if self.add_action_features:
+            actions = self.history['action'][-self.window_size:]
+            actions = np.array(actions, dtype=np.float32).reshape(-1, 1)
+
+            observation['env_features'] = np.concatenate([used_positions, used_time, actions], axis=-1)
+        else:
+            observation['env_features'] = np.concatenate([used_positions, used_time], axis=-1)
 
         return observation
 

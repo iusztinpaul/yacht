@@ -47,31 +47,32 @@ class StudentPPO(PPO):
             return actions, values, log_prob, probabilities
 
     def __init__(
-        self,
-        policy: Union[str, Type[ActorCriticPolicy]],
-        env: Union[GymEnv, str],
-        learning_rate: Union[float, Schedule] = 3e-4,
-        n_steps: int = 2048,
-        batch_size: Optional[int] = 64,
-        n_epochs: int = 10,
-        gamma: float = 0.99,
-        gae_lambda: float = 0.95,
-        clip_range: Union[float, Schedule] = 0.2,
-        clip_range_vf: Union[None, float, Schedule] = None,
-        ent_coef: float = 0.0,
-        vf_coef: float = 0.5,
-        max_grad_norm: float = 0.5,
-        use_sde: bool = False,
-        sde_sample_freq: int = -1,
-        target_kl: Optional[float] = None,
-        tensorboard_log: Optional[str] = None,
-        create_eval_env: bool = False,
-        policy_kwargs: Optional[Dict[str, Any]] = None,
-        verbose: int = 0,
-        seed: Optional[int] = None,
-        device: Union[th.device, str] = "auto",
-        _init_setup_model: bool = True,
-        distillation_loss_weights: Optional[list] = None
+            self,
+            policy: Union[str, Type[ActorCriticPolicy]],
+            env: Union[GymEnv, str],
+            learning_rate: Union[float, Schedule] = 3e-4,
+            n_steps: int = 2048,
+            batch_size: Optional[int] = 64,
+            n_epochs: int = 10,
+            gamma: float = 0.99,
+            gae_lambda: float = 0.95,
+            clip_range: Union[float, Schedule] = 0.2,
+            clip_range_vf: Union[None, float, Schedule] = None,
+            ent_coef: float = 0.0,
+            vf_coef: float = 0.5,
+            max_grad_norm: float = 0.5,
+            use_sde: bool = False,
+            sde_sample_freq: int = -1,
+            target_kl: Optional[float] = None,
+            tensorboard_log: Optional[str] = None,
+            create_eval_env: bool = False,
+            policy_kwargs: Optional[Dict[str, Any]] = None,
+            verbose: int = 0,
+            seed: Optional[int] = None,
+            device: Union[th.device, str] = "auto",
+            _init_setup_model: bool = True,
+            distillation_coef: float = 0.01,
+            distillation_loss_weights: Optional[list] = None
     ):
         assert policy == 'MlpPolicy'
         policy = self.StudentActorCriticPolicy
@@ -102,8 +103,10 @@ class StudentPPO(PPO):
             _init_setup_model=_init_setup_model,
         )
 
+        self.distillation_coef = distillation_coef
         if distillation_loss_weights is not None:
             self.distillation_loss_weights = th.tensor(distillation_loss_weights, dtype=th.float32)
+            self.distillation_loss_weights = self.distillation_loss_weights.to(self.device)
         else:
             self.distillation_loss_weights = None
 
@@ -121,11 +124,11 @@ class StudentPPO(PPO):
         )
 
     def collect_rollouts(
-        self,
-        env: VecEnv,
-        callback: BaseCallback,
-        rollout_buffer: StudentRolloutBuffer,
-        n_rollout_steps: int,
+            self,
+            env: VecEnv,
+            callback: BaseCallback,
+            rollout_buffer: StudentRolloutBuffer,
+            n_rollout_steps: int,
     ) -> bool:
         """
         Collect experiences using the current policy and fill a ``RolloutBuffer``.
@@ -293,7 +296,11 @@ class StudentPPO(PPO):
                 )
                 distillation_losses.append(distillation_loss.item())
 
-                loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss + distillation_loss
+                loss = \
+                    policy_loss + \
+                    self.ent_coef * entropy_loss + \
+                    self.vf_coef * value_loss + \
+                    self.distillation_coef * distillation_loss
 
                 # Calculate approximate form of reverse KL Divergence for early stopping
                 # see issue #417: https://github.com/DLR-RM/stable-baselines3/issues/417

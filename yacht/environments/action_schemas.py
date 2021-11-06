@@ -75,7 +75,7 @@ class DiscreteActionScheme(ActionSchema):
         indices = np.where(value == self.possibilities)
         indices = indices[1]
 
-        return self.possibilities[indices]
+        return indices
 
 
 class ContinuousFloatActionSchema(ActionSchema):

@@ -157,8 +157,10 @@ def compute_action_distance(report: dict) -> dict:
         asset_num_actions = action_indices.shape[0]
         num_actions.append(asset_num_actions)
 
+        # A difference "=1" means that actions are consecutive.
+        # Keep this convention for the cases where there is a single action for consistency.
         if len(action_indices) <= 1:
-            differences.append(np.zeros_like(action_indices))
+            differences.append(np.ones_like(action_indices))
         else:
             left_interval = action_indices[:-1]
             right_interval = action_indices[1:]
