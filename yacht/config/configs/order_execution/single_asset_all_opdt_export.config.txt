@@ -1,12 +1,12 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'DayFrequencyDataset'
+    dataset: 'TeacherDayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
-    fine_tune_tickers: ['AAPL']
+    fine_tune_tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
@@ -26,14 +26,14 @@ input: {
     backtest_split_ratio: 0.0
     embargo_ratio: 0.025
     backtest: {
-        run: false
+        run: true
         deterministic: true
-        tickers: ['AAPL']
+        tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     }
 }
 environment: {
-    name: 'OrderExecutionEnvironment-v0'
-    n_envs: 6
+    name: 'ExportTeacherActionsOrderExecutionEnvironment-v0'
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -62,6 +62,7 @@ environment: {
 agent: {
     name: 'PPO'
     is_classic_method: false
+    is_teacher: true
     verbose: true
     policy: {
         name: 'MlpPolicy'
@@ -82,7 +83,7 @@ agent: {
 train: {
     trainer_name: 'Trainer'
     total_timesteps: 1000000
-    fine_tune_total_timesteps: 250000
+    fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0001
     batch_size: 1024
@@ -101,9 +102,9 @@ train: {
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR', 'AD']
-    metrics_to_load_best_on: ['PA', 'GLR', 'AD']
+    metrics_to_save_best_on: ['PA']
+    metrics_to_load_best_on: ['PA']
     plateau_max_n_steps: 10
     device: 'gpu'
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
 }

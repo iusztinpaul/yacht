@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from typing import Union, Dict, Tuple, List
 
@@ -16,6 +17,7 @@ def compute_backtest_metrics(
     daily_returns = get_daily_return(report[total_assets_col_name])
     report['daily_returns'] = daily_returns.values
 
+    warnings.filterwarnings(action='ignore', category=RuntimeWarning)
     # TODO: Add the rest of the arguments for more statistics.
     strategy_metrics = timeseries.perf_stats(
         returns=daily_returns,
@@ -24,6 +26,7 @@ def compute_backtest_metrics(
         transactions=None,
         turnover_denom='AGB',
     )
+    warnings.filterwarnings(action='default', category=RuntimeWarning)
     strategy_metrics = dict(
         zip(strategy_metrics.index, strategy_metrics.values)
     )

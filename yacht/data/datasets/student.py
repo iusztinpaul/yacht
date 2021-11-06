@@ -47,9 +47,9 @@ class StudentMultiAssetDataset(MultiAssetDataset):
         self.actions = self.get_teacher_actions()
 
     def get_teacher_actions(self) -> pd.DataFrame:
-        from yacht.environments.order_execution import TeacherOrderExecutionEnvironment
+        from yacht.environments.order_execution import ExportTeacherActionsOrderExecutionEnvironment
 
-        teacher_actions = self.actions_store[TeacherOrderExecutionEnvironment.create_key(self)]
+        teacher_actions = self.actions_store[ExportTeacherActionsOrderExecutionEnvironment.create_key(self)]
         # Firstly, create a template with the desired dates in case any actions are missing within the past window_size.
         start = self.datasets[0].start
         end = self.datasets[0].end
@@ -70,6 +70,11 @@ class StudentMultiAssetDataset(MultiAssetDataset):
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
         data = super().__getitem__(day_index)
         # For data within window [t - window_size + 1; t] the action is taken at t + 1.
-        data['action'] = self.actions.iloc[day_index + 1].values
+        action_index = day_index + 1
+        if action_index < len(self.actions):
+            data['teacher_action'] = self.actions.iloc[day_index + 1].values
+        else:
+            # There is no action for the final window observation.
+            data['teacher_action'] = -1
 
         return data

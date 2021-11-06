@@ -53,6 +53,9 @@ def build_env(
         'include_weekends': config.input.include_weekends
     }
 
+    if env_config.name == 'ExportTeacherActionsOrderExecutionEnvironment':
+        assert env_config.n_envs == 1, 'Export can be done only with x1 envs.'
+
     if mode.is_trainable() or config.input.backtest.deterministic is False:
         n_envs = env_config.n_envs
     else:
@@ -96,8 +99,14 @@ def register_gym_envs():
 
             }
         },
-        'TeacherOrderExecutionEnvironment-v0': {
-            'entry_point': 'yacht.environments.order_execution:TeacherOrderExecutionEnvironment',
+        'ExportTeacherActionsOrderExecutionEnvironment-v0': {
+            'entry_point': 'yacht.environments.order_execution:ExportTeacherActionsOrderExecutionEnvironment',
+            'kwargs': {
+
+            }
+        },
+        'StudentOrderExecutionEnvironment-v0': {
+            'entry_point': 'yacht.environments.order_execution:StudentOrderExecutionEnvironment',
             'kwargs': {
 
             }

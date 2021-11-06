@@ -181,7 +181,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         return title
 
 
-class TeacherOrderExecutionEnvironment(OrderExecutionEnvironment):
+class ExportTeacherActionsOrderExecutionEnvironment(OrderExecutionEnvironment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -221,3 +221,14 @@ class TeacherOrderExecutionEnvironment(OrderExecutionEnvironment):
     @staticmethod
     def create_key(dataset: 'MultiAssetDataset') -> str:
         return '-'.join(dataset.asset_tickers)
+
+
+class StudentOrderExecutionEnvironment(OrderExecutionEnvironment):
+    def _create_info(self, info: dict) -> dict:
+        info = super()._create_info(info)
+        if self._s_t and 'teacher_action' in self._s_t:
+            info['teacher_action'] = self._s_t['teacher_action']
+        else:
+            info['teacher_action'] = None
+
+        return info

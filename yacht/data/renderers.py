@@ -458,24 +458,24 @@ class TradingPositionRenderer(MplFinanceRenderer):
             positions[adjacent_equal_values_mask] = np.nan
 
         # Calculate positions.
-        positions = pd.Series(index=data.index, data=positions)
+        positions = pd.Series(index=data.index, data=positions, dtype=np.float32)
         # Precompute masks.
         positive_positions_mask = positions > 0
         hold_positions_mask = positions == 0
         negative_positions_mask = positions < 0
 
         short_positions_index = positions[negative_positions_mask].index
-        short_positions = pd.Series(index=positions.index)
+        short_positions = pd.Series(index=positions.index, dtype=np.float32)
         short_positions[negative_positions_mask] = data.loc[short_positions_index, 'High']
         short_positions[positions >= 0] = np.nan
 
         long_positions_index = positions[positive_positions_mask].index
-        long_positions = pd.Series(index=positions.index)
+        long_positions = pd.Series(index=positions.index, dtype=np.float32)
         long_positions[positive_positions_mask] = data.loc[long_positions_index, 'Low']
         long_positions[positions <= 0] = np.nan
 
         hold_position_index = positions[hold_positions_mask].index
-        hold_positions = pd.Series(index=positions.index)
+        hold_positions = pd.Series(index=positions.index, dtype=np.float32)
         hold_positions[hold_positions_mask] = \
             (data.loc[hold_position_index, 'Low'] + data.loc[hold_position_index, 'High']) / 2
         hold_positions[negative_positions_mask] = np.nan
