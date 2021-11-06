@@ -5,6 +5,7 @@ from typing import Optional, Dict
 import numpy as np
 import pandas as pd
 from gym import spaces
+from tqdm import tqdm
 
 from yacht.data.datasets import SampleAssetDataset
 from yacht.environments import RewardSchema, ActionSchema
@@ -200,17 +201,25 @@ class ExportTeacherActionsOrderExecutionEnvironment(OrderExecutionEnvironment):
             path=os.path.join(self.dataset.market.storage_dir, 'teacher_actions.h5'),
             mode='w'
         )
+        self.progress_bar = tqdm(
+            desc='Exported datasets',
+            total=self.dataset.num_datasets
+        )
 
     def close(self):
         super().close()
 
+        self.progress_bar.close()
         self.actions_store.close()
 
     def _on_done(self, report: Optional[dict] = None) -> dict:
         results = super()._on_done(report)
 
         if report is not None:
+            self.progress_bar.update()
             self.persist_actions(report)
+        else:
+            print(f'Could not persist actions for: {self.dataset}')
 
         return results
 

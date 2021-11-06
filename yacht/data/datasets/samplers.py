@@ -80,6 +80,10 @@ class SampleAssetDataset(AssetDataset):
         self.current_dataset_index = idx
 
     @property
+    def num_datasets(self) -> int:
+        return len(self.datasets)
+
+    @property
     def sampled_dataset(self) -> Union[SingleAssetDataset, MultiAssetDataset]:
         # Expose the chosen dataset to access its attributes.
         return self.datasets[self.current_dataset_index]
