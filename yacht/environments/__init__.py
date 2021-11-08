@@ -96,19 +96,16 @@ def register_gym_envs():
         'OrderExecutionEnvironment-v0': {
             'entry_point': 'yacht.environments.order_execution:OrderExecutionEnvironment',
             'kwargs': {
-
             }
         },
         'ExportTeacherActionsOrderExecutionEnvironment-v0': {
             'entry_point': 'yacht.environments.order_execution:ExportTeacherActionsOrderExecutionEnvironment',
             'kwargs': {
-
             }
         },
         'StudentOrderExecutionEnvironment-v0': {
             'entry_point': 'yacht.environments.order_execution:StudentOrderExecutionEnvironment',
             'kwargs': {
-
             }
         }
     }

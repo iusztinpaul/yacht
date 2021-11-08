@@ -273,7 +273,7 @@ class H5Market(Market, ABC):
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
         # Also stocks have data only in the work days.
-        is_cached_state = len(valid_values) >= 0.75 * len(time_series)
+        is_cached_state = len(valid_values) >= 0.95 * len(time_series)
         self.is_cached_cache[is_cached_key] = is_cached_state
 
         return is_cached_state

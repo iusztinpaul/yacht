@@ -1,11 +1,11 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'TeacherDayFrequencyDataset'
+    dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
+    tickers: ['NASDAQ100']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
@@ -46,6 +46,10 @@ environment: {
     {
         name: 'ActionMagnitudeRewardSchema',
         reward_scaling: 0.75
+    },
+    {
+        name: 'ActionDistanceRewardSchema',
+        reward_scaling: 1.
     }
     ]
     global_reward_scaling: 1.
@@ -62,7 +66,6 @@ environment: {
 agent: {
     name: 'PPO'
     is_classic_method: false
-    is_teacher: true
     verbose: true
     policy: {
         name: 'MlpPolicy'
@@ -82,7 +85,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1000000
+    total_timesteps: 700000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0001

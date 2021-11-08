@@ -48,7 +48,6 @@ class StudentPPO(PPO):
 
     def __init__(
             self,
-            policy: Union[str, Type[ActorCriticPolicy]],
             env: Union[GymEnv, str],
             learning_rate: Union[float, Schedule] = 3e-4,
             n_steps: int = 2048,
@@ -74,12 +73,9 @@ class StudentPPO(PPO):
             distillation_coef: float = 0.01,
             distillation_loss_weights: Optional[list] = None
     ):
-        assert policy == 'MlpPolicy'
-        policy = self.StudentActorCriticPolicy
-
         super(PPO, self).__init__(
-            policy,
-            env,
+            policy=self.StudentActorCriticPolicy,
+            env=env,
             learning_rate=learning_rate,
             n_steps=n_steps,
             batch_size=batch_size,

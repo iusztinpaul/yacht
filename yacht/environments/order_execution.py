@@ -21,7 +21,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             action_schema: ActionSchema,
             seed: int = 0,
             compute_metrics: bool = False,
-            add_action_features: bool = False,
+            add_action_features: bool = True,
             **kwargs
     ):
         self.add_action_features = add_action_features

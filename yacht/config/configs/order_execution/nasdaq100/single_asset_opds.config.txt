@@ -5,7 +5,7 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
+    tickers: ['NASDAQ100']
     fine_tune_tickers: ['AAPL']
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
@@ -81,7 +81,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1000000
+    total_timesteps: 700000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0001

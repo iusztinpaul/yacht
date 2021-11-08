@@ -26,7 +26,14 @@ class CacheContext:
         self.num_iteration = None
 
     def __enter__(self):
-        Path(self.storage_dir).mkdir(parents=True, exist_ok=True)
+        if os.path.exists(self.storage_dir):
+            local_cache = self.get_local_cache(self.storage_dir, check_context=False)
+            if local_cache.get('initialized', False) is True:
+                raise RuntimeError(
+                    f'Application already running within the folder: {self.storage_dir}. Choose another directory.'
+                )
+        else:
+            Path(self.storage_dir).mkdir(parents=True, exist_ok=True)
         self.write_to_cache(self.storage_dir, 'initialized', True, check_context=False)
 
         self.num_iteration = self.query_cache(self.storage_dir, 'num_iteration')
