@@ -262,10 +262,12 @@ class SingleAssetDataset(AssetDataset, ABC):
         return self.ticker
 
     def __len__(self) -> int:
+        # All the interval.
         return len(self.prices)
 
     @property
     def num_days(self) -> int:
+        # Only the unadjusted interval.
         return utils.len_period_range(
             start=self.unadjusted_start,
             end=self.unadjusted_end,

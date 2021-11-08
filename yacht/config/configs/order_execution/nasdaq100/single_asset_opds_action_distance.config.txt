@@ -49,6 +49,10 @@ environment: {
     },
     {
         name: 'ActionDistanceRewardSchema',
+        reward_scaling: 0.5
+    },
+    {
+        name: 'CashOnLastTickRewardSchema',
         reward_scaling: 1.
     }
     ]

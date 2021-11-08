@@ -108,13 +108,31 @@ class ActionDistanceRewardSchema(ScaledRewardSchema):
         difference = action_indices - diag_action_indices
         difference = np.tril(difference)
         difference = difference[difference != 0]
+        difference += 1  # Don't reward adjacent actions.
         difference = np.abs(difference)
         difference = np.mean(difference)
 
-        reward = difference / max_distance
+        reward = difference / (max_distance + 1)
         reward *= self.reward_scaling
 
         return reward.item()
+
+
+class CashOnLastTickRewardSchema(ScaledRewardSchema):
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
+        actions = kwargs['actions']
+        max_distance = kwargs['max_distance']
+        # This reward should be given only in the end.
+        if len(actions) < max_distance:
+            return 0.
+
+        cash_used = kwargs['cash_used_on_last_tick']
+        initial_cash_position = kwargs['initial_cash_position']
+
+        reward = cash_used / initial_cash_position
+        reward = -reward * self.reward_scaling
+
+        return reward
 
 
 ###########################################################
@@ -217,6 +235,7 @@ reward_schema_registry = {
     'DecisionMakingRewardSchema': DecisionMakingRewardSchema,
     'ActionMagnitudeRewardSchema': ActionMagnitudeRewardSchema,
     'ActionDistanceRewardSchema': ActionDistanceRewardSchema,
+    'CashOnLastTickRewardSchema': CashOnLastTickRewardSchema,
     'LeaderBoardRewardSchema': LeaderBoardRewardSchema
 }
 

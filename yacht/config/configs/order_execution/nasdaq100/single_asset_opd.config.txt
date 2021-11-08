@@ -99,7 +99,7 @@ train: {
     use_sde: false
     sde_sample_freq: -1
     learning_rate_scheduler: 'ConstantSchedule'
-    distillation_coef: 1.
+    distillation_coef: 0.01
     distillation_loss_weights: [1., 1., 1., 1., 1.]
 }
 meta: {

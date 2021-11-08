@@ -85,6 +85,8 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             # TODO: Move this logic to _filter_actions() for consistency.
             # Make a copy to keep it for metrics.
             self.cash_used_on_last_tick = copy(self._total_cash)
+            # Remove the cash that the agent actually tried to used. That is a valid move.
+            self.cash_used_on_last_tick -= (self._a_t * self._initial_cash_position).sum()
 
             # Split money equally between the assets, if there is any cash position left for the current month.
             remaining_month_cash = np.tile(self._total_cash // self.dataset.num_assets, self.dataset.num_assets)
@@ -136,7 +138,9 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             'market_mean_price': self.unadjusted_period_mean_price.values,
             'next_price': next_price,
             'actions': self.history['action'][self.window_size:],
-            'max_distance': len(self.dataset) - self.window_size
+            'max_distance': self.dataset.num_days,
+            'cash_used_on_last_tick': self.cash_used_on_last_tick,
+            'initial_cash_position': self._initial_cash_position
         }
 
     def _compute_used_position(self) -> float:

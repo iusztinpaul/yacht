@@ -48,6 +48,8 @@ class StudentPPO(PPO):
 
     def __init__(
             self,
+            # Policy is not used, but it is kept for interface compatibility.
+            policy: Union[str, Type[ActorCriticPolicy]],
             env: Union[GymEnv, str],
             learning_rate: Union[float, Schedule] = 3e-4,
             n_steps: int = 2048,
