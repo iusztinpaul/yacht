@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n%yacht/config/proto/action_noise.proto\x12\x12yacht.config.proto\"M\n\x11\x41\x63tionNoiseConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04mean\x18\x02 \x01(\x01\x12\r\n\x05sigma\x18\x03 \x01(\x01\x12\r\n\x05theta\x18\x04 \x01(\x01\x62\x06proto3')
+  serialized_pb=_b('\n%yacht/config/proto/action_noise.proto\x12\x12yacht.config.proto\"X\n\x11\x41\x63tionNoiseConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04mean\x18\x02 \x01(\x01\x12\r\n\x05sigma\x18\x03 \x01(\x01\x12\r\n\x05theta\x18\x04 \x01(\x01\x12\t\n\x01p\x18\x05 \x01(\x01\x62\x06proto3')
 )
 
 
@@ -60,6 +60,13 @@ _ACTIONNOISECONFIG = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='p', full_name='yacht.config.proto.ActionNoiseConfig.p', index=4,
+      number=5, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -73,7 +80,7 @@ _ACTIONNOISECONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=61,
-  serialized_end=138,
+  serialized_end=149,
 )
 
 DESCRIPTOR.message_types_by_name['ActionNoiseConfig'] = _ACTIONNOISECONFIG

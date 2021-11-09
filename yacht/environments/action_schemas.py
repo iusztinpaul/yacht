@@ -9,7 +9,7 @@ from yacht import Mode
 from yacht.config import Config
 from yacht.config.proto.environment_pb2 import EnvironmentConfig
 from yacht.data.datasets import SampleAssetDataset
-from yacht.environments.action_noises import build_action_noise
+from yacht.environments.action_noises import build_action_noise, apply_action_noise
 
 
 class ActionSchema(ABC):
@@ -62,7 +62,7 @@ class DiscreteActionScheme(ActionSchema):
     def get_value(self, action: np.ndarray) -> np.ndarray:
         action = self.possibilities[action]
         if self.apply_noise:
-            action += self.action_noise()
+            action = apply_action_noise(action, self.action_noise)
             action = np.clip(action, a_min=np.min(self.possibilities), a_max=np.max(self.possibilities))
 
         return action
@@ -95,7 +95,7 @@ class ContinuousFloatActionSchema(ActionSchema):
     def get_value(self, action: np.ndarray) -> np.ndarray:
         action = action * self.action_scaling_factor
         if self.apply_noise:
-            action += self.action_noise()
+            action = apply_action_noise(action, self.action_noise)
             action = np.clip(action, a_min=-1, a_max=1)
 
         return action

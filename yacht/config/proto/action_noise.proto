@@ -8,4 +8,5 @@ message ActionNoiseConfig {
     double mean = 2;
     double sigma = 3;
     double theta = 4;
+    double p = 5;
 }

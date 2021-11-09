@@ -54,12 +54,10 @@ environment: {
     ]
     global_reward_scaling: 1.
     action_schema: 'DiscreteActionScheme'
-    use_action_noise: false
+    use_action_noise: true
     action_noise: {
-        name: 'OrnsteinUhlenbeckActionNoise'
-        mean: 0.01
-        sigma: 0.02
-        theta: 0.15
+        name: 'ActionDropOut'
+        p: 0.1
     }
     possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
