@@ -9,8 +9,9 @@ from yacht.utils import build_from_protobuf
 class ActionDropOut(ActionNoise):
     def __init__(self, p: float = 0.25):
         super().__init__()
+        assert 0 <= p <= 1
 
-        self.p = p
+        self.p = 1. - p
         self.operation = '*'
 
     def __call__(self):
