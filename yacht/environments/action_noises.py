@@ -15,7 +15,7 @@ class ActionDropOut(ActionNoise):
         self.operation = '*'
 
     def __call__(self):
-        noise_value = np.random.binomial(1, p=self.p, size=1)
+        noise_value = np.random.binomial(n=1, p=self.p, size=1)
 
         return noise_value
 

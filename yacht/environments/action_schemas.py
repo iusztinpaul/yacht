@@ -5,7 +5,7 @@ from gym import Space, spaces
 import numpy as np
 from stable_baselines3.common import noise
 
-from yacht import Mode
+from yacht import Mode, utils
 from yacht.config import Config
 from yacht.config.proto.environment_pb2 import EnvironmentConfig
 from yacht.data.datasets import SampleAssetDataset
@@ -16,11 +16,13 @@ class ActionSchema(ABC):
     def __init__(
             self,
             num_assets: int,
-            action_noise: Optional[noise.ActionNoise] = None
+            action_noise: Optional[noise.ActionNoise] = None,
+            apply_noise: bool = True
     ):
         self.num_assets = num_assets
-        self.apply_noise = action_noise is not None
+        self.apply_noise = apply_noise
         if self.apply_noise:
+            assert action_noise is not None
             self.action_noise = noise.VectorizedActionNoise(base_noise=action_noise, n_envs=num_assets)
         else:
             self.action_noise = None
@@ -47,9 +49,12 @@ class DiscreteActionScheme(ActionSchema):
             self,
             num_assets: int,
             possibilities: List[float],
-            action_noise: Optional[noise.ActionNoise] = None
+            action_noise: Optional[noise.ActionNoise] = None,
+            apply_noise: bool = True
     ):
-        super().__init__(num_assets=num_assets, action_noise=action_noise)
+        assert len(possibilities) > 0
+
+        super().__init__(num_assets=num_assets, action_noise=action_noise, apply_noise=apply_noise)
 
         self.possibilities = np.array(possibilities, dtype=np.float32)
 
@@ -83,9 +88,12 @@ class ContinuousFloatActionSchema(ActionSchema):
             self,
             num_assets: int,
             action_scaling_factor: float,
-            action_noise: Optional[noise.ActionNoise] = None
+            action_noise: Optional[noise.ActionNoise] = None,
+            apply_noise: bool = True
     ):
-        super().__init__(num_assets=num_assets, action_noise=action_noise)
+        assert action_scaling_factor > 0
+
+        super().__init__(num_assets=num_assets, action_noise=action_noise, apply_noise=apply_noise)
 
         self.action_scaling_factor = action_scaling_factor
 
@@ -130,19 +138,13 @@ def build_action_schema(config: Config, dataset: SampleAssetDataset, mode: Mode)
         action_noise = build_action_noise(config)
     else:
         action_noise = None
-    if action_schema_class in (ContinuousIntegerActionSchema, ContinuousFloatActionSchema):
-        assert env_config.action_scaling_factor > 0
+    action_schema_kwargs = {
+        'num_assets': dataset.num_assets,
+        'action_scaling_factor': env_config.action_scaling_factor,
+        'possibilities': list(env_config.possibilities),
+        'action_noise': action_noise,
+        'apply_noise': action_noise is not None and mode.is_trainable()
+    }
+    action_schema = utils.build_from_kwargs(action_schema_class, action_schema_kwargs, to_numpy=False)
 
-        return action_schema_class(
-            num_assets=dataset.num_assets,
-            action_scaling_factor=env_config.action_scaling_factor,
-            action_noise=action_noise
-        )
-    else:
-        assert len(env_config.possibilities) > 0
-
-        return action_schema_class(
-            num_assets=dataset.num_assets,
-            possibilities=list(env_config.possibilities),
-            action_noise=action_noise
-        )
+    return action_schema

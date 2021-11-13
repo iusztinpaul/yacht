@@ -20,4 +20,5 @@ message EnvironmentConfig {
   bool use_action_noise = 10;
   ActionNoiseConfig action_noise = 11;
   repeated double possibilities = 12;
+  double action_scaling_factor = 13;
 }
