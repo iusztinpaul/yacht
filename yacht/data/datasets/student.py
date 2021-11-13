@@ -40,8 +40,9 @@ class StudentMultiAssetDataset(MultiAssetDataset):
             window_size=window_size,
         )
 
+        teacher_actions_path = os.path.join(self.market.storage_dir, 'teacher_actions.h5')
         actions_store = pd.HDFStore(
-            path=os.path.join(self.market.storage_dir, 'teacher_actions.h5'),
+            path=teacher_actions_path,
             mode='r'
         )
         self.actions = self.get_teacher_actions(actions_store)

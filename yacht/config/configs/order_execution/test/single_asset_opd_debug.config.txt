@@ -33,7 +33,7 @@ input: {
 }
 environment: {
     name: 'StudentOrderExecutionEnvironment-v0'
-    n_envs: 6
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -50,13 +50,6 @@ environment: {
     ]
     global_reward_scaling: 1.
     action_schema: 'DiscreteActionScheme'
-    use_action_noise: false
-    action_noise: {
-        name: 'OrnsteinUhlenbeckActionNoise'
-        mean: 0.01
-        sigma: 0.02
-        theta: 0.15
-    }
     possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
 agent: {
@@ -100,7 +93,7 @@ train: {
     sde_sample_freq: 500
     learning_rate_scheduler: 'ConstantSchedule'
     distillation_coef: 0.01
-    distillation_loss_weights: [1., 3., 3., 3., 3.]
+    distillation_loss_weights: [0., 1., 1., 1., 1.]
 }
 meta: {
     log_frequency_steps: 100

@@ -158,7 +158,7 @@ class StudentPPO(PPO):
             with th.no_grad():
                 # Convert to pytorch tensor or to TensorDict
                 obs_tensor = obs_as_tensor(self._last_obs, self.device)
-                actions, values, log_probs, logits = self.policy.forward(obs_tensor)
+                actions, values, log_probs, taken_action_probs = self.policy.forward(obs_tensor)
             actions = actions.cpu().numpy()
 
             # Rescale and perform action
@@ -191,7 +191,7 @@ class StudentPPO(PPO):
                 values,
                 log_probs,
                 teacher_actions,
-                logits,
+                taken_action_probs,
             )
             self._last_obs = new_obs
             self._last_episode_starts = dones
