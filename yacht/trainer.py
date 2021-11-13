@@ -136,6 +136,7 @@ def run_train(
         logger: Logger,
         storage_dir: str,
         resume_training: bool,
+        agent_from: Optional[str] = None,
         market_storage_dir: Optional[str] = None
 ):
     trainer = build_trainer(
@@ -145,7 +146,8 @@ def run_train(
         mode=Mode.Train,
         logger=logger,
         save=True,
-        market_storage_dir=market_storage_dir
+        agent_from=agent_from,
+        market_storage_dir=market_storage_dir,
     )
     trainer.train()
     trainer.close()

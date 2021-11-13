@@ -143,7 +143,7 @@ def build_action_schema(config: Config, dataset: SampleAssetDataset, mode: Mode)
         'action_scaling_factor': env_config.action_scaling_factor,
         'possibilities': list(env_config.possibilities),
         'action_noise': action_noise,
-        'apply_noise': action_noise is not None and mode.is_trainable()
+        'apply_noise': apply_noise
     }
     action_schema = utils.build_from_kwargs(action_schema_class, action_schema_kwargs, to_numpy=False)
 

@@ -27,8 +27,8 @@ parser.add_argument(
 parser.add_argument('--resume_training', default=False, action='store_true', help='Resume training or not.')
 parser.add_argument(
     '--agent_from',
-    default='best-train',
-    help='File path to the *.zip file that you want to resume from. If None it will resume from the best checkpoint.'
+    default=None,
+    help='File path to the *.zip file that you want to resume from.'
 )
 parser.add_argument('--storage_dir', required=True, help='Directory where your model & logs will be saved.')
 parser.add_argument(
@@ -70,6 +70,7 @@ if __name__ == '__main__':
                 logger=logger,
                 storage_dir=storage_dir,
                 resume_training=args.resume_training,
+                agent_from=args.agent_from,
                 market_storage_dir=market_storage_dir
             )
             if config.input.backtest.run:

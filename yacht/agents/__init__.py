@@ -77,7 +77,10 @@ def build_agent(
     """
 
     if bool(agent_from) and not os.path.exists(agent_from):
+        is_path = False
         assert agent_from in ('latest-train', 'best-train', 'latest-fine-tune', 'best-fine-tune')
+    else:
+        is_path = True
 
     agent_config = config.agent
     policy_config = config.agent.policy
@@ -93,23 +96,24 @@ def build_agent(
         )
 
     if resume:
-        if 'train' in agent_from:
-            mode = Mode.Train
-        elif 'fine-tune' in agent_from:
-            mode = Mode.FineTuneTrain
-        else:
-            mode = None
-
-        if 'best' in agent_from:
-            if best_metric is None or best_metric == 'reward':
-                agent_from = utils.build_best_reward_checkpoint_path(storage_dir, mode)
-                logger.info(f'Resuming from the best reward checkpoint: {agent_from}')
+        if not is_path:
+            if 'train' in agent_from:
+                mode = Mode.Train
+            elif 'fine-tune' in agent_from:
+                mode = Mode.FineTuneTrain
             else:
-                agent_from = utils.build_best_metric_checkpoint_path(storage_dir, mode, best_metric)
-                logger.info(f'Resuming from the best metric - {best_metric} - checkpoint: {agent_from}')
-        elif 'latest' in agent_from:
-            agent_from = utils.build_last_checkpoint_path(storage_dir, mode)
-            logger.info(f'Resuming from the latest checkpoint: {agent_from}')
+                mode = None
+
+            if 'best' in agent_from:
+                if best_metric is None or best_metric == 'reward':
+                    agent_from = utils.build_best_reward_checkpoint_path(storage_dir, mode)
+                    logger.info(f'Resuming from the best reward checkpoint: {agent_from}')
+                else:
+                    agent_from = utils.build_best_metric_checkpoint_path(storage_dir, mode, best_metric)
+                    logger.info(f'Resuming from the best metric - {best_metric} - checkpoint: {agent_from}')
+            elif 'latest' in agent_from:
+                agent_from = utils.build_last_checkpoint_path(storage_dir, mode)
+                logger.info(f'Resuming from the latest checkpoint: {agent_from}')
 
         assert os.path.exists(agent_from), f'Path does not exist: {agent_from}'
 
