@@ -113,6 +113,7 @@ class ActionDistanceRewardSchema(ScaledRewardSchema):
         difference = np.mean(difference)
 
         reward = difference / (max_distance + 1)
+        reward *= action
         reward *= self.reward_scaling
 
         return reward.item()

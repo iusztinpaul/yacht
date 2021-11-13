@@ -58,7 +58,7 @@ environment: {
     ]
     global_reward_scaling: 1.
     action_schema: 'DiscreteActionScheme'
-    use_action_noise: true
+    use_action_noise: false
     action_noise: {
         name: 'ActionDropOut'
         p: 0.1
@@ -87,7 +87,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 700000
+    total_timesteps: 1500000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0001

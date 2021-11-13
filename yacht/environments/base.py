@@ -183,6 +183,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
             # Update internal state after (s_t, a_t).
             changes = self.update_internal_state(self._a_t)
+            changes['action'] = self._a_t
             # Update history with the internal changes so the next observation can be computed.
             self.update_history(changes)
 
