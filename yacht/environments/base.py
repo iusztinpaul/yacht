@@ -1,7 +1,7 @@
 import datetime
 import time
 from abc import abstractmethod, ABC
-from copy import deepcopy
+from copy import copy
 from typing import Dict, List, Optional, Union, Tuple
 
 import gym
@@ -29,8 +29,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.name = name
 
         # Environment general requirements.
-        self.dataset = dataset
-        self.window_size = dataset.past_window_size
+        self.dataset = copy(dataset)  # Deep copy does not work with tables.
+        self.window_size = self.dataset.past_window_size
         self.reward_schema = reward_schema
         self.action_schema = action_schema
 
@@ -80,6 +80,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def reset(self):
         # Choose a random ticker for every instance of the environment.
         self.dataset.sample()
+        self.window_size = self.dataset.past_window_size
 
         # Rendering.
         self.renderer = self.build_renderer()
@@ -508,6 +509,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
             renderer_kwargs['total_assets'] = report['total_assets']
         if len(self.history['total_units']) > 0:
             renderer_kwargs['total_units'] = report['total_units']
+        if getattr(self, 'unadjusted_period_mean_price', None) is not None:
+            renderer_kwargs['mean_price'] = getattr(self, 'unadjusted_period_mean_price')
 
         self.renderer.render(**renderer_kwargs)
         

@@ -112,7 +112,7 @@ class AssetDataset(Dataset, ABC):
     @property
     def first_observation_index(self) -> int:
         # Starting from 0 & the minimum value for the window_size is 1.
-        return self.period.past_window_size - 1
+        return self.past_window_size - 1
 
     @property
     def last_observation_index(self) -> int:
@@ -362,7 +362,7 @@ class MultiAssetDataset(AssetDataset):
 
     @property
     def num_days(self) -> int:
-        # All the datasets have the same number of days.
+        # All the datasets have the same number of days, because they are reflecting the same time (eg. the same month).
         return self.datasets[0].num_days
 
     @property

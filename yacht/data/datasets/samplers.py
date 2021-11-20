@@ -47,22 +47,17 @@ class SampleAssetDataset(AssetDataset):
         self.shuffle = shuffle
 
         # Keep a map of the dataset sampling order.
-        self.dataset_indices = np.arange(0, len(self.datasets))
+        self.dataset_indices = tuple(np.arange(0, len(self.datasets)))  # Make it a tuple for shallow copying.
         self.current_dataset_indices_position = -1
         self.current_dataset_index = default_index
-
-    @classmethod
-    def seed(cls, value: float):
-        # Seed python RNG
-        random.seed(value)
-        # Seed numpy RNG
-        np.random.seed(value)
 
     def sample(self, idx: Optional[int] = None):
         if self.current_dataset_indices_position == len(self.datasets) - 1:
             self.current_dataset_indices_position = -1
         if self.shuffle and self.current_dataset_indices_position == -1:
-            np.random.shuffle(self.dataset_indices)
+            dataset_indices = np.array(self.dataset_indices, dtype=np.int64)
+            np.random.shuffle(dataset_indices)
+            self.dataset_indices = dataset_indices
 
         if idx is None:
             # Move to the next dataset by moving the map cursor.

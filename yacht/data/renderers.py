@@ -259,6 +259,7 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         total_assets = kwargs.get('total_assets')
         remove_adjacent_positions = kwargs.get('remove_adjacent_positions', False)
         render_positions_separately = kwargs.get('render_positions_separately', False)
+        mean_price = kwargs.get('mean_price', None)
 
         assert len(tickers) <= len(self.COLOURS), 'Not enough supported colours.'
 
@@ -363,6 +364,15 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             linewidths=(1.5, ),
             linestyle='-.'
         )
+        if mean_price is not None:
+            hlines = dict(
+                hlines=mean_price.values.tolist(),
+                colors=[self.COLOURS[idx] for idx in range(len(tickers) - 1, -1, -1)],
+                linewidths=[1.0 for _ in range(len(tickers))],
+                linestyle='-.'
+            )
+        else:
+            hlines = None
         fig, axes = mpf.plot(
             data=dummy_data,
             addplot=extra_plots,
@@ -376,7 +386,8 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             volume=False,
             axisoff=False,
             returnfig=True,
-            vlines=vlines
+            vlines=vlines,
+            hlines=hlines
         )
 
         # Configure chart legend and title
