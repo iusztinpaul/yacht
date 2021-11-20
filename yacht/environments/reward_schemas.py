@@ -71,6 +71,26 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
 #################### ORDER EXECUTION #########################
 ##############################################################
 
+
+class PriceAdvantageRelativeToCashPositionRewardSchema(ScaledRewardSchema):
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
+        market_mean_price = kwargs['market_mean_price']
+        next_price = kwargs['next_price']
+        initial_cash_position = kwargs['initial_cash_position']
+        remained_cash = kwargs['remained_cash']
+
+        price_advantage = (1 - next_price / market_mean_price)
+        remained_cash_ratio = remained_cash / initial_cash_position
+        # Map ratio to [-1; 1]
+        remained_cash_ratio *= 2
+        remained_cash_ratio -= 1
+
+        reward = price_advantage * remained_cash_ratio
+        reward *= self.reward_scaling
+
+        return reward.item()
+
+
 class DecisionMakingRewardSchema(ScaledRewardSchema):
     def calculate_reward(self, action: np.ndarray, *args, **kwargs):
         # TODO: Adapt for sell execution
@@ -232,6 +252,7 @@ class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
 
 
 reward_schema_registry = {
+    'PriceAdvantageRelativeToCashPositionRewardSchema': PriceAdvantageRelativeToCashPositionRewardSchema,
     'AssetsPriceChangeRewardSchema': AssetsPriceChangeRewardSchema,
     'DecisionMakingRewardSchema': DecisionMakingRewardSchema,
     'ActionMagnitudeRewardSchema': ActionMagnitudeRewardSchema,

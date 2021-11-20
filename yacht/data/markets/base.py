@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Union, List, Any, Iterable, Optional
+from typing import Union, List, Any, Iterable, Optional, Tuple
 
 import pandas as pd
 
@@ -68,11 +68,11 @@ class Market(ABC):
             start: datetime,
             end: datetime,
             features: Optional[List[str]] = None,
-            flexible_start: bool = False
+            squeeze: bool = False
     ) -> pd.DataFrame:
         """
             Returns: data within [start, end] and fills nan values.
-            If flexible_start = True, it should return [data.index.sort()[0] (=new_start), end],
+            If squeeze = True, it should return [data.index.sort()[0] (=new_start), end],
                 only if start <= new_start <= end, with nan values filled.
                 The point of this is that some assets don't have data on the whole interval.
                 This will move the starting point from where the data starts.
@@ -88,7 +88,17 @@ class Market(ABC):
             start: datetime,
             end: datetime = None
     ) -> Union[List[List[Any]], pd.DataFrame]:
-        pass
+        """
+
+        Args:
+            ticker:
+            interval:
+            start:
+            end:
+
+        Returns:
+            Prices data for [start, end] and interval: "interval"
+        """
 
     @abstractmethod
     def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
@@ -108,18 +118,18 @@ class Market(ABC):
             interval: str,
             start: datetime,
             end: datetime,
-            flexible_start: bool = False
+            squeeze: bool = False
     ):
         if isinstance(tickers, str):
             tickers = [tickers]
 
         for ticker in tickers:
-            self._download(ticker, interval, start, end, flexible_start)
+            self._download(ticker, interval, start, end, squeeze)
 
-    def _download(self, ticker: str, interval: str, start: datetime, end: datetime, flexible_start: bool = False):
+    def _download(self, ticker: str, interval: str, start: datetime, end: datetime, squeeze: bool = False):
         # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
-        if flexible_start:
-            start = self.move_start(ticker, interval, start, end)
+        if squeeze:
+            start, end = self.squeeze_period(ticker, interval, start, end)
 
         if self.is_cached(ticker, interval, start, end):
             return
@@ -133,12 +143,24 @@ class Market(ABC):
 
         assert self.DOWNLOAD_MANDATORY_FEATURES.intersection(set(data.columns)) == self.DOWNLOAD_MANDATORY_FEATURES, \
             f'Some mandatory features are missing after downloading: {ticker}.'
+        assert data.index[0] == start and data.index[-1] == end, f'Data interval is not fulfilled for: {ticker}'
 
         self.cache_request(ticker, interval, data)
 
-    @abstractmethod
-    def move_start(self, ticker: str, interval: str, start: datetime, end: datetime) -> datetime:
-        pass
+    def squeeze_period(self, ticker: str, interval: str, start: datetime, end: datetime) -> Tuple[datetime, datetime]:
+        """
+            Try to squeeze the [start, end] period into [start', end'], where start <= start' & end' <= end.
+            This is useful when we know that some data is not available.
+        Args:
+            ticker:
+            interval:
+            start:
+            end:
+
+        Returns:
+            [start', end'], where start <= start' & end' <= end
+        """
+        return start, end
     
     def check_downloaded_data(
             self,
@@ -193,18 +215,18 @@ class H5Market(Market, ABC):
             start: datetime,
             end: datetime,
             features: Optional[List[str]] = None,
-            flexible_start: bool = False
+            squeeze: bool = False
     ) -> pd.DataFrame:
         """
             Returns: data within [start, end] and fills nan values.
-            If flexible_start = True, it should return [data.index.sort()[0] (=new_start), end],
+            If squeeze = True, it should return [data.index.sort()[0] (=new_start), end],
                 only if start <= new_start <= end, with nan values filled.
                 The point of this is that some assets don't have data on the whole interval.
                 This will move the starting point from where the data starts.
         """
 
-        if flexible_start:
-            start = self.move_start(ticker, interval, start, end)
+        if squeeze:
+            start, end = self.squeeze_period(ticker, interval, start, end)
 
         if not self.is_cached(ticker, interval, start, end):
             raise RuntimeError(f'[{ticker}]: "{interval}" not supported for {start} - {end}')
@@ -214,6 +236,8 @@ class H5Market(Market, ABC):
         data_slice.fillna(method='ffill', inplace=True, axis=0)
 
         assert data_slice.notna().all().all(), \
+            f'Data from the market is not valid for: [{ticker}${interval}] {start} - {end}'
+        assert data_slice.index[0] == start and data_slice.index[-1] == end, \
             f'Data from the market is not valid for: [{ticker}${interval}] {start} - {end}'
 
         return data_slice
@@ -232,22 +256,22 @@ class H5Market(Market, ABC):
 
         # Create the desired data span because there are missing values. In this way we will know exactly what data is
         # missing and at what index.
-        date_time_index = utils.compute_period_range(start, end, self.include_weekends, interval)
+        datetime_index = utils.compute_period_range(start, end, self.include_weekends, interval)
         if features is None:
             features = self.features
-        final_data = pd.DataFrame(index=date_time_index, columns=features)
+        final_data = pd.DataFrame(index=datetime_index, columns=features)
 
         piece_of_data = self.connection[self.create_key(ticker, interval)].loc[start:end]
         final_data.update(piece_of_data)
 
         return final_data
 
-    def move_start(self, ticker: str, interval: str, start: datetime, end: datetime) -> datetime:
+    def squeeze_period(self, ticker: str, interval: str, start: datetime, end: datetime) -> Tuple[datetime, datetime]:
         ticker_key = self.create_key(ticker, interval)
         if ticker_key in self.connection:
             indices = self.connection[ticker_key].loc[start:end].index
             if len(indices) == 0:
-                return start
+                return start, end
 
             new_start = indices[0]
             if new_start > start:
@@ -255,7 +279,7 @@ class H5Market(Market, ABC):
                 assert start <= end, \
                     f'Cannot move start after the end period: {start} > {end}'
 
-        return start
+        return start, end
 
     def is_cached(self, ticker: str, interval: str, start: datetime, end: datetime) -> bool:
         key = self.create_key(ticker, interval)

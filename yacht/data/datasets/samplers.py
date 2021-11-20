@@ -28,7 +28,7 @@ class SampleAssetDataset(AssetDataset):
             logger: Logger,
             window_size: int = 1,
             default_index: int = 0,
-            shuffle: bool = False
+            shuffle: bool = False,
     ):
         super().__init__(
             market=market,
@@ -49,10 +49,6 @@ class SampleAssetDataset(AssetDataset):
         # Keep a map of the dataset sampling order.
         self.dataset_indices = np.arange(0, len(self.datasets))
         self.current_dataset_indices_position = -1
-        if self.shuffle:
-            self.seed(default_index)
-            np.random.shuffle(self.dataset_indices)
-
         self.current_dataset_index = default_index
 
     @classmethod
@@ -62,18 +58,15 @@ class SampleAssetDataset(AssetDataset):
         # Seed numpy RNG
         np.random.seed(value)
 
-    def sample(self, idx: Optional[int] = None, seed: Optional[float] = None):
-        if seed is not None:
-            self.seed(seed)
-            
+    def sample(self, idx: Optional[int] = None):
+        if self.current_dataset_indices_position == len(self.datasets) - 1:
+            self.current_dataset_indices_position = -1
+        if self.shuffle and self.current_dataset_indices_position == -1:
+            np.random.shuffle(self.dataset_indices)
+
         if idx is None:
             # Move to the next dataset by moving the map cursor.
             self.current_dataset_indices_position += 1
-            if self.current_dataset_indices_position == len(self.datasets):
-                self.current_dataset_indices_position = 0
-                if self.shuffle:
-                    np.random.shuffle(self.dataset_indices)
-
             # Get the actual dataset index from the map.
             idx = self.dataset_indices[self.current_dataset_indices_position]
 

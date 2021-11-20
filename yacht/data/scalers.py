@@ -93,7 +93,7 @@ class Scaler(ABC):
                 start=train_start,
                 end=train_end,
                 features=features,
-                flexible_start=True
+                squeeze=True
             )
             scaler.fit(data)
 

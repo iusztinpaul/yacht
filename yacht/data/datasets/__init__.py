@@ -43,6 +43,11 @@ def build_dataset(
     dataset_cls = dataset_registry[input_config.dataset]
     multi_asset_dataset_cls = StudentMultiAssetDataset if config.agent.is_student else MultiAssetDataset
 
+    # -----------------------------------------------------------------------------------------------------------------
+    # 1. Download
+    # 2. Load
+    # 3. Remove invalid tickers
+    # -----------------------------------------------------------------------------------------------------------------
     tickers = build_tickers(config, mode)
     market = build_market(
         config=config,
@@ -50,16 +55,6 @@ def build_dataset(
         storage_dir=market_storage_dir if market_storage_dir is not None else storage_dir,
         read_only=market_storage_dir is not None
     )
-
-    train_split, validation_split, backtest_split = utils.split(
-        input_config.start,
-        input_config.end,
-        input_config.validation_split_ratio,
-        input_config.backtest_split_ratio,
-        input_config.embargo_ratio,
-        input_config.include_weekends
-    )
-
     # Download the whole requested interval in one shot for further processing & rendering.
     start = utils.string_to_datetime(input_config.start)
     end = utils.string_to_datetime(input_config.end)
@@ -68,17 +63,31 @@ def build_dataset(
         interval='1d',
         start=start,
         end=end,
-        flexible_start=True
+        squeeze=True
     )
-    # Clean dataset from the tickers that are too sparse.
+    # Remove tickers that are too sparse.
     num_tickers = len(tickers)
-    tickers = clean_tickers(tickers, market, interval='1d', start=start, end=end)
+    tickers = remove_invalid_tickers(tickers, market, interval='1d', start=start, end=end)
     logger.info(f'Dropped {num_tickers - len(tickers)} corrupted tickers.')
-    if len(tickers) == 0:
+    num_tickers = len(tickers)
+    if num_tickers == 0:
         logger.error('No valid tickers to train on.')
 
         return None
 
+    # -----------------------------------------------------------------------------------------------------------------
+    # 1. Create splits.
+    # 2. Render splits.
+    # 3. Pick mode split.
+    # -----------------------------------------------------------------------------------------------------------------
+    train_split, validation_split, backtest_split = utils.split(
+        input_config.start,
+        input_config.end,
+        input_config.validation_split_ratio,
+        input_config.backtest_split_ratio,
+        input_config.embargo_ratio,
+        input_config.include_weekends
+    )
     # Render split only for backtest tickers.
     if not mode.is_trainable() and config.meta.render_data_split:
         render_split(
@@ -114,6 +123,11 @@ def build_dataset(
     else:
         raise RuntimeError(f'Invalid mode for creating a split: {mode}')
 
+    # -----------------------------------------------------------------------------------------------------------------
+    # 1. Adjust split starting point.
+    # 2. Compute dataset periods.
+    # 3. Compute observation window_size.
+    # -----------------------------------------------------------------------------------------------------------------
     # Datasets will expand their data range with -window_size on the left side of the interval.
     start = utils.adjust_period_to_window(
         datetime_point=start,
@@ -129,10 +143,9 @@ def build_dataset(
         include_edges=False
     )
 
-    total_num_periods = len(periods) * len(list(itertools.combinations(tickers, config.input.num_assets_per_dataset)))
+    total_num_datasets = len(periods) * len(list(itertools.combinations(tickers, config.input.num_assets_per_dataset)))
     logger.info('Creating datasets...')
-    logger.info(f'Total estimated num datasets: {total_num_periods}')
-
+    logger.info(f'Total estimated num datasets: {total_num_datasets}')
     if len(periods) == 0:
         logger.error(f'Num periods equal to 0. Dataset could not be created.')
 
@@ -153,14 +166,20 @@ def build_dataset(
     else:
         window_size = input_config.window_size
 
+    # -----------------------------------------------------------------------------------------------------------------
+    # 1. Build single asset datasets.
+    # 2. Build asset scalers.
+    # 3. Build multi asset datasets.
+    # 4. Build dataset sampler.
+    # -----------------------------------------------------------------------------------------------------------------
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
-    num_skipped_periods = 0
+    num_skipped_datasets = 0
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
     for (period_start, period_end) in tqdm(periods, desc='Num periods / Tickers'):
         dataset_period = DatasetPeriod(
             start=period_start,
             end=period_end,
-            past_window_size=input_config.window_size,
+            past_window_size=input_config.window_size,  # Same past offset for Student or Teacher setup.
             include_weekends=input_config.include_weekends,
             frequency='days'
         )
@@ -171,7 +190,7 @@ def build_dataset(
                 for ticker in dataset_tickers
             ]
             if all(tickers_validity) is False:
-                num_skipped_periods += 1
+                num_skipped_datasets += 1
                 continue
 
             dataset_period = copy(dataset_period)
@@ -224,19 +243,19 @@ def build_dataset(
             )
             datasets.append(dataset)
 
+    usable_num_datasets = total_num_datasets - num_skipped_datasets
+    if usable_num_datasets == 0:
+        return None
+
     period_length = len(utils.compute_period_range(
         start=periods[0][0],
         end=periods[0][1],
         include_weekends=input_config.include_weekends
     ))
-    usable_num_datasets = total_num_periods - num_skipped_periods
-    logger.info(f'Skipped {num_skipped_periods} / {total_num_periods} datasets.')
+    logger.info(f'Skipped {num_skipped_datasets} / {total_num_datasets} datasets.')
     logger.info(f'A total of {usable_num_datasets} datasets were created.')
     logger.info(f'Which is equal to a total of {usable_num_datasets * period_length} timesteps.')
     logger.info(f'Datasets built in {time.time() - start_building_data_time:.2f} seconds.')
-
-    if usable_num_datasets == 0:
-        return None
 
     sample_dataset_period = DatasetPeriod(
         start=start,
@@ -296,7 +315,7 @@ def build_tickers(config: Config, mode: Mode) -> Set[str]:
     return set(tickers)
 
 
-def clean_tickers(tickers: set, market: Market, interval: str, start: datetime, end: datetime) -> set:
+def remove_invalid_tickers(tickers: set, market: Market, interval: str, start: datetime, end: datetime) -> set:
     valid_tickers = set()
     for ticker in tickers:
         if market.is_cached(ticker, interval, start, end):
@@ -324,7 +343,7 @@ def render_split(
             '1d',
             utils.string_to_datetime(input_config.start),
             utils.string_to_datetime(input_config.end),
-            flexible_start=True
+            squeeze=True
         )
 
     # Render de train-test split with their original values.

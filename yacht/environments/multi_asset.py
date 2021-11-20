@@ -15,11 +15,10 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
             dataset: SampleAssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
-            seed: int = 0,
             compute_metrics: bool = False,
             **kwargs
     ):
-        super().__init__(name, dataset, reward_schema, action_schema, seed, compute_metrics)
+        super().__init__(name, dataset, reward_schema, action_schema, compute_metrics)
 
         self.buy_commission = kwargs.get('buy_commission', 0)
         self.sell_commission = kwargs.get('sell_commission', 0)

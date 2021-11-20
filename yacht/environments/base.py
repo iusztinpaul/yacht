@@ -1,7 +1,7 @@
 import datetime
 import time
 from abc import abstractmethod, ABC
-from copy import copy
+from copy import deepcopy
 from typing import Dict, List, Optional, Union, Tuple
 
 import gym
@@ -23,15 +23,13 @@ class BaseAssetEnvironment(gym.Env, ABC):
             dataset: SampleAssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
-            seed: int = 0,
             compute_metrics: bool = False
     ):
         # Environment name
         self.name = name
-        self.given_seed = seed
 
         # Environment general requirements.
-        self.dataset = copy(dataset)  # Copy the dataset, so every instance of the env will choose a different ticker.
+        self.dataset = dataset
         self.window_size = dataset.past_window_size
         self.reward_schema = reward_schema
         self.action_schema = action_schema
@@ -77,13 +75,11 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.agent_time_length = np.nan
 
     def seed(self, seed=None):
-        self.given_seed = seed
-
         set_random_seed(seed=seed, using_cuda=True)
 
     def reset(self):
         # Choose a random ticker for every instance of the environment.
-        self.dataset.sample(seed=self.given_seed)
+        self.dataset.sample()
 
         # Rendering.
         self.renderer = self.build_renderer()

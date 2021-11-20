@@ -11,7 +11,7 @@ from yacht.data.markets import Market
 class TechnicalIndicatorMixin:
     def __init__(self, technical_indicators: List[str], *args, **kwargs):
         assert Market in type(self).mro(), \
-            '"OscillatorMixin" works only with "Market" objects.'
+            '"TechnicalIndicatorMixin" works only with "Market" objects.'
 
         super().__init__(*args, **kwargs)
 

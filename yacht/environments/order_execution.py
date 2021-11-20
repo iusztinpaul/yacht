@@ -19,14 +19,13 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             dataset: SampleAssetDataset,
             reward_schema: RewardSchema,
             action_schema: ActionSchema,
-            seed: int = 0,
             compute_metrics: bool = False,
             add_action_features: bool = False,
             **kwargs
     ):
         self.add_action_features = add_action_features
 
-        super().__init__(name, dataset, reward_schema, action_schema, seed, compute_metrics, **kwargs)
+        super().__init__(name, dataset, reward_schema, action_schema, compute_metrics, **kwargs)
 
         self.unadjusted_period_mean_price = None
         self.cash_used_on_last_tick = 0
@@ -140,6 +139,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             'actions': self.history['action'][self.window_size:],
             'max_distance': self.dataset.num_days,
             'cash_used_on_last_tick': self.cash_used_on_last_tick,
+            'remained_cash': self._total_cash,
             'initial_cash_position': self._initial_cash_position
         }
 
@@ -181,7 +181,6 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         }
 
     def _is_done(self) -> bool:
-        return False
         return self._total_cash <= 1
 
     def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:

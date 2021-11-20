@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Tuple, Dict, Union, Optional
+from typing import List, Dict, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -254,7 +254,8 @@ class SingleAssetDataset(AssetDataset, ABC):
                     interval=interval,
                     start=self.start,
                     end=self.end,
-                    features=self.features + [self.decision_price_feature]
+                    features=self.features + [self.decision_price_feature],
+                    squeeze=False
                 )
         self.prices = self.get_prices()
 
@@ -291,7 +292,8 @@ class SingleAssetDataset(AssetDataset, ABC):
             interval='1d',
             start=self.start,
             end=self.end,
-            features=list(self.market.DOWNLOAD_MANDATORY_FEATURES) + [self.decision_price_feature]
+            features=list(self.market.DOWNLOAD_MANDATORY_FEATURES) + [self.decision_price_feature],
+            squeeze=False
         )
 
     def get_decision_prices(self, t_tick: Optional[int] = None, **kwargs) -> pd.Series:

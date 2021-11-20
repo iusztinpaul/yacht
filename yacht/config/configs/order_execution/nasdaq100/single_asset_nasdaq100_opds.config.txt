@@ -45,7 +45,7 @@ environment: {
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.75
+        reward_scaling: 1.
     }
     ]
     global_reward_scaling: 1.
@@ -58,7 +58,7 @@ agent: {
     verbose: true
     policy: {
         name: 'MlpPolicy'
-        activation_fn: 'ReLU',
+        activation_fn: 'Tanh',
         feature_extractor: {
             name: 'RecurrentFeatureExtractor'
             features_dim: [64,64,128]

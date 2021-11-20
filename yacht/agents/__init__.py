@@ -76,11 +76,14 @@ def build_agent(
         A stable-baselines3 RL agent.
     """
 
-    if bool(agent_from) and not os.path.exists(agent_from):
+    if agent_from is not None and not os.path.exists(agent_from):
         is_path = False
         assert agent_from in ('latest-train', 'best-train', 'latest-fine-tune', 'best-fine-tune')
-    else:
+    elif agent_from is not None and os.path.exists(agent_from):
         is_path = True
+    else:
+        is_path = False
+        agent_from = 'best-train'
 
     agent_config = config.agent
     policy_config = config.agent.policy
