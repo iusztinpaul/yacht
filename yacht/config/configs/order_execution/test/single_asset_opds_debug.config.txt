@@ -33,7 +33,7 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 2
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00

@@ -61,7 +61,6 @@ class DiscreteActionScheme(ActionSchema):
     def get_action_space(self) -> Space:
         return spaces.MultiDiscrete(
             nvec=[len(self.possibilities) for _ in range(self.num_assets)]
-
         )
 
     def get_value(self, action: np.ndarray) -> np.ndarray:

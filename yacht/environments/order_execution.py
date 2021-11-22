@@ -55,27 +55,27 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     def _get_env_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
         assert self.is_history_initialized
 
-        used_positions = self.history['used_position'][-self.window_size:]
-        used_positions = np.array(used_positions, dtype=np.float32).reshape(-1, 1)
+        total_cash_history = self.history['total_cash'][-self.window_size:]
+        total_cash_history = np.array(total_cash_history, dtype=np.float32).reshape(-1, 1)
 
-        used_time = self.history['used_time'][-self.window_size:]
-        used_time = np.array(used_time, dtype=np.float32).reshape(-1, 1)
+        used_time_history = self.history['used_time'][-self.window_size:]
+        used_time_history = np.array(used_time_history, dtype=np.float32).reshape(-1, 1)
 
         if self.add_action_features:
             actions = self.history['action'][-self.window_size:]
             actions = np.array(actions, dtype=np.float32).reshape(-1, 1)
 
-            observation['env_features'] = np.concatenate([used_positions, used_time, actions], axis=-1)
+            observation['env_features'] = np.concatenate([total_cash_history, used_time_history, actions], axis=-1)
         else:
-            observation['env_features'] = np.concatenate([used_positions, used_time], axis=-1)
+            observation['env_features'] = np.concatenate([total_cash_history, used_time_history], axis=-1)
 
         return observation
 
     def _initialize_history(self, history: dict) -> dict:
         history = super()._initialize_history(history)
 
-        history['used_position'] = self.window_size * [0]
-        history['used_time'] = self.window_size * [0]
+        history['total_cash'] = self.window_size * [1.]
+        history['used_time'] = self.window_size * [0.]
 
         return history
 
@@ -100,29 +100,38 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
                     'total_units': np.copy(self._total_units.values)
                 }
 
-            changes['used_position'] = 1.
+            changes['total_cash'] = 0.
             changes['used_time'] = 1.
         else:
             changes = super().update_internal_state(action)
-            changes['used_position'] = self._compute_used_position()
+            changes['total_cash'] = self._compute_total_cash_ratio()
             changes['used_time'] = self._compute_used_time_ratio()
 
         return changes
 
     def _buy_asset(self, ticker: str, cash_ratio_to_use: float):
-        # TODO: Don't use the super() logic for faster computation. Now is encoding & decoding just for compatibility.
         if self._total_cash > 0:
-            cash_to_use = abs(cash_ratio_to_use) * self._initial_cash_position
-            # Change the action to log the real value taken because of the lack of cash.
-            # TODO: Should I move this logic to _filter_actions() for consistency ?
-            if cash_to_use > self._total_cash:
-                cash_to_use = self._total_cash
+            buy_amount = cash_ratio_to_use * self._initial_cash_position
+            if buy_amount > self._total_cash:
+                buy_amount = self._total_cash
                 action_index = np.where(self._total_units.index == ticker)[0]
+                # Change the action to log the real value taken because of the lack of cash.
+                # We change it here, because in _filter_actions it would be unnecessary computations to do this for
+                # all the tickers.
                 self._a_t[action_index] = self._total_cash / self._initial_cash_position
 
-            asset_price = self.dataset.get_decision_prices(self.t_tick, ticker).item()
-            num_units_to_buy = cash_to_use / asset_price
-            super()._buy_asset(ticker=ticker, num_units_to_buy=num_units_to_buy)
+            asset_price = self.dataset.get_decision_prices(self.t_tick, ticker)
+            assert asset_price.notna().all(), 'Cannot buy assets with price = nan.'
+            asset_price = asset_price.item()
+
+            commission_amount = buy_amount * self.buy_commission
+            asset_buy_amount = buy_amount - commission_amount
+            buy_num_shares = asset_buy_amount / asset_price
+
+            # Update balance.
+            self._total_cash -= buy_amount
+            self._total_units[ticker] += buy_num_shares
+            self._total_loss_commissions += commission_amount
 
     def _filter_actions(self, actions: np.ndarray) -> np.ndarray:
         if self._total_cash <= 1.:
@@ -143,8 +152,8 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             'initial_cash_position': self._initial_cash_position
         }
 
-    def _compute_used_position(self) -> float:
-        return (self._initial_cash_position - self._total_cash) / self._initial_cash_position
+    def _compute_total_cash_ratio(self) -> float:
+        return self._total_cash / self._initial_cash_position
 
     def _compute_used_time_ratio(self, t_tick: Optional[int] = None) -> float:
         """
@@ -185,16 +194,8 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
     def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:
         pa = round(episode_metrics['PA'], 4)
-        cumulative_returns = round(episode_metrics['cumulative_returns'], 4)
-        sharpe_ratio = round(episode_metrics['sharpe_ratio'], 4)
-        max_drawdown = round(episode_metrics['max_drawdown'], 4)
 
-        title = f'SR={sharpe_ratio};' \
-                f'Cumulative Returns={cumulative_returns};' \
-                f'PA={pa};' \
-                f'Max Drawdown={max_drawdown}'
-
-        return title
+        return f'PA={pa}'
 
 
 class ExportTeacherActionsOrderExecutionEnvironment(OrderExecutionEnvironment):

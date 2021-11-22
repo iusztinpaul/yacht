@@ -111,19 +111,20 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         action = pd.Series(data=action, index=self.dataset.asset_tickers, name='Actions')
         action = action.sort_values()
 
+        # Firstly, sell the assets so the agent is having more buying power.
+        # Sell from the most conviction items to the least.
+        sell_asset_actions = action[action < 0]
+        for ticker, ticker_action in sell_asset_actions.iteritems():
+            self._sell_asset(
+                ticker,
+                ticker_action
+            )
+
         buy_asset_actions = action[action > 0]
         # Buy from the most conviction items to the least.
         buy_asset_actions = buy_asset_actions.iloc[::-1]
         for ticker, ticker_action in buy_asset_actions.iteritems():
             self._buy_asset(
-                ticker,
-                ticker_action
-            )
-
-        # Sell from the most conviction items to the least.
-        sell_asset_actions = action[action < 0]
-        for ticker, ticker_action in sell_asset_actions.iteritems():
-            self._sell_asset(
                 ticker,
                 ticker_action
             )
@@ -154,6 +155,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
 
         available_amount = self._total_cash / asset_price
         buy_num_shares = min(available_amount, num_units_to_buy)
+        # FIXME: Commission will pass the cash position, when num_units_to_buy >  available_amount.
         buy_amount = asset_price * buy_num_shares * (1 + self.buy_commission)
 
         # Update balance.

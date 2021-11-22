@@ -364,6 +364,7 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             linewidths=(1.5, ),
             linestyle='-.'
         )
+        # TODO: Plot the mean only from self.unadjusted_start.
         if mean_price is not None:
             hlines = dict(
                 hlines=mean_price.values.tolist(),

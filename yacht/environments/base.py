@@ -349,7 +349,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         history_keys.add('date')
         for key in history_keys:
             if key == 'action':
-                history['action'] = self.window_size * [[0] * self.dataset.num_assets]
+                history['action'] = self.window_size * [np.array([0] * self.dataset.num_assets, dtype=np.float32)]
             elif key == 'total_cash':
                 history['total_cash'] = self.window_size * [self._total_cash]
             elif key == 'date':
@@ -379,7 +379,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             Because the history can be updated on multiple calls on the step function check if in the changes
             dictionary there is the desired key & that it was not already added in the current step.
         """
-        return key in changes and len(self.history.get(key, dict())) <= self.t_tick
+        return key in changes and len(self.history.get(key, [])) <= self.t_tick
 
     def _update_history(self, history: dict) -> dict:
         return history
