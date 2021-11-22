@@ -141,6 +141,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
 
         if self._total_units[ticker] > 0:
             sell_num_shares = min(abs(num_units_to_sell), self._total_units[ticker])
+            # FIXME: Commission will pass the shares position, when num_units_to_sell > self._total_units[ticker].
             sell_amount = asset_price * sell_num_shares * (1 - self.sell_commission)
 
             # Update balance.

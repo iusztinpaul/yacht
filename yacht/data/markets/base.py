@@ -143,7 +143,7 @@ class Market(ABC):
 
         assert self.DOWNLOAD_MANDATORY_FEATURES.intersection(set(data.columns)) == self.DOWNLOAD_MANDATORY_FEATURES, \
             f'Some mandatory features are missing after downloading: {ticker}.'
-        assert data.index[0] == start and data.index[-1] == end, f'Data interval is not fulfilled for: {ticker}'
+        assert data.index[0] == start or data.index[-1] == end, f'Data interval is not fulfilled for: {ticker}'
 
         self.cache_request(ticker, interval, data)
 
@@ -274,10 +274,15 @@ class H5Market(Market, ABC):
                 return start, end
 
             new_start = indices[0]
+            new_end = indices[-1]
             if new_start > start:
                 start = new_start
                 assert start <= end, \
                     f'Cannot move start after the end period: {start} > {end}'
+            if new_end < end:
+                end = new_end
+                assert start <= end, \
+                    f'Cannot move end before the start period: {start} > {end}'
 
         return start, end
 
