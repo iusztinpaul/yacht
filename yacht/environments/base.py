@@ -1,4 +1,3 @@
-import datetime
 import time
 from abc import abstractmethod, ABC
 from copy import copy
@@ -7,7 +6,6 @@ from typing import Dict, List, Optional, Union, Tuple
 import gym
 from gym import spaces
 import numpy as np
-from pandas._libs.tslibs.offsets import BDay
 from stable_baselines3.common.utils import set_random_seed
 
 from yacht import utils
@@ -30,7 +28,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         # Environment general requirements.
         self.dataset = copy(dataset)  # Deep copy does not work with tables.
-        self.window_size = self.dataset.past_window_size
+        self.window_size = self.dataset.period_window_size
         self.reward_schema = reward_schema
         self.action_schema = action_schema
 
@@ -80,7 +78,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
     def reset(self):
         # Choose a random ticker for every instance of the environment.
         self.dataset.sample()
-        self.window_size = self.dataset.past_window_size
+        self.window_size = self.dataset.period_window_size
 
         # Rendering.
         self.renderer = self.build_renderer()
@@ -92,6 +90,9 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.start_tick = self.dataset.first_observation_index
         self.end_tick = self.dataset.last_observation_index
         self.t_tick = self.start_tick
+
+        assert self.dataset.index_to_datetime(self.start_tick) == self.dataset.sampled_dataset.unadjusted_start
+        assert self.dataset.index_to_datetime(self.end_tick) == self.dataset.sampled_dataset.unadjusted_end
 
         # MDP state.
         self._done = False
@@ -151,10 +152,22 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return self.dataset.intervals
 
     @property
+    def period_adjustment_size(self) -> int:
+        return self.dataset.sampled_dataset.period_adjustment_size
+
+    @property
     def observation_env_features_len(self) -> int:
         return self.observation_space['env_features'].shape[1] \
             if self.observation_space['env_features'] is not None \
             else 0
+
+    def get_decision_tick(self, take_action_at: str):
+        assert take_action_at in ('current', 'next')
+
+        if take_action_at == 'current':
+            return self.t_tick - 1
+        elif take_action_at == 'next':
+            return self.t_tick
 
     def step(self, action: np.ndarray):
         # The agent time is computed between the last time it called the environment &
@@ -185,7 +198,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             self.update_history(changes)
 
             # Get next observation only to compute the reward. Do not update the env state yet.
-            # The next observation should be computed only after updating the internal state to the history.
+            # The next observation should be computed only after updating the internal state.
             next_state = self.get_observation()
 
             # For a_t compute r_t.
@@ -299,7 +312,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         info = dict(
             # MDP information.
-            step=self.t_tick - self.window_size,
             action=action,
             reward=self._r_t,
             # Interval state information.
@@ -324,13 +336,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         return np.sign(action)
 
     def update_history(self, changes: dict):
-        # Update date at any first call for the current self._tick_t
-        changes['date'] = None
-        if self._should_update_history(key='date', changes=changes):
-            # Map index_t to its corresponding date.
-            current_date = self.dataset.index_to_datetime(self.t_tick)
-            self.history['date'].append(current_date)
-
         for key, value in changes.items():
             if self._should_update_history(key=key, changes=changes):
                 self.history[key].append(value)
@@ -338,28 +343,17 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.history = self._update_history(self.history)
 
     def initialize_history(self):
-        def _get_day_offset(day_delta):
-            if self.dataset.sampled_dataset.include_weekends:
-                return datetime.timedelta(days=day_delta)
-            else:
-                return BDay(day_delta)
         history = dict()
 
         history_keys = set(self.create_info().keys())
         history_keys.add('date')
         for key in history_keys:
             if key == 'action':
-                history['action'] = self.window_size * [np.array([0] * self.dataset.num_assets, dtype=np.float32)]
+                history['action'] = self.period_adjustment_size * [np.array([0] * self.dataset.num_assets, dtype=np.float32)]
             elif key == 'total_cash':
-                history['total_cash'] = self.window_size * [self._total_cash]
-            elif key == 'date':
-                current_date = self.dataset.index_to_datetime(self.window_size)
-                history['date'] = [
-                    current_date - _get_day_offset(day_delta)
-                    for day_delta in range(self.window_size, 0, -1)
-                ]
+                history['total_cash'] = self.period_adjustment_size * [self._total_cash]
             else:
-                history[key] = self.window_size * [np.nan]
+                history[key] = self.period_adjustment_size * [np.nan]
 
         # Initialize custom states.
         history = self._initialize_history(history)
@@ -379,7 +373,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             Because the history can be updated on multiple calls on the step function check if in the changes
             dictionary there is the desired key & that it was not already added in the current step.
         """
-        return key in changes and len(self.history.get(key, [])) <= self.t_tick
+        return key in changes and len(self.history.get(key, [])) < self.t_tick
 
     def _update_history(self, history: dict) -> dict:
         return history
@@ -469,22 +463,24 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         data['unadjusted_dates'] = unadjusted_dates
         data['unadjusted_prices'] = unadjusted_prices.values
-        data['unadjusted_actions'] = data['action'][self.window_size:]
+        data['unadjusted_actions'] = data['action'][self.period_adjustment_size:]
 
         return data
     
     def pad_report(self, report: Dict[str, Union[np.ndarray, list]]) -> Dict[str, Union[np.ndarray, list]]:
         edge_keys = ('total_cash', 'total_units', 'total_assets')
         zero_keys = ('action', 'longs', 'shorts', 'holds')
+        to_be_padded_keys = edge_keys + zero_keys
 
-        remaining_period_length = self.end_tick - self.t_tick
-        padding_axis_one_dim = (0, remaining_period_length)
-        padding_axis_two_dims = ((0, remaining_period_length), (0, 0))
         for k, v in report.items():
+            if k not in to_be_padded_keys:
+                continue
+
+            remaining_period_length = self.end_tick + 1 - len(v)
             if isinstance(v, np.ndarray) and len(v.shape) == 1:
-                padding_axis = padding_axis_one_dim
+                padding_axis = (0, remaining_period_length)
             else:
-                padding_axis = padding_axis_two_dims
+                padding_axis = ((0, remaining_period_length), (0, 0))
 
             if k in edge_keys:
                 report[k] = np.pad(report[k], padding_axis, mode='edge')

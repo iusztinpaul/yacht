@@ -131,7 +131,7 @@ def build_dataset(
     # Datasets will expand their data range with -window_size on the left side of the interval.
     start = utils.adjust_period_to_window(
         datetime_point=start,
-        window_size=input_config.window_size,
+        window_size=DatasetPeriod.compute_period_adjustment_size(input_config.window_size, take_action_at='current'),
         action='+',
         include_weekends=input_config.include_weekends
     )
@@ -179,7 +179,7 @@ def build_dataset(
         dataset_period = DatasetPeriod(
             start=period_start,
             end=period_end,
-            past_window_size=input_config.window_size,  # Same past offset for Student or Teacher setup.
+            window_size=input_config.window_size,  # Same past offset for Student or Teacher setup.
             include_weekends=input_config.include_weekends,
             frequency='days'
         )
@@ -260,7 +260,7 @@ def build_dataset(
     sample_dataset_period = DatasetPeriod(
         start=start,
         end=end,
-        past_window_size=input_config.window_size,
+        window_size=input_config.window_size,
         include_weekends=input_config.include_weekends,
         frequency='days'
     )

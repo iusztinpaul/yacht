@@ -1,6 +1,6 @@
 import random
 from datetime import datetime
-from typing import List, Optional, Dict, Union
+from typing import List, Optional, Dict, Union, Iterable
 
 import numpy as np
 import pandas as pd
@@ -92,7 +92,7 @@ class SampleAssetDataset(AssetDataset):
     def asset_tickers(self) -> List[str]:
         return self.datasets[self.current_dataset_index].asset_tickers
 
-    def index_to_datetime(self, integer_index: int) -> datetime:
+    def index_to_datetime(self, integer_index: Union[int, Iterable]) -> Union[datetime, Iterable[datetime]]:
         return self.datasets[self.current_dataset_index].index_to_datetime(integer_index)
 
     def get_prices(self) -> pd.DataFrame:

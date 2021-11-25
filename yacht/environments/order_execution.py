@@ -55,8 +55,8 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
     def _get_env_observation(self, observation: Dict[str, np.array]) -> Dict[str, np.array]:
         assert self.is_history_initialized
 
-        total_cash_history = self.history['total_cash'][-self.window_size:]
-        total_cash_history = np.array(total_cash_history, dtype=np.float32).reshape(-1, 1)
+        remained_cash_history = self.history['remained_cash'][-self.window_size:]
+        remained_cash_history = np.array(remained_cash_history, dtype=np.float32).reshape(-1, 1)
 
         used_time_history = self.history['used_time'][-self.window_size:]
         used_time_history = np.array(used_time_history, dtype=np.float32).reshape(-1, 1)
@@ -65,17 +65,26 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             actions = self.history['action'][-self.window_size:]
             actions = np.array(actions, dtype=np.float32).reshape(-1, 1)
 
-            observation['env_features'] = np.concatenate([total_cash_history, used_time_history, actions], axis=-1)
+            observation['env_features'] = np.concatenate([remained_cash_history, used_time_history, actions], axis=-1)
         else:
-            observation['env_features'] = np.concatenate([total_cash_history, used_time_history], axis=-1)
+            observation['env_features'] = np.concatenate([remained_cash_history, used_time_history], axis=-1)
+
+        # In the first iterations we don't have enough history.
+        if observation['env_features'].shape[0] < self.window_size:
+            padding_value = self.window_size - observation['env_features'].shape[0]
+            observation['env_features'] = np.pad(
+                observation['env_features'],
+                ((padding_value, 0), (0, 0)),
+                mode='edge'
+            )
 
         return observation
 
     def _initialize_history(self, history: dict) -> dict:
         history = super()._initialize_history(history)
 
-        history['total_cash'] = self.window_size * [1.]
-        history['used_time'] = self.window_size * [0.]
+        history['remained_cash'] = self.period_adjustment_size * [1.]
+        history['used_time'] = self.period_adjustment_size * [0.]
 
         return history
 
@@ -100,11 +109,11 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
                     'total_units': np.copy(self._total_units.values)
                 }
 
-            changes['total_cash'] = 0.
+            changes['remained_cash'] = 0.
             changes['used_time'] = 1.
         else:
             changes = super().update_internal_state(action)
-            changes['total_cash'] = self._compute_total_cash_ratio()
+            changes['remained_cash'] = self._compute_total_cash_ratio()
             changes['used_time'] = self._compute_used_time_ratio()
 
         return changes
@@ -120,13 +129,14 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
                 # all the tickers.
                 self._a_t[action_index] = self._total_cash / self._initial_cash_position
 
-            asset_price = self.dataset.get_decision_prices(self.t_tick, ticker)
-            assert asset_price.notna().all(), 'Cannot buy assets with price = nan.'
-            asset_price = asset_price.item()
+            decision_tick = self.get_decision_tick(take_action_at='current')
+            asset_last_price = self.dataset.get_decision_prices(decision_tick, ticker)
+            assert asset_last_price.notna().all(), 'Cannot buy assets with price = nan.'
+            asset_last_price = asset_last_price.item()
 
             commission_amount = buy_amount * self.buy_commission
             asset_buy_amount = buy_amount - commission_amount
-            buy_num_shares = asset_buy_amount / asset_price
+            buy_num_shares = asset_buy_amount / asset_last_price
 
             # Update balance.
             self._total_cash -= buy_amount
@@ -134,17 +144,18 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             self._total_loss_commissions += commission_amount
 
     def _filter_actions(self, actions: np.ndarray) -> np.ndarray:
-        if self._total_cash <= 1.:
+        if not self.has_cash():
             actions = np.zeros_like(actions)
 
         return actions
 
     def _get_reward_schema_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:
-        next_price = self.dataset.get_decision_prices(self.t_tick).values
+        decision_tick = self.get_decision_tick(take_action_at='current')
+        last_price = self.dataset.get_decision_prices(decision_tick).values
 
         return {
             'market_mean_price': self.unadjusted_period_mean_price.values,
-            'next_price': next_price,
+            'last_price': last_price,
             'actions': self.history['action'][self.window_size:],
             'max_distance': self.dataset.num_days,
             'cash_used_on_last_tick': self.cash_used_on_last_tick,
@@ -161,25 +172,16 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             t_tick: The tick relative to the ratio will be computed. If `None` self.t_tick will be used.
 
         Returns:
-            Computes the ratio from t_tick to the end of the month. If t_tick is at the very beginning of the month
-            the function will return 0, otherwise if it is the last day of the month it will return 1.
+            Computes the ratio from t_tick to the end of the env. If t_tick is at the very beginning of the month
+            the function will return 0, otherwise if it is the last day of the env it will return 1.
         """
 
         if t_tick is None:
             t_tick = self.t_tick
+        mapped_t_tick = t_tick - self.start_tick
+        total_len = self.end_tick - self.start_tick
 
-        t_datetime = self.dataset.index_to_datetime(t_tick)
-        start = self.dataset.sampled_dataset.unadjusted_start
-        end = self.dataset.sampled_dataset.end
-
-        # Decrement one day, because t_month_period.right is not included in the interval.
-        # We want the data to have values between [0, 1], especially the 0 & 1 values.
-        days_until_end_of_month = (end - t_datetime).days
-        days_in_month = (end - start).days
-
-        # Add +1 to differentiate between the initialized history &
-        # the steps that the agent could actually do something.
-        ratio = (days_in_month - days_until_end_of_month + 1) / (days_in_month + 1)
+        ratio = mapped_t_tick / total_len
         assert 0 <= ratio <= 1, 't_tick / t_datetime it is not within the current month'
 
         return ratio
@@ -190,7 +192,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         }
 
     def _is_done(self) -> bool:
-        return self._total_cash <= 1
+        return not self.has_cash()
 
     def _compute_render_all_graph_title(self, episode_metrics: dict) -> str:
         pa = round(episode_metrics['PA'], 4)

@@ -55,6 +55,8 @@ environment: {
 agent: {
     name: 'PPO'
     is_classic_method: false
+    is_teacher: false
+    is_student: false
     verbose: true
     policy: {
         name: 'MlpPolicy'

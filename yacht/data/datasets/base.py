@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union, Optional, Iterable
 
 import numpy as np
 import pandas as pd
@@ -21,28 +21,43 @@ class DatasetPeriod:
             self,
             start: datetime,
             end: datetime,
-            past_window_size: int,
+            window_size: int,
             include_weekends: bool,
+            take_action_at: str = 'current',
             frequency: str = 'days'
     ):
         assert frequency in ('days', )
 
         self.unadjusted_start = start
         self.unadjusted_end = end
+        self.period_adjustment_size = self.compute_period_adjustment_size(
+            window_size=window_size,
+            take_action_at=take_action_at
+        )
         # Adjust start with a 'window_size' length so we take data from the past & actually start from the given start.
         self.start = utils.adjust_period_to_window(
             datetime_point=start,
-            window_size=past_window_size,
+            window_size=self.period_adjustment_size,  # We also use the initial price within the period.
             action='-',
-            include_weekends=include_weekends
+            include_weekends=include_weekends,
+            frequency=frequency
         )
         self.end = end
 
-        self.past_window_size = past_window_size
+        self.window_size = window_size
         self.include_weekends = include_weekends
         self.frequency = frequency
 
         assert self.start < self.unadjusted_start
+
+    @classmethod
+    def compute_period_adjustment_size(cls, window_size: int, take_action_at: str) -> int:
+        assert take_action_at in ('current', 'next')
+
+        if take_action_at == 'current':
+            return window_size - 1
+        elif take_action_at == 'next':
+            return window_size
 
     def __len__(self) -> int:
         return utils.len_period_range(
@@ -106,17 +121,21 @@ class AssetDataset(Dataset, ABC):
         self.market.close()
 
     @property
-    def past_window_size(self) -> int:
-        return self.period.past_window_size
+    def period_window_size(self) -> int:
+        return self.period.window_size
+
+    @property
+    def period_adjustment_size(self) -> int:
+        return self.period.period_adjustment_size
 
     @property
     def first_observation_index(self) -> int:
         # Starting from 0 & the minimum value for the window_size is 1.
-        return self.past_window_size - 1
+        return self.period_window_size - 1
 
     @property
     def last_observation_index(self) -> int:
-        return self.first_observation_index + self.num_days
+        return self.period_adjustment_size + self.num_days - 1
 
     @property
     def unadjusted_start(self) -> datetime:
@@ -283,7 +302,7 @@ class SingleAssetDataset(AssetDataset, ABC):
     def asset_tickers(self) -> List[str]:
         return [self.ticker]
 
-    def index_to_datetime(self, integer_index: int) -> datetime:
+    def index_to_datetime(self, integer_index: Union[int, Iterable]) -> Union[datetime, Iterable[datetime]]:
         return self.data['1d'].index[integer_index].to_pydatetime()
 
     def get_prices(self) -> pd.DataFrame:
@@ -373,7 +392,7 @@ class MultiAssetDataset(AssetDataset):
     def asset_tickers(self) -> List[str]:
         return [dataset.ticker for dataset in self.datasets]
 
-    def index_to_datetime(self, integer_index: int) -> datetime:
+    def index_to_datetime(self, integer_index: Union[int, Iterable]) -> Union[datetime, Iterable[datetime]]:
         # All the datasets have the same indices to dates mappings.
         return self.datasets[0].index_to_datetime(integer_index)
 

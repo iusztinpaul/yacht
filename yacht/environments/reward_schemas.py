@@ -75,11 +75,11 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
 class PriceAdvantageRelativeToCashPositionRewardSchema(ScaledRewardSchema):
     def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
         market_mean_price = kwargs['market_mean_price']
-        next_price = kwargs['next_price']
+        last_price = kwargs['last_price']
         initial_cash_position = kwargs['initial_cash_position']
         remained_cash = kwargs['remained_cash']
 
-        price_advantage = (1 - next_price / market_mean_price)
+        price_advantage = (1 - last_price / market_mean_price)
         remained_cash_ratio = remained_cash / initial_cash_position
         # Map ratio to [-1; 1]
         remained_cash_ratio *= 2
@@ -95,9 +95,9 @@ class DecisionMakingRewardSchema(ScaledRewardSchema):
     def calculate_reward(self, action: np.ndarray, *args, **kwargs):
         # TODO: Adapt for sell execution
         market_mean_price = kwargs['market_mean_price']
-        next_price = kwargs['next_price']
+        last_price = kwargs['last_price']
 
-        price_advantage = (1 - next_price / market_mean_price)
+        price_advantage = (1 - last_price / market_mean_price)
         reward = self.reward_scaling * action * price_advantage
 
         return reward.item()

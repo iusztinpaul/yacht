@@ -9,6 +9,8 @@ from yacht.environments import BaseAssetEnvironment, RewardSchema, ActionSchema
 
 
 class MultiAssetEnvironment(BaseAssetEnvironment):
+    INSOLVENT_EPSILON = 10.
+
     def __init__(
             self,
             name: str,
@@ -85,8 +87,8 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         return observation
 
     def _initialize_history(self, history: dict) -> dict:
-        history['total_units'] = self.window_size * [np.copy(self._total_units.values)]
-        history['total_assets'] = self.window_size * [self._initial_cash_position]
+        history['total_units'] = self.period_adjustment_size * [np.copy(self._total_units.values)]
+        history['total_assets'] = self.period_adjustment_size * [self._initial_cash_position]
 
         return history
 
@@ -98,7 +100,8 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         return info
 
     def _compute_total_assets(self) -> float:
-        asset_prices = self.dataset.get_decision_prices(t_tick=self.t_tick)
+        decision_tick = self.get_decision_tick(take_action_at='current')
+        asset_prices = self.dataset.get_decision_prices(t_tick=decision_tick)
         total_units_price = self._total_units.combine(
             other=asset_prices,
             func=lambda num_units, unit_price: num_units * unit_price
@@ -135,7 +138,8 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         }
 
     def _sell_asset(self, ticker: str, num_units_to_sell: float):
-        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker)
+        decision_tick = self.get_decision_tick(take_action_at='current')
+        asset_price = self.dataset.get_decision_prices(decision_tick, ticker)
         assert asset_price.notna().all(), 'Cannot sell assets with price = nan.'
         asset_price = asset_price.item()
 
@@ -150,7 +154,8 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
             self._total_loss_commissions += asset_price * sell_num_shares * self.sell_commission
 
     def _buy_asset(self, ticker: str, num_units_to_buy: float):
-        asset_price = self.dataset.get_decision_prices(self.t_tick, ticker)
+        decision_tick = self.get_decision_tick(take_action_at='current')
+        asset_price = self.dataset.get_decision_prices(decision_tick, ticker)
         assert asset_price.notna().all(), 'Cannot buy assets with price = nan.'
         asset_price = asset_price.item()
 
@@ -165,8 +170,13 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         self._total_loss_commissions += asset_price * buy_num_shares * self.buy_commission
 
     def _is_done(self) -> bool:
-        # If the agent has no more assets finish the episode.
-        return bool(self._total_cash <= 0 and (self._total_units <= 0).all())
+        return not bool(self.has_cash() or self.has_shares())
+
+    def has_cash(self) -> bool:
+        return self._total_cash > self.INSOLVENT_EPSILON
+
+    def has_shares(self) -> bool:
+        return (self._total_units > 0).any()
 
     def render(self, mode='human', name='trades.png'):
         pass

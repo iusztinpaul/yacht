@@ -131,9 +131,11 @@ def adjust_period_to_window(
         datetime_point: Union[str, datetime],
         window_size: int,
         action: str,
-        include_weekends: bool
+        include_weekends: bool,
+        frequency: str = 'days'
 ):
     assert action in ('+', '-')
+    assert frequency in ('days', )
 
     if isinstance(datetime_point, str):
         datetime_point = string_to_datetime(datetime_point)
