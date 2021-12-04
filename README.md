@@ -209,5 +209,5 @@ train: {
 }
 ```
 
-## More Detailed Results
+## Detailed Documentation
 * [Order Execution](docs/order_execution.md)
