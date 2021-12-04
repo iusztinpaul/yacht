@@ -10,6 +10,7 @@ input: {
     intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
+    take_action_at: 'current'
     technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
     start: '1/8/2016'
     end: '15/10/2021'

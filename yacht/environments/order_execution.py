@@ -129,7 +129,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
                 # all the tickers.
                 self._a_t[action_index] = self._total_cash / self._initial_cash_position
 
-            decision_tick = self.get_decision_tick(take_action_at='current')
+            decision_tick = self.get_decision_tick()
             asset_last_price = self.dataset.get_decision_prices(decision_tick, ticker)
             assert asset_last_price.notna().all(), 'Cannot buy assets with price = nan.'
             asset_last_price = asset_last_price.item()
@@ -150,7 +150,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         return actions
 
     def _get_reward_schema_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:
-        decision_tick = self.get_decision_tick(take_action_at='current')
+        decision_tick = self.get_decision_tick()
         last_price = self.dataset.get_decision_prices(decision_tick).values
 
         return {

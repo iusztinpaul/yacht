@@ -91,7 +91,8 @@ class BaseAssetEnvironment(gym.Env, ABC):
         self.end_tick = self.dataset.last_observation_index
         self.t_tick = self.start_tick
 
-        assert self.dataset.index_to_datetime(self.start_tick) == self.dataset.sampled_dataset.unadjusted_start
+        assert self.dataset.index_to_datetime(self.dataset.period_adjustment_size) == \
+               self.dataset.sampled_dataset.unadjusted_start
         assert self.dataset.index_to_datetime(self.end_tick) == self.dataset.sampled_dataset.unadjusted_end
 
         # MDP state.
@@ -161,12 +162,10 @@ class BaseAssetEnvironment(gym.Env, ABC):
             if self.observation_space['env_features'] is not None \
             else 0
 
-    def get_decision_tick(self, take_action_at: str):
-        assert take_action_at in ('current', 'next')
-
-        if take_action_at == 'current':
+    def get_decision_tick(self):
+        if self.dataset.take_action_at == 'current':
             return self.t_tick - 1
-        elif take_action_at == 'next':
+        elif self.dataset.take_action_at == 'next':
             return self.t_tick
 
     def step(self, action: np.ndarray):
@@ -342,6 +341,19 @@ class BaseAssetEnvironment(gym.Env, ABC):
 
         self.history = self._update_history(self.history)
 
+    def _should_update_history(self, key: str, changes: dict) -> bool:
+        """
+            Because the history can be updated on multiple calls on the step function check if in the changes
+            dictionary there is the desired key & that it was not already added in the current step.
+        """
+        if self.dataset.take_action_at == 'current':
+            return key in changes and len(self.history.get(key, [])) < self.t_tick
+        elif self.dataset.take_action_at == 'next':
+            return key in changes and len(self.history.get(key, [])) <= self.t_tick
+
+    def _update_history(self, history: dict) -> dict:
+        return history
+
     def initialize_history(self):
         history = dict()
 
@@ -366,16 +378,6 @@ class BaseAssetEnvironment(gym.Env, ABC):
         # Parameter where to store the total value of your assets = units * price.
         history['total_assets'] = []
 
-        return history
-
-    def _should_update_history(self, key: str, changes: dict):
-        """
-            Because the history can be updated on multiple calls on the step function check if in the changes
-            dictionary there is the desired key & that it was not already added in the current step.
-        """
-        return key in changes and len(self.history.get(key, [])) < self.t_tick
-
-    def _update_history(self, history: dict) -> dict:
         return history
 
     def is_done(self) -> bool:
@@ -445,7 +447,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         unadjusted_prices = prices.loc[unadjusted_dates]
         prices = prices.loc[dates]
 
-        data = {
+        report = {
             'date': dates,
             'price': prices.values,
             'action': np.array(self.history['action'], dtype=np.float32),
@@ -455,17 +457,17 @@ class BaseAssetEnvironment(gym.Env, ABC):
             'total_cash': np.array(self.history['total_cash'], dtype=np.float64)
         }
         if len(self.history['total_units']) > 0:
-            data['total_units'] = np.array(self.history['total_units'], dtype=np.float32)
+            report['total_units'] = np.array(self.history['total_units'], dtype=np.float32)
         if len(self.history['total_assets']) > 0:
-            data['total_assets'] = np.array(self.history['total_assets'], dtype=np.float64)
+            report['total_assets'] = np.array(self.history['total_assets'], dtype=np.float64)
             
-        data = self.pad_report(data)
+        report = self.pad_report(report)
 
-        data['unadjusted_dates'] = unadjusted_dates
-        data['unadjusted_prices'] = unadjusted_prices.values
-        data['unadjusted_actions'] = data['action'][self.period_adjustment_size:]
+        report['unadjusted_dates'] = unadjusted_dates
+        report['unadjusted_prices'] = unadjusted_prices.values
+        report['unadjusted_actions'] = report['action'][self.period_adjustment_size:]
 
-        return data
+        return report
     
     def pad_report(self, report: Dict[str, Union[np.ndarray, list]]) -> Dict[str, Union[np.ndarray, list]]:
         edge_keys = ('total_cash', 'total_units', 'total_assets')

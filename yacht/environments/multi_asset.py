@@ -9,7 +9,7 @@ from yacht.environments import BaseAssetEnvironment, RewardSchema, ActionSchema
 
 
 class MultiAssetEnvironment(BaseAssetEnvironment):
-    INSOLVENT_EPSILON = 10.
+    INSOLVENT_EPSILON = 0.5
 
     def __init__(
             self,
@@ -100,7 +100,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         return info
 
     def _compute_total_assets(self) -> float:
-        decision_tick = self.get_decision_tick(take_action_at='current')
+        decision_tick = self.get_decision_tick()
         asset_prices = self.dataset.get_decision_prices(t_tick=decision_tick)
         total_units_price = self._total_units.combine(
             other=asset_prices,
@@ -138,7 +138,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
         }
 
     def _sell_asset(self, ticker: str, num_units_to_sell: float):
-        decision_tick = self.get_decision_tick(take_action_at='current')
+        decision_tick = self.get_decision_tick()
         asset_price = self.dataset.get_decision_prices(decision_tick, ticker)
         assert asset_price.notna().all(), 'Cannot sell assets with price = nan.'
         asset_price = asset_price.item()
@@ -154,7 +154,7 @@ class MultiAssetEnvironment(BaseAssetEnvironment):
             self._total_loss_commissions += asset_price * sell_num_shares * self.sell_commission
 
     def _buy_asset(self, ticker: str, num_units_to_buy: float):
-        decision_tick = self.get_decision_tick(take_action_at='current')
+        decision_tick = self.get_decision_tick()
         asset_price = self.dataset.get_decision_prices(decision_tick, ticker)
         assert asset_price.notna().all(), 'Cannot buy assets with price = nan.'
         asset_price = asset_price.item()

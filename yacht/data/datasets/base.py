@@ -46,6 +46,7 @@ class DatasetPeriod:
 
         self.window_size = window_size
         self.include_weekends = include_weekends
+        self.take_action_at = take_action_at
         self.frequency = frequency
 
         assert self.start < self.unadjusted_start
@@ -127,6 +128,10 @@ class AssetDataset(Dataset, ABC):
     @property
     def period_adjustment_size(self) -> int:
         return self.period.period_adjustment_size
+
+    @property
+    def take_action_at(self) -> str:
+        return self.period.take_action_at
 
     @property
     def first_observation_index(self) -> int:

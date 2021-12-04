@@ -128,10 +128,15 @@ def build_dataset(
     # 2. Compute dataset periods.
     # 3. Compute observation window_size.
     # -----------------------------------------------------------------------------------------------------------------
+    assert bool(input_config.take_action_at) is True, '"input.take_action_at" feature is mandatory.'
+
     # Datasets will expand their data range with -window_size on the left side of the interval.
     start = utils.adjust_period_to_window(
         datetime_point=start,
-        window_size=DatasetPeriod.compute_period_adjustment_size(input_config.window_size, take_action_at='current'),
+        window_size=DatasetPeriod.compute_period_adjustment_size(
+            window_size=input_config.window_size,
+            take_action_at=input_config.take_action_at
+        ),
         action='+',
         include_weekends=input_config.include_weekends
     )
@@ -181,6 +186,7 @@ def build_dataset(
             end=period_end,
             window_size=input_config.window_size,  # Same past offset for Student or Teacher setup.
             include_weekends=input_config.include_weekends,
+            take_action_at=input_config.take_action_at,
             frequency='days'
         )
         for dataset_tickers in itertools.combinations(tickers, config.input.num_assets_per_dataset):
@@ -262,6 +268,7 @@ def build_dataset(
         end=end,
         window_size=input_config.window_size,
         include_weekends=input_config.include_weekends,
+        take_action_at=input_config.take_action_at,
         frequency='days'
     )
     return SampleAssetDataset(
