@@ -74,3 +74,140 @@ wandb agent id-given-by-generated-sweep
 
 Just set `tickers: ['NASDAQ100']` in the configuration file and all the tickers will be downloaded.
 You can also set something like `['NASDQ100', 'RUSSELL2000', 'AAPL']` or any combination you like.
+
+#### Example of Input Config
+```json
+input: {
+    market: 'Yahoo'
+    market_mixins: ['TargetPriceMixin']
+    dataset: 'DayFrequencyDataset'
+    num_assets_per_dataset: 1
+    scaler: 'MinMaxScaler'
+    scale_on_interval: '1d'
+    tickers: ['NASDAQ100']
+    fine_tune_tickers: ['AAPL']
+    intervals: ['1d']
+    features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    decision_price_feature: 'TP'
+    take_action_at: 'current'
+    technical_indicators: ['macd', 'rsi_30']
+    start: '1/8/2016'
+    end: '15/10/2021'
+    period_length: '1M'
+    window_size: 30
+    render_periods: [
+        # For the train period plot a bigger interval, because it is rendered only once.
+         {start: '1/1/2018', end: '1/7/2019'},
+        # For the validation period be more greedy, because it is rendered a lot of times during training.
+         {start: '15/12/2020', end: '15/8/2021'}
+    ]
+    include_weekends: false
+    validation_split_ratio: 0.3
+    backtest_split_ratio: 0.0
+    embargo_ratio: 0.025
+    backtest: {
+        run: false
+        deterministic: true
+        tickers: ['AAPL']
+    }
+}
+```
+
+# Reinforcement Learning Components
+## Agents
+* PPO
+
+#### Example of Agent Config
+```json
+agent: {
+    name: 'StudentPPO'
+    is_classic_method: false
+    is_teacher: false
+    is_student: true
+    verbose: true
+    policy: {
+        name: 'MlpPolicy'
+        activation_fn: 'Tanh',
+        feature_extractor: {
+            name: 'RecurrentFeatureExtractor'
+            features_dim: [64,64,128]
+            drop_out_p: 0.,
+            rnn_layer_type: 'GRU'
+        }
+        net_arch: {
+            shared: [64, 64]
+            vf: [32]
+            pi: [32]
+        }
+    }
+}
+```
+
+## Environments
+* SingleAssetEnvironment
+* MultiAssetEnvironment
+* OrderExecutionEnvironment
+
+## Reward Schemas
+#### Trading:
+* AssetsPriceChangeRewardSchema
+
+#### Order Execution
+* DecisionMakingRewardSchema
+* ActionMagnitudeRewardSchema
+
+## Action Schemas
+* DiscreteActionScheme
+* ContinuousFloatActionSchema
+* ContinuousIntegerActionSchema
+
+#### Example of Environment Config
+```json
+environment: {
+    name: 'StudentOrderExecutionEnvironment-v0'
+    n_envs: 6
+    envs_on_different_processes: false
+    buy_commission: 0.00
+    sell_commission: 0.00
+    initial_cash_position: 5000
+    reward_schemas: [
+    {
+        name: 'DecisionMakingRewardSchema',
+        reward_scaling: 40
+    },
+    {
+        name: 'ActionMagnitudeRewardSchema',
+        reward_scaling: 1.
+    }
+    ]
+    global_reward_scaling: 1.
+    action_schema: 'DiscreteActionScheme'
+    possibilities: [0, 0.25, 0.5, 0.75, 1]
+}
+```
+
+#### Example of Train Config
+```json
+train: {
+    trainer_name: 'Trainer'
+    total_timesteps: 2000000
+    fine_tune_total_timesteps: -1
+    collecting_n_steps: 2048
+    learning_rate: 0.0002
+    batch_size: 2048
+    n_epochs: 5
+    gamma: 1.
+    gae_lambda: 1.
+    clip_range: 0.3
+    vf_clip_range: 0.3
+    entropy_coefficient: 0.6
+    vf_coefficient: 1.
+    max_grad_norm: 100
+    use_sde: false
+    sde_sample_freq: -1
+    learning_rate_scheduler: 'ConstantSchedule'
+}
+```
+
+## More Detailed Results
+* [Order Execution](docs/order_execution.md)
