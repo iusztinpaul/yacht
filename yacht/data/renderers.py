@@ -362,18 +362,26 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
         vlines = dict(
             vlines=[self.unadjusted_start],
             linewidths=(1.5, ),
-            linestyle='-.'
+            linestyle='-.',
+            colors='black'
         )
-        # TODO: Plot the mean only from self.unadjusted_start.
         if mean_price is not None:
-            hlines = dict(
-                hlines=mean_price.values.tolist(),
-                colors=[self.COLOURS[idx] for idx in range(len(tickers) - 1, -1, -1)],
-                linewidths=[1.0 for _ in range(len(tickers))],
+            alines = []
+            colours = []
+            for idx, asset_mean_price in enumerate(mean_price.values.tolist()):
+                alines.append([
+                    (self.unadjusted_start, asset_mean_price),
+                    (self.end, asset_mean_price)
+                ])
+                colours.append(self.COLOURS[idx])
+            alines = dict(
+                alines=alines,
+                colors=colours,
+                linewidths=1.,
                 linestyle='-.'
             )
         else:
-            hlines = None
+            alines = None
         fig, axes = mpf.plot(
             data=dummy_data,
             addplot=extra_plots,
@@ -388,7 +396,7 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             axisoff=False,
             returnfig=True,
             vlines=vlines,
-            hlines=hlines
+            alines=alines
         )
 
         # Configure chart legend and title
