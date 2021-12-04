@@ -76,7 +76,7 @@ Just set `tickers: ['NASDAQ100']` in the configuration file and all the tickers 
 You can also set something like `['NASDQ100', 'RUSSELL2000', 'AAPL']` or any combination you like.
 
 #### Example of Input Config
-```json
+```
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
@@ -118,7 +118,7 @@ input: {
 * PPO
 
 #### Example of Agent Config
-```json
+```
 agent: {
     name: 'StudentPPO'
     is_classic_method: false
@@ -162,7 +162,7 @@ agent: {
 * ContinuousIntegerActionSchema
 
 #### Example of Environment Config
-```json
+```
 environment: {
     name: 'StudentOrderExecutionEnvironment-v0'
     n_envs: 6
@@ -187,7 +187,7 @@ environment: {
 ```
 
 #### Example of Train Config
-```json
+```
 train: {
     trainer_name: 'Trainer'
     total_timesteps: 2000000
