@@ -188,7 +188,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             self.t_tick += 1
 
             self._a_t = self.action_schema.get_value(action)
-            self._a_t = self._filter_actions(self._a_t)
+            self._a_t = self._adjust_actions(self._a_t)
 
             # Update internal state after (s_t, a_t).
             changes = self.update_internal_state(self._a_t)
@@ -238,7 +238,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
         """
         pass
 
-    def _filter_actions(self, actions: np.ndarray) -> np.ndarray:
+    def _adjust_actions(self, actions: np.ndarray) -> np.ndarray:
         return actions
 
     def _get_reward_schema_kwargs(self, next_state: Dict[str, np.ndarray]) -> dict:

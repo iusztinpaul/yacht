@@ -89,32 +89,9 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         return history
 
     def update_internal_state(self, action: np.ndarray) -> dict:
-        if self.is_done():
-            # TODO: Move this logic to _filter_actions() for consistency.
-            # Make a copy to keep it for metrics.
-            self.cash_used_on_last_tick = copy(self._total_cash)
-            # Remove the cash that the agent actually tried to used. That is a valid move.
-            self.cash_used_on_last_tick -= (self._a_t * self._initial_cash_position).sum()
-
-            # Split money equally between the assets, if there is any cash position left for the current month.
-            remaining_month_cash = np.tile(self._total_cash // self.dataset.num_assets, self.dataset.num_assets)
-            if (remaining_month_cash > 0).all():
-                # Update state action to preserve the history & statistics.
-                self._a_t = remaining_month_cash / self._initial_cash_position
-                changes = super().update_internal_state(self._a_t)
-            else:
-                self._a_t = np.zeros_like(action)
-                changes = {
-                    'total_cash': self._total_cash,
-                    'total_units': np.copy(self._total_units.values)
-                }
-
-            changes['remained_cash'] = 0.
-            changes['used_time'] = 1.
-        else:
-            changes = super().update_internal_state(action)
-            changes['remained_cash'] = self._compute_total_cash_ratio()
-            changes['used_time'] = self._compute_used_time_ratio()
+        changes = super().update_internal_state(action)
+        changes['remained_cash'] = self._compute_total_cash_ratio()
+        changes['used_time'] = self._compute_used_time_ratio()
 
         return changes
 
@@ -143,9 +120,26 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             self._total_units[ticker] += buy_num_shares
             self._total_loss_commissions += commission_amount
 
-    def _filter_actions(self, actions: np.ndarray) -> np.ndarray:
+    def _adjust_actions(self, actions: np.ndarray) -> np.ndarray:
         if not self.has_cash():
-            actions = np.zeros_like(actions)
+            return np.zeros_like(actions)
+
+        if self.is_done():
+            # Make a copy to keep it for metrics.
+            self.cash_used_on_last_tick = copy(self._total_cash)
+            # Remove the cash that the agent actually tried to use. That is a valid move.
+            self.cash_used_on_last_tick -= self._a_t * self._initial_cash_position
+            # The buy & sell actions will handle the case when the agent tries to buy more than it has.
+            # But in that case, put 'cash_used_on_last_tick' on 0.
+            self.cash_used_on_last_tick = max(self.cash_used_on_last_tick, 0)
+
+            # Split money equally between the assets, if there is any cash position left for the current month.
+            remaining_month_cash = np.tile(
+                self.cash_used_on_last_tick // self.dataset.num_assets,
+                self.dataset.num_assets
+            )
+            action_remaining_month_cash = remaining_month_cash / self._initial_cash_position
+            actions += action_remaining_month_cash
 
         return actions
 
