@@ -49,7 +49,7 @@ class DatasetPeriod:
         self.take_action_at = take_action_at
         self.frequency = frequency
 
-        assert self.start < self.unadjusted_start
+        assert self.start <= self.unadjusted_start
 
     @classmethod
     def compute_period_adjustment_size(cls, window_size: int, take_action_at: str) -> int:

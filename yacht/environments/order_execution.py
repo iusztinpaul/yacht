@@ -69,14 +69,18 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
         else:
             observation['env_features'] = np.concatenate([remained_cash_history, used_time_history], axis=-1)
 
-        # In the first iterations we don't have enough history.
+        # In the first iterations, in some setups, we don't have enough history.
         if observation['env_features'].shape[0] < self.window_size:
-            padding_value = self.window_size - observation['env_features'].shape[0]
-            observation['env_features'] = np.pad(
-                observation['env_features'],
-                ((padding_value, 0), (0, 0)),
-                mode='edge'
-            )
+            if self.window_size == 1:
+                assert self.add_action_features is False, 'window_size = 1 does not support add_action_features = True.'
+                observation['env_features'] = np.array([[1., 0.]], dtype=np.float32)
+            else:
+                padding_value = self.window_size - observation['env_features'].shape[0]
+                observation['env_features'] = np.pad(
+                    observation['env_features'],
+                    ((padding_value, 0), (0, 0)),
+                    mode='edge'
+                )
 
         return observation
 
