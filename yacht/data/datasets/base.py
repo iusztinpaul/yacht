@@ -24,9 +24,9 @@ class DatasetPeriod:
             window_size: int,
             include_weekends: bool,
             take_action_at: str = 'current',
-            frequency: str = 'days'
+            frequency: str = 'd'
     ):
-        assert frequency in ('days', )
+        assert frequency in ('d', )
 
         self.unadjusted_start = start
         self.unadjusted_end = end
@@ -35,7 +35,7 @@ class DatasetPeriod:
             take_action_at=take_action_at
         )
         # Adjust start with a 'window_size' length so we take data from the past & actually start from the given start.
-        self.start = utils.adjust_period_to_window(
+        self.start = utils.adjust_period_with_window(
             datetime_point=start,
             window_size=self.period_adjustment_size,  # We also use the initial price within the period.
             action='-',

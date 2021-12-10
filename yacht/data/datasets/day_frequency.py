@@ -74,13 +74,13 @@ class DayFrequencyDataset(SingleAssetDataset):
 
         day_features = self.data['1d'][self.features]
         start_index = day_index - self.window_size + 1
-        end_index = day_index
+        end_index = day_index + 1
 
-        day_features = day_features.iloc[start_index:end_index + 1]
+        day_features = day_features.iloc[start_index:end_index]
         day_features = self.scaler.transform(day_features)
+        day_features = np.expand_dims(day_features, axis=1)
         if self.window_transforms is not None:
             day_features = self.window_transforms(day_features)
-        day_features = np.expand_dims(day_features, axis=1)
 
         return {
             '1d': day_features

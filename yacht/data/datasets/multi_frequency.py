@@ -15,13 +15,17 @@ from yacht.logger import Logger
 
 
 class DayMultiFrequencyDataset(SingleAssetDataset):
-    INTERVAL_TO_DAY_BAR_UNITS = {
-        '1d': 1,
-        '12h': 2,
-        '6h': 4,
-        '1h': 24,
-        '30m': 48,
-        '15m': 96
+    INTERVAL_TO_BARS_PER_DAY = {
+        # All hours ( crypto).
+        True: {
+            '1d': 1,
+            '1h': 24
+        },
+        # Trading hours.
+        False: {
+            '1d': 1,
+            '1h': 7
+        }
     }
 
     def __init__(
@@ -41,8 +45,6 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             window_size: int = 1,
             data: Dict[str, pd.DataFrame] = None
     ):
-        assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
-
         super().__init__(
             ticker=ticker,
             market=market,
@@ -60,13 +62,15 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             data=data
         )
 
+        assert set(intervals).issubset(set(self.supported_intervals)), 'Requested intervals are not supported.'
+
     def __len__(self):
         return len(self.data['1d'])
 
     def get_external_observation_space(self) -> Dict[str, spaces.Space]:
         observation_space = dict()
         for interval in self.intervals:
-            interval_bars = self.INTERVAL_TO_DAY_BAR_UNITS[interval]
+            interval_bars = self.INTERVAL_TO_BARS_PER_DAY[self.include_weekends][interval]
             observation_space[interval] = spaces.Box(
                 low=-np.inf,
                 high=np.inf,
@@ -77,12 +81,12 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
         return observation_space
 
     @classmethod
-    def get_day_bar_units_for(cls, interval: str) -> int:
-        return cls.INTERVAL_TO_DAY_BAR_UNITS[interval]
+    def get_day_bar_units_for(cls, interval: str, include_weekends: bool) -> int:
+        return cls.INTERVAL_TO_BARS_PER_DAY[include_weekends][interval]
 
     @property
     def supported_intervals(self):
-        return list(self.INTERVAL_TO_DAY_BAR_UNITS.keys())
+        return list(self.INTERVAL_TO_BARS_PER_DAY[self.include_weekends].keys())
 
     def __getitem__(self, day_index: int) -> Dict[str, np.array]:
         """
@@ -93,20 +97,19 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             The data features within the [day_index - window_size + 1, day_index] interval.
         """
 
-        window_item: Dict[str, Union[list, np.ndarray]] = defaultdict(list)
-        for i in reversed(range(self.window_size)):
-            for interval in self.intervals:
-                bars_per_day = self.INTERVAL_TO_DAY_BAR_UNITS[interval]
-                start_index = (day_index - i) * bars_per_day
-                end_index = (day_index - i + 1) * bars_per_day
-                features = self.data[interval][self.features].iloc[start_index: end_index].values
+        window_item: Dict[str, np.ndarray] = dict()
+        for interval in self.intervals:
+            features = self.data[interval][self.features]
+            bars_per_day = self.INTERVAL_TO_BARS_PER_DAY[self.include_weekends][interval]
+            start_index = (day_index - self.window_size + 1) * bars_per_day
+            end_index = (day_index + 1) * bars_per_day
 
-                window_item[interval].append(features)
-        else:
-            for interval in self.intervals:
-                window_item[interval] = np.stack(window_item[interval])
-                window_item[interval] = self.scaler.transform(window_item[interval])
-                if self.window_transforms is not None:
-                    window_item[interval] = self.window_transforms(window_item[interval])
+            features = features[start_index: end_index]
+            features = self.scaler.transform(features)
+            features = features.reshape(self.window_size, bars_per_day, len(self.features))
+            if self.window_transforms is not None:
+                features = self.window_transforms(features)
+
+            window_item[interval] = features
 
         return window_item

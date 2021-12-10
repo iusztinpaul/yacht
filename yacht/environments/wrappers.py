@@ -67,7 +67,11 @@ class MultiFrequencyDictToBoxWrapper(gym.Wrapper):
         # Add that metadata to the env_features.
         padding_size = flattened_observation.shape[0] - env_features.shape[0]
         env_features = np.pad(env_features, ((0, padding_size), (0, 0), (0, 0)))
-        padding_size = np.full(shape=(flattened_observation.shape[0], 1, 1), fill_value=padding_size, dtype=np.int32)
+        padding_size = np.full(
+            shape=(flattened_observation.shape[0], flattened_observation.shape[1], 1),
+            fill_value=padding_size,
+            dtype=np.int32
+        )
         env_features = np.concatenate([
             env_features,
             padding_size

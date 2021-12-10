@@ -127,15 +127,15 @@ def split(
     return (start_train, end_train), (start_validation, end_validation), (start_backtest, end_backtest)
 
 
-def adjust_period_to_window(
+def adjust_period_with_window(
         datetime_point: Union[str, datetime],
         window_size: int,
         action: str,
         include_weekends: bool,
-        frequency: str = 'days'
+        frequency: str = 'd'
 ):
     assert action in ('+', '-')
-    assert frequency in ('days', )
+    assert frequency in ('d', )
 
     if isinstance(datetime_point, str):
         datetime_point = string_to_datetime(datetime_point)
@@ -211,6 +211,9 @@ def len_period_range(start, end, include_weekends) -> int:
 def compute_period_range(start, end, include_weekends, interval: str = '1d') -> List[datetime]:
     freq = interval_to_pd_freq(interval=interval, include_weekends=include_weekends)
     period_range = list(pd.date_range(start, end, freq=freq))
+    if interval == '1h' and include_weekends is False:
+        # The hours should be within [9:00, 15:00] when getting data within the trading hours.
+        period_range = [item for item in period_range if item.hour != 16]
 
     return period_range
 
@@ -224,9 +227,12 @@ def interval_to_pd_freq(interval: str, include_weekends: bool) -> str:
         }
         freq = interval[:-1] + database_to_pandas_freq[interval[-1].lower()]
     else:
-        # TODO: Adapt the business days logic to other intervals.
-        assert interval == '1d'
-        freq = 'B'
+        assert interval in ('1d', '1h')
+        database_to_pandas_freq = {
+            '1d': 'B',
+            '1h': 'BH'
+        }
+        freq = database_to_pandas_freq[interval]
 
     return freq
 
@@ -242,6 +248,23 @@ def compute_render_periods(config_periods: List[PeriodConfig]) -> List[Interval]
         )
 
     return periods
+
+
+def add_days(
+        obj: Union[datetime, pd.Timestamp],
+        action: str,
+        include_weekends: bool,
+        offset: int = 1
+) -> datetime:
+    assert action in ('+', '-')
+
+    if include_weekends:
+        if action == '+':
+            return obj + timedelta(days=offset)
+        else:
+            return obj - timedelta(days=offset)
+    else:
+        return add_business_days(obj, action, offset)
 
 
 def add_business_days(obj: Union[datetime, pd.Timestamp], action: str, offset: int = 1) -> datetime:

@@ -35,7 +35,8 @@ policy_registry = {
 
 feature_extractor_registry = {
     'MultiFrequencyFeatureExtractor': modules.MultiFrequencyFeatureExtractor,
-    'RecurrentFeatureExtractor': modules.RecurrentFeatureExtractor,
+    'RecurrentFeatureExtractor': modules.DayRecurrentFeatureExtractor,
+    'MultiFrequencyRecurrentFeatureExtractor': modules.MultiFrequencyRecurrentFeatureExtractor,
     'RecurrentNPeriodsFeatureExtractor': modules.RecurrentNPeriodsFeatureExtractor,
     'RecurrentAttentionFeatureExtractor': modules.RecurrentAttentionFeatureExtractor,
     'TransformerFeatureExtractor': modules.TransformerFeatureExtractor,
@@ -146,6 +147,7 @@ def build_agent(
                 'features': list(input_config.features) + list(input_config.technical_indicators),
                 'env_features_len': env.envs[0].observation_env_features_len,
                 'num_assets': input_config.num_assets_per_dataset,
+                'include_weekends': input_config.include_weekends,
                 'drop_out_p': feature_extractor_config.drop_out_p,
                 'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM
             }

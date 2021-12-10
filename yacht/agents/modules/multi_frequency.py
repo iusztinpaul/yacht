@@ -18,6 +18,7 @@ class MultiFrequencyFeatureExtractor(BaseFeaturesExtractor):
             intervals: List[str],
             features: List[str],
             num_assets: int,
+            include_weekends: bool,
             env_features_len: int,
             activation_fn: nn.Module,
             drop_out_p: float = 0.5
@@ -30,11 +31,12 @@ class MultiFrequencyFeatureExtractor(BaseFeaturesExtractor):
         self.intervals = intervals
         self.features = features
         self.num_assets = num_assets
+        self.include_weekends = include_weekends
         self.env_features_len = env_features_len
 
         self.interval_encoders = dict()
         for interval in self.intervals:
-            bar_units = DayMultiFrequencyDataset.get_day_bar_units_for(interval)
+            bar_units = DayMultiFrequencyDataset.get_day_bar_units_for(interval, include_weekends=include_weekends)
             self.interval_encoders[interval] = IntervalObservationEncoder(
                 num_input_channel=len(self.features) + self.env_features_len,
                 num_output_channel=features_dim[0],

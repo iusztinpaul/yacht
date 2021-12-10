@@ -143,7 +143,6 @@ class Market(ABC):
 
         assert self.DOWNLOAD_MANDATORY_FEATURES.intersection(set(data.columns)) == self.DOWNLOAD_MANDATORY_FEATURES, \
             f'Some mandatory features are missing after downloading: {ticker}.'
-        assert data.index[0] == start or data.index[-1] == end, f'Data interval is not fulfilled for: {ticker}'
 
         self.cache_request(ticker, interval, data)
 
@@ -169,7 +168,9 @@ class Market(ABC):
             start: datetime,
             end: datetime
     ) -> bool:
-        return len(data) > 0
+        has_data = len(data) > 0
+
+        return has_data
 
 
 class H5Market(Market, ABC):
@@ -185,6 +186,9 @@ class H5Market(Market, ABC):
             read_only: bool
     ):
         self.storage_file = os.path.join(storage_dir, storage_file)
+        if read_only:
+            assert os.path.exists(self.storage_file), 'In read only the h5 file should already exist.'
+
         # The is_cached operation is called multiple times. So we cache the data state for faster usage.
         # We cache in memory the disk cache state.
         self.is_cached_cache = dict()
@@ -236,9 +240,9 @@ class H5Market(Market, ABC):
         data_slice.fillna(method='ffill', inplace=True, axis=0)
 
         assert data_slice.notna().all().all(), \
-            f'Data from the market is not valid for: [{ticker}${interval}] {start} - {end}'
-        assert data_slice.index[0] == start and data_slice.index[-1] == end, \
-            f'Data from the market is not valid for: [{ticker}${interval}] {start} - {end}'
+            f'Data from the market is not valid for: [{ticker}-{interval}] {start} - {end}'
+        assert data_slice.index[0].date() == start.date() and data_slice.index[-1].date() == end.date(), \
+            f'Data from the market is not valid for: [{ticker}-{interval}] {start} - {end}'
 
         return data_slice
 
@@ -254,17 +258,20 @@ class H5Market(Market, ABC):
             Returns: data within [start, end].
         """
 
+        if interval == '1h':
+            # We need to add another day to get data for the interval [start, end].
+            end = utils.add_days(end, action='+', include_weekends=self.include_weekends, offset=1)
+
         # Create the desired data span because there are missing values. In this way we will know exactly what data is
         # missing and at what index.
         datetime_index = utils.compute_period_range(start, end, self.include_weekends, interval)
         if features is None:
             features = self.features
-        final_data = pd.DataFrame(index=datetime_index, columns=features)
-
+        template_data = pd.DataFrame(index=datetime_index, columns=features)
         piece_of_data = self.connection[self.create_key(ticker, interval)].loc[start:end]
-        final_data.update(piece_of_data)
+        template_data.update(piece_of_data)
 
-        return final_data
+        return template_data
 
     def squeeze_period(self, ticker: str, interval: str, start: datetime, end: datetime) -> Tuple[datetime, datetime]:
         ticker_key = self.create_key(ticker, interval)
@@ -295,14 +302,17 @@ class H5Market(Market, ABC):
         if is_cached_key in self.is_cached_cache:
             return self.is_cached_cache[is_cached_key]
 
-        time_series = utils.compute_period_range(start, end, self.include_weekends, interval)
+        if interval == '1h':
+            # We need to add another day to get data for the interval [start, end].
+            end = utils.add_days(end, action='+', include_weekends=self.include_weekends, offset=1)
+        expected_period_range = utils.compute_period_range(start, end, self.include_weekends, interval)
         # Query how much of the requested time series is in the cache.
-        valid_values = self.connection[key].loc[start:end].index
+        actual_period_range = self.connection[key].loc[start:end].index
 
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
         # Also stocks have data only in the work days.
-        is_cached_state = len(valid_values) >= 0.95 * len(time_series)
+        is_cached_state = len(actual_period_range) >= 0.95 * len(expected_period_range)
         self.is_cached_cache[is_cached_key] = is_cached_state
 
         return is_cached_state

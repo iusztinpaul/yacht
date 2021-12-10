@@ -22,7 +22,6 @@ from yacht.data.scalers import build_scaler
 from yacht.data.transforms import build_transforms
 from yacht import Mode
 
-
 dataset_registry = {
     'DayMultiFrequencyDataset': DayMultiFrequencyDataset,
     'DayFrequencyDataset': DayFrequencyDataset,
@@ -58,16 +57,17 @@ def build_dataset(
     # Download the whole requested interval in one shot for further processing & rendering.
     start = utils.string_to_datetime(input_config.start)
     end = utils.string_to_datetime(input_config.end)
-    market.download(
-        tickers,
-        interval='1d',
-        start=start,
-        end=end,
-        squeeze=True
-    )
+    for interval in input_config.intervals:
+        market.download(
+            tickers,
+            interval=interval,
+            start=start,
+            end=end,
+            squeeze=True
+        )
     # Remove tickers that are too sparse.
     num_tickers = len(tickers)
-    tickers = remove_invalid_tickers(tickers, market, interval='1d', start=start, end=end)
+    tickers = remove_invalid_tickers(tickers, market, intervals=input_config.intervals, start=start, end=end)
     logger.info(f'Dropped {num_tickers - len(tickers)} corrupted tickers.')
     num_tickers = len(tickers)
     if num_tickers == 0:
@@ -131,7 +131,7 @@ def build_dataset(
     assert bool(input_config.take_action_at) is True, '"input.take_action_at" feature is mandatory.'
 
     # Datasets will expand their data range with -window_size on the left side of the interval.
-    start = utils.adjust_period_to_window(
+    start = utils.adjust_period_with_window(
         datetime_point=start,
         window_size=DatasetPeriod.compute_period_adjustment_size(
             window_size=input_config.window_size,
@@ -187,13 +187,13 @@ def build_dataset(
             window_size=input_config.window_size,  # Same past offset for Student or Teacher setup.
             include_weekends=input_config.include_weekends,
             take_action_at=input_config.take_action_at,
-            frequency='days'
+            frequency='d'
         )
         for dataset_tickers in itertools.combinations(tickers, config.input.num_assets_per_dataset):
             # If the period is cached, after a download operation was tried, it means it is available for usage.
             tickers_validity = [
-                market.is_cached(ticker, '1d', dataset_period.start, dataset_period.end)
-                for ticker in dataset_tickers
+                market.is_cached(ticker, interval, dataset_period.start, dataset_period.end)
+                for ticker in dataset_tickers for interval in input_config.intervals
             ]
             if all(tickers_validity) is False:
                 num_skipped_datasets += 1
@@ -269,7 +269,7 @@ def build_dataset(
         window_size=input_config.window_size,
         include_weekends=input_config.include_weekends,
         take_action_at=input_config.take_action_at,
-        frequency='days'
+        frequency='d'
     )
     return SampleAssetDataset(
         datasets=datasets,
@@ -322,10 +322,21 @@ def build_tickers(config: Config, mode: Mode) -> Set[str]:
     return set(tickers)
 
 
-def remove_invalid_tickers(tickers: set, market: Market, interval: str, start: datetime, end: datetime) -> set:
+def remove_invalid_tickers(
+        tickers: set,
+        market: Market,
+        intervals: List[str],
+        start: datetime,
+        end: datetime
+) -> set:
     valid_tickers = set()
     for ticker in tickers:
-        if market.is_cached(ticker, interval, start, end):
+        is_valid = []
+        for interval in intervals:
+            is_valid.append(
+                market.is_cached(ticker, interval, start, end)
+            )
+        if all(is_valid):
             valid_tickers.add(ticker)
 
     return valid_tickers
@@ -377,4 +388,3 @@ def render_split(
         renderer.render()
         renderer.save(utils.build_graphics_path(storage_dir, f'{mode.value}_train_test_split_rescaled.png'))
         renderer.close()
-

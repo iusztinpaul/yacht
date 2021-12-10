@@ -1,21 +1,21 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'DayFrequencyDataset'
+    dataset: 'DayMultiFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['AAPL']
     fine_tune_tickers: ['AAPL']
-    intervals: ['1d']
+    intervals: ['1d', '1h']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macd', 'rsi_30']
-    start: '1/8/2016'
-    end: '15/10/2021'
+    start: '1/1/2020'
+    end: '8/12/2021'
     period_length: '1M'
-    window_size: 1
+    window_size: 10
     render_periods: [
         # For the train period plot a bigger interval, because it is rendered only once.
          {start: '1/1/2018', end: '1/7/2019'},
@@ -61,7 +61,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'RecurrentFeatureExtractor'
+            name: 'MultiFrequencyRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
