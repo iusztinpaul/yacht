@@ -120,20 +120,20 @@ class MultiFrequencyRecurrentFeatureExtractor(BaseFeaturesExtractor):
         self.include_weekends = include_weekends
         self.num_rnn_layers = len(features_dim[1:-1])
 
-        num_bars = sum([
-            DayMultiFrequencyDataset.get_day_bar_units_for(interval, include_weekends=include_weekends)
-            for interval in self.intervals
-        ])
-        self.public_mlp = nn.Sequential(
-            nn.Linear(in_features=len(self.features) * self.num_assets * num_bars, out_features=features_dim[0]),
-            activation_fn()
-        )
-        self.public_recurrent = rnn_layer_type(
-            features_dim[0],
-            features_dim[1],
-            num_layers=self.num_rnn_layers,
-            batch_first=True
-        )
+        self.public_modules = nn.ModuleDict()
+        for interval in self.intervals:
+            num_bars = DayMultiFrequencyDataset.get_day_bar_units_for(interval, include_weekends=include_weekends)
+            self.public_modules[interval] = nn.ModuleDict()
+            self.public_modules[interval]['mlp'] = nn.Sequential(
+                nn.Linear(in_features=len(self.features) * self.num_assets * num_bars, out_features=features_dim[0]),
+                activation_fn()
+            )
+            self.public_modules[interval]['rnn'] = rnn_layer_type(
+                features_dim[0],
+                features_dim[1],
+                num_layers=self.num_rnn_layers,
+                batch_first=True
+            )
 
         self.private_mlp = nn.Sequential(
             nn.Linear(in_features=env_features_len, out_features=features_dim[0]),
@@ -147,7 +147,7 @@ class MultiFrequencyRecurrentFeatureExtractor(BaseFeaturesExtractor):
         )
 
         self.output_mlp = nn.Sequential(
-            nn.Linear(features_dim[1] * 2, features_dim[-1]),
+            nn.Linear(features_dim[1] * (1 + len(self.intervals)), features_dim[-1]),
             activation_fn()
         )
 
@@ -159,25 +159,26 @@ class MultiFrequencyRecurrentFeatureExtractor(BaseFeaturesExtractor):
             num_assets=self.num_assets,
             include_weekends=self.include_weekends
         )
-        batch_size, window_size, bar_size, num_assets_size, features_size = observations['1d'].shape
-        public_input_1d = observations['1d']
-        public_input_1h = observations['1h']
-        public_input_1d = public_input_1d.reshape(batch_size, window_size, -1)
-        public_input_1h = public_input_1h.reshape(batch_size, window_size, -1)
-        public_input = torch.cat([public_input_1d, public_input_1h], dim=-1)
+        batch_size, window_size, _, num_assets_size, features_size = observations['1d'].shape
 
-        batch_size, window_size, env_features = observations['env_features'].shape
+        aggregated_public_features = None
+        for interval in self.intervals:
+            public_features = observations[interval]
+            public_features = public_features.reshape(batch_size, window_size, -1)
+            public_features = self.public_modules[interval]['mlp'](public_features)
+            public_features, _ = self.public_modules[interval]['rnn'](public_features)
+            public_features = public_features[:, -1, :]
+            if aggregated_public_features is None:
+                aggregated_public_features = public_features
+            else:
+                aggregated_public_features = torch.cat([aggregated_public_features, public_features], dim=-1)
+
         private_input = observations['env_features']
-
-        public_input = self.public_mlp(public_input)
-        public_input, _ = self.public_recurrent(public_input)
-        public_input = public_input[:, -1, :]
-
         private_input = self.private_mlp(private_input)
         private_input, _ = self.private_recurrent(private_input)
         private_input = private_input[:, -1, :]
 
-        output = torch.cat([public_input, private_input], dim=-1)
+        output = torch.cat([aggregated_public_features, private_input], dim=-1)
         output = output.reshape(batch_size, -1)
         output = self.output_mlp(output)
 
