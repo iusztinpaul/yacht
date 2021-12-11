@@ -98,6 +98,7 @@ meta: {
     metrics_to_save_best_on: ['PA', 'GLR', 'AD']
     metrics_to_load_best_on: ['PA', 'GLR', 'AD']
     plateau_max_n_steps: 15
+    render_data_split: true
     device: 'gpu'
     experiment_tracker: ''
 }

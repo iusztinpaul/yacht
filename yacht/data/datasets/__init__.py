@@ -47,24 +47,26 @@ def build_dataset(
     # 2. Load
     # 3. Remove invalid tickers
     # -----------------------------------------------------------------------------------------------------------------
+    is_read_only = market_storage_dir is not None
     tickers = build_tickers(config, mode)
     market = build_market(
         config=config,
         logger=logger,
         storage_dir=market_storage_dir if market_storage_dir is not None else storage_dir,
-        read_only=market_storage_dir is not None
+        read_only=is_read_only
     )
-    # Download the whole requested interval in one shot for further processing & rendering.
     start = utils.string_to_datetime(input_config.start)
     end = utils.string_to_datetime(input_config.end)
-    for interval in input_config.intervals:
-        market.download(
-            tickers,
-            interval=interval,
-            start=start,
-            end=end,
-            squeeze=True
-        )
+    if is_read_only is False:
+        # Download the whole requested interval in one shot for further processing & rendering.
+        for interval in input_config.intervals:
+            market.download(
+                tickers,
+                interval=interval,
+                start=start,
+                end=end,
+                squeeze=True
+            )
     # Remove tickers that are too sparse.
     num_tickers = len(tickers)
     tickers = remove_invalid_tickers(tickers, market, intervals=input_config.intervals, start=start, end=end)
@@ -190,7 +192,8 @@ def build_dataset(
             frequency='d'
         )
         for dataset_tickers in itertools.combinations(tickers, config.input.num_assets_per_dataset):
-            # If the period is cached, after a download operation was tried, it means it is available for usage.
+            # Also check data availability for every specific interval. The big interval might pass the tests, but
+            # the local periods could not be valid.
             tickers_validity = [
                 market.is_cached(ticker, interval, dataset_period.start, dataset_period.end)
                 for ticker in dataset_tickers for interval in input_config.intervals

@@ -209,8 +209,8 @@ class H5Market(Market, ABC):
         return f'/{ticker}/{interval}'
 
     @classmethod
-    def create_is_cached_key(cls, ticker: str, start: datetime, end: datetime) -> str:
-        return f'{ticker}@{start}@{end}'
+    def create_is_cached_key(cls, ticker: str, interval: str, start: datetime, end: datetime) -> str:
+        return f'{ticker}@{interval}@{start}@{end}'
 
     def get(
             self,
@@ -298,7 +298,7 @@ class H5Market(Market, ABC):
         if key not in self.connection:
             return False
 
-        is_cached_key = self.create_is_cached_key(ticker, start, end)
+        is_cached_key = self.create_is_cached_key(ticker, interval, start, end)
         if is_cached_key in self.is_cached_cache:
             return self.is_cached_cache[is_cached_key]
 
