@@ -72,16 +72,62 @@ class AssetsPriceChangeRewardSchema(ScaledRewardSchema):
 ##############################################################
 
 
-class DecisionMakingRewardSchema(ScaledRewardSchema):
-    def calculate_reward(self, action: np.ndarray, *args, **kwargs):
+class PriceAdvantageRewardSchema(ScaledRewardSchema, ABC):
+    def compute_price_advantage(self, **kwargs):
         # TODO: Adapt for sell execution
         market_mean_price = kwargs['market_mean_price']
         last_price = kwargs['last_price']
 
         price_advantage = (1 - last_price / market_mean_price)
+
+        return price_advantage
+
+
+class DecisionMakingRewardSchema(PriceAdvantageRewardSchema):
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
+        price_advantage = self.compute_price_advantage(**kwargs)
         reward = self.reward_scaling * action * price_advantage
 
         return reward.item()
+
+
+class SinDecisionMakingRewardSchema(PriceAdvantageRewardSchema):
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
+        price_advantage = self.compute_price_advantage(**kwargs)
+        price_advantage *= np.pi / 2
+        price_advantage = np.clip(price_advantage, a_min=-np.pi / 2, a_max=np.pi / 2)
+        price_advantage = np.sin(price_advantage)
+
+        reward = self.reward_scaling * action * price_advantage
+
+        return reward.item()
+
+
+class NoActionRewardSchema(PriceAdvantageRewardSchema):
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
+        valid_actions_mask = (action == 0).astype(np.int8)
+
+        price_advantage = self.compute_price_advantage(**kwargs)
+        price_advantage *= np.pi / 2
+        price_advantage = np.clip(price_advantage, a_min=-np.pi / 2, a_max=np.pi / 2)
+        price_advantage = np.sin(price_advantage + np.pi)
+
+        reward = self.reward_scaling * price_advantage * valid_actions_mask
+
+        return reward.item()
+
+
+class CashRelativeNoActionRewardSchema(NoActionRewardSchema):
+    def calculate_reward(self, action: np.ndarray, *args, **kwargs) -> float:
+        reward = super().calculate_reward(action, *args, **kwargs)
+
+        remained_cash = kwargs['remained_cash']
+        initial_cash_position = kwargs['initial_cash_position']
+        remained_cash_ratio = remained_cash / initial_cash_position
+
+        reward *= remained_cash_ratio
+
+        return reward
 
 
 class ActionMagnitudeRewardSchema(ScaledRewardSchema):
@@ -233,9 +279,11 @@ class LeaderBoardRewardSchema(ScoreBasedRewardSchema):
 
 
 reward_schema_registry = {
-    'PriceAdvantageRelativeToCashPositionRewardSchema': PriceAdvantageRelativeToCashPositionRewardSchema,
     'AssetsPriceChangeRewardSchema': AssetsPriceChangeRewardSchema,
     'DecisionMakingRewardSchema': DecisionMakingRewardSchema,
+    'SinDecisionMakingRewardSchema': SinDecisionMakingRewardSchema,
+    'NoActionRewardSchema': NoActionRewardSchema,
+    'CashRelativeNoActionRewardSchema': CashRelativeNoActionRewardSchema,
     'ActionMagnitudeRewardSchema': ActionMagnitudeRewardSchema,
     'ActionDistanceRewardSchema': ActionDistanceRewardSchema,
     'CashOnLastTickRewardSchema': CashOnLastTickRewardSchema,
