@@ -5,8 +5,8 @@ input: {
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['AAPL']
-    fine_tune_tickers: ['AAPL']
+    tickers: ['AAPL', 'MSFT']
+    fine_tune_tickers: ['AAPL', 'MSFT']
     intervals: ['1d', '1h']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
@@ -22,6 +22,7 @@ input: {
         # For the validation period be more greedy, because it is rendered a lot of times during training.
          {start: '15/12/2020', end: '15/8/2021'}
     ]
+    render_tickers: ['AAPL']
     include_weekends: false
     validation_split_ratio: 0.3
     backtest_split_ratio: 0.0
@@ -29,7 +30,7 @@ input: {
     backtest: {
         run: false
         deterministic: true
-        tickers: ['AAPL']
+        tickers: ['AAPL', 'MSFT']
     }
 }
 environment: {

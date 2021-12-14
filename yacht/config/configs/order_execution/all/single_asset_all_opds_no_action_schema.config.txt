@@ -1,13 +1,13 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'DayFrequencyDataset'
+    dataset: 'DayMultiFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['NASDAQ100']
+    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     fine_tune_tickers: ['AAPL']
-    intervals: ['1d']
+    intervals: ['1d', '1h']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
@@ -17,16 +17,17 @@ input: {
     period_length: '1M'
     window_size: 5
     render_periods: [
-         {start: '1/1/2020', end: '8/12/2021'}
+         {start: '1/1/2020', end: '1/1/2022'}
     ]
+    render_tickers: ['AAPL']
     include_weekends: false
-    validation_split_ratio: 0.3
+    validation_split_ratio: 0.35
     backtest_split_ratio: 0.0
     embargo_ratio: 0.025
     backtest: {
         run: false
         deterministic: true
-        tickers: ['AAPL']
+        tickers: ['NASDAQ100']
     }
 }
 environment: {
@@ -38,12 +39,16 @@ environment: {
     initial_cash_position: 5000
     reward_schemas: [
     {
-        name: 'DecisionMakingRewardSchema',
-        reward_scaling: 40
+        name: 'SinDecisionMakingRewardSchema',
+        reward_scaling: 15.0
+    },
+    {
+        name: 'NoActionRewardSchema',
+        reward_scaling: 1.5
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 1.
+        reward_scaling: 0.0001
     }
     ]
     global_reward_scaling: 1.
@@ -60,7 +65,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'RecurrentFeatureExtractor'
+            name: 'MultiFrequencyRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'

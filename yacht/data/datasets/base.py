@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime
+from functools import cached_property
 from typing import List, Dict, Union, Optional, Iterable
 
 import numpy as np
@@ -162,7 +163,7 @@ class AssetDataset(Dataset, ABC):
     def include_weekends(self) -> bool:
         return self.market.include_weekends
 
-    @property
+    @cached_property
     def should_render(self) -> bool:
         # Because it is not efficient to render all the environments, we choose over some desired logic what to render.
         for render_interval in self.render_intervals:
@@ -244,6 +245,7 @@ class SingleAssetDataset(AssetDataset, ABC):
             decision_price_feature: str,
             period: DatasetPeriod,
             render_intervals: List[Interval],
+            render_tickers: List[str],
             mode: Mode,
             logger: Logger,
             scaler: Scaler,
@@ -267,6 +269,8 @@ class SingleAssetDataset(AssetDataset, ABC):
         self.ticker = ticker
         self.scaler = scaler
         self.window_transforms = window_transforms
+        self.render_tickers = render_tickers
+
         if data is not None:
             self.data = data
         else:
@@ -306,6 +310,13 @@ class SingleAssetDataset(AssetDataset, ABC):
     @property
     def asset_tickers(self) -> List[str]:
         return [self.ticker]
+
+    @cached_property
+    def should_render(self) -> bool:
+        if self.ticker in self.render_tickers:
+            return super().should_render
+
+        return False
 
     def index_to_datetime(self, integer_index: Union[int, Iterable]) -> Union[datetime, Iterable[datetime]]:
         return self.data['1d'].index[integer_index].to_pydatetime()
@@ -362,6 +373,7 @@ class MultiAssetDataset(AssetDataset):
             decision_price_feature: str,
             period: DatasetPeriod,
             render_intervals: List[Interval],
+            render_tickers: List[str],
             mode: Mode,
             logger: Logger,
             window_size: int = 1
@@ -380,6 +392,7 @@ class MultiAssetDataset(AssetDataset):
         )
 
         self.datasets = datasets
+        self.render_tickers = render_tickers
 
         assert self.datasets[0].num_days * len(self.datasets) == sum([dataset.num_days for dataset in self.datasets]), \
             'All the datasets should have the same length.'
@@ -396,6 +409,10 @@ class MultiAssetDataset(AssetDataset):
     @property
     def asset_tickers(self) -> List[str]:
         return [dataset.ticker for dataset in self.datasets]
+
+    @cached_property
+    def should_render(self) -> bool:
+        return any([dataset.should_render for dataset in self.datasets])
 
     def index_to_datetime(self, integer_index: Union[int, Iterable]) -> Union[datetime, Iterable[datetime]]:
         # All the datasets have the same indices to dates mappings.

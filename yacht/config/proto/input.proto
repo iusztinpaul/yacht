@@ -28,9 +28,10 @@ message InputConfig {
   repeated string window_transforms = 19;
   int32 num_periods = 20;
   repeated PeriodConfig render_periods = 21;
-  bool include_weekends = 22;
-  double validation_split_ratio = 23;
-  double backtest_split_ratio = 24;
-  double embargo_ratio = 25;
-  BacktestConfig backtest = 26;
+  repeated string render_tickers = 22;
+  bool include_weekends = 23;
+  double validation_split_ratio = 24;
+  double backtest_split_ratio = 25;
+  double embargo_ratio = 26;
+  BacktestConfig backtest = 27;
 }

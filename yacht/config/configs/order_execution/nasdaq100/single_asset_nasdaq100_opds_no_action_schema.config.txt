@@ -17,16 +17,17 @@ input: {
     period_length: '1M'
     window_size: 5
     render_periods: [
-         {start: '1/1/2020', end: '8/12/2021'}
+         {start: '1/1/2020', end: '1/1/2022'}
     ]
+    render_tickers: ['AAPL']
     include_weekends: false
-    validation_split_ratio: 0.3
+    validation_split_ratio: 0.35
     backtest_split_ratio: 0.0
     embargo_ratio: 0.025
     backtest: {
         run: false
         deterministic: true
-        tickers: ['AAPL']
+        tickers: ['NASDAQ100']
     }
 }
 environment: {
@@ -39,12 +40,16 @@ environment: {
     reward_schemas: [
     {
         name: 'DecisionMakingRewardSchema',
-        reward_scaling: 40
+        reward_scaling: 15.
+    },
+    {
+        name: 'NoActionRewardSchema',
+        reward_scaling: 1.5
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 1.
-    }
+        reward_scaling: 0.5
+    },
     ]
     global_reward_scaling: 1.
     action_schema: 'DiscreteActionScheme'
