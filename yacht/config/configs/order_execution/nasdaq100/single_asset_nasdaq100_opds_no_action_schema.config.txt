@@ -1,13 +1,13 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'DayMultiFrequencyDataset'
+    dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100']
-    fine_tune_tickers: ['AAPL']
-    intervals: ['1d', '1h']
+    fine_tune_tickers: ['NASDAQ100']
+    intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
@@ -17,8 +17,9 @@ input: {
     period_length: '1M'
     window_size: 5
     render_periods: [
-         {start: '1/1/2020', end: '8/12/2021'}
+         {start: '1/1/2020', end: '1/1/2022'}
     ]
+    render_tickers: ['AAPL']
     include_weekends: false
     validation_split_ratio: 0.3
     backtest_split_ratio: 0.0
@@ -26,7 +27,7 @@ input: {
     backtest: {
         run: false
         deterministic: true
-        tickers: ['AAPL']
+        tickers: ['NASDAQ100']
     }
 }
 environment: {
@@ -36,14 +37,18 @@ environment: {
     buy_commission: 0.00
     sell_commission: 0.00
     initial_cash_position: 5000
-    reward_schemas: [
+     reward_schemas: [
     {
-        name: 'DecisionMakingRewardSchema',
-        reward_scaling: 40
+        name: 'SinDecisionMakingRewardSchema',
+        reward_scaling: 15.0
+    },
+    {
+        name: 'CashRelativeNoActionRewardSchema',
+        reward_scaling: 1.5
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 1.
+        reward_scaling: 0.5
     }
     ]
     global_reward_scaling: 1.
@@ -60,7 +65,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'MultiFrequencyRecurrentFeatureExtractor'
+            name: 'DayRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
@@ -74,7 +79,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 2000000
+    total_timesteps: 1500000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0002

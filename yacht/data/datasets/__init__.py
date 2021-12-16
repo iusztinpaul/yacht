@@ -161,7 +161,6 @@ def build_dataset(
     if config.agent.is_teacher:
         # In a teacher setup the agent will take the data from the whole period.
         # Make the window_size the maximum period length for observation size consistency.
-        # TODO: Map this logic to more frequencies than days.
         max_period_length = max([
             utils.len_period_range(
                 start=period[0],
@@ -180,6 +179,7 @@ def build_dataset(
     # 4. Build dataset sampler.
     # -----------------------------------------------------------------------------------------------------------------
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
+    render_tickers = list(input_config.render_tickers) if len(input_config.render_tickers) > 0 else list(tickers)[0]
     num_skipped_datasets = 0
     datasets: List[Union[SingleAssetDataset, MultiAssetDataset]] = []
     for (period_start, period_end) in tqdm(periods, desc='Num periods / Tickers'):
@@ -229,6 +229,7 @@ def build_dataset(
                         decision_price_feature=input_config.decision_price_feature,
                         period=dataset_period,
                         render_intervals=render_intervals,
+                        render_tickers=render_tickers,
                         mode=mode,
                         logger=logger,
                         scaler=scaler,
@@ -246,6 +247,7 @@ def build_dataset(
                 decision_price_feature=input_config.decision_price_feature,
                 period=dataset_period,
                 render_intervals=render_intervals,
+                render_tickers=render_tickers,
                 mode=mode,
                 logger=logger,
                 window_size=window_size
