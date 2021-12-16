@@ -1,13 +1,13 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'DayMultiFrequencyDataset'
+    dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
-    fine_tune_tickers: ['AAPL']
-    intervals: ['1d', '1h']
+    fine_tune_tickers: ['NASDAQ100']
+    intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
@@ -21,7 +21,7 @@ input: {
     ]
     render_tickers: ['AAPL']
     include_weekends: false
-    validation_split_ratio: 0.35
+    validation_split_ratio: 0.3
     backtest_split_ratio: 0.0
     embargo_ratio: 0.025
     backtest: {
@@ -61,13 +61,13 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'MultiFrequencyRecurrentFeatureExtractor'
+            name: 'DayRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
         }
         net_arch: {
-            shared: [64, 64]
+            shared: [64]
             vf: [32]
             pi: [32]
         }
@@ -75,7 +75,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 2000000
+    total_timesteps: 1750000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0002
@@ -95,9 +95,9 @@ train: {
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR', 'AD']
-    metrics_to_load_best_on: ['PA', 'GLR', 'AD']
-    plateau_max_n_steps: 15
+    metrics_to_save_best_on: ['PA', 'GLR']
+    metrics_to_load_best_on: ['PA', 'GLR']
+    plateau_max_n_steps: 10
     device: 'gpu'
     experiment_tracker: 'wandb'
 }
