@@ -66,19 +66,16 @@ class LogDifferenceMixin:
     def process_request(self, data: List[List[Any]]) -> pd.DataFrame:
         df = super().process_request(data)
 
-        for column in self.DOWNLOAD_MANDATORY_FEATURES:
-            df[f'{column}Diff'] = self.compute_log_diff(df[column])
+        df_log_dif_t = df[self.DOWNLOAD_MANDATORY_FEATURES].copy()
+        df_log_dif_t_minus_1 = df_log_dif_t.shift(1)
+        df_log_diff = df_log_dif_t / df_log_dif_t_minus_1
+        df_log_diff = df_log_diff.apply(np.log)
+        df_log_diff.fillna(method='bfill', inplace=True, axis=0)
+        df_log_diff.fillna(method='ffill', inplace=True, axis=0)
+
+        log_diff_column_mappings = {column: f'{column}LogDiff' for column in self.DOWNLOAD_MANDATORY_FEATURES}
+        df_log_diff.rename(columns=log_diff_column_mappings, inplace=True)
+
+        df = pd.concat([df, df_log_diff], axis=1)
 
         return df
-
-    @classmethod
-    def compute_log_diff(cls, column: pd.Series):
-        column.fillna(method='bfill', inplace=True, axis=0)
-        column.fillna(method='ffill', inplace=True, axis=0)
-
-        data = column.values
-        data = np.log(data)
-        # Append the first item to keep consistency in data length.
-        data = np.diff(data, prepend=data[0])
-
-        return data

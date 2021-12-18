@@ -125,12 +125,54 @@ class MinMaxScaler(Scaler):
         return self.scaler.inverse_transform(data)
 
 
+class TechnicalIndicatorMinMaxScaler(MinMaxScaler):
+    def __init__(self, ticker: str, features: List[str]):
+        super().__init__(ticker=ticker, features=features)
+
+        self.scaler = SkMinMaxScaler()
+        # TODO: Inject this list from the config for generalisation.
+        self.supported_technical_indicators = ['rsi', 'macd', 'macds']
+        self.features, self.identity_features = self._trim_features(self.features, self.supported_technical_indicators)
+
+    @classmethod
+    def _trim_features(cls, features: List[str], supported_features: List[str]):
+        trimmed_features = set()
+        for feature in features:
+            # Make a more loose search in case that the names do not match perfectly.
+            for supported_feature in supported_features:
+                if supported_feature in feature.lower():
+                    trimmed_features.add(feature)
+
+        identity_features = set(features) - trimmed_features
+
+        return list(trimmed_features), list(identity_features)
+
+    def transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        identity_data = data[self.identity_features]
+        identity_data = identity_data.values
+        transformed_data = super().transform(data)
+
+        data = np.concatenate([identity_data, transformed_data], axis=-1)
+
+        return data
+
+    def inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        identity_data = data[self.identity_features]
+        identity_data = identity_data.values
+        transformed_data = super().inverse_transform(data)
+
+        data = np.concat([identity_data, transformed_data], axis=-1)
+
+        return data
+
+
 #######################################################################################################################
 
 
 scaler_registry = {
     'IdentityScaler': IdentityScaler,
-    'MinMaxScaler': MinMaxScaler
+    'MinMaxScaler': MinMaxScaler,
+    'TechnicalIndicatorMinMaxScaler': TechnicalIndicatorMinMaxScaler
 }
 
 scaler_singletones = dict()

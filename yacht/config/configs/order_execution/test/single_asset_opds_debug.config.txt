@@ -1,14 +1,14 @@
 input: {
     market: 'Yahoo'
-    market_mixins: ['TargetPriceMixin']
-    dataset: 'DayMultiFrequencyDataset'
+    market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin']
+    dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
-    scaler: 'MinMaxScaler'
+    scaler: 'TechnicalIndicatorMinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['AAPL', 'MSFT']
     fine_tune_tickers: ['AAPL', 'MSFT']
-    intervals: ['1d', '1h']
-    features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    intervals: ['1d']
+    features: ['CloseLogDiff', 'OpenLogDiff', 'HighLogDiff', 'LowLogDiff', 'VolumeLogDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macd', 'rsi_30']
@@ -66,7 +66,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'MultiFrequencyRecurrentFeatureExtractor'
+            name: 'DayRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
