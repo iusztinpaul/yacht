@@ -1,24 +1,28 @@
 input: {
     market: 'Yahoo'
-    market_mixins: ['TargetPriceMixin']
+    market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
-    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
-    intervals: ['1d', '1h']
+    fine_tune_tickers: ['NASDAQ100']
+    intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
-    technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
-    start: '1/1/2020'
-    end: '8/12/2021'
+    take_action_at: 'next'
+    technical_indicators: ['macd', 'rsi_30']
+    start: '1/8/2016'
+    end: '15/10/2021'
     period_length: '1M'
-    window_size: 7
+    window_size: 5
     render_periods: [
-     {start: '1/8/2019', end: '1/3/2020'},
-     {start: '1/8/2020', end: '1/3/2021'}
+        # For the train period plot a bigger interval, because it is rendered only once.
+         {start: '1/1/2018', end: '1/7/2019'},
+        # For the validation period be more greedy, because it is rendered a lot of times during training.
+         {start: '15/12/2020', end: '15/8/2021'}
     ]
+    render_tickers: ['AAPL']
     include_weekends: false
     validation_split_ratio: 0.3
     backtest_split_ratio: 0.0
@@ -26,7 +30,7 @@ input: {
     backtest: {
         run: false
         deterministic: true
-        tickers: ['NASDAQ100', 'S&P500', 'DOW30']
+        tickers: ['NASDAQ100']
     }
 }
 environment: {

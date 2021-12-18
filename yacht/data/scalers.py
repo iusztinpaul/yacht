@@ -136,16 +136,17 @@ class TechnicalIndicatorMinMaxScaler(MinMaxScaler):
 
     @classmethod
     def _trim_features(cls, features: List[str], supported_features: List[str]):
-        trimmed_features = set()
+        trimmed_features = list()
         for feature in features:
             # Make a more loose search in case that the names do not match perfectly.
             for supported_feature in supported_features:
                 if supported_feature in feature.lower():
-                    trimmed_features.add(feature)
+                    trimmed_features.append(feature)
 
-        identity_features = set(features) - trimmed_features
+        # Do not use sets to preserve order in all the cases.
+        identity_features = [feature for feature in features if feature not in trimmed_features]
 
-        return list(trimmed_features), list(identity_features)
+        return trimmed_features, identity_features
 
     def transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
         identity_data = data[self.identity_features]

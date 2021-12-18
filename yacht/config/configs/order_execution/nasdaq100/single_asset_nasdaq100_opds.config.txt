@@ -12,12 +12,15 @@ input: {
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macd', 'rsi_30']
-    start: '1/1/2020'
-    end: '8/12/2021'
+    start: '1/8/2016'
+    end: '15/10/2021'
     period_length: '1M'
-    window_size: 1
+    window_size: 5
     render_periods: [
-         {start: '1/1/2020', end: '1/1/2022'}
+        # For the train period plot a bigger interval, because it is rendered only once.
+         {start: '1/1/2018', end: '1/7/2019'},
+        # For the validation period be more greedy, because it is rendered a lot of times during training.
+         {start: '15/12/2020', end: '15/8/2021'}
     ]
     render_tickers: ['AAPL']
     include_weekends: false
@@ -39,8 +42,8 @@ environment: {
     initial_cash_position: 5000
     reward_schemas: [
     {
-        name: 'DecisionMakingRewardSchema',
-        reward_scaling: 40
+        name: 'SinDecisionMakingRewardSchema',
+        reward_scaling: 15.
     },
     {
         name: 'ActionMagnitudeRewardSchema',

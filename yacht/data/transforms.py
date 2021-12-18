@@ -23,23 +23,31 @@ class Compose(Transform):
         return sample
 
 
-class RelativeNormalization:
+class RelativeClosePriceScaling:
     PRICE_COLUMNS = ['Close', 'Open', 'High', 'Low']
 
     def __call__(self, data: pd.DataFrame) -> pd.DataFrame:
-        other_columns = list(set(data.columns) - set(self.PRICE_COLUMNS))
-        data[self.PRICE_COLUMNS] = data[self.PRICE_COLUMNS].values / data['Close'].iloc[-1]
-        if len(other_columns) > 0:
-            data[other_columns] = data[other_columns].values / data[other_columns].values[-1, :]
+        data[self.PRICE_COLUMNS] = data[self.PRICE_COLUMNS] / data['Close'].iloc[-1]
+        data['Volume'] = data['Volume'] / data['Volume'].iloc[-1]
 
         return data
 
+
+class AverageValueDiff:
+    COLUMNS = ['Close', 'Open', 'High', 'Low', 'Volume']
+
+    def __call__(self, data: pd.DataFrame) -> pd.DataFrame:
+        columns_average = data[self.COLUMNS].mean()
+        data[self.COLUMNS] = data[self.COLUMNS] - columns_average
+
+        return data
 
 #######################################################################################################################
 
 
 transforms_registry = {
-    'RelativeNormalization': RelativeNormalization
+    'RelativeClosePriceScaling': RelativeClosePriceScaling,
+    'AverageValueDiff': AverageValueDiff
 }
 
 

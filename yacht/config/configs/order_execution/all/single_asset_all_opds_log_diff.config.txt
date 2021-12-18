@@ -1,14 +1,14 @@
 input: {
     market: 'Yahoo'
-    market_mixins: ['TargetPriceMixin']
+    market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
-    scaler: 'MinMaxScaler'
+    scaler: 'TechnicalIndicatorMinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     fine_tune_tickers: ['NASDAQ100']
     intervals: ['1d']
-    features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    features: ['CloseLogDiff', 'OpenLogDiff', 'HighLogDiff', 'LowLogDiff', 'VolumeLogDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macd', 'rsi_30']
@@ -22,6 +22,7 @@ input: {
         # For the validation period be more greedy, because it is rendered a lot of times during training.
          {start: '15/12/2020', end: '15/8/2021'}
     ]
+    render_tickers: ['AAPL']
     include_weekends: false
     validation_split_ratio: 0.3
     backtest_split_ratio: 0.0
@@ -46,7 +47,7 @@ environment: {
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 2.
+        reward_scaling: 1.
     }
     ]
     global_reward_scaling: 1.

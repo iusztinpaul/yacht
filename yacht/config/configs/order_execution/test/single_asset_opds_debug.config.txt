@@ -4,11 +4,12 @@ input: {
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'TechnicalIndicatorMinMaxScaler'
+    window_transforms: ['RelativeClosePriceScaling']
     scale_on_interval: '1d'
-    tickers: ['AAPL', 'MSFT']
+    tickers: ['AAPL', 'MSFT', 'NVDA']
     fine_tune_tickers: ['AAPL', 'MSFT']
     intervals: ['1d']
-    features: ['CloseLogDiff', 'OpenLogDiff', 'HighLogDiff', 'LowLogDiff', 'VolumeLogDiff']
+    features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macd', 'rsi_30']
