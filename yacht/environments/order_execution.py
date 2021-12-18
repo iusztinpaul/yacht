@@ -132,18 +132,17 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
             # Make a copy to keep it for metrics.
             self.cash_used_on_last_tick = copy(self._total_cash)
             # Remove the cash that the agent actually tried to use. That is a valid move.
-            self.cash_used_on_last_tick -= self._a_t * self._initial_cash_position
+            self.cash_used_on_last_tick -= (actions * self._initial_cash_position).sum()
             # The buy & sell actions will handle the case when the agent tries to buy more than it has.
             # But in that case, put 'cash_used_on_last_tick' on 0.
             self.cash_used_on_last_tick = max(self.cash_used_on_last_tick, 0)
             self.cash_used_on_last_tick /= self._initial_cash_position
 
-            # Split money equally between the assets, if there is any cash position left for the current month.
-            remaining_month_cash = np.tile(
+            # Split money equally between the assets.
+            action_remaining_month_cash = np.tile(
                 self.cash_used_on_last_tick // self.dataset.num_assets,
                 self.dataset.num_assets
             )
-            action_remaining_month_cash = remaining_month_cash / self._initial_cash_position
             actions += action_remaining_month_cash
 
         return actions

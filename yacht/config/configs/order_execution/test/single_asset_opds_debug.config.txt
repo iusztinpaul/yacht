@@ -3,8 +3,8 @@ input: {
     market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
-    scaler: 'TechnicalIndicatorMinMaxScaler'
-    window_transforms: ['RelativeClosePriceScaling']
+    scaler: 'MinMaxScaler'
+    window_transforms: []
     scale_on_interval: '1d'
     tickers: ['AAPL', 'MSFT', 'NVDA']
     fine_tune_tickers: ['AAPL', 'MSFT']
@@ -36,7 +36,7 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 6
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
