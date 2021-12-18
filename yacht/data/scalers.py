@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 
 from sklearn.preprocessing import MinMaxScaler as SkMinMaxScaler
+from sklearn.preprocessing import Normalizer as SkNormalizer
+from sklearn.preprocessing import RobustScaler as SkRobustScaler
 
 from yacht.config import Config
 from yacht.data.markets import Market
@@ -98,6 +100,25 @@ class Scaler(ABC):
             scaler.fit(data)
 
 
+class GenericScaler(Scaler):
+    scaler_class = None
+
+    def __init__(self, ticker: str, features: List[str]):
+        super().__init__(ticker=ticker, features=features)
+
+        assert self.scaler_class is not None
+        self.scaler = self.scaler_class()
+
+    def _fit(self, data: Union[pd.DataFrame, np.ndarray]):
+        self.scaler.fit(data)
+
+    def _transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        return self.scaler.transform(data)
+
+    def _inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
+        return self.scaler.inverse_transform(data)
+
+
 class IdentityScaler(Scaler):
     def _fit(self, data: Union[pd.DataFrame, np.ndarray]):
         pass
@@ -109,20 +130,8 @@ class IdentityScaler(Scaler):
         return data
 
 
-class MinMaxScaler(Scaler):
-    def __init__(self, ticker: str, features: List[str]):
-        super().__init__(ticker=ticker, features=features)
-
-        self.scaler = SkMinMaxScaler()
-
-    def _fit(self, data: Union[pd.DataFrame, np.ndarray]):
-        self.scaler.fit(data)
-
-    def _transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
-        return self.scaler.transform(data)
-
-    def _inverse_transform(self, data: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFrame, np.ndarray]:
-        return self.scaler.inverse_transform(data)
+class MinMaxScaler(GenericScaler):
+    scaler_class = SkMinMaxScaler
 
 
 class TechnicalIndicatorMinMaxScaler(MinMaxScaler):
@@ -167,13 +176,23 @@ class TechnicalIndicatorMinMaxScaler(MinMaxScaler):
         return data
 
 
+class Normalizer(GenericScaler):
+    scaler_class = SkNormalizer
+
+
+class RobustScaler(GenericScaler):
+    scaler_class = SkRobustScaler
+
+
 #######################################################################################################################
 
 
 scaler_registry = {
     'IdentityScaler': IdentityScaler,
     'MinMaxScaler': MinMaxScaler,
-    'TechnicalIndicatorMinMaxScaler': TechnicalIndicatorMinMaxScaler
+    'TechnicalIndicatorMinMaxScaler': TechnicalIndicatorMinMaxScaler,
+    'Normalizer': Normalizer,
+    'RobustScaler': RobustScaler
 }
 
 scaler_singletones = dict()

@@ -34,11 +34,14 @@ class RelativeClosePriceScaling:
 
 
 class AverageValueDiff:
-    COLUMNS = ['Close', 'Open', 'High', 'Low', 'Volume']
+    PRICE_COLUMNS = ['Close', 'Open', 'High', 'Low']
 
     def __call__(self, data: pd.DataFrame) -> pd.DataFrame:
-        columns_average = data[self.COLUMNS].mean()
-        data[self.COLUMNS] = data[self.COLUMNS] - columns_average
+        close_price_average = data['Close'].mean()
+        volume_average = data['Volume'].mean()
+
+        data[self.PRICE_COLUMNS] = data[self.PRICE_COLUMNS] / close_price_average
+        data['Volume'] = data['Volume'] / volume_average
 
         return data
 

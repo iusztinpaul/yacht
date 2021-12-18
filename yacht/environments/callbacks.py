@@ -122,7 +122,11 @@ class MetricsEvalCallback(EvalCallback):
         self.found_any_new = False
 
     def _on_step(self) -> bool:
-        super()._on_step()
+        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+            self.model.policy.eval()
+        on_step_state = super()._on_step()
+        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+            self.model.policy.train()
 
         if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
             step_mean_metrics = self.eval_env.mean_metrics
@@ -158,7 +162,7 @@ class MetricsEvalCallback(EvalCallback):
 
                 return continue_training
 
-        return True
+        return on_step_state
 
     def _on_event(self) -> bool:
         state = super()._on_event()
