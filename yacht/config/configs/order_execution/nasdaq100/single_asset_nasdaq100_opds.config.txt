@@ -1,13 +1,13 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'DayMultiFrequencyDataset'
+    dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100']
     fine_tune_tickers: []
-    intervals: ['1d', '1h']
+    intervals: ['1d']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
@@ -61,7 +61,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'MultiFrequencyRecurrentFeatureExtractor'
+            name: 'DayRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
