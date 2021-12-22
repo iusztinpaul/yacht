@@ -239,7 +239,7 @@ class H5Market(Market, ABC):
         data_slice.fillna(method='bfill', inplace=True, axis=0)
         data_slice.fillna(method='ffill', inplace=True, axis=0)
 
-        assert data_slice.notna().all().all(), \
+        assert data_slice.notna().all().all().item(), \
             f'Data from the market is not valid for: [{ticker}-{interval}] {start} - {end}'
         assert data_slice.index[0].date() == start.date() and data_slice.index[-1].date() == end.date(), \
             f'Data from the market is not valid for: [{ticker}-{interval}] {start} - {end}'

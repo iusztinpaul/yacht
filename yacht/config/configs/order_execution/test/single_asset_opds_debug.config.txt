@@ -3,8 +3,8 @@ input: {
     market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
-    scaler: 'MinMaxScaler'
-    window_transforms: []
+    scaler: 'TechnicalIndicatorMinMaxScaler'
+    window_transforms: ['RelativeClosePriceScaling']
     scale_on_interval: '1d'
     tickers: ['AAPL', 'MSFT', 'NVDA']
     fine_tune_tickers: ['AAPL', 'MSFT']

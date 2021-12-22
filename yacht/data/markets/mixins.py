@@ -68,7 +68,8 @@ class LogDifferenceMixin:
 
         df_log_dif_t = df[self.DOWNLOAD_MANDATORY_FEATURES].copy()
         df_log_dif_t_minus_1 = df_log_dif_t.shift(1)
-        df_log_diff = df_log_dif_t / df_log_dif_t_minus_1
+        # Add a small value to both sides to avoid division by 0 & log of 0.
+        df_log_diff = (df_log_dif_t + 1e-7) / (df_log_dif_t_minus_1 + 1e-7)
         df_log_diff = df_log_diff.apply(np.log)
         df_log_diff.fillna(method='bfill', inplace=True, axis=0)
         df_log_diff.fillna(method='ffill', inplace=True, axis=0)

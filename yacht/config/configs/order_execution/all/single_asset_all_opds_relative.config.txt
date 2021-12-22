@@ -89,7 +89,7 @@ train: {
     gae_lambda: 1.
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 0.6
+    entropy_coefficient: 0.1
     vf_coefficient: 1.
     max_grad_norm: 100
     use_sde: false
@@ -103,5 +103,5 @@ meta: {
     metrics_to_load_best_on: ['PA', 'GLR']
     plateau_max_n_steps: 10
     device: 'gpu'
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
 }
