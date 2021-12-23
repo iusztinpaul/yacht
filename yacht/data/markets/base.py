@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Union, List, Any, Iterable, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 
 from yacht import utils
@@ -239,7 +240,7 @@ class H5Market(Market, ABC):
         data_slice.fillna(method='bfill', inplace=True, axis=0)
         data_slice.fillna(method='ffill', inplace=True, axis=0)
 
-        assert data_slice.notna().all().all().item(), \
+        assert np.isfinite(data_slice).all().all().item(), \
             f'Data from the market is not valid for: [{ticker}-{interval}] {start} - {end}'
         assert data_slice.index[0].date() == start.date() and data_slice.index[-1].date() == end.date(), \
             f'Data from the market is not valid for: [{ticker}-{interval}] {start} - {end}'

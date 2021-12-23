@@ -74,12 +74,20 @@ def build_env(
         monitor_kwargs=None,
         wrapper_kwargs=None
     )
+
+    metrics_to_log = set(
+        config.meta.metrics_to_log
+    ).union(
+        set(config.meta.metrics_to_save_best_on)
+    ).union(
+        set(config.meta.metrics_to_load_best_on)
+    )
     env = MetricsVecEnvWrapper(
         venv=env,
         n_metrics_episodes=len(dataset.datasets),
         logger=logger,
         mode=mode,
-        metrics_to_log=list(config.meta.metrics_to_log),
+        metrics_to_log=list(metrics_to_log),
         load_best_metric=load_best_metric
     )
 
