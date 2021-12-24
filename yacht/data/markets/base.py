@@ -1,10 +1,12 @@
 import os
+import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Union, List, Any, Iterable, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from tables import NaturalNameWarning
 
 from yacht import utils
 from yacht.logger import Logger
@@ -124,8 +126,10 @@ class Market(ABC):
         if isinstance(tickers, str):
             tickers = [tickers]
 
+        warnings.filterwarnings(action='ignore', category=NaturalNameWarning)
         for ticker in tickers:
             self._download(ticker, interval, start, end, squeeze)
+        warnings.filterwarnings(action='default', category=NaturalNameWarning)
 
     def _download(self, ticker: str, interval: str, start: datetime, end: datetime, squeeze: bool = False):
         # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
@@ -141,6 +145,7 @@ class Market(ABC):
         assert self.check_downloaded_data(data, interval, start, end), \
             f'[{ticker}] Download data did not passed the download checks.'
         data = self.process_request(data)
+        data = data.sort_index()
 
         assert self.DOWNLOAD_MANDATORY_FEATURES.intersection(set(data.columns)) == self.DOWNLOAD_MANDATORY_FEATURES, \
             f'Some mandatory features are missing after downloading: {ticker}.'
@@ -271,6 +276,10 @@ class H5Market(Market, ABC):
         template_data = pd.DataFrame(index=datetime_index, columns=features)
         piece_of_data = self.connection[self.create_key(ticker, interval)].loc[start:end]
         template_data.update(piece_of_data)
+
+        unsupported_features = set(features) - set(piece_of_data.columns)
+        assert len(unsupported_features) == 0, \
+            f'Unsupported features requested from the market: {unsupported_features}'
 
         return template_data
 

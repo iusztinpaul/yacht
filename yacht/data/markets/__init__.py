@@ -13,6 +13,7 @@ market_registry = {
 }
 mixins_registry = {
     'LogDifferenceMixin': mixins.LogDifferenceMixin,
+    'FracDiffMixin': mixins.FracDiffMixin,
     'TargetPriceMixin': mixins.TargetPriceMixin
 }
 
