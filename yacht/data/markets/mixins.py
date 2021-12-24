@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import List, Any, Union
+from typing import List, Any, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -8,36 +7,15 @@ from stockstats import StockDataFrame
 
 from yacht import utils
 from yacht.config import Config
-from yacht.data.markets import Market
 
 
 class TechnicalIndicatorMixin:
     def __init__(self, technical_indicators: List[str], *args, **kwargs):
-        assert Market in type(self).mro(), \
-            '"TechnicalIndicatorMixin" works only with "Market" objects.'
-
         super().__init__(*args, **kwargs)
 
         self.technical_indicators = technical_indicators
         self.data_features = self.features
         self.features = self.technical_indicators + self.features
-
-    def is_cached(
-            self,
-            ticker: str,
-            interval: str,
-            start: datetime,
-            end: datetime
-    ) -> bool:
-        value = super().is_cached(ticker, interval, start, end)
-
-        if value is False:
-            return False
-
-        key = self.create_key(ticker, interval)
-        data_columns = set(self.connection[key].columns)
-
-        return set(self.technical_indicators).issubset(data_columns) and value
 
     def process_request(self, data: Union[List[List[Any]], pd.DataFrame], **kwargs) -> pd.DataFrame:
         df = super().process_request(data, **kwargs)
@@ -113,7 +91,7 @@ class FracDiffMixin:
 
         assert d_value is not None, 'Could not find d_value'
 
-        data_to_process = self.frac_diff_fixed_ffd(series=data_to_process, d=d_value, size=window_size)
+        data_to_process = self.frac_diff_fixed_ffd(data=data_to_process, d=d_value, size=window_size)
         data_to_process.bfill(axis='rows', inplace=True)
         data_to_process.ffill(axis='rows', inplace=True)
 
@@ -125,20 +103,19 @@ class FracDiffMixin:
         return df
 
     @classmethod
-    def find_d_value(cls, data: pd.DataFrame, size: int):
-        out = pd.DataFrame(columns=['adfStat', 'pVal', 'lags', 'nObs', '95% conf', 'corr'])
+    def find_d_value(cls, data: pd.DataFrame, size: int) -> Optional[float]:
+        results = pd.DataFrame(columns=['adfStat', 'pVal', 'lags', 'nObs', '95% conf'])
         for d in np.linspace(0, 2, 21):
-            df1 = data[['Close']].resample('1D').last()
-            df2 = cls.frac_diff_fixed_ffd(df1, d, size=size)
-            corr = np.corrcoef(df1.loc[df2.index, 'Close'], df2['Close'])[0, 1]
-            df2 = adfuller(df2['Close'], maxlag=1, regression='c', autolag=None)
+            prices_df = data[['Close']].resample('1D').last()
+            differentiated_df = cls.frac_diff_fixed_ffd(prices_df, d, size=size)
+            differentiated_df = adfuller(differentiated_df['Close'], maxlag=1, regression='c', autolag=None)
 
-            out.loc[d] = list(df2[:4]) + [df2[4]['5%']] + [corr]
+            results.loc[d] = list(differentiated_df[:4]) + [differentiated_df[4]['5%']]
         
-        return cls._parse_d_values(out)
+        return cls._parse_d_values(results)
 
     @classmethod
-    def _parse_d_values(cls, results):
+    def _parse_d_values(cls, results: pd.DataFrame) -> Optional[float]:
         # adfStat values are within [0, -inf]. When a adfStat value crosses the 95% conf border
         # we consider that we have found the d_value which makes the data stationary.
         conf_95 = results['95% conf'].mean()
@@ -149,33 +126,31 @@ class FracDiffMixin:
         return None
 
     @classmethod
-    def frac_diff_fixed_ffd(cls, series, d, size):
+    def frac_diff_fixed_ffd(cls, data: pd.DataFrame, d: float, size: int) -> pd.DataFrame:
         # Constant width window
         w = cls.get_fixed_weights_ffd(d, size)
         width = len(w) - 1
         df = {}
-        for name in series.columns:
-            seriesF = series[[name]].fillna(method='ffill').dropna()
-            df_ = pd.Series(dtype=np.float32)
-            for iloc1 in range(width, seriesF.shape[0]):
-                loc0 = seriesF.index[iloc1 - width]
-                loc1 = seriesF.index[iloc1]
-                if not np.isfinite(series.loc[loc1, name]):
+        for name in data.columns:
+            column_data = data[[name]].fillna(method='ffill').dropna()
+            differentiated_column_data = pd.Series(dtype=np.float32)
+            for end_iloc in range(width, column_data.shape[0]):
+                start_loc = column_data.index[end_iloc - width]
+                end_loc = column_data.index[end_iloc]
+                if not np.isfinite(data.loc[end_loc, name]):
                     # Exclude NaNs
                     continue
-
-                df_[loc1] = np.dot(w.T, seriesF.loc[loc0:loc1]).item()
-            df[name] = df_.copy(deep=True)
+                differentiated_column_data[end_loc] = np.dot(w.T, column_data.loc[start_loc:end_loc]).item()
+            df[name] = differentiated_column_data.copy(deep=True)
         df = pd.concat(df, axis=1)
 
         return df
 
     @classmethod
-    def get_fixed_weights_ffd(cls, d, size):
+    def get_fixed_weights_ffd(cls, d: float, size: int) -> np.ndarray:
         w = [1.]
         for k in range(1, size):
             w_ = -w[-1] / k * (d - k + 1)
             w.append(w_)
-        w = np.array(w[::-1]).reshape(-1, 1)
 
-        return w
+        return np.array(w[::-1], dtype=np.float32).reshape(-1, 1)
