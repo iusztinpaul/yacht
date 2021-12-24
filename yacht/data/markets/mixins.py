@@ -108,7 +108,12 @@ class FracDiffMixin:
         for d in np.linspace(0, 2, 21):
             prices_df = data[['Close']].resample('1D').last()
             differentiated_df = cls.frac_diff_fixed_ffd(prices_df, d, size=size)
-            differentiated_df = adfuller(differentiated_df['Close'], maxlag=1, regression='c', autolag=None)
+            try:
+                differentiated_df = adfuller(differentiated_df['Close'], maxlag=1, regression='c', autolag=None)
+            except ValueError as e:
+                # TODO: Remove this print.
+                print(e)
+                differentiated_df = adfuller(differentiated_df['Close'], maxlag=0, regression='c', autolag=None)
 
             results.loc[d] = list(differentiated_df[:4]) + [differentiated_df[4]['5%']]
         

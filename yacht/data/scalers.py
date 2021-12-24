@@ -100,7 +100,7 @@ class Scaler(ABC):
             scaler.fit(data)
 
 
-class GenericScaler(Scaler):
+class GenericScaler(Scaler, ABC):
     scaler_class = None
 
     def __init__(self, ticker: str, features: List[str]):
@@ -134,11 +134,10 @@ class MinMaxScaler(GenericScaler):
     scaler_class = SkMinMaxScaler
 
 
-class TechnicalIndicatorMinMaxScaler(MinMaxScaler):
+class TechnicalIndicatorGenericScaler(GenericScaler, ABC):
     def __init__(self, ticker: str, features: List[str]):
         super().__init__(ticker=ticker, features=features)
 
-        self.scaler = SkMinMaxScaler()
         # TODO: Inject this list from the config for generalisation.
         self.supported_technical_indicators = ['rsi', 'macd', 'macds']
         self.features, self.identity_features = self._trim_features(self.features, self.supported_technical_indicators)
@@ -176,6 +175,18 @@ class TechnicalIndicatorMinMaxScaler(MinMaxScaler):
         return data
 
 
+class TechnicalIndicatorMinMaxScaler(TechnicalIndicatorGenericScaler):
+    scaler_class = SkMinMaxScaler
+
+
+class TechnicalIndicatorNormalizer(TechnicalIndicatorGenericScaler):
+    scaler_class = SkNormalizer
+
+
+class TechnicalIndicatorRobustScaler(TechnicalIndicatorGenericScaler):
+    scaler_class = SkRobustScaler
+
+
 class Normalizer(GenericScaler):
     scaler_class = SkNormalizer
 
@@ -191,6 +202,8 @@ scaler_registry = {
     'IdentityScaler': IdentityScaler,
     'MinMaxScaler': MinMaxScaler,
     'TechnicalIndicatorMinMaxScaler': TechnicalIndicatorMinMaxScaler,
+    'TechnicalIndicatorNormalizer': TechnicalIndicatorNormalizer,
+    'TechnicalIndicatorRobustScaler': TechnicalIndicatorRobustScaler,
     'Normalizer': Normalizer,
     'RobustScaler': RobustScaler
 }
