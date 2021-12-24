@@ -104,7 +104,7 @@ class Market(ABC):
         """
 
     @abstractmethod
-    def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame], **kwargs) -> pd.DataFrame:
         pass
 
     @abstractmethod
@@ -121,17 +121,18 @@ class Market(ABC):
             interval: str,
             start: datetime,
             end: datetime,
-            squeeze: bool = False
+            squeeze: bool = False,
+            **kwargs
     ):
         if isinstance(tickers, str):
             tickers = [tickers]
 
         warnings.filterwarnings(action='ignore', category=NaturalNameWarning)
         for ticker in tickers:
-            self._download(ticker, interval, start, end, squeeze)
+            self._download(ticker, interval, start, end, squeeze, **kwargs)
         warnings.filterwarnings(action='default', category=NaturalNameWarning)
 
-    def _download(self, ticker: str, interval: str, start: datetime, end: datetime, squeeze: bool = False):
+    def _download(self, ticker: str, interval: str, start: datetime, end: datetime, squeeze: bool = False, **kwargs):
         # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
         if squeeze:
             start, end = self.squeeze_period(ticker, interval, start, end)
@@ -144,7 +145,7 @@ class Market(ABC):
         data = self.request(ticker, interval, start, end)
         assert self.check_downloaded_data(data, interval, start, end), \
             f'[{ticker}] Download data did not passed the download checks.'
-        data = self.process_request(data)
+        data = self.process_request(data, **kwargs)
         data = data.sort_index()
 
         assert self.DOWNLOAD_MANDATORY_FEATURES.intersection(set(data.columns)) == self.DOWNLOAD_MANDATORY_FEATURES, \

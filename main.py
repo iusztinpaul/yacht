@@ -125,7 +125,8 @@ if __name__ == '__main__':
                     interval=interval,
                     start=utils.string_to_datetime(config.input.start),
                     end=utils.string_to_datetime(config.input.end),
-                    squeeze=True
+                    squeeze=True,
+                    config=config
                 )
 
             logger.info(f'Downloading finished')

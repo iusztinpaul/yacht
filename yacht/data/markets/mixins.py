@@ -6,6 +6,8 @@ import pandas as pd
 from statsmodels.tsa.stattools import adfuller
 from stockstats import StockDataFrame
 
+from yacht import utils
+from yacht.config import Config
 from yacht.data.markets import Market
 
 
@@ -37,8 +39,8 @@ class TechnicalIndicatorMixin:
 
         return set(self.technical_indicators).issubset(data_columns) and value
 
-    def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
-        df = super().process_request(data)
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame], **kwargs) -> pd.DataFrame:
+        df = super().process_request(data, **kwargs)
 
         stock = StockDataFrame.retype(df.copy())
         for technical_indicator_name in self.technical_indicators:
@@ -49,8 +51,8 @@ class TechnicalIndicatorMixin:
 
 
 class TargetPriceMixin:
-    def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
-        df = super().process_request(data)
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame], **kwargs) -> pd.DataFrame:
+        df = super().process_request(data, **kwargs)
 
         df['TP'] = df.apply(func=self.compute_target_price, axis=1)
 
@@ -64,8 +66,8 @@ class TargetPriceMixin:
 
 
 class LogDifferenceMixin:
-    def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
-        df = super().process_request(data)
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame], **kwargs) -> pd.DataFrame:
+        df = super().process_request(data, **kwargs)
 
         df_log_dif_t = df[self.DOWNLOAD_MANDATORY_FEATURES].copy()
         df_log_dif_t_minus_1 = df_log_dif_t.shift(1)
@@ -84,16 +86,30 @@ class LogDifferenceMixin:
 
 
 class FracDiffMixin:
-    def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
-        df = super().process_request(data)
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame], config: Config, **kwargs) -> pd.DataFrame:
+        df = super().process_request(data, **kwargs)
 
-        # TODO: Inject this value from the config
-        # TODO: Make FracDiff only on the train set.
-        window_size = 5
+        # FIXME: Find a better place to process this stuff,
+        #  because in this way we make the cached date config dependent.
+        #  For now it is optimal to do it here because this is a time consuming operation & we don't want to do it
+        #  at run time. When we change the code remove the 'config' parameter from the downloads methods.
+        window_size = config.input.window_size
+        train_split, _, _ = utils.split(
+            config.input.start,
+            config.input.end,
+            config.input.validation_split_ratio,
+            config.input.backtest_split_ratio,
+            config.input.embargo_ratio,
+            config.input.include_weekends
+        )
 
         data_to_process = df[self.DOWNLOAD_MANDATORY_FEATURES].copy()
         data_to_process = data_to_process.apply(np.log)
-        d_value = self.find_d_value(data=data_to_process, size=window_size)
+        # Find the d_value only within the train_split.
+        d_value = self.find_d_value(
+            data=data_to_process.loc[train_split[0]: train_split[1]],
+            size=window_size
+        )
 
         assert d_value is not None, 'Could not find d_value'
 

@@ -276,7 +276,6 @@ class SingleAssetDataset(AssetDataset, ABC):
         else:
             self.data = dict()
             for interval in self.intervals:
-                self.market.download(ticker, interval, self.start, self.end)
                 self.data[interval] = self.market.get(
                     ticker=ticker,
                     interval=interval,

@@ -16,7 +16,7 @@ input: {
     start: '1/1/2020'
     end: '8/12/2021'
     period_length: '1M'
-    window_size: 10
+    window_size: 5
     render_periods: [
         # For the train period plot a bigger interval, because it is rendered only once.
          {start: '1/1/2018', end: '1/7/2019'},
