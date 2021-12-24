@@ -171,18 +171,17 @@ def compute_action_distance(report: dict) -> dict:
         differences_start.append(action_indices.min())
         differences_end.append(actions.shape[0] - action_indices.max())
 
-    ad = np.array(differences, dtype=np.float32).mean().item()
+    # Calculate means & scale them between [0, 1] ( where possible).
+    ad = np.array(differences, dtype=np.float32).mean() / length_episode
     ads = np.array(differences_start, dtype=np.float32).mean() / length_episode
-    ads = ads.item()
     ade = np.array(differences_end, dtype=np.float32).mean() / length_episode
-    ade = ade.item()
-    num_actions = np.array(num_actions, dtype=np.float32).mean().item()
+    num_actions = np.array(num_actions, dtype=np.float32).mean()
 
     return {
-        'AD': ad,
-        'ADS': ads,
-        'ADE': ade,
-        'num_actions': num_actions
+        'AD': ad.item(),
+        'ADS': ads.item(),
+        'ADE': ade.item(),
+        'num_actions': num_actions.item()
     }
 
 

@@ -43,11 +43,11 @@ environment: {
     reward_schemas: [
     {
         name: 'SinDecisionMakingRewardSchema',
-        reward_scaling: 15.
+        reward_scaling: 1.
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 1.
+        reward_scaling: 0.025
     }
     ]
     global_reward_scaling: 1.
@@ -78,7 +78,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1500000
+    total_timesteps: 4000000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0002
@@ -88,7 +88,7 @@ train: {
     gae_lambda: 1.
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 0.6
+    entropy_coefficient: 0.15
     vf_coefficient: 1.
     max_grad_norm: 100
     use_sde: false
@@ -97,10 +97,10 @@ train: {
 }
 meta: {
     log_frequency_steps: 5000
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR']
-    metrics_to_load_best_on: ['PA', 'GLR']
-    plateau_max_n_steps: 10
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
+    metrics_to_save_best_on: ['PA', 'GLR', 'T']
+    metrics_to_load_best_on: ['PA', 'GLR', 'T']
+    plateau_max_n_steps: -1
     device: 'gpu'
     experiment_tracker: 'wandb'
 }

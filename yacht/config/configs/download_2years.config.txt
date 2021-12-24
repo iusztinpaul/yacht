@@ -10,7 +10,7 @@ input: {
     intervals: ['1d', '1h']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
-    technical_indicators: ['macd', 'rsi_30', 'cci_30', 'dx_30']
+    technical_indicators: ['macd', 'macds', ''rsi_30', 'cci_30', 'dx_30']
     start: '1/1/2020'
     end: '8/12/2021'
     period_length: '1M'

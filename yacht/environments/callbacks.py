@@ -152,7 +152,6 @@ class MetricsEvalCallback(EvalCallback):
                 self.found_any_new = False
 
             if self.apply_plateau:
-                # If any metric we are listing to did not had a new best value for 'max_n_steps' end training.
                 metrics_plateau = [
                     plateau_steps <= self.plateau_max_n_steps for plateau_steps in self.plateau_metrics_counter.values()
                 ]

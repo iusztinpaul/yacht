@@ -47,7 +47,7 @@ environment: {
     },
     {
         name: 'ActionMagnitudeRewardSchema',
-        reward_scaling: 0.0125
+        reward_scaling: 0.025
     }
     ]
     global_reward_scaling: 1.
@@ -88,7 +88,7 @@ train: {
     gae_lambda: 1.
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 0.05
+    entropy_coefficient: 0.15
     vf_coefficient: 1.
     max_grad_norm: 100
     use_sde: false

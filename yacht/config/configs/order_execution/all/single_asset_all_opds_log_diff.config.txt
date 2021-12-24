@@ -11,7 +11,7 @@ input: {
     features: ['CloseLogDiff', 'OpenLogDiff', 'HighLogDiff', 'LowLogDiff', 'VolumeLogDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macd', 'rsi_30']
+    technical_indicators: ['rsi_30']
     start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
@@ -97,9 +97,9 @@ train: {
 }
 meta: {
     log_frequency_steps: 5000
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR']
-    metrics_to_load_best_on: ['PA', 'GLR']
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
+    metrics_to_save_best_on: ['PA', 'GLR', 'T']
+    metrics_to_load_best_on: ['PA', 'GLR', 'T']
     plateau_max_n_steps: -1
     device: 'gpu'
     experiment_tracker: 'wandb'
