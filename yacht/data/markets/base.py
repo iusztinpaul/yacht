@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from tables import NaturalNameWarning
 
-from yacht import utils
+from yacht import utils, errors
 from yacht.logger import Logger
 
 
@@ -20,13 +20,13 @@ class Market(ABC):
             to check the data correctness &
             to fill missing values
     """
-    DOWNLOAD_MANDATORY_FEATURES = {
+    DOWNLOAD_MANDATORY_FEATURES = [
         'Close',
         'Open',
         'High',
         'Low',
         'Volume'
-    }
+    ]
 
     def __init__(
             self,
@@ -128,9 +128,14 @@ class Market(ABC):
             tickers = [tickers]
 
         warnings.filterwarnings(action='ignore', category=NaturalNameWarning)
+        invalid_tickers = set()
         for ticker in tickers:
-            self._download(ticker, interval, start, end, squeeze, **kwargs)
+            try:
+                self._download(ticker, interval, start, end, squeeze, **kwargs)
+            except (errors.DownloadError, errors.PreProcessError):
+                invalid_tickers.add(ticker)
         warnings.filterwarnings(action='default', category=NaturalNameWarning)
+        self.logger.log(f'Could not download / process: {invalid_tickers}')
 
     def _download(self, ticker: str, interval: str, start: datetime, end: datetime, squeeze: bool = False, **kwargs):
         # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
@@ -148,8 +153,9 @@ class Market(ABC):
         data = self.process_request(data, **kwargs)
         data = data.sort_index()
 
-        assert self.DOWNLOAD_MANDATORY_FEATURES.intersection(set(data.columns)) == self.DOWNLOAD_MANDATORY_FEATURES, \
-            f'Some mandatory features are missing after downloading: {ticker}.'
+        assert set(self.DOWNLOAD_MANDATORY_FEATURES).intersection(set(data.columns)) == \
+               set(self.DOWNLOAD_MANDATORY_FEATURES), \
+               f'Some mandatory features are missing after downloading: {ticker}.'
 
         self.cache_request(ticker, interval, data)
 
@@ -181,6 +187,8 @@ class Market(ABC):
 
 
 class H5Market(Market, ABC):
+    IS_CACHED_PROPORTION = 0.95
+
     def __init__(
             self,
             get_features: List[str],
@@ -318,12 +326,18 @@ class H5Market(Market, ABC):
             end = utils.add_days(end, action='+', include_weekends=self.include_weekends, offset=1)
         expected_period_range = utils.compute_period_range(start, end, self.include_weekends, interval)
         # Query how much of the requested time series is in the cache.
-        actual_period_range = self.connection[key].loc[start:end].index
+        piece_of_data = self.connection[key].loc[start:end]
 
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
         # Also stocks have data only in the work days.
-        is_cached_state = len(actual_period_range) >= 0.95 * len(expected_period_range)
+        actual_period_range = piece_of_data.index
+        is_cached_length_state = len(actual_period_range) >= self.IS_CACHED_PROPORTION * len(expected_period_range)
+        # Apply the same logic, but relative to the NaN values.
+        is_cached_nan_state = piece_of_data.notna().sum() >= self.IS_CACHED_PROPORTION * len(expected_period_range)
+        is_cached_nan_state = is_cached_nan_state.all().item()
+
+        is_cached_state = is_cached_length_state and is_cached_nan_state
         self.is_cached_cache[is_cached_key] = is_cached_state
 
         return is_cached_state

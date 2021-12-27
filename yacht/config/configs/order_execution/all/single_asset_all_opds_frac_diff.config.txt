@@ -3,18 +3,17 @@ input: {
     market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin', 'FracDiffMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
-    scaler: 'TechnicalIndicatorRobustScaler'
-    window_transforms: []
+    scaler: 'TechnicalIndicatorMinMaxScaler'
     scale_on_interval: '1d'
-    tickers: ['AAPL', 'MSFT', 'NVDA']
-    fine_tune_tickers: ['AAPL', 'MSFT']
+    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
+    fine_tune_tickers: ['NASDAQ100']
     intervals: ['1d']
     features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macd', 'rsi_30']
-    start: '1/1/2020'
-    end: '8/12/2021'
+    start: '1/8/2016'
+    end: '15/10/2021'
     period_length: '1M'
     window_size: 5
     render_periods: [
@@ -31,12 +30,12 @@ input: {
     backtest: {
         run: false
         deterministic: true
-        tickers: ['AAPL', 'MSFT']
+        tickers: ['NASDAQ100']
     }
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 1
+    n_envs: 6
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -44,15 +43,11 @@ environment: {
     reward_schemas: [
     {
         name: 'SinDecisionMakingRewardSchema',
-        reward_scaling: 40
-    },
-    {
-        name: 'ActionMagnitudeRewardSchema',
         reward_scaling: 1.
     },
     {
-        name: 'CashRelativeNoActionRewardSchema',
-        reward_scaling: 1.5
+        name: 'ActionMagnitudeRewardSchema',
+        reward_scaling: 0.025
     }
     ]
     global_reward_scaling: 1.
@@ -62,6 +57,8 @@ environment: {
 agent: {
     name: 'PPO'
     is_classic_method: false
+    is_teacher: false
+    is_student: false
     verbose: true
     policy: {
         name: 'MlpPolicy'
@@ -81,17 +78,17 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 2000000
+    total_timesteps: 4000000
     fine_tune_total_timesteps: -1
-    collecting_n_steps: 128
+    collecting_n_steps: 2048
     learning_rate: 0.0002
-    batch_size: 64
+    batch_size: 2048
     n_epochs: 5
     gamma: 1.
     gae_lambda: 1.
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 0.6
+    entropy_coefficient: 0.15
     vf_coefficient: 1.
     max_grad_norm: 100
     use_sde: false
@@ -101,10 +98,9 @@ train: {
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
-    metrics_to_save_best_on: ['PA', 'GLR', 'AD', 'T']
-    metrics_to_load_best_on: ['PA', 'GLR', 'AD', 'T']
-    plateau_max_n_steps: 15
-    render_data_split: true
-    device: 'cpu'
-    experiment_tracker: ''
+    metrics_to_save_best_on: ['PA', 'GLR', 'T']
+    metrics_to_load_best_on: ['PA', 'GLR', 'T']
+    plateau_max_n_steps: -1
+    device: 'gpu'
+    experiment_tracker: 'wandb'
 }

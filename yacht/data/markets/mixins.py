@@ -5,7 +5,7 @@ import pandas as pd
 from statsmodels.tsa.stattools import adfuller
 from stockstats import StockDataFrame
 
-from yacht import utils
+from yacht import utils, errors
 from yacht.config import Config
 
 
@@ -81,8 +81,12 @@ class FracDiffMixin:
             config.input.include_weekends
         )
 
-        data_to_process = df[self.DOWNLOAD_MANDATORY_FEATURES].copy()
-        data_to_process = data_to_process.apply(np.log)
+        features = self.DOWNLOAD_MANDATORY_FEATURES + list(config.input.technical_indicators)
+        data_to_process = df[features].copy()
+        # Apply log on price features.
+        data_to_process[self.DOWNLOAD_MANDATORY_FEATURES] += 1e-7  # To avoid log(0).
+        data_to_process[self.DOWNLOAD_MANDATORY_FEATURES] = \
+            data_to_process[self.DOWNLOAD_MANDATORY_FEATURES].apply(np.log)
         # Find the d_value only within the train_split.
         d_value = self.find_d_value(
             data=data_to_process.loc[train_split[0]: train_split[1]],
@@ -95,7 +99,7 @@ class FracDiffMixin:
         data_to_process.bfill(axis='rows', inplace=True)
         data_to_process.ffill(axis='rows', inplace=True)
 
-        log_diff_column_mappings = {column: f'{column}FracDiff' for column in self.DOWNLOAD_MANDATORY_FEATURES}
+        log_diff_column_mappings = {feature: f'{feature}FracDiff' for feature in features}
         data_to_process.rename(columns=log_diff_column_mappings, inplace=True)
 
         df = pd.concat([df, data_to_process], axis=1)
@@ -110,11 +114,8 @@ class FracDiffMixin:
             differentiated_df = cls.frac_diff_fixed_ffd(prices_df, d, size=size)
             try:
                 differentiated_df = adfuller(differentiated_df['Close'], maxlag=1, regression='c', autolag=None)
-            except ValueError as e:
-                # TODO: Remove this print.
-                print(e)
-                differentiated_df = adfuller(differentiated_df['Close'], maxlag=0, regression='c', autolag=None)
-
+            except ValueError:
+                raise errors.PreProcessError()
             results.loc[d] = list(differentiated_df[:4]) + [differentiated_df[4]['5%']]
         
         return cls._parse_d_values(results)
