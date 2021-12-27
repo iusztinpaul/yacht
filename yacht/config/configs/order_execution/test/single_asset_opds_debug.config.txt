@@ -9,10 +9,10 @@ input: {
     tickers: ['AAPL', 'MSFT', 'NVDA']
     fine_tune_tickers: ['AAPL', 'MSFT']
     intervals: ['1d']
-    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
+    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff', 'Close', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macd', 'rsi_30']
+    technical_indicators: ['macd', 'rsi_30', 'macdFracDiff', 'rsi_30FracDiff']
     start: '1/1/2020'
     end: '8/12/2021'
     period_length: '1M'

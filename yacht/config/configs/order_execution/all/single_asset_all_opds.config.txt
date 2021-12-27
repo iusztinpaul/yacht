@@ -1,6 +1,6 @@
 input: {
     market: 'Yahoo'
-    market_mixins: ['TargetPriceMixin']
+    market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin', 'FracDiffMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
@@ -8,10 +8,10 @@ input: {
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     fine_tune_tickers: ['NASDAQ100']
     intervals: ['1d']
-    features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macd', 'rsi_30']
+    technical_indicators: ['macdFracDiff', 'rsi_30FracDiff']
     start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
@@ -70,7 +70,7 @@ agent: {
             rnn_layer_type: 'GRU'
         }
         net_arch: {
-            shared: [64]
+            shared: [64, 64]
             vf: [32]
             pi: [32]
         }
@@ -97,9 +97,9 @@ train: {
 }
 meta: {
     log_frequency_steps: 5000
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR']
-    metrics_to_load_best_on: ['PA', 'GLR']
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
+    metrics_to_save_best_on: ['PA', 'GLR', 'T']
+    metrics_to_load_best_on: ['PA', 'GLR', 'T']
     plateau_max_n_steps: -1
     device: 'gpu'
     experiment_tracker: 'wandb'

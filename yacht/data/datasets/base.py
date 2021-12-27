@@ -290,7 +290,7 @@ class SingleAssetDataset(AssetDataset, ABC):
         return self.ticker
 
     def __len__(self) -> int:
-        # All the interval.
+        # All the adjusted interval.
         return len(self.prices)
 
     @property
