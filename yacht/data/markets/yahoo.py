@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Any, Union
 
 import pandas as pd
@@ -68,7 +68,7 @@ class Yahoo(H5Market):
 
         return ticker_data
 
-    def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame], **kwargs) -> pd.DataFrame:
         data = data.loc[:, self.DOWNLOAD_MANDATORY_FEATURES]
 
         return data

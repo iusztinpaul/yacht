@@ -65,7 +65,8 @@ def build_dataset(
                 interval=interval,
                 start=start,
                 end=end,
-                squeeze=True
+                squeeze=True,
+                config=config
             )
     # Remove tickers that are too sparse.
     num_tickers = len(tickers)

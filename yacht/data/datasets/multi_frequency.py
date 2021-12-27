@@ -107,11 +107,10 @@ class DayMultiFrequencyDataset(SingleAssetDataset):
             end_index = (day_index + 1) * bars_per_day
 
             features = features[start_index: end_index]
-            features = self.scaler.transform(features)
-            features = features.reshape(self.window_size, bars_per_day, len(self.features))
             if self.window_transforms is not None:
                 features = self.window_transforms(features)
-
+            features = self.scaler.transform(features)
+            features = features.reshape(self.window_size, bars_per_day, len(self.features))
             window_item[interval] = features
 
         return window_item

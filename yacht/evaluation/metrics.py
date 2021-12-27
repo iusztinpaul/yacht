@@ -147,6 +147,7 @@ def compute_longs_shorts_ratio(report: dict) -> float:
 
 def compute_action_distance(report: dict) -> dict:
     actions = report['unadjusted_actions']
+    length_episode = len(report['unadjusted_actions'])
 
     differences = []
     differences_start = []
@@ -170,9 +171,22 @@ def compute_action_distance(report: dict) -> dict:
         differences_start.append(action_indices.min())
         differences_end.append(actions.shape[0] - action_indices.max())
 
+    # Calculate means & scale them between [0, 1] ( where possible).
+    ad = np.array(differences, dtype=np.float32).mean() / length_episode
+    ads = np.array(differences_start, dtype=np.float32).mean() / length_episode
+    ade = np.array(differences_end, dtype=np.float32).mean() / length_episode
+    num_actions = np.array(num_actions, dtype=np.float32).mean()
+
     return {
-        'AD': np.array(differences, dtype=np.float32).mean().item(),
-        'ADS': np.array(differences_start, dtype=np.float32).mean().item(),
-        'ADE': np.array(differences_end, dtype=np.float32).mean().item(),
-        'num_actions': np.array(num_actions, dtype=np.float32).mean().item()
+        'AD': ad.item(),
+        'ADS': ads.item(),
+        'ADE': ade.item(),
+        'num_actions': num_actions.item()
     }
+
+
+def compute_tactics_ratio(ads_values: List[float], cash_used_on_last_tick_values: List[float]) -> float:
+    ads_mean = sum(ads_values) / len(ads_values)
+    cash_used_on_last_tick_mean = sum(cash_used_on_last_tick_values) / len(cash_used_on_last_tick_values)
+
+    return ads_mean / (cash_used_on_last_tick_mean + 1e-2)

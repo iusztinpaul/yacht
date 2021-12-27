@@ -1,21 +1,22 @@
 input: {
     market: 'Yahoo'
-    market_mixins: ['TargetPriceMixin']
-    dataset: 'DayMultiFrequencyDataset'
+    market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin', 'FracDiffMixin']
+    dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
-    scaler: 'MinMaxScaler'
+    scaler: 'TechnicalIndicatorRobustScaler'
+    window_transforms: []
     scale_on_interval: '1d'
-    tickers: ['AAPL', 'MSFT']
+    tickers: ['AAPL', 'MSFT', 'NVDA']
     fine_tune_tickers: ['AAPL', 'MSFT']
-    intervals: ['1d', '1h']
-    features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    intervals: ['1d']
+    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff', 'Close', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macd', 'rsi_30']
+    technical_indicators: ['macd', 'rsi_30', 'macdFracDiff', 'rsi_30FracDiff']
     start: '1/1/2020'
     end: '8/12/2021'
     period_length: '1M'
-    window_size: 10
+    window_size: 5
     render_periods: [
         # For the train period plot a bigger interval, because it is rendered only once.
          {start: '1/1/2018', end: '1/7/2019'},
@@ -66,7 +67,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'MultiFrequencyRecurrentFeatureExtractor'
+            name: 'DayRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
@@ -99,11 +100,11 @@ train: {
 }
 meta: {
     log_frequency_steps: 5000
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions']
-    metrics_to_save_best_on: ['PA', 'GLR', 'AD']
-    metrics_to_load_best_on: ['PA', 'GLR', 'AD']
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
+    metrics_to_save_best_on: ['PA', 'GLR', 'AD', 'T']
+    metrics_to_load_best_on: ['PA', 'GLR', 'AD', 'T']
     plateau_max_n_steps: 15
     render_data_split: true
-    device: 'gpu'
+    device: 'cpu'
     experiment_tracker: ''
 }

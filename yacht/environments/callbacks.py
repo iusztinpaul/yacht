@@ -122,7 +122,11 @@ class MetricsEvalCallback(EvalCallback):
         self.found_any_new = False
 
     def _on_step(self) -> bool:
-        super()._on_step()
+        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+            self.model.policy.eval()
+        on_step_state = super()._on_step()
+        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+            self.model.policy.train()
 
         if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
             step_mean_metrics = self.eval_env.mean_metrics
@@ -148,7 +152,6 @@ class MetricsEvalCallback(EvalCallback):
                 self.found_any_new = False
 
             if self.apply_plateau:
-                # If any metric we are listing to did not had a new best value for 'max_n_steps' end training.
                 metrics_plateau = [
                     plateau_steps <= self.plateau_max_n_steps for plateau_steps in self.plateau_metrics_counter.values()
                 ]
@@ -158,7 +161,7 @@ class MetricsEvalCallback(EvalCallback):
 
                 return continue_training
 
-        return True
+        return on_step_state
 
     def _on_event(self) -> bool:
         state = super()._on_event()

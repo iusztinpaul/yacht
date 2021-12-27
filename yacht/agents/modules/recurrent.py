@@ -93,6 +93,74 @@ class DayRecurrentFeatureExtractor(BaseFeaturesExtractor):
         return output
 
 
+class DayBatchNormRecurrentFeatureExtractor(DayRecurrentFeatureExtractor):
+    def __init__(
+            self,
+            observation_space: gym.Space,
+            features_dim: List[int],
+            window_size: int,
+            intervals: List[str],
+            features: List[str],
+            env_features_len: int,
+            num_assets: int,
+            include_weekends: bool,
+            activation_fn: nn.Module,
+            rnn_layer_type: nn.Module
+    ):
+        super().__init__(
+            observation_space=observation_space,
+            features_dim=features_dim,
+            window_size=window_size,
+            intervals=intervals,
+            features=features,
+            env_features_len=env_features_len,
+            num_assets=num_assets,
+            include_weekends=include_weekends,
+            activation_fn=activation_fn,
+            rnn_layer_type=rnn_layer_type
+        )
+
+        assert len(features_dim) >= 3
+        assert len(set(features_dim[1:-1])) == 1, 'The features_dim of the recurrent layers should be equal.'
+
+        self.window_size = window_size
+        self.intervals = intervals
+        self.features = features
+        self.env_features_len = env_features_len
+        self.num_assets = num_assets
+        self.include_weekends = include_weekends
+        self.num_rnn_layers = len(features_dim[1:-1])
+
+        self.public_mlp = nn.Sequential(
+            nn.Linear(in_features=len(self.features) * self.num_assets, out_features=features_dim[0]),
+            activation_fn(),
+        )
+        self.public_recurrent = rnn_layer_type(
+            features_dim[0],
+            features_dim[1],
+            num_layers=self.num_rnn_layers,
+            batch_first=True
+        )
+
+        self.private_mlp = nn.Sequential(
+            nn.Linear(in_features=env_features_len, out_features=features_dim[0]),
+            activation_fn(),
+        )
+        self.private_recurrent = rnn_layer_type(
+            features_dim[0],
+            features_dim[1],
+            num_layers=self.num_rnn_layers,
+            batch_first=True
+        )
+
+        self.output_mlp = nn.Sequential(
+            nn.BatchNorm1d(num_features=features_dim[1] * 2),
+            nn.Linear(features_dim[1] * 2, features_dim[-1]),
+            activation_fn(),
+            nn.BatchNorm1d(num_features=features_dim[-1])
+        )
+
+
 class MultiFrequencyRecurrentFeatureExtractor(BaseFeaturesExtractor):
     def __init__(
             self,

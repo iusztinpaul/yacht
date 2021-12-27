@@ -1,11 +1,14 @@
 import os
+import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Union, List, Any, Iterable, Optional, Tuple
 
+import numpy as np
 import pandas as pd
+from tables import NaturalNameWarning
 
-from yacht import utils
+from yacht import utils, errors
 from yacht.logger import Logger
 
 
@@ -17,13 +20,13 @@ class Market(ABC):
             to check the data correctness &
             to fill missing values
     """
-    DOWNLOAD_MANDATORY_FEATURES = {
+    DOWNLOAD_MANDATORY_FEATURES = [
         'Close',
         'Open',
         'High',
         'Low',
         'Volume'
-    }
+    ]
 
     def __init__(
             self,
@@ -101,7 +104,7 @@ class Market(ABC):
         """
 
     @abstractmethod
-    def process_request(self, data: Union[List[List[Any]], pd.DataFrame]) -> pd.DataFrame:
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame], **kwargs) -> pd.DataFrame:
         pass
 
     @abstractmethod
@@ -118,15 +121,23 @@ class Market(ABC):
             interval: str,
             start: datetime,
             end: datetime,
-            squeeze: bool = False
+            squeeze: bool = False,
+            **kwargs
     ):
         if isinstance(tickers, str):
             tickers = [tickers]
 
+        warnings.filterwarnings(action='ignore', category=NaturalNameWarning)
+        invalid_tickers = set()
         for ticker in tickers:
-            self._download(ticker, interval, start, end, squeeze)
+            try:
+                self._download(ticker, interval, start, end, squeeze, **kwargs)
+            except (errors.DownloadError, errors.PreProcessError):
+                invalid_tickers.add(ticker)
+        warnings.filterwarnings(action='default', category=NaturalNameWarning)
+        self.logger.log(f'Could not download / process: {invalid_tickers}')
 
-    def _download(self, ticker: str, interval: str, start: datetime, end: datetime, squeeze: bool = False):
+    def _download(self, ticker: str, interval: str, start: datetime, end: datetime, squeeze: bool = False, **kwargs):
         # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.
         if squeeze:
             start, end = self.squeeze_period(ticker, interval, start, end)
@@ -139,10 +150,12 @@ class Market(ABC):
         data = self.request(ticker, interval, start, end)
         assert self.check_downloaded_data(data, interval, start, end), \
             f'[{ticker}] Download data did not passed the download checks.'
-        data = self.process_request(data)
+        data = self.process_request(data, **kwargs)
+        data = data.sort_index()
 
-        assert self.DOWNLOAD_MANDATORY_FEATURES.intersection(set(data.columns)) == self.DOWNLOAD_MANDATORY_FEATURES, \
-            f'Some mandatory features are missing after downloading: {ticker}.'
+        assert set(self.DOWNLOAD_MANDATORY_FEATURES).intersection(set(data.columns)) == \
+               set(self.DOWNLOAD_MANDATORY_FEATURES), \
+               f'Some mandatory features are missing after downloading: {ticker}.'
 
         self.cache_request(ticker, interval, data)
 
@@ -174,6 +187,8 @@ class Market(ABC):
 
 
 class H5Market(Market, ABC):
+    IS_CACHED_PROPORTION = 0.95
+
     def __init__(
             self,
             get_features: List[str],
@@ -239,7 +254,7 @@ class H5Market(Market, ABC):
         data_slice.fillna(method='bfill', inplace=True, axis=0)
         data_slice.fillna(method='ffill', inplace=True, axis=0)
 
-        assert data_slice.notna().all().all(), \
+        assert np.isfinite(data_slice).all().all().item(), \
             f'Data from the market is not valid for: [{ticker}-{interval}] {start} - {end}'
         assert data_slice.index[0].date() == start.date() and data_slice.index[-1].date() == end.date(), \
             f'Data from the market is not valid for: [{ticker}-{interval}] {start} - {end}'
@@ -270,6 +285,10 @@ class H5Market(Market, ABC):
         template_data = pd.DataFrame(index=datetime_index, columns=features)
         piece_of_data = self.connection[self.create_key(ticker, interval)].loc[start:end]
         template_data.update(piece_of_data)
+
+        unsupported_features = set(features) - set(piece_of_data.columns)
+        assert len(unsupported_features) == 0, \
+            f'Unsupported features requested from the market: {unsupported_features}'
 
         return template_data
 
@@ -307,12 +326,18 @@ class H5Market(Market, ABC):
             end = utils.add_days(end, action='+', include_weekends=self.include_weekends, offset=1)
         expected_period_range = utils.compute_period_range(start, end, self.include_weekends, interval)
         # Query how much of the requested time series is in the cache.
-        actual_period_range = self.connection[key].loc[start:end].index
+        piece_of_data = self.connection[key].loc[start:end]
 
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
         # Also stocks have data only in the work days.
-        is_cached_state = len(actual_period_range) >= 0.95 * len(expected_period_range)
+        actual_period_range = piece_of_data.index
+        is_cached_length_state = len(actual_period_range) >= self.IS_CACHED_PROPORTION * len(expected_period_range)
+        # Apply the same logic, but relative to the NaN values.
+        is_cached_nan_state = piece_of_data.notna().sum() >= self.IS_CACHED_PROPORTION * len(expected_period_range)
+        is_cached_nan_state = is_cached_nan_state.all().item()
+
+        is_cached_state = is_cached_length_state and is_cached_nan_state
         self.is_cached_cache[is_cached_key] = is_cached_state
 
         return is_cached_state

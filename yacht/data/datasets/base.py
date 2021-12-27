@@ -276,7 +276,6 @@ class SingleAssetDataset(AssetDataset, ABC):
         else:
             self.data = dict()
             for interval in self.intervals:
-                self.market.download(ticker, interval, self.start, self.end)
                 self.data[interval] = self.market.get(
                     ticker=ticker,
                     interval=interval,
@@ -291,7 +290,7 @@ class SingleAssetDataset(AssetDataset, ABC):
         return self.ticker
 
     def __len__(self) -> int:
-        # All the interval.
+        # All the adjusted interval.
         return len(self.prices)
 
     @property

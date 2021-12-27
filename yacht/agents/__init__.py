@@ -36,6 +36,7 @@ policy_registry = {
 feature_extractor_registry = {
     'MultiFrequencyFeatureExtractor': modules.MultiFrequencyFeatureExtractor,
     'DayRecurrentFeatureExtractor': modules.DayRecurrentFeatureExtractor,
+    'DayBatchNormRecurrentFeatureExtractor': modules.DayBatchNormRecurrentFeatureExtractor,
     'MultiFrequencyRecurrentFeatureExtractor': modules.MultiFrequencyRecurrentFeatureExtractor,
     'RecurrentNPeriodsFeatureExtractor': modules.RecurrentNPeriodsFeatureExtractor,
     'RecurrentAttentionFeatureExtractor': modules.RecurrentAttentionFeatureExtractor,

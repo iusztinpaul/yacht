@@ -54,7 +54,7 @@ class Binance(H5Market):
 
             raise e
 
-    def process_request(self, data: List[List[Any]]) -> pd.DataFrame:
+    def process_request(self, data: Union[List[List[Any]], pd.DataFrame], **kwargs) -> pd.DataFrame:
         df = pd.DataFrame(
             data,
             columns=[
