@@ -60,7 +60,7 @@ environment: {
     possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
 agent: {
-    name: 'PPO'
+    name: 'SupervisedPPO'
     is_classic_method: false
     verbose: true
     policy: {
@@ -81,7 +81,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 2000000
+    total_timesteps: 1000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 128
     learning_rate: 0.0002
@@ -97,6 +97,7 @@ train: {
     use_sde: false
     sde_sample_freq: -1
     learning_rate_scheduler: 'ConstantSchedule'
+    supervised_coef: 0.25
 }
 meta: {
     log_frequency_steps: 5000
@@ -106,5 +107,5 @@ meta: {
     plateau_max_n_steps: 15
     render_data_split: true
     device: 'cpu'
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
 }

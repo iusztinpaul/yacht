@@ -321,6 +321,7 @@ class BaseAssetEnvironment(gym.Env, ABC):
             data_time_length=self.data_time_length,
             env_time_length=self.env_time_length,
             agent_time_length=self.agent_time_length,
+            label=self.dataset.get_labels(self.get_decision_tick()).values
         )
 
         info = self._create_info(info)
