@@ -20,13 +20,13 @@ class SupervisedRolloutBufferSamples(NamedTuple):
 
 class SupervisedRolloutBuffer(RolloutBuffer):
     def __init__(self, *args, **kwargs):
-        self.num_labels = kwargs.pop('num_labels', None)
-        assert self.num_labels is not None
-
-        super().__init__(*args, **kwargs)
-
+        num_labels = kwargs.pop('num_labels')
+        assert num_labels is not None
+        self.num_labels = num_labels
         self.labels = None
         self.predictions = None
+
+        super().__init__(*args, **kwargs)
 
     def reset(self) -> None:
         self.labels = np.zeros((self.buffer_size, self.n_envs, self.num_labels), dtype=np.float32)

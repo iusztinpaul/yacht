@@ -97,6 +97,7 @@ train: {
     use_sde: false
     sde_sample_freq: -1
     learning_rate_scheduler: 'ConstantSchedule'
+    supervised_coef: 0.25
 }
 meta: {
     log_frequency_steps: 5000

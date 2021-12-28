@@ -179,7 +179,8 @@ def build_agent(
             policy_kwargs=policy_kwargs,
             device='cuda' if config.meta.device == 'gpu' else config.meta.device,
             distillation_coef=train_config.distillation_coef,
-            distillation_loss_weights=train_config.distillation_loss_weights
+            distillation_loss_weights=train_config.distillation_loss_weights,
+            supervised_coef=train_config.supervised_coef
         )
         agent_kwargs = utils.filter_class_kwargs(
                 agent_class,
