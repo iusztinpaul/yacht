@@ -7,6 +7,7 @@ input: {
     window_transforms: []
     scale_on_interval: '1d'
     tickers: ['AAPL', 'MSFT', 'NVDA']
+    indexes_tickers: ['QQQ']
     fine_tune_tickers: ['AAPL', 'MSFT']
     intervals: ['1d']
     features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff', 'Close', 'Volume']

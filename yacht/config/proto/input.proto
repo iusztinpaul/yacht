@@ -34,4 +34,5 @@ message InputConfig {
   double backtest_split_ratio = 25;
   double embargo_ratio = 26;
   BacktestConfig backtest = 27;
+  repeated string indexes_tickers = 28;
 }
