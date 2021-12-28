@@ -45,6 +45,7 @@ class SimpleBackTester(BackTester):
 
     def test(self):
         # Run the agent with the given policy.
+        self.agent.policy.eval()
         evaluate_policy(
             model=self.agent,
             env=self.env,
@@ -56,6 +57,7 @@ class SimpleBackTester(BackTester):
             return_episode_rewards=False,
             warn=False
         )
+        self.agent.policy.train()
 
         assert np.all(self.env.buf_dones), 'Cannot compute metrics on undone environments.'
 
