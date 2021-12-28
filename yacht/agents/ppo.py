@@ -13,7 +13,7 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.utils import obs_as_tensor, explained_variance
 from stable_baselines3.common.vec_env import VecEnv
 
-from yacht.agents.buffers import StudentRolloutBuffer
+from yacht.agents.buffers import StudentRolloutBuffer, SupervisedRolloutBuffer
 
 
 class PPO(SB3PPO):
@@ -21,6 +21,108 @@ class PPO(SB3PPO):
         super().train()
 
         self.logger.dump()
+
+
+class SupervisedPPO(SB3PPO):
+    def _setup_model(self):
+        super()._setup_model()
+
+        self.rollout_buffer = SupervisedRolloutBuffer(
+            self.n_steps,
+            self.observation_space,
+            self.action_space,
+            self.device,
+            gamma=self.gamma,
+            gae_lambda=self.gae_lambda,
+            n_envs=self.n_envs,
+            num_labels=1
+        )
+
+    def collect_rollouts(
+        self,
+        env: VecEnv,
+        callback: BaseCallback,
+        rollout_buffer: SupervisedRolloutBuffer,
+        n_rollout_steps: int,
+    ) -> bool:
+        """
+        Collect experiences using the current policy and fill a ``RolloutBuffer``.
+        The term rollout here refers to the model-free notion and should not
+        be used with the concept of rollout used in model-based RL or planning.
+
+        :param env: The training environment
+        :param callback: Callback that will be called at each step
+            (and at the beginning and end of the rollout)
+        :param rollout_buffer: Buffer to fill with rollouts
+        :param n_steps: Number of experiences to collect per environment
+        :return: True if function returned with at least `n_rollout_steps`
+            collected, False if callback terminated rollout prematurely.
+        """
+        assert self._last_obs is not None, "No previous observation was provided"
+        n_steps = 0
+        rollout_buffer.reset()
+        # Sample new weights for the state dependent exploration
+        if self.use_sde:
+            self.policy.reset_noise(env.num_envs)
+
+        callback.on_rollout_start()
+
+        while n_steps < n_rollout_steps:
+            if self.use_sde and self.sde_sample_freq > 0 and n_steps % self.sde_sample_freq == 0:
+                # Sample a new noise matrix
+                self.policy.reset_noise(env.num_envs)
+
+            with th.no_grad():
+                # Convert to pytorch tensor or to TensorDict
+                obs_tensor = obs_as_tensor(self._last_obs, self.device)
+                actions, values, log_probs = self.policy.forward(obs_tensor)
+            actions = actions.cpu().numpy()
+
+            # Rescale and perform action
+            clipped_actions = actions
+            # Clip the actions to avoid out of bound error
+            if isinstance(self.action_space, gym.spaces.Box):
+                clipped_actions = np.clip(actions, self.action_space.low, self.action_space.high)
+
+            new_obs, rewards, dones, infos = env.step(clipped_actions)
+
+            self.num_timesteps += env.num_envs
+
+            # Give access to local variables
+            callback.update_locals(locals())
+            if callback.on_step() is False:
+                return False
+
+            self._update_info_buffer(infos)
+            n_steps += 1
+
+            if isinstance(self.action_space, gym.spaces.Discrete):
+                # Reshape in case of discrete action
+                actions = actions.reshape(-1, 1)
+            label = np.array([info['label'] for info in infos], dtype=np.float32)
+            rollout_buffer.add(
+                self._last_obs,
+                actions,
+                rewards,
+                self._last_episode_starts,
+                values,
+                log_probs,
+                label,
+                prediction=None
+            )
+            self._last_obs = new_obs
+            self._last_episode_starts = dones
+
+        with th.no_grad():
+            # Compute value for the last timestep
+            obs_tensor = obs_as_tensor(new_obs, self.device)
+            _, values, _ = self.policy.forward(obs_tensor)
+
+        rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
+
+        callback.on_rollout_end()
+
+        return True
 
 
 class StudentPPO(PPO):

@@ -7,6 +7,101 @@ from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.common.vec_env import VecNormalize
 
 
+class SupervisedRolloutBufferSamples(NamedTuple):
+    observations: th.Tensor
+    actions: th.Tensor
+    old_values: th.Tensor
+    old_log_prob: th.Tensor
+    advantages: th.Tensor
+    returns: th.Tensor
+    labels: th.Tensor
+    predictions: th.Tensor
+
+
+class SupervisedRolloutBuffer(RolloutBuffer):
+    def __init__(self, *args, **kwargs):
+        self.num_labels = kwargs.pop('num_labels', None)
+        assert self.num_labels is not None
+
+        super().__init__(*args, **kwargs)
+
+        self.labels = None
+        self.predictions = None
+
+    def reset(self) -> None:
+        self.labels = np.zeros((self.buffer_size, self.n_envs, self.num_labels), dtype=np.float32)
+        self.predictions = np.zeros((self.buffer_size, self.n_envs, self.num_labels), dtype=np.float32)
+
+        super().reset()
+
+    def add(
+            self,
+            obs: np.ndarray,
+            action: np.ndarray,
+            reward: np.ndarray,
+            episode_start: np.ndarray,
+            value: th.Tensor,
+            log_prob: th.Tensor,
+            label: np.ndarray,
+            prediction: th.Tensor
+    ) -> None:
+        self.labels[self.pos] = np.array(label, dtype=np.float32).copy()
+        self.predictions[self.pos] = prediction.clone().cpu().numpy()
+
+        super().add(
+            obs,
+            action,
+            reward,
+            episode_start,
+            value,
+            log_prob
+        )
+
+    def get(self, batch_size: Optional[int] = None) -> Generator[SupervisedRolloutBufferSamples, None, None]:
+        assert self.full
+        indices = np.random.permutation(self.buffer_size * self.n_envs)
+        # Prepare the data
+        if not self.generator_ready:
+            _tensor_names = [
+                "observations",
+                "actions",
+                "values",
+                "log_probs",
+                "advantages",
+                "returns",
+                "labels",
+                "predictions"
+            ]
+
+            for tensor in _tensor_names:
+                self.__dict__[tensor] = self.swap_and_flatten(self.__dict__[tensor])
+            self.generator_ready = True
+
+        # Return everything, don't create minibatches
+        if batch_size is None:
+            batch_size = self.buffer_size * self.n_envs
+
+        start_idx = 0
+        while start_idx < self.buffer_size * self.n_envs:
+            yield self._get_samples(indices[start_idx : start_idx + batch_size])
+            start_idx += batch_size
+
+    def _get_samples(
+            self,
+            batch_inds: np.ndarray,
+            env: Optional[VecNormalize] = None
+    ) -> SupervisedRolloutBufferSamples:
+        sample = super()._get_samples(batch_inds, env)
+        additional_sample = (
+            self.labels[batch_inds],
+            self.predictions[batch_inds]
+        )
+        additional_sample = tuple(map(self.to_torch, additional_sample))
+        sample = sample + additional_sample
+
+        return SupervisedRolloutBufferSamples(*sample)
+
+
 class StudentRolloutBufferSamples(NamedTuple):
     observations: th.Tensor
     actions: th.Tensor

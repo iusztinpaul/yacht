@@ -11,7 +11,7 @@ from yacht.logger import Logger
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
 from yacht.agents import modules
 from yacht.agents import schedulers
-from yacht.agents.ppo import PPO, StudentPPO
+from yacht.agents.ppo import PPO, StudentPPO, SupervisedPPO
 from yacht.agents.sac import SAC
 from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
@@ -20,6 +20,7 @@ from ..environments import BaseAssetEnvironment
 
 reinforcement_learning_agents = {
     'PPO': PPO,
+    'SupervisedPPO': SupervisedPPO,
     'StudentPPO': StudentPPO,
     'SAC': SAC
 }

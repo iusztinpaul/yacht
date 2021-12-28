@@ -22,6 +22,7 @@ class StudentMultiAssetDataset(MultiAssetDataset):
             decision_price_feature: str,
             period: DatasetPeriod,
             render_intervals: List[Interval],
+            render_tickers: List[str],
             mode: Mode,
             logger: Logger,
             window_size: int = 1
@@ -35,6 +36,7 @@ class StudentMultiAssetDataset(MultiAssetDataset):
             decision_price_feature=decision_price_feature,
             period=period,
             render_intervals=render_intervals,
+            render_tickers=render_tickers,
             mode=mode,
             logger=logger,
             window_size=window_size,

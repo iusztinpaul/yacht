@@ -98,6 +98,9 @@ class SampleAssetDataset(AssetDataset):
     def get_prices(self) -> pd.DataFrame:
         return self.datasets[self.current_dataset_index].get_prices()
 
+    def get_labels(self, t_tick: Optional[int] = None) -> Union[pd.DataFrame, pd.Series]:
+        return self.datasets[self.current_dataset_index].get_labels(t_tick)
+
     def get_decision_prices(self, t_tick: Optional[int] = None, ticker: Optional[str] = None) -> pd.Series:
         return self.datasets[self.current_dataset_index].get_decision_prices(t_tick, ticker)
 

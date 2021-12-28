@@ -459,6 +459,18 @@ class MultiAssetDataset(AssetDataset):
 
         return prices
 
+    def get_labels(self, t_tick: Optional[int] = None) -> Union[pd.DataFrame, pd.Series]:
+        labels = []
+        for dataset in self.datasets:
+            ticker_labels = getattr(dataset, 'labels', pd.Series())
+            ticker_labels.name = dataset.ticker
+            labels.append(ticker_labels)
+        labels = pd.concat(labels, axis=1)
+        if t_tick is not None:
+            labels = labels.iloc[t_tick]
+
+        return labels
+
     def get_decision_prices(self, t_tick: Optional[int] = None, ticker: Optional[str] = None) -> pd.Series:
         if ticker is not None:
             datasets = [self._pick_dataset(ticker=ticker)]

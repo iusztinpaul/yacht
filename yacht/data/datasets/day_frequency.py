@@ -7,13 +7,14 @@ from pandas import Interval
 
 from yacht import Mode
 from yacht.data.datasets import SingleAssetDataset, DatasetPeriod
+from yacht.data.datasets.mixins import MetaLabelingMixin
 from yacht.data.markets import Market
 from yacht.data.scalers import Scaler
 from yacht.data.transforms import Compose
 from yacht.logger import Logger
 
 
-class DayFrequencyDataset(SingleAssetDataset):
+class DayFrequencyDataset(MetaLabelingMixin, SingleAssetDataset):
     def __init__(
             self,
             ticker: str,
