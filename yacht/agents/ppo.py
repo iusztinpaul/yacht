@@ -15,6 +15,7 @@ from stable_baselines3.common.utils import obs_as_tensor, explained_variance
 from stable_baselines3.common.vec_env import VecEnv
 
 from yacht.agents.buffers import StudentRolloutBuffer, SupervisedRolloutBuffer
+from yacht.agents.modules.torch_layers import SupervisedMlpExtractor
 
 
 class PPO(SB3PPO):
@@ -24,6 +25,7 @@ class PPO(SB3PPO):
         self.logger.dump()
 
 
+# TODO: Fork stable_baselines3 and move implementation there.
 class SupervisedPPO(SB3PPO):
     class SupervisedActorCriticPolicy(ActorCriticPolicy):
         def __init__(self, *args, **kwargs):
@@ -35,12 +37,27 @@ class SupervisedPPO(SB3PPO):
 
             super().__init__(*args, **kwargs)
 
+        def _build_mlp_extractor(self) -> None:
+            """
+            Create the policy and value networks.
+            Part of the layers can be shared.
+            """
+            # Note: If net_arch is None and some features extractor is used,
+            #       net_arch here is an empty list and mlp_extractor does not
+            #       really contain any layers (acts like an identity module).
+            self.mlp_extractor = SupervisedMlpExtractor(
+                self.features_dim,
+                net_arch=self.net_arch,
+                activation_fn=self.activation_fn,
+                device=self.device,
+            )
+
         def _build(self, lr_schedule: Schedule) -> None:
             super()._build(lr_schedule)
 
-            latent_dim_pi = self.mlp_extractor.latent_dim_pi
+            latent_dim_supervised = self.mlp_extractor.latent_dim_supervised
             self.supervised_labels_net = nn.Sequential(
-                nn.Linear(latent_dim_pi, self.num_labels),
+                nn.Linear(latent_dim_supervised, self.num_labels),
                 nn.Sigmoid()
             )
 
@@ -56,8 +73,8 @@ class SupervisedPPO(SB3PPO):
             :param deterministic: Whether to sample or use deterministic actions
             :return: action, value and log probability of the action
             """
-            latent_pi, latent_vf, latent_sde = self._get_latent(obs)
-            supervised_predictions = self.supervised_labels_net(latent_pi)
+            latent_pi, latent_vf, latent_sde, latent_supervised = self._get_latent(obs)
+            supervised_predictions = self.supervised_labels_net(latent_supervised)
 
             # Evaluate the values for the given observations
             values = self.value_net(latent_vf)
@@ -81,12 +98,43 @@ class SupervisedPPO(SB3PPO):
             :return: estimated value, log likelihood of taking those actions
                 and entropy of the action distribution.
             """
-            latent_pi, latent_vf, latent_sde = self._get_latent(obs)
-            supervised_predictions = self.supervised_labels_net(latent_pi)
+            latent_pi, latent_vf, latent_sde, latent_supervised = self._get_latent(obs)
+            supervised_predictions = self.supervised_labels_net(latent_supervised)
             distribution = self._get_action_dist_from_latent(latent_pi, latent_sde)
             log_prob = distribution.log_prob(actions)
             values = self.value_net(latent_vf)
             return values, log_prob, distribution.entropy(), supervised_predictions
+
+        def _predict(self, observation: th.Tensor, deterministic: bool = False) -> th.Tensor:
+            """
+            Get the action according to the policy for a given observation.
+
+            :param observation:
+            :param deterministic: Whether to use stochastic or deterministic actions
+            :return: Taken action according to the policy
+            """
+            latent_pi, _, latent_sde, _ = self._get_latent(observation)
+            distribution = self._get_action_dist_from_latent(latent_pi, latent_sde)
+            return distribution.get_actions(deterministic=deterministic)
+
+        def _get_latent(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor]:
+            """
+            Get the latent code (i.e., activations of the last layer of each network)
+            for the different networks.
+
+            :param obs: Observation
+            :return: Latent codes
+                for the actor, the value function and for gSDE function
+            """
+            # Preprocess the observation if needed
+            features = self.extract_features(obs)
+            latent_pi, latent_vf, latent_supervised = self.mlp_extractor(features)
+
+            # Features for sde
+            latent_sde = latent_pi
+            if self.sde_features_extractor is not None:
+                latent_sde = self.sde_features_extractor(features)
+            return latent_pi, latent_vf, latent_sde, latent_supervised
 
     def __init__(
             self,
@@ -263,6 +311,7 @@ class SupervisedPPO(SB3PPO):
         entropy_losses = []
         pg_losses, value_losses = [], []
         clip_fractions = []
+        supervised_losses = []
 
         continue_training = True
 
@@ -282,7 +331,7 @@ class SupervisedPPO(SB3PPO):
                 if self.use_sde:
                     self.policy.reset_noise(self.batch_size)
 
-                values, log_prob, entropy, _ = self.policy.evaluate_actions(rollout_data.observations, actions)
+                values, log_prob, entropy, predictions = self.policy.evaluate_actions(rollout_data.observations, actions)
                 values = values.flatten()
                 # Normalize advantage
                 advantages = rollout_data.advantages
@@ -325,10 +374,12 @@ class SupervisedPPO(SB3PPO):
 
                 # Supervised loss
                 supervised_loss = F.binary_cross_entropy(
-                    rollout_data.predictions,
+                    # rollout_data.predictions,
+                    predictions,
                     rollout_data.labels,
                     reduction='mean'
                 )
+                supervised_losses.append(supervised_loss.item())
 
                 loss = \
                     policy_loss + \
@@ -368,7 +419,7 @@ class SupervisedPPO(SB3PPO):
         self.logger.record("train/entropy_loss", np.mean(entropy_losses))
         self.logger.record("train/policy_gradient_loss", np.mean(pg_losses))
         self.logger.record("train/value_loss", np.mean(value_losses))
-        self.logger.record("train/supervised_loss", np.mean(value_losses))
+        self.logger.record("train/supervised_loss", np.mean(supervised_losses))
         self.logger.record("train/approx_kl", np.mean(approx_kl_divs))
         self.logger.record("train/clip_fraction", np.mean(clip_fractions))
         self.logger.record("train/loss", loss.item())
