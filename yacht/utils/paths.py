@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Optional
 
 from yacht import Mode
 
@@ -23,8 +24,14 @@ def build_best_reward_checkpoint_path(storage_dir: str, mode: Mode) -> str:
     return build_checkpoints_path(storage_dir, mode, 'best_model.zip')
 
 
-def build_best_checkpoint_dir(storage_dir: str, mode: Mode) -> str:
-    return build_checkpoints_path(storage_dir, mode, '')
+def build_checkpoints_dir(storage_dir: str, mode: Optional[Mode] = None) -> str:
+    if mode is None:
+        checkpoint_dir = os.path.join(storage_dir, 'checkpoints')
+        Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
+
+        return checkpoint_dir
+    else:
+        return build_checkpoints_path(storage_dir, mode, '')
 
 
 def build_best_metric_checkpoint_path(storage_dir: str, mode: Mode, metric: str) -> str:

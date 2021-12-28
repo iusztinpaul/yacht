@@ -26,4 +26,5 @@ message TrainConfig {
   double k_fold_embargo_ratio = 21;
   double distillation_coef = 22;
   repeated double distillation_loss_weights = 23;
+  double supervised_coef = 24;
 }

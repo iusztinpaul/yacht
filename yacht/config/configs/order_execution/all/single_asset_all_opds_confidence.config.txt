@@ -55,7 +55,7 @@ environment: {
     possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
 agent: {
-    name: 'PPO'
+    name: 'SupervisedPPO'
     is_classic_method: false
     is_teacher: false
     is_student: false
@@ -94,6 +94,7 @@ train: {
     use_sde: false
     sde_sample_freq: -1
     learning_rate_scheduler: 'ConstantSchedule'
+    supervised_coef: 1.
 }
 meta: {
     log_frequency_steps: 5000

@@ -1,17 +1,14 @@
 from abc import ABC
-from typing import List, Union, Optional
+from typing import List, Optional
 
-import wandb
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import VecEnv
-from tqdm import tqdm
 
 from yacht import utils, Mode
 from yacht.agents import build_agent
 from yacht.config import Config
-from yacht.data.datasets import AssetDataset, build_dataset, SampleAssetDataset
-from yacht.data.k_fold import PurgedKFold
+from yacht.data.datasets import build_dataset, SampleAssetDataset
 from yacht.environments import build_env, MetricsVecEnvWrapper
 from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback
 from yacht.evaluation import run_backtest
@@ -59,13 +56,7 @@ class Trainer(ABC):
 
         if self.save is True:
             save_path = utils.build_last_checkpoint_path(self.storage_dir, self.mode)
-            self.agent.save(
-                path=save_path
-            )
-
-            # TODO: Find a way to add this line to the wandb classes for consistency.
-            if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
-                wandb.save(save_path)
+            self.agent.save(path=save_path)
 
         self.train_env.close()
         self.validation_env.close()
@@ -105,7 +96,7 @@ class Trainer(ABC):
                 n_eval_episodes=len(self.validation_dataset.datasets),
                 eval_freq=self.config.train.collecting_n_steps * self.config.environment.n_envs,
                 log_path=utils.build_log_dir(self.storage_dir),
-                best_model_save_path=utils.build_best_checkpoint_dir(self.storage_dir, self.mode),
+                best_model_save_path=utils.build_checkpoints_dir(self.storage_dir, self.mode),
                 deterministic=self.config.input.backtest.deterministic,
                 logger=self.logger,
                 verbose=1

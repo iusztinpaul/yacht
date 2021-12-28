@@ -29,8 +29,13 @@ class WandBContext(CacheContext):
         if self.config.meta.experiment_tracker == 'wandb':
             cache_experiment_tracker_name(self.storage_dir, 'wandb')
             self._init_wandb()
+            self.save_config()
 
         return self
+
+    def save_config(self):
+        config_path = os.path.join(self.storage_dir, 'config.txt')
+        wandb.save(config_path)
 
     def _init_wandb(self):
         wandb.login(key=os.environ['WANDB_API_KEY'])
@@ -67,6 +72,11 @@ class WandBContext(CacheContext):
         super().__exit__(exc_type, exc_val, exc_tb)
 
         if self.config.meta.experiment_tracker == 'wandb':
+            # Save all checkpoints to wandb.
+            checkpoints_dir = utils.build_checkpoints_dir(self.storage_dir)
+            checkpoints_dir = os.path.join(checkpoints_dir, '*', '*.zip')
+            wandb.save(checkpoints_dir, base_path=self.storage_dir)
+
             wandb.finish()
 
     @classmethod
@@ -191,8 +201,3 @@ class WandBCallback(BaseCallback):
                 policy.action_net
             )
         )
-
-        if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
-            best_model_path = utils.build_best_reward_checkpoint_path(self.storage_dir, self.mode)
-            if os.path.exists(best_model_path):
-                wandb.save(best_model_path)

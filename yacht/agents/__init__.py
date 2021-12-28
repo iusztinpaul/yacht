@@ -11,7 +11,7 @@ from yacht.logger import Logger
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
 from yacht.agents import modules
 from yacht.agents import schedulers
-from yacht.agents.ppo import PPO, StudentPPO
+from yacht.agents.ppo import PPO, StudentPPO, SupervisedPPO
 from yacht.agents.sac import SAC
 from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
@@ -20,6 +20,7 @@ from ..environments import BaseAssetEnvironment
 
 reinforcement_learning_agents = {
     'PPO': PPO,
+    'SupervisedPPO': SupervisedPPO,
     'StudentPPO': StudentPPO,
     'SAC': SAC
 }
@@ -178,7 +179,8 @@ def build_agent(
             policy_kwargs=policy_kwargs,
             device='cuda' if config.meta.device == 'gpu' else config.meta.device,
             distillation_coef=train_config.distillation_coef,
-            distillation_loss_weights=train_config.distillation_loss_weights
+            distillation_loss_weights=train_config.distillation_loss_weights,
+            supervised_coef=train_config.supervised_coef
         )
         agent_kwargs = utils.filter_class_kwargs(
                 agent_class,
