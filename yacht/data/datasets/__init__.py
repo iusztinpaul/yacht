@@ -183,6 +183,22 @@ def build_dataset(
     # 3. Build multi asset datasets.
     # 4. Build dataset sampler.
     # -----------------------------------------------------------------------------------------------------------------
+    indexes_scalers = dict()
+    for index_ticker in input_config.indexes_tickers:
+        scaler = build_scaler(
+            config=config,
+            ticker=index_ticker
+        )
+        Scaler.fit_on(
+            scaler=scaler,
+            market=market,
+            train_start=train_split[0],
+            train_end=train_split[1],
+            interval=config.input.scale_on_interval,
+            features=list(input_config.features) + list(input_config.technical_indicators)
+        )
+        indexes_scalers[index_ticker] = scaler
+
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
     render_tickers = list(input_config.render_tickers) if len(input_config.render_tickers) > 0 else list(tickers)[0]
     num_skipped_datasets = 0
