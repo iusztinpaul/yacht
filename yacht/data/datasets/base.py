@@ -466,6 +466,9 @@ class MultiAssetDataset(AssetDataset):
             ticker_labels.name = dataset.ticker
             labels.append(ticker_labels)
         labels = pd.concat(labels, axis=1)
+        if len(labels) < t_tick:
+            return pd.Series()
+
         if t_tick is not None:
             labels = labels.iloc[t_tick]
 

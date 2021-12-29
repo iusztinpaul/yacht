@@ -112,6 +112,8 @@ if __name__ == '__main__':
             storage_dir = market_storage_dir if market_storage_dir is not None else storage_dir
             logger.info(f'Downloading to: {storage_dir}')
 
+            start = utils.string_to_datetime(config.input.start)
+            end = utils.string_to_datetime(config.input.end)
             market = build_market(
                 config=config,
                 logger=logger,
@@ -119,16 +121,18 @@ if __name__ == '__main__':
                 read_only=False
             )
             tickers = build_tickers(config, mode)
+            # Indexes tickers are not used within the standard pipeline,
+            # therefore we are adding them separately.
+            tickers = tickers.union(set(config.input.indexes_tickers))
             for interval in config.input.intervals:
                 market.download(
                     tickers,
                     interval=interval,
-                    start=utils.string_to_datetime(config.input.start),
-                    end=utils.string_to_datetime(config.input.end),
+                    start=start,
+                    end=end,
                     squeeze=True,
                     config=config
                 )
-
             logger.info(f'Downloading finished')
         elif mode == Mode.ExportActions:
             run_backtest(

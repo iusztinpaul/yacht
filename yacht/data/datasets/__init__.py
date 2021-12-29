@@ -58,10 +58,14 @@ def build_dataset(
     start = utils.string_to_datetime(input_config.start)
     end = utils.string_to_datetime(input_config.end)
     if is_read_only is False:
+        to_download_tickers = tickers
+        # Indexes tickers are not used within the standard pipeline,
+        # therefore we are adding them separately.
+        to_download_tickers = to_download_tickers.union(set(input_config.indexes_tickers))
         # Download the whole requested interval in one shot for further processing & rendering.
         for interval in input_config.intervals:
             market.download(
-                tickers,
+                to_download_tickers,
                 interval=interval,
                 start=start,
                 end=end,
