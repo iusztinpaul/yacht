@@ -3,17 +3,17 @@ input: {
     market_mixins: ['TargetPriceMixin', 'LogDifferenceMixin', 'FracDiffMixin']
     dataset: 'DayFrequencyDataset'
     num_assets_per_dataset: 1
-    scaler: 'TechnicalIndicatorRobustScaler'
+    scaler: 'MinMaxScaler'
     window_transforms: []
     scale_on_interval: '1d'
     tickers: ['AAPL', 'MSFT', 'NVDA']
     attached_tickers: ['QQQ', 'SPY']
     fine_tune_tickers: ['AAPL', 'MSFT']
     intervals: ['1d']
-    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff', 'Close', 'Volume']
+    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macd', 'rsi_30', 'macdFracDiff', 'rsi_30FracDiff']
+    technical_indicators: ['macdFracDiff', 'rsi_30']
     start: '1/1/2020'
     end: '8/12/2021'
     period_length: '1M'
