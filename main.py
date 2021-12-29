@@ -120,13 +120,11 @@ if __name__ == '__main__':
                 storage_dir=storage_dir,
                 read_only=False
             )
-            tickers = build_tickers(config, mode)
-            # Indexes tickers are not used within the standard pipeline,
-            # therefore we are adding them separately.
-            tickers = tickers.union(set(config.input.indexes_tickers))
+            tickers, attached_tickers = build_tickers(config, mode)
+            tickers_to_download = tickers.union(attached_tickers)
             for interval in config.input.intervals:
                 market.download(
-                    tickers,
+                    tickers_to_download,
                     interval=interval,
                     start=start,
                     end=end,

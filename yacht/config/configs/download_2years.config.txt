@@ -6,6 +6,7 @@ input: {
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
+    attached_tickers: ['QQQ', 'SPY']
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     intervals: ['1d', '1h']
     features: ['Close', 'Open', 'High', 'Low', 'Volume']

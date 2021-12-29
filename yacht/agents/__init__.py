@@ -148,7 +148,7 @@ def build_agent(
                 'intervals': list(input_config.intervals),
                 'features': list(input_config.features) + list(input_config.technical_indicators),
                 'env_features_len': env.envs[0].observation_env_features_len,
-                'num_assets': input_config.num_assets_per_dataset,
+                'num_assets': input_config.num_assets_per_dataset + len(input_config.attached_tickers),
                 'include_weekends': input_config.include_weekends,
                 'drop_out_p': feature_extractor_config.drop_out_p,
                 'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM

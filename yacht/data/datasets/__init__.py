@@ -1,7 +1,7 @@
 import itertools
 import time
 from copy import copy
-from typing import Set
+from typing import Set, Tuple
 
 from tqdm import tqdm
 
@@ -48,7 +48,7 @@ def build_dataset(
     # 3. Remove invalid tickers
     # -----------------------------------------------------------------------------------------------------------------
     is_read_only = market_storage_dir is not None
-    tickers = build_tickers(config, mode)
+    tickers, attached_tickers = build_tickers(config, mode)
     market = build_market(
         config=config,
         logger=logger,
@@ -58,10 +58,7 @@ def build_dataset(
     start = utils.string_to_datetime(input_config.start)
     end = utils.string_to_datetime(input_config.end)
     if is_read_only is False:
-        to_download_tickers = tickers
-        # Indexes tickers are not used within the standard pipeline,
-        # therefore we are adding them separately.
-        to_download_tickers = to_download_tickers.union(set(input_config.indexes_tickers))
+        to_download_tickers = tickers.union(attached_tickers)
         # Download the whole requested interval in one shot for further processing & rendering.
         for interval in input_config.intervals:
             market.download(
@@ -183,22 +180,7 @@ def build_dataset(
     # 3. Build multi asset datasets.
     # 4. Build dataset sampler.
     # -----------------------------------------------------------------------------------------------------------------
-    indexes_scalers = dict()
-    for index_ticker in input_config.indexes_tickers:
-        scaler = build_scaler(
-            config=config,
-            ticker=index_ticker
-        )
-        Scaler.fit_on(
-            scaler=scaler,
-            market=market,
-            train_start=train_split[0],
-            train_end=train_split[1],
-            interval=config.input.scale_on_interval,
-            features=list(input_config.features) + list(input_config.technical_indicators)
-        )
-        indexes_scalers[index_ticker] = scaler
-
+    attached_tickers = tuple(attached_tickers)
     render_intervals = utils.compute_render_periods(list(config.input.render_periods))
     render_tickers = list(input_config.render_tickers) if len(input_config.render_tickers) > 0 else list(tickers)[0]
     num_skipped_datasets = 0
@@ -212,52 +194,49 @@ def build_dataset(
             take_action_at=input_config.take_action_at,
             frequency='d'
         )
+        # We build attached_tickers separately, because the agent will not trade those tickers.
+        # This data plays a role as meta information.
+        if len(attached_tickers) > 0:
+            attached_single_asset_datasets = _build_datasets(
+                    market=market,
+                    dataset_period=dataset_period,
+                    dataset_tickers=attached_tickers,
+                    dataset_cls=dataset_cls,
+                    config=config,
+                    train_split=train_split,
+                    window_size=window_size,
+                    mode=mode,
+                    logger=logger,
+                    storage_dir=storage_dir,
+                    render_intervals=render_intervals,
+                    render_tickers=render_tickers
+                )
+            if len(attached_single_asset_datasets) == 0:
+                num_skipped_datasets += len(
+                    [_ for _ in itertools.combinations(tickers, config.input.num_assets_per_dataset)]
+                )
+                print('OOOOOPS')
+                continue
+        else:
+            attached_single_asset_datasets = None
         for dataset_tickers in itertools.combinations(tickers, config.input.num_assets_per_dataset):
-            # Also check data availability for every specific interval. The big interval might pass the tests, but
-            # the local periods could not be valid.
-            tickers_validity = [
-                market.is_cached(ticker, interval, dataset_period.start, dataset_period.end)
-                for ticker in dataset_tickers for interval in input_config.intervals
-            ]
-            if all(tickers_validity) is False:
+            single_asset_datasets = _build_datasets(
+                market=market,
+                dataset_period=dataset_period,
+                dataset_tickers=dataset_tickers,
+                dataset_cls=dataset_cls,
+                config=config,
+                train_split=train_split,
+                window_size=window_size,
+                mode=mode,
+                logger=logger,
+                storage_dir=storage_dir,
+                render_intervals=render_intervals,
+                render_tickers=render_tickers
+            )
+            if len(single_asset_datasets) == 0:
                 num_skipped_datasets += 1
                 continue
-
-            dataset_period = copy(dataset_period)
-            single_asset_datasets: List[SingleAssetDataset] = []
-            for ticker in dataset_tickers:
-                scaler = build_scaler(
-                    config=config,
-                    ticker=ticker
-                )
-                Scaler.fit_on(
-                    scaler=scaler,
-                    market=market,
-                    train_start=train_split[0],
-                    train_end=train_split[1],
-                    interval=config.input.scale_on_interval,
-                    features=list(input_config.features) + list(input_config.technical_indicators)
-                )
-
-                transforms = build_transforms(config)
-                single_asset_datasets.append(
-                    dataset_cls(
-                        ticker=ticker,
-                        market=market,
-                        storage_dir=storage_dir,
-                        intervals=list(input_config.intervals),
-                        features=list(input_config.features) + list(input_config.technical_indicators),
-                        decision_price_feature=input_config.decision_price_feature,
-                        period=dataset_period,
-                        render_intervals=render_intervals,
-                        render_tickers=render_tickers,
-                        mode=mode,
-                        logger=logger,
-                        scaler=scaler,
-                        window_transforms=transforms,
-                        window_size=window_size
-                    )
-                )
 
             dataset = multi_asset_dataset_cls(
                 datasets=single_asset_datasets,
@@ -271,7 +250,8 @@ def build_dataset(
                 render_tickers=render_tickers,
                 mode=mode,
                 logger=logger,
-                window_size=window_size
+                window_size=window_size,
+                attached_datasets=attached_single_asset_datasets
             )
             datasets.append(dataset)
 
@@ -314,7 +294,7 @@ def build_dataset(
     )
 
 
-def build_tickers(config: Config, mode: Mode) -> Set[str]:
+def build_tickers(config: Config, mode: Mode) -> Tuple[Set[str], Set[str]]:
     input_config = config.input
 
     if mode.is_download():
@@ -332,6 +312,15 @@ def build_tickers(config: Config, mode: Mode) -> Set[str]:
     assert len(tickers) > 0
     assert len(tickers) >= config.input.num_assets_per_dataset, 'Cannot create a dataset with less tickers than asked.'
 
+    tickers = _expand_indexes(tickers)
+    # Attached tickers are not used within the standard pipeline,
+    # therefore we are adding them separately.
+    attached_tickers = _expand_indexes(list(input_config.attached_tickers))
+
+    return set(tickers), set(attached_tickers)
+
+
+def _expand_indexes(tickers: List[str]) -> List[str]:
     if 'S&P500' in tickers:
         tickers.remove('S&P500')
         tickers.extend(indexes.SP_500_TICKERS)
@@ -345,7 +334,7 @@ def build_tickers(config: Config, mode: Mode) -> Set[str]:
         tickers.remove('RUSSELL2000')
         tickers.extend(indexes.RUSSELL_2000_TICKERS)
 
-    return set(tickers)
+    return tickers
 
 
 def remove_invalid_tickers(
@@ -366,6 +355,70 @@ def remove_invalid_tickers(
             valid_tickers.add(ticker)
 
     return valid_tickers
+
+
+def _build_datasets(
+        market: Market,
+        dataset_period: DatasetPeriod,
+        dataset_tickers: Tuple[str],
+        dataset_cls: type,
+        config: Config,
+        train_split: tuple,
+        window_size: int,
+        mode: Mode,
+        logger: Logger,
+        storage_dir: str,
+        render_intervals: list,
+        render_tickers: list,
+) -> List[SingleAssetDataset]:
+    input_config = config.input
+
+    # Also check data availability for every specific interval. The big interval might pass the tests, but
+    # the local periods could not be valid.
+    tickers_validity = [
+        market.is_cached(ticker, interval, dataset_period.start, dataset_period.end)
+        for ticker in dataset_tickers for interval in input_config.intervals
+    ]
+    if all(tickers_validity) is False:
+        return []
+
+    dataset_period = copy(dataset_period)
+    single_asset_datasets: List[SingleAssetDataset] = []
+    for ticker in dataset_tickers:
+        scaler = build_scaler(
+            config=config,
+            ticker=ticker
+        )
+        Scaler.fit_on(
+            scaler=scaler,
+            market=market,
+            train_start=train_split[0],
+            train_end=train_split[1],
+            interval=config.input.scale_on_interval,
+            features=list(input_config.features) + list(input_config.technical_indicators)
+        )
+
+        transforms = build_transforms(config)
+        single_asset_datasets.append(
+            dataset_cls(
+                ticker=ticker,
+                market=market,
+                storage_dir=storage_dir,
+                intervals=list(input_config.intervals),
+                features=list(input_config.features) + list(input_config.technical_indicators),
+                decision_price_feature=input_config.decision_price_feature,
+                period=dataset_period,
+                render_intervals=render_intervals,
+                render_tickers=render_tickers,
+                mode=mode,
+                logger=logger,
+                scaler=scaler,
+                window_transforms=transforms,
+                window_size=window_size
+            )
+        )
+
+    return single_asset_datasets
 
 
 def render_split(

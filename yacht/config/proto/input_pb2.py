@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1eyacht/config/proto/input.proto\x12\x12yacht.config.proto\x1a!yacht/config/proto/backtest.proto\x1a\x1fyacht/config/proto/period.proto\"\xd7\x05\n\x0bInputConfig\x12\x0e\n\x06market\x18\x01 \x01(\t\x12\x15\n\rmarket_mixins\x18\x02 \x03(\t\x12\x0f\n\x07\x64\x61taset\x18\x03 \x01(\t\x12\x16\n\x0eis_multi_asset\x18\x04 \x01(\x08\x12\x1e\n\x16num_assets_per_dataset\x18\x05 \x01(\x05\x12\x0e\n\x06scaler\x18\x06 \x01(\t\x12\x19\n\x11scale_on_interval\x18\x07 \x01(\t\x12\x0f\n\x07tickers\x18\x08 \x03(\t\x12\x19\n\x11\x66ine_tune_tickers\x18\t \x03(\t\x12\x11\n\tintervals\x18\n \x03(\t\x12\x10\n\x08\x66\x65\x61tures\x18\x0b \x03(\t\x12\x1e\n\x16\x64\x65\x63ision_price_feature\x18\x0c \x01(\t\x12\x16\n\x0etake_action_at\x18\r \x01(\t\x12\x1c\n\x14technical_indicators\x18\x0e \x03(\t\x12\r\n\x05start\x18\x0f \x01(\t\x12\x0b\n\x03\x65nd\x18\x10 \x01(\t\x12\x15\n\rperiod_length\x18\x11 \x01(\t\x12\x13\n\x0bwindow_size\x18\x12 \x01(\x05\x12\x19\n\x11window_transforms\x18\x13 \x03(\t\x12\x13\n\x0bnum_periods\x18\x14 \x01(\x05\x12\x38\n\x0erender_periods\x18\x15 \x03(\x0b\x32 .yacht.config.proto.PeriodConfig\x12\x16\n\x0erender_tickers\x18\x16 \x03(\t\x12\x18\n\x10include_weekends\x18\x17 \x01(\x08\x12\x1e\n\x16validation_split_ratio\x18\x18 \x01(\x01\x12\x1c\n\x14\x62\x61\x63ktest_split_ratio\x18\x19 \x01(\x01\x12\x15\n\rembargo_ratio\x18\x1a \x01(\x01\x12\x34\n\x08\x62\x61\x63ktest\x18\x1b \x01(\x0b\x32\".yacht.config.proto.BacktestConfig\x12\x17\n\x0findexes_tickers\x18\x1c \x03(\tb\x06proto3')
+  serialized_pb=_b('\n\x1eyacht/config/proto/input.proto\x12\x12yacht.config.proto\x1a!yacht/config/proto/backtest.proto\x1a\x1fyacht/config/proto/period.proto\"\xd8\x05\n\x0bInputConfig\x12\x0e\n\x06market\x18\x01 \x01(\t\x12\x15\n\rmarket_mixins\x18\x02 \x03(\t\x12\x0f\n\x07\x64\x61taset\x18\x03 \x01(\t\x12\x16\n\x0eis_multi_asset\x18\x04 \x01(\x08\x12\x1e\n\x16num_assets_per_dataset\x18\x05 \x01(\x05\x12\x0e\n\x06scaler\x18\x06 \x01(\t\x12\x19\n\x11scale_on_interval\x18\x07 \x01(\t\x12\x0f\n\x07tickers\x18\x08 \x03(\t\x12\x19\n\x11\x66ine_tune_tickers\x18\t \x03(\t\x12\x11\n\tintervals\x18\n \x03(\t\x12\x10\n\x08\x66\x65\x61tures\x18\x0b \x03(\t\x12\x1e\n\x16\x64\x65\x63ision_price_feature\x18\x0c \x01(\t\x12\x16\n\x0etake_action_at\x18\r \x01(\t\x12\x1c\n\x14technical_indicators\x18\x0e \x03(\t\x12\r\n\x05start\x18\x0f \x01(\t\x12\x0b\n\x03\x65nd\x18\x10 \x01(\t\x12\x15\n\rperiod_length\x18\x11 \x01(\t\x12\x13\n\x0bwindow_size\x18\x12 \x01(\x05\x12\x19\n\x11window_transforms\x18\x13 \x03(\t\x12\x13\n\x0bnum_periods\x18\x14 \x01(\x05\x12\x38\n\x0erender_periods\x18\x15 \x03(\x0b\x32 .yacht.config.proto.PeriodConfig\x12\x16\n\x0erender_tickers\x18\x16 \x03(\t\x12\x18\n\x10include_weekends\x18\x17 \x01(\x08\x12\x1e\n\x16validation_split_ratio\x18\x18 \x01(\x01\x12\x1c\n\x14\x62\x61\x63ktest_split_ratio\x18\x19 \x01(\x01\x12\x15\n\rembargo_ratio\x18\x1a \x01(\x01\x12\x34\n\x08\x62\x61\x63ktest\x18\x1b \x01(\x0b\x32\".yacht.config.proto.BacktestConfig\x12\x18\n\x10\x61ttached_tickers\x18\x1c \x03(\tb\x06proto3')
   ,
   dependencies=[yacht_dot_config_dot_proto_dot_backtest__pb2.DESCRIPTOR,yacht_dot_config_dot_proto_dot_period__pb2.DESCRIPTOR,])
 
@@ -225,7 +225,7 @@ _INPUTCONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='indexes_tickers', full_name='yacht.config.proto.InputConfig.indexes_tickers', index=27,
+      name='attached_tickers', full_name='yacht.config.proto.InputConfig.attached_tickers', index=27,
       number=28, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -244,7 +244,7 @@ _INPUTCONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=123,
-  serialized_end=850,
+  serialized_end=851,
 )
 
 _INPUTCONFIG.fields_by_name['render_periods'].message_type = yacht_dot_config_dot_proto_dot_period__pb2._PERIODCONFIG
