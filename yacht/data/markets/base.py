@@ -187,7 +187,7 @@ class Market(ABC):
 
 
 class H5Market(Market, ABC):
-    IS_CACHED_PROPORTION = 0.95
+    IS_CACHED_PROPORTION = 0.875
 
     def __init__(
             self,
@@ -330,7 +330,7 @@ class H5Market(Market, ABC):
 
         # If we find almost all the asked dates we can say that the data is cached. We do not check for a
         # perfect match because the data from the API sometimes has leaks, therefore it would never be a match.
-        # Also stocks have data only in the work days.
+        # Also, stocks have data only in the work days.
         actual_period_range = piece_of_data.index
         is_cached_length_state = len(actual_period_range) >= self.IS_CACHED_PROPORTION * len(expected_period_range)
         # Apply the same logic, but relative to the NaN values.

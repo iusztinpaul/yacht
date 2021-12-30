@@ -13,7 +13,7 @@ class TechnicalIndicatorMixin:
     def __init__(self, technical_indicators: List[str], *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.technical_indicators = technical_indicators
+        self.technical_indicators = self.clean(technical_indicators)
         self.data_features = self.features
         self.features = self.technical_indicators + self.features
 
@@ -26,6 +26,20 @@ class TechnicalIndicatorMixin:
             df[technical_indicator_name] = oscillator_data
 
         return df
+
+    @staticmethod
+    def clean(technical_indicators: List[str]) -> List[str]:
+        def _clean(name: str) -> str:
+            if 'LogDiff' in name:
+                name = name.replace('LogDiff', '')
+            if 'FracDiff' in name:
+                name = name.replace('FracDiff', '')
+
+            return name
+
+        technical_indicators = {_clean(name) for name in technical_indicators}
+
+        return list(technical_indicators)
 
 
 class TargetPriceMixin:
@@ -81,7 +95,8 @@ class FracDiffMixin:
             config.input.include_weekends
         )
 
-        features = self.DOWNLOAD_MANDATORY_FEATURES + list(config.input.technical_indicators)
+        technical_indicators = TechnicalIndicatorMixin.clean(list(config.input.technical_indicators))
+        features = self.DOWNLOAD_MANDATORY_FEATURES + technical_indicators
         data_to_process = df[features].copy()
         # Apply log on price features.
         data_to_process[self.DOWNLOAD_MANDATORY_FEATURES] += 1e-7  # To avoid log(0).

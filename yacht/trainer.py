@@ -205,6 +205,9 @@ def build_trainer(
         mode=mode,
         market_storage_dir=market_storage_dir
     )
+    if train_dataset is None:
+        raise RuntimeError('Could not create training dataset.')
+
     train_env = build_env(config, train_dataset, logger, mode=mode)
     validation_dataset = build_dataset(
         config,
@@ -213,6 +216,8 @@ def build_trainer(
         mode=Mode.BacktestValidation,
         market_storage_dir=market_storage_dir
     )
+    if validation_dataset is None:
+        raise RuntimeError('Could not create validation dataset.')
     validation_env = build_env(config, validation_dataset, logger, mode=Mode.BacktestValidation)
 
     if agent is None:

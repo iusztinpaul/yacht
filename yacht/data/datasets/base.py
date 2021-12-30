@@ -375,7 +375,8 @@ class MultiAssetDataset(AssetDataset):
             render_tickers: List[str],
             mode: Mode,
             logger: Logger,
-            window_size: int = 1
+            window_size: int = 1,
+            attached_datasets: Optional[List[SingleAssetDataset]] = None
     ):
         super().__init__(
             market=market,
@@ -392,6 +393,7 @@ class MultiAssetDataset(AssetDataset):
 
         self.datasets = datasets
         self.render_tickers = render_tickers
+        self.attached_datasets = attached_datasets if attached_datasets is not None else []
 
         assert self.datasets[0].num_days * len(self.datasets) == sum([dataset.num_days for dataset in self.datasets]), \
             'All the datasets should have the same length.'
@@ -422,8 +424,9 @@ class MultiAssetDataset(AssetDataset):
         return len(self.datasets[0])
 
     def __getitem__(self, current_index: int) -> Dict[str, np.array]:
+        datasets = self.datasets + self.attached_datasets
         stacked_items: Dict[str, list] = defaultdict(list)
-        for dataset in self.datasets:
+        for dataset in datasets:
             item = dataset[current_index]
 
             for key, value in item.items():
@@ -466,6 +469,9 @@ class MultiAssetDataset(AssetDataset):
             ticker_labels.name = dataset.ticker
             labels.append(ticker_labels)
         labels = pd.concat(labels, axis=1)
+        if len(labels) < t_tick:
+            return pd.Series()
+
         if t_tick is not None:
             labels = labels.iloc[t_tick]
 
@@ -519,7 +525,7 @@ class MultiAssetDataset(AssetDataset):
             observation_space[key] = spaces.Box(
                 low=-np.inf,
                 high=np.inf,
-                shape=(*value.shape[:-1], len(self.datasets), value.shape[-1]),
+                shape=(*value.shape[:-1], len(self.datasets + self.attached_datasets), value.shape[-1]),
                 dtype=value.dtype
             )
 
