@@ -15,7 +15,6 @@ class SupervisedRolloutBufferSamples(NamedTuple):
     advantages: th.Tensor
     returns: th.Tensor
     labels: th.Tensor
-    predictions: th.Tensor
 
 
 class SupervisedRolloutBuffer(RolloutBuffer):
@@ -24,13 +23,11 @@ class SupervisedRolloutBuffer(RolloutBuffer):
         assert num_labels is not None
         self.num_labels = num_labels
         self.labels = None
-        self.predictions = None
 
         super().__init__(*args, **kwargs)
 
     def reset(self) -> None:
         self.labels = np.zeros((self.buffer_size, self.n_envs, self.num_labels), dtype=np.float32)
-        self.predictions = np.zeros((self.buffer_size, self.n_envs, self.num_labels), dtype=np.float32)
 
         super().reset()
 
@@ -43,10 +40,8 @@ class SupervisedRolloutBuffer(RolloutBuffer):
             value: th.Tensor,
             log_prob: th.Tensor,
             label: np.ndarray,
-            prediction: th.Tensor
     ) -> None:
         self.labels[self.pos] = np.array(label, dtype=np.float32).copy()
-        self.predictions[self.pos] = prediction.clone().cpu().numpy()
 
         super().add(
             obs,
@@ -69,8 +64,7 @@ class SupervisedRolloutBuffer(RolloutBuffer):
                 "log_probs",
                 "advantages",
                 "returns",
-                "labels",
-                "predictions"
+                "labels"
             ]
 
             for tensor in _tensor_names:
@@ -83,7 +77,7 @@ class SupervisedRolloutBuffer(RolloutBuffer):
 
         start_idx = 0
         while start_idx < self.buffer_size * self.n_envs:
-            yield self._get_samples(indices[start_idx : start_idx + batch_size])
+            yield self._get_samples(indices[start_idx: start_idx + batch_size])
             start_idx += batch_size
 
     def _get_samples(
@@ -94,7 +88,6 @@ class SupervisedRolloutBuffer(RolloutBuffer):
         sample = super()._get_samples(batch_inds, env)
         additional_sample = (
             self.labels[batch_inds],
-            self.predictions[batch_inds]
         )
         additional_sample = tuple(map(self.to_torch, additional_sample))
         sample = sample + additional_sample

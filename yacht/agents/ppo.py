@@ -247,7 +247,7 @@ class SupervisedPPO(SB3PPO):
             with th.no_grad():
                 # Convert to pytorch tensor or to TensorDict
                 obs_tensor = obs_as_tensor(self._last_obs, self.device)
-                actions, values, log_probs, predictions = self.policy.forward(obs_tensor)
+                actions, values, log_probs, _ = self.policy.forward(obs_tensor)
             actions = actions.cpu().numpy()
 
             # Rescale and perform action
@@ -279,9 +279,8 @@ class SupervisedPPO(SB3PPO):
                 self._last_episode_starts,
                 values,
                 log_probs,
-                labels,
-                predictions
-            )
+                labels
+                )
             self._last_obs = new_obs
             self._last_episode_starts = dones
 
@@ -374,7 +373,6 @@ class SupervisedPPO(SB3PPO):
 
                 # Supervised loss
                 supervised_loss = F.binary_cross_entropy(
-                    # rollout_data.predictions,
                     predictions,
                     rollout_data.labels,
                     reduction='mean'

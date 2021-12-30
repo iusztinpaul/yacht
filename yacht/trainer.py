@@ -49,11 +49,7 @@ class Trainer(ABC):
         else:
             self.total_timesteps = self.config.train.total_timesteps
 
-        self.agent.policy.train()
-
     def close(self):
-        self.agent.policy.eval()
-
         if self.save is True:
             save_path = utils.build_last_checkpoint_path(self.storage_dir, self.mode)
             self.agent.save(path=save_path)
@@ -64,6 +60,8 @@ class Trainer(ABC):
         self.validation_dataset.close()
 
     def train(self) -> BaseAlgorithm:
+        self.agent.policy.train()
+
         self.before_train_log()
         self.agent = self.agent.learn(
             total_timesteps=self.total_timesteps,
@@ -178,8 +176,8 @@ def run_train(
     else:
         logger.info(
             f'Fine tuning is stopped: '
-            f'fine_tune_total_timesteps [{config.train.fine_tune_total_timesteps}] < '
-            f'collecting_n_steps [{config.train.collecting_n_steps}]'
+            f'fine_tune_total_timesteps [ = {config.train.fine_tune_total_timesteps}] < '
+            f'collecting_n_steps [ = {config.train.collecting_n_steps}]'
         )
 
 
