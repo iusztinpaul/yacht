@@ -155,7 +155,9 @@ def build_agent(
                 'dropout': feature_extractor_config.drop_out_p,
                 'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM,
                 'attention_head_size': feature_extractor_config.attention_head_size,
-                'drop_attention': feature_extractor_config.drop_attention
+                'drop_attention': feature_extractor_config.drop_attention,
+                'drop_normalization': feature_extractor_config.drop_normalization,
+                'residual_upsampling': feature_extractor_config.residual_upsampling
             }
             policy_kwargs['features_extractor_kwargs'] = utils.filter_class_kwargs(
                 feature_extractor_class,

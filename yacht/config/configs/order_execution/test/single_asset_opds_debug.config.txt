@@ -74,8 +74,8 @@ agent: {
             rnn_layer_type: 'LSTM'
             attention_head_size: 4
             drop_attention: True
-            drop_normalization: False
-            residual_upsampling: 'interpolation'
+            drop_normalization: True
+            residual_upsampling: 'learnable'
         }
         net_arch: {
             shared: []

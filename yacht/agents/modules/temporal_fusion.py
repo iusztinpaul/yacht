@@ -23,8 +23,11 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             rnn_layer_type: nn.Module,
             dropout: float = 0.1,
             attention_head_size: int = 1,
-            drop_attention: bool = False
+            drop_attention: bool = False,
+            drop_normalization: bool = False,
+            residual_upsampling: str = 'interpolation'
     ):
+        # TODO: Check if drop_normalization & residual_upsampling logic are ok.
         super().__init__(observation_space, features_dim[-1])
 
         assert len(features_dim) >= 3
@@ -40,6 +43,8 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
         self.dropout = dropout if dropout else None
         self.attention_head_size = attention_head_size
         self.drop_attention = drop_attention
+        self.drop_normalization = drop_normalization
+        self.residual_upsampling = residual_upsampling
 
         # Step 1: Variable Selection Network
         self.vsn = VariableSelectionNetwork(
@@ -47,7 +52,9 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             private_features_len=self.private_features_len,
             num_assets=self.num_assets,
             hidden_size=features_dim[0],
-            dropout=self.dropout
+            dropout=self.dropout,
+            residual_upsampling=self.residual_upsampling,
+            drop_normalization=self.drop_normalization
         )
         # Step 2: Recurrent layers.
         # TODO: How are rnn layer weights initialized ?
@@ -62,14 +69,18 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             input_size=features_dim[1],
             hidden_size=features_dim[1],
             trainable_add=False,
-            dropout=self.dropout
+            dropout=self.dropout,
+            residual_upsampling=self.residual_upsampling,
+            drop_normalization=self.drop_normalization
         )
         # Step 3: Attention layers.
         self.pre_attn_grn = GatedResidualNetwork(
             input_size=features_dim[1],
             hidden_size=features_dim[1],
             output_size=features_dim[1],
-            dropout=self.dropout
+            dropout=self.dropout,
+            residual_upsampling=self.residual_upsampling,
+            drop_normalization=self.drop_normalization
         )
         # TODO: Check if 'trainable_add' are ok.
         if self.drop_attention is False:
@@ -82,7 +93,9 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
                 input_size=features_dim[1],
                 hidden_size=features_dim[1],
                 dropout=self.dropout,
-                trainable_add=False
+                trainable_add=False,
+                residual_upsampling=self.residual_upsampling,
+                drop_normalization=self.drop_normalization
             )
         # Step 4: Final output layers.
         if self.drop_attention is False:
@@ -90,13 +103,17 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
                 input_size=features_dim[1],
                 hidden_size=features_dim[1],
                 output_size=features_dim[1],
-                dropout=self.dropout
+                dropout=self.dropout,
+                residual_upsampling=self.residual_upsampling,
+                drop_normalization=self.drop_normalization
             )
             self.out_gate_add_norm = GateAddNorm(
                 input_size=features_dim[1],
                 hidden_size=features_dim[1],
                 trainable_add=False,
-                dropout=None
+                dropout=None,
+                residual_upsampling=self.residual_upsampling,
+                drop_normalization=self.drop_normalization
             )
         # Step 5: Cast to the desired output number of features.
         self.output_layer = nn.Linear(features_dim[1], features_dim[2])
@@ -163,6 +180,8 @@ class VariableSelectionNetwork(nn.Module):
             num_assets: int,
             hidden_size: int,
             dropout: float = 0.1,
+            residual_upsampling: str = 'interpolation',
+            drop_normalization: bool = False
     ):
         """
         Calcualte weights for ``num_inputs`` variables  which are each of size ``input_size``
@@ -174,6 +193,8 @@ class VariableSelectionNetwork(nn.Module):
         self.num_assets = num_assets
         self.hidden_size = hidden_size
         self.dropout = dropout
+        self.residual_upsampling = residual_upsampling
+        self.drop_normalization = drop_normalization
 
         self.input_sizes = {
             f'public_features_{asset_idx}': self.public_features_len for asset_idx in range(self.num_assets)
@@ -195,6 +216,8 @@ class VariableSelectionNetwork(nn.Module):
             output_size=self.num_inputs,
             dropout=self.dropout,
             residual=False,
+            residual_upsampling=self.residual_upsampling,
+            drop_normalization=self.drop_normalization
         )
         self.softmax = nn.Softmax(dim=-1)
 
@@ -235,6 +258,8 @@ class GatedResidualNetwork(nn.Module):
             dropout: float = 0.1,
             context_size: int = None,
             residual: bool = False,
+            residual_upsampling: str = 'interpolation',
+            drop_normalization: bool = False
     ):
         super().__init__()
         self.input_size = input_size
@@ -243,6 +268,8 @@ class GatedResidualNetwork(nn.Module):
         self.hidden_size = hidden_size
         self.dropout = dropout
         self.residual = residual
+        self.residual_upsampling = residual_upsampling
+        self.drop_normalization = drop_normalization
 
         if self.input_size != self.output_size and not self.residual:
             residual_size = self.input_size
@@ -250,7 +277,7 @@ class GatedResidualNetwork(nn.Module):
             residual_size = self.output_size
 
         if self.output_size != residual_size:
-            self.resample_norm = ResampleNorm(residual_size, self.output_size)
+            self.resample_norm = ResampleNorm(residual_size, self.output_size, self.drop_normalization)
 
         self.fc1 = nn.Linear(self.input_size, self.hidden_size)
         self.elu = nn.ELU()
@@ -267,6 +294,8 @@ class GatedResidualNetwork(nn.Module):
             hidden_size=self.output_size,
             dropout=self.dropout,
             trainable_add=False,
+            residual_upsampling=self.residual_upsampling,
+            drop_normalization=self.drop_normalization
         )
 
     def init_weights(self):
@@ -297,20 +326,35 @@ class GatedResidualNetwork(nn.Module):
 
 
 class ResampleNorm(nn.Module):
-    def __init__(self, input_size: int, output_size: int = None, trainable_add: bool = True):
+    def __init__(
+            self,
+            input_size: int,
+            output_size: int = None,
+            trainable_add: bool = True,
+            residual_upsampling: str = 'interpolation',
+            drop_normalization: bool = False
+    ):
         super().__init__()
 
         self.input_size = input_size
         self.trainable_add = trainable_add
         self.output_size = output_size or input_size
+        self.residual_upsampling = residual_upsampling
+        self.drop_normalization = drop_normalization
 
         if self.input_size != self.output_size:
-            self.resample = TimeDistributedInterpolation(self.output_size, batch_first=True, trainable=False)
+            if self.residual_upsampling == 'interpolation':
+                self.resample = TimeDistributedInterpolation(self.output_size, batch_first=True, trainable=False)
+            elif self.residual_upsampling == 'learnable':
+                self.resample = LearnableInterpolation(self.input_size, self.output_size, trainable=False)
+            else:
+                raise RuntimeError(f'Wrong residual_upsampling method: {self.residual_upsampling}')
 
         if self.trainable_add:
             self.mask = nn.Parameter(torch.zeros(self.output_size, dtype=torch.float))
             self.gate = nn.Sigmoid()
-        self.norm = nn.LayerNorm(self.output_size)
+        if self.drop_normalization is False:
+            self.norm = nn.LayerNorm(self.output_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.input_size != self.output_size:
@@ -319,7 +363,10 @@ class ResampleNorm(nn.Module):
         if self.trainable_add:
             x = x * self.gate(self.mask) * 2.0
 
-        output = self.norm(x)
+        if self.drop_normalization is False:
+            output = self.norm(x)
+        else:
+            output = x
 
         return output
 
@@ -332,6 +379,8 @@ class GateAddNorm(nn.Module):
             skip_size: int = None,
             trainable_add: bool = False,
             dropout: float = None,
+            residual_upsampling: str = 'interpolation',
+            drop_normalization: bool = False
     ):
         super().__init__()
 
@@ -339,9 +388,17 @@ class GateAddNorm(nn.Module):
         self.hidden_size = hidden_size or input_size
         self.skip_size = skip_size or self.hidden_size
         self.dropout = dropout
+        self.residual_upsampling = residual_upsampling
+        self.drop_normalization = drop_normalization
 
         self.glu = GatedLinearUnit(self.input_size, hidden_size=self.hidden_size, dropout=self.dropout)
-        self.add_norm = AddNorm(self.hidden_size, skip_size=self.skip_size, trainable_add=trainable_add)
+        self.add_norm = AddNorm(
+            self.hidden_size,
+            skip_size=self.skip_size,
+            trainable_add=trainable_add,
+            residual_upsampling=self.residual_upsampling,
+            drop_normalization=self.drop_normalization
+        )
 
     def forward(self, x, skip):
         output = self.glu(x)
@@ -382,20 +439,35 @@ class GatedLinearUnit(nn.Module):
 
 
 class AddNorm(nn.Module):
-    def __init__(self, input_size: int, skip_size: int = None, trainable_add: bool = True):
+    def __init__(
+            self,
+            input_size: int,
+            skip_size: int = None,
+            trainable_add: bool = True,
+            residual_upsampling: str = 'interpolation',
+            drop_normalization: bool = False
+    ):
         super().__init__()
 
         self.input_size = input_size
         self.trainable_add = trainable_add
         self.skip_size = skip_size or input_size
+        self.residual_upsampling = residual_upsampling
+        self.drop_normalization = drop_normalization
 
         if self.input_size != self.skip_size:
-            self.resample = TimeDistributedInterpolation(self.input_size, batch_first=True, trainable=False)
+            if self.residual_upsampling == 'interpolation':
+                self.resample = TimeDistributedInterpolation(self.input_size, batch_first=True, trainable=False)
+            elif self.residual_upsampling == 'learnable':
+                self.resample = LearnableInterpolation(self.input_size, self.input_size, trainable=False)
+            else:
+                raise RuntimeError(f'Wrong residual_upsampling method: {self.residual_upsampling}')
 
         if self.trainable_add:
             self.mask = nn.Parameter(torch.zeros(self.input_size, dtype=torch.float))
             self.gate = nn.Sigmoid()
-        self.norm = nn.LayerNorm(self.input_size)
+        if self.drop_normalization is False:
+            self.norm = nn.LayerNorm(self.input_size)
 
     def forward(self, x: torch.Tensor, skip: torch.Tensor):
         if self.input_size != self.skip_size:
@@ -404,7 +476,11 @@ class AddNorm(nn.Module):
         if self.trainable_add:
             skip = skip * self.gate(self.mask) * 2.0
 
-        output = self.norm(x + skip)
+        if self.drop_normalization is False:
+            output = self.norm(x + skip)
+        else:
+            output = x + skip
+
         return output
 
 
@@ -442,6 +518,36 @@ class TimeDistributedInterpolation(nn.Module):
             y = y.view(-1, x.size(1), y.size(-1))  # (timesteps, samples, output_size)
 
         return y
+
+
+class LearnableInterpolation(nn.Module):
+    def __init__(self, input_size: int, output_size: int, trainable: bool = False):
+        super().__init__()
+        self.input_size = input_size
+        self.output_size = output_size
+        self.trainable = trainable
+        self.lin = nn.Linear(
+            in_features=self.input_size,
+            out_features=self.output_size
+        )
+        self.init_weights()
+        if self.trainable:
+            self.mask = nn.Parameter(torch.zeros(self.output_size, dtype=torch.float32))
+            self.gate = nn.Sigmoid()
+
+    def init_weights(self):
+        for name, p in self.named_parameters():
+            if "bias" not in name:
+                torch.nn.init.xavier_uniform_(p)
+            else:
+                torch.nn.init.zeros_(p)
+
+    def forward(self, x):
+        upsampled = self.lin(x)
+        if self.trainable:
+            upsampled = upsampled * self.gate(self.mask.unsqueeze(0)) * 2.0
+
+        return upsampled
 
 
 class InterpretableMultiHeadAttention(nn.Module):
