@@ -68,15 +68,15 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'DayRecurrentFeatureExtractor'
-            features_dim: [64,64,128]
+            name: 'DayTemporalFusionFeatureExtractor'
+            features_dim: [16,16,16]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
         }
         net_arch: {
-            shared: [64, 64]
-            vf: [32]
-            pi: [32]
+            shared: [16]
+            vf: [16]
+            pi: [16]
         }
     }
 }

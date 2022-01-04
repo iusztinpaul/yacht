@@ -7,3 +7,4 @@ from .recurrent import (
     RecurrentAttentionFeatureExtractor
 )
 from .attention import TransformerFeatureExtractor
+from .temporal_fusion import DayTemporalFusionFeatureExtractor
