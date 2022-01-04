@@ -153,7 +153,9 @@ def build_agent(
                 'num_assets': input_config.num_assets_per_dataset + len(input_config.attached_tickers),
                 'include_weekends': input_config.include_weekends,
                 'dropout': feature_extractor_config.drop_out_p,
-                'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM
+                'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM,
+                'attention_head_size': feature_extractor_config.attention_head_size,
+                'drop_attention': feature_extractor_config.drop_attention
             }
             policy_kwargs['features_extractor_kwargs'] = utils.filter_class_kwargs(
                 feature_extractor_class,

@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import gym
 import torch
@@ -21,7 +21,9 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             num_assets: int,
             include_weekends: bool,
             rnn_layer_type: nn.Module,
-            dropout: float = 0.1
+            dropout: float = 0.1,
+            attention_head_size: int = 1,
+            drop_attention: bool = False
     ):
         super().__init__(observation_space, features_dim[-1])
 
@@ -36,6 +38,8 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
         self.include_weekends = include_weekends
         self.num_rnn_layers = len(features_dim[1:-1])
         self.dropout = dropout if dropout else None
+        self.attention_head_size = attention_head_size
+        self.drop_attention = drop_attention
 
         # Step 1: Variable Selection Network
         self.vsn = VariableSelectionNetwork(
@@ -46,6 +50,7 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             dropout=self.dropout
         )
         # Step 2: Recurrent layers.
+        # TODO: How are rnn layer weights initialized ?
         self.recurrent_layer = rnn_layer_type(
             features_dim[0],
             features_dim[1],
@@ -66,30 +71,34 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             output_size=features_dim[1],
             dropout=self.dropout
         )
-        self.multihead_attn = InterpretableMultiHeadAttention(
-            n_head=1,
-            d_model=features_dim[1],
-            dropout=self.dropout
-        )
-        self.post_attn_gate_norm = GateAddNorm(
-            input_size=features_dim[1],
-            hidden_size=features_dim[1],
-            dropout=self.dropout,
-            trainable_add=False
-        )
+        # TODO: Check if 'trainable_add' are ok.
+        if self.drop_attention is False:
+            self.multihead_attn = InterpretableMultiHeadAttention(
+                n_head=self.attention_head_size,
+                d_model=features_dim[1],
+                dropout=self.dropout
+            )
+            self.post_attn_gate_norm = GateAddNorm(
+                input_size=features_dim[1],
+                hidden_size=features_dim[1],
+                dropout=self.dropout,
+                trainable_add=False
+            )
         # Step 4: Final output layers.
-        self.output_grn = GatedResidualNetwork(
-            input_size=features_dim[1],
-            hidden_size=features_dim[1],
-            output_size=features_dim[1],
-            dropout=self.dropout
-        )
-        self.out_gate_add_norm = GateAddNorm(
-            input_size=features_dim[1],
-            hidden_size=features_dim[1],
-            trainable_add=False,
-            dropout=None
-        )
+        if self.drop_attention is False:
+            self.output_grn = GatedResidualNetwork(
+                input_size=features_dim[1],
+                hidden_size=features_dim[1],
+                output_size=features_dim[1],
+                dropout=self.dropout
+            )
+            self.out_gate_add_norm = GateAddNorm(
+                input_size=features_dim[1],
+                hidden_size=features_dim[1],
+                trainable_add=False,
+                dropout=None
+            )
+        # Step 5: Cast to the desired output number of features.
         self.output_layer = nn.Linear(features_dim[1], features_dim[2])
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
@@ -105,19 +114,23 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
         selected_variables = self.vsn(variables)
         # Step 2: Recurrent layers.
         recurrent_output, _ = self.recurrent_layer(selected_variables)
-        # TODO : Why they used the gate & add norm layers splitted ?
+        # TODO : Why they used the gate & add norm layers split ?
         recurrent_output = self.post_recurrent_gate_add_norm(recurrent_output, selected_variables)
         # Step 3: Attention layers.
         attention_input = self.pre_attn_grn(recurrent_output)
-        attention_output, _ = self.multihead_attn(
-            q=attention_input[:, -1:],
-            k=attention_input,
-            v=attention_input
-        )
-        attention_output = self.post_attn_gate_norm(attention_output, attention_input[:, -1:])
-        # Step 4: Final output layers.
-        output = self.output_grn(attention_output)
-        output = self.out_gate_add_norm(output, recurrent_output[:, -1:])
+        if self.drop_attention is False:
+            attention_output, _ = self.multihead_attn(
+                q=attention_input[:, -1:],
+                k=attention_input,
+                v=attention_input
+            )
+            attention_output = self.post_attn_gate_norm(attention_output, attention_input[:, -1:])
+            # Step 4: Final output layers.
+            output = self.output_grn(attention_output)
+            output = self.out_gate_add_norm(output, recurrent_output[:, -1:])
+        else:
+            output = attention_input[:, -1:]
+        # Step 5: Cast to the desired output number of features.
         output = self.output_layer(output)
         output = torch.squeeze(output, dim=1)
 
@@ -396,6 +409,7 @@ class AddNorm(nn.Module):
 
 
 class TimeDistributedInterpolation(nn.Module):
+    # TODO: Double check this layer.
     def __init__(self, output_size: int, batch_first: bool = False, trainable: bool = False):
         super().__init__()
         self.output_size = output_size
@@ -431,7 +445,7 @@ class TimeDistributedInterpolation(nn.Module):
 
 
 class InterpretableMultiHeadAttention(nn.Module):
-    def __init__(self, n_head: int, d_model: int, dropout: float = 0.0):
+    def __init__(self, n_head: int, d_model: int, dropout: Optional[float] = None):
         super(InterpretableMultiHeadAttention, self).__init__()
 
         self.n_head = n_head
@@ -482,7 +496,7 @@ class InterpretableMultiHeadAttention(nn.Module):
 
 
 class ScaledDotProductAttention(nn.Module):
-    def __init__(self, dropout: float = None, scale: bool = True):
+    def __init__(self, dropout: Optional[float] = None, scale: bool = True):
         super(ScaledDotProductAttention, self).__init__()
         if dropout is not None:
             self.dropout = nn.Dropout(p=dropout)

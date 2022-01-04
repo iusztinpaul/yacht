@@ -69,6 +69,8 @@ agent: {
             features_dim: [16,16,16]
             drop_out_p: 0.1,
             rnn_layer_type: 'LSTM'
+            attention_head_size: 1
+            drop_attention: True
         }
         net_arch: {
             shared: []

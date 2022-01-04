@@ -8,4 +8,8 @@ message FeatureExtractorConfig {
     repeated int32 features_dim = 2;
     double drop_out_p = 3;
     string rnn_layer_type = 4;
+    int32 attention_head_size = 5;
+    bool drop_attention = 6;
+    bool drop_normalization = 7;
+    string residual_upsampling = 8;
 }
