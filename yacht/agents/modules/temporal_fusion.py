@@ -20,7 +20,6 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             env_features_len: int,
             num_assets: int,
             include_weekends: bool,
-            activation_fn: nn.Module,
             rnn_layer_type: nn.Module,
             dropout: float = 0.1
     ):

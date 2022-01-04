@@ -49,7 +49,8 @@ feature_extractor_registry = {
 
 activation_fn_registry = {
     'ReLU': nn.ReLU,
-    'Tanh': nn.Tanh
+    'Tanh': nn.Tanh,
+    'ELU': nn.ELU
 }
 
 

@@ -66,15 +66,15 @@ agent: {
     verbose: true
     policy: {
         name: 'MlpPolicy'
-        activation_fn: 'Tanh',
+        activation_fn: 'ELU',
         feature_extractor: {
             name: 'DayTemporalFusionFeatureExtractor'
             features_dim: [16,16,16]
-            drop_out_p: 0.,
-            rnn_layer_type: 'GRU'
+            drop_out_p: 0.1,
+            rnn_layer_type: 'LSTM'
         }
         net_arch: {
-            shared: [16]
+            shared: []
             vf: [16]
             pi: [16]
         }

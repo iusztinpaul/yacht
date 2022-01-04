@@ -63,17 +63,17 @@ agent: {
     verbose: true
     policy: {
         name: 'MlpPolicy'
-        activation_fn: 'Tanh',
+        activation_fn: 'ELU',
         feature_extractor: {
-            name: 'DayRecurrentFeatureExtractor'
-            features_dim: [64,64,128]
-            drop_out_p: 0.,
-            rnn_layer_type: 'GRU'
+            name: 'DayTemporalFusionFeatureExtractor'
+            features_dim: [16,16,16]
+            drop_out_p: 0.1,
+            rnn_layer_type: 'LSTM'
         }
         net_arch: {
-            shared: [64, 64]
-            vf: [32]
-            pi: [32]
+            shared: []
+            vf: [16]
+            pi: [16]
         }
     }
 }

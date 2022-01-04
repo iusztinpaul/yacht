@@ -215,7 +215,7 @@ def build_dataset(
                 num_skipped_datasets += len(
                     [_ for _ in itertools.combinations(tickers, config.input.num_assets_per_dataset)]
                 )
-                print('OOOOOPS')
+                logger.info(f'Attached tickers not available for: {period_start} - {period_end}')
                 continue
         else:
             attached_single_asset_datasets = None
