@@ -24,10 +24,9 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             dropout: float = 0.1,
             attention_head_size: int = 1,
             drop_attention: bool = False,
-            drop_normalization: bool = False,
-            residual_upsampling: str = 'interpolation'
+            residual_upsampling: str = 'interpolation',
+            drop_normalization: bool = False
     ):
-        # TODO: Check if drop_normalization & residual_upsampling logic are ok.
         super().__init__(observation_space, features_dim[-1])
 
         assert len(features_dim) >= 3
@@ -43,8 +42,8 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
         self.dropout = dropout if dropout else None
         self.attention_head_size = attention_head_size
         self.drop_attention = drop_attention
-        self.drop_normalization = drop_normalization
         self.residual_upsampling = residual_upsampling
+        self.drop_normalization = drop_normalization
 
         # Step 1: Variable Selection Network
         self.vsn = VariableSelectionNetwork(
@@ -57,7 +56,6 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             drop_normalization=self.drop_normalization
         )
         # Step 2: Recurrent layers.
-        # TODO: How are rnn layer weights initialized ?
         self.recurrent_layer = rnn_layer_type(
             features_dim[0],
             features_dim[1],
@@ -82,7 +80,6 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             residual_upsampling=self.residual_upsampling,
             drop_normalization=self.drop_normalization
         )
-        # TODO: Check if 'trainable_add' are ok.
         if self.drop_attention is False:
             self.multihead_attn = InterpretableMultiHeadAttention(
                 n_head=self.attention_head_size,
@@ -131,7 +128,6 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
         selected_variables = self.vsn(variables)
         # Step 2: Recurrent layers.
         recurrent_output, _ = self.recurrent_layer(selected_variables)
-        # TODO : Why they used the gate & add norm layers split ?
         recurrent_output = self.post_recurrent_gate_add_norm(recurrent_output, selected_variables)
         # Step 3: Attention layers.
         attention_input = self.pre_attn_grn(recurrent_output)
@@ -208,6 +204,8 @@ class VariableSelectionNetwork(nn.Module):
                 hidden_size=min(input_size, self.hidden_size),
                 output_size=self.hidden_size,
                 dropout=self.dropout,
+                residual_upsampling=self.residual_upsampling,
+                drop_normalization=self.drop_normalization
             )
 
         self.flattened_grn = GatedResidualNetwork(
@@ -277,7 +275,13 @@ class GatedResidualNetwork(nn.Module):
             residual_size = self.output_size
 
         if self.output_size != residual_size:
-            self.resample_norm = ResampleNorm(residual_size, self.output_size, self.drop_normalization)
+            self.resample_norm = ResampleNorm(
+                input_size=residual_size,
+                output_size=self.output_size,
+                trainable_add=True,
+                residual_upsampling=self.residual_upsampling,
+                drop_normalization=self.drop_normalization,
+            )
 
         self.fc1 = nn.Linear(self.input_size, self.hidden_size)
         self.elu = nn.ELU()
@@ -485,7 +489,6 @@ class AddNorm(nn.Module):
 
 
 class TimeDistributedInterpolation(nn.Module):
-    # TODO: Double check this layer.
     def __init__(self, output_size: int, batch_first: bool = False, trainable: bool = False):
         super().__init__()
         self.output_size = output_size

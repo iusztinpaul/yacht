@@ -72,9 +72,9 @@ agent: {
             features_dim: [16,16,16]
             drop_out_p: 0.1,
             rnn_layer_type: 'LSTM'
-            attention_head_size: 4
-            drop_attention: True
-            drop_normalization: True
+            attention_head_size: 1
+            drop_attention: False
+            drop_normalization: False
             residual_upsampling: 'learnable'
         }
         net_arch: {
