@@ -21,12 +21,14 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
             num_assets: int,
             include_weekends: bool,
             rnn_layer_type: nn.Module,
+            activation_fn: nn.Module,
             dropout: float = 0.1,
             attention_head_size: int = 1,
             drop_attention: bool = False,
             residual_upsampling: str = 'interpolation',
             drop_normalization: bool = False
     ):
+        # TODO: Make activation fn configurable.
         super().__init__(observation_space, features_dim[-1])
 
         assert len(features_dim) >= 3
@@ -113,7 +115,10 @@ class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
                 drop_normalization=self.drop_normalization
             )
         # Step 5: Cast to the desired output number of features.
-        self.output_layer = nn.Linear(features_dim[1], features_dim[2])
+        self.output_layer = nn.Sequential(
+            nn.Linear(features_dim[1], features_dim[2]),
+            activation_fn()
+        )
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
         observations = unflatten_observations(

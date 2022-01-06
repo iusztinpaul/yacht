@@ -78,7 +78,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 4000000
+    total_timesteps: 3500000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0002
@@ -94,7 +94,7 @@ train: {
     use_sde: false
     sde_sample_freq: -1
     learning_rate_scheduler: 'ConstantSchedule'
-    supervised_coef: 10.
+    supervised_coef: 0.5
 }
 meta: {
     log_frequency_steps: 5000

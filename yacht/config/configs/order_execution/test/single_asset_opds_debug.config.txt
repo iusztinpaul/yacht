@@ -68,7 +68,7 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'ELU',
         feature_extractor: {
-            name: 'DayTemporalFusionFeatureExtractor'
+            name: 'DayVSNRecurrentFeatureExtractor'
             features_dim: [16,16,16]
             drop_out_p: 0.1,
             rnn_layer_type: 'LSTM'
