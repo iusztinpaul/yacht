@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import gym
 import torch
@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 from yacht.agents.misc import unflatten_observations
+from yacht.agents.modules.torch_layers import GatedLinearUnit
 
 
 class DayTemporalFusionFeatureExtractor(BaseFeaturesExtractor):
@@ -400,7 +401,7 @@ class GateAddNorm(nn.Module):
         self.residual_upsampling = residual_upsampling
         self.drop_normalization = drop_normalization
 
-        self.glu = GatedLinearUnit(self.input_size, hidden_size=self.hidden_size, dropout=self.dropout)
+        self.glu = GatedLinearUnit(self.input_size, out_features=self.hidden_size, dropout=self.dropout)
         self.add_norm = AddNorm(
             self.hidden_size,
             skip_size=self.skip_size,
@@ -414,37 +415,6 @@ class GateAddNorm(nn.Module):
         output = self.add_norm(output, skip)
 
         return output
-
-
-class GatedLinearUnit(nn.Module):
-    """Gated Linear Unit"""
-
-    def __init__(self, input_size: int, hidden_size: int = None, dropout: float = None):
-        super().__init__()
-
-        if dropout is not None:
-            self.dropout = nn.Dropout(dropout)
-        else:
-            self.dropout = dropout
-        self.hidden_size = hidden_size or input_size
-        self.fc = nn.Linear(input_size, self.hidden_size * 2)
-
-        self.init_weights()
-
-    def init_weights(self):
-        for n, p in self.named_parameters():
-            if "bias" in n:
-                torch.nn.init.zeros_(p)
-            elif "fc" in n:
-                torch.nn.init.xavier_uniform_(p)
-
-    def forward(self, x):
-        if self.dropout is not None:
-            x = self.dropout(x)
-        x = self.fc(x)
-        x = F.glu(x, dim=-1)
-
-        return x
 
 
 class AddNorm(nn.Module):

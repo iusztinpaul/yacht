@@ -6,6 +6,7 @@ from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 
+import yacht.agents.modules.multi_frequency
 from yacht import utils, Mode
 from yacht.logger import Logger
 from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
@@ -40,7 +41,6 @@ feature_extractor_registry = {
     'OnlyVSNRecurrentFeatureExtractor': modules.OnlyVSNRecurrentFeatureExtractor,
     'DayVSNRecurrentFeatureExtractor': modules.DayVSNRecurrentFeatureExtractor,
     'MultiFrequencyRecurrentFeatureExtractor': modules.MultiFrequencyRecurrentFeatureExtractor,
-    'RecurrentAttentionFeatureExtractor': modules.RecurrentAttentionFeatureExtractor,
     'TransformerFeatureExtractor': modules.TransformerFeatureExtractor,
     'DayTemporalFusionFeatureExtractor': modules.DayTemporalFusionFeatureExtractor,
     '': None,
@@ -155,9 +155,10 @@ def build_agent(
                 'dropout': feature_extractor_config.drop_out_p,
                 'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM,
                 'attention_head_size': feature_extractor_config.attention_head_size,
-                'drop_attention': feature_extractor_config.drop_attention,
-                'drop_normalization': feature_extractor_config.drop_normalization,
-                'residual_upsampling': feature_extractor_config.residual_upsampling
+                'add_attention': feature_extractor_config.add_attention,
+                'add_normalization': feature_extractor_config.add_normalization,
+                'add_output_vsn': feature_extractor_config.add_output_vsn,
+                'add_residual': feature_extractor_config.add_residual
             }
             policy_kwargs['features_extractor_kwargs'] = utils.filter_class_kwargs(
                 feature_extractor_class,

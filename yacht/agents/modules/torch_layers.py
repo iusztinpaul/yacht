@@ -3,16 +3,17 @@ from typing import Tuple, Dict, Optional
 import torch
 
 from stable_baselines3.common.torch_layers import MlpExtractor
-from torch import nn
+from torch import nn as nn
+from torch.nn import functional as F
 
 
 class SupervisedMlpExtractor(MlpExtractor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         activation_fn = kwargs['activation_fn']
         device = kwargs['device']
-        
+
         self.latent_dim_supervised = self.latent_dim_pi
         supervised_net = []
         for layer in self.policy_net:
@@ -38,17 +39,22 @@ class SimplifiedVariableSelectionNetwork(nn.Module):
             public_features_len: int,
             private_features_len: Optional[int],
             num_assets: int,
-            hidden_size: int,
+            hidden_features: int,
             activation_fn: nn.Module,
             dropout: Optional[float] = None,
+            layers_type: str = 'linear',
+            add_normalization: bool = False,
+            add_residual: bool = False
     ):
         super().__init__()
 
         self.public_features_len = public_features_len
         self.private_features_len = private_features_len
         self.num_assets = num_assets
-        self.hidden_size = hidden_size
+        self.hidden_features = hidden_features
         self.dropout = dropout
+        self.add_normalization = add_normalization
+        self.add_residual = add_residual
 
         self.input_sizes = {
             f'public_features_{asset_idx}': self.public_features_len for asset_idx in range(self.num_assets)
@@ -58,22 +64,45 @@ class SimplifiedVariableSelectionNetwork(nn.Module):
 
         self.single_variable_layers = nn.ModuleDict()
         for name, input_size in self.input_sizes.items():
-            self.single_variable_layers[name] = LinearStack(
-                in_features=input_size,
-                hidden_features=self.hidden_size,
-                out_features=self.hidden_size,
-                activation_fn=activation_fn,
-                dropout=self.dropout
-            )
+            if layers_type == 'linear':
+                self.single_variable_layers[name] = LinearStack(
+                    in_features=input_size,
+                    out_features=self.hidden_features,
+                    activation_fn=activation_fn,
+                    dropout=self.dropout,
+                    n=1
+                )
+            elif layers_type == 'grn':
+                self.single_variable_layers[name] = SimplifiedGatedResidualNetwork(
+                    in_features=input_size,
+                    out_features=self.hidden_features,
+                    activation_fn=activation_fn,
+                    dropout=self.dropout,
+                    add_normalization=self.add_normalization,
+                    add_residual=self.add_residual
+                )
+            else:
+                raise RuntimeError(f'Wrong layers_type={layers_type}')
 
-        self.flattened_variables_layer = LinearStack(
-            in_features=self.input_size_total,
-            hidden_features=hidden_size,
-            out_features=self.num_inputs,
-            activation_fn=activation_fn,
-            dropout=self.dropout,
-            n=2
-        )
+        if layers_type == 'linear':
+            self.flattened_variables_layer = LinearStack(
+                in_features=self.input_size_total,
+                hidden_features=self.hidden_features,
+                out_features=self.num_inputs,
+                activation_fn=activation_fn,
+                dropout=self.dropout,
+                n=2
+            )
+        elif layers_type == 'grn':
+            self.flattened_variables_layer = SimplifiedGatedResidualNetwork(
+                in_features=self.input_size_total,
+                out_features=self.num_inputs,
+                activation_fn=activation_fn,
+                dropout=self.dropout,
+                add_normalization=self.add_normalization
+            )
+        else:
+            raise RuntimeError(f'Wrong layers_type={layers_type}')
         self.softmax = nn.Softmax(dim=-1)
 
     @property
@@ -109,7 +138,7 @@ class LinearStack(nn.Module):
             self,
             in_features: int,
             out_features: int,
-            activation_fn: nn.Module,
+            activation_fn: Optional[nn.Module] = None,
             n: int = 1,
             hidden_features: Optional[int] = None,
             dropout: Optional[float] = None
@@ -126,7 +155,8 @@ class LinearStack(nn.Module):
                 modules.append(nn.Linear(in_features=hidden_features, out_features=hidden_features))
             else:
                 modules.append(nn.Linear(in_features=hidden_features, out_features=out_features))
-            modules.append(activation_fn())
+            if activation_fn is not None:
+                modules.append(activation_fn())
             if dropout is not None and dropout > 0:
                 modules.append(nn.Dropout(p=dropout))
         self.net = nn.Sequential(*modules)
@@ -142,3 +172,147 @@ class LinearStack(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.net(x)
+
+
+class SimplifiedGatedResidualNetwork(nn.Module):
+    def __init__(
+            self,
+            in_features: int,
+            out_features: int,
+            activation_fn: nn.Module,
+            dropout: float = 0.1,
+            add_normalization: bool = False,
+            add_residual: bool = False
+    ):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.dropout = dropout
+        self.add_normalization = add_normalization
+        self.add_residual = add_residual
+
+        if self.in_features != self.out_features:
+            self.resample = Resample(
+                in_features=self.in_features,
+                out_features=self.out_features,
+                activation_fn=activation_fn,
+                trainable_add=True,
+                dropout=self.dropout
+            )
+        self.lin1 = LinearStack(
+            in_features=self.in_features,
+            out_features=self.out_features,
+            activation_fn=activation_fn,
+            dropout=self.dropout
+        )
+        self.lin2 = LinearStack(
+            in_features=self.out_features,
+            out_features=self.out_features,
+            activation_fn=None,
+            dropout=self.dropout
+        )
+        self.glu = GatedLinearUnit(
+            in_features=self.out_features,
+            out_features=self.out_features
+        )
+        if self.add_normalization is True:
+            self.norm = nn.LayerNorm(self.out_features)
+
+    def forward(self, x):
+        if self.add_residual is True and self.in_features != self.out_features:
+            residual = self.resample(x)
+        else:
+            residual = x
+
+        x = self.lin1(x)
+        x = self.lin2(x)
+        x = self.glu(x)
+        if self.add_residual is True:
+            x = x + residual
+        if self.add_normalization is True:
+            x = self.norm(x)
+
+        return x
+
+
+class GatedLinearUnit(nn.Module):
+    """Gated Linear Unit"""
+
+    def __init__(self, in_features: int, out_features: int = None):
+        super().__init__()
+
+        self.out_features = out_features or in_features
+        self.fc = LinearStack(
+            in_features=in_features,
+            out_features=self.out_features * 2,
+            activation_fn=None
+        )
+
+    def forward(self, x):
+        x = self.fc(x)
+        x = F.glu(x, dim=-1)
+
+        return x
+
+
+class Resample(nn.Module):
+    def __init__(
+            self,
+            in_features: int,
+            out_features: int,
+            activation_fn: nn.Module,
+            trainable_add: bool = True,
+            dropout: Optional[float] = None,
+    ):
+        super().__init__()
+
+        self.in_features = in_features
+        self.trainable_add = trainable_add
+        self.out_features = out_features
+        self.dropout = dropout
+
+        if self.in_features != self.out_features:
+            self.resample = LinearStack(
+                in_features=self.in_features,
+                out_features=self.out_features,
+                activation_fn=activation_fn,
+                dropout=self.dropout
+            )
+
+        if self.trainable_add:
+            self.mask = nn.Parameter(torch.zeros(self.out_features, dtype=torch.float))
+            self.gate = nn.Sigmoid()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.in_features != self.out_features:
+            x = self.resample(x)
+
+        if self.trainable_add:
+            x = x * self.gate(self.mask) * 2.0
+
+        return x
+
+
+class AddNorm(nn.Module):
+    def __init__(
+            self,
+            out_features: int,
+            add_normalization: bool,
+            add_residual: bool
+    ):
+        super().__init__()
+        
+        self.out_features = out_features
+        self.add_normalization = add_normalization
+        self.add_residual = add_residual
+        
+        if self.add_normalization is True:
+            self.norm_layer = nn.LayerNorm(self.out_features)
+            
+    def forward(self, x: torch.Tensor, residual: Optional[torch.Tensor] = None):
+        if self.add_residual:
+            x += residual
+        if self.add_normalization:
+            x = self.norm_layer(x)
+
+        return x

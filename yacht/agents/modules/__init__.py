@@ -1,10 +1,8 @@
-from .multi_frequency import MultiFrequencyFeatureExtractor
+from .multi_frequency import MultiFrequencyFeatureExtractor, MultiFrequencyRecurrentFeatureExtractor
 from .recurrent import (
     DayRecurrentFeatureExtractor,
     OnlyVSNRecurrentFeatureExtractor,
-    DayVSNRecurrentFeatureExtractor,
-    MultiFrequencyRecurrentFeatureExtractor,
-    RecurrentAttentionFeatureExtractor
+    DayVSNRecurrentFeatureExtractor
 )
 from .attention import TransformerFeatureExtractor
 from .temporal_fusion import DayTemporalFusionFeatureExtractor
