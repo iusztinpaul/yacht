@@ -104,7 +104,7 @@ def compute_price_advantage(
         mean_price: np.ndarray,
         buy: bool = True
 ) -> float:
-    average_execution_price = (actions * prices).sum() / actions.sum()
+    average_execution_price = (actions * prices).sum() / (actions.sum() + 1e-8)
     assert np.isfinite(average_execution_price)
 
     # If you buy, you want a lower AEP, else if you sell, you want a higher AEP.

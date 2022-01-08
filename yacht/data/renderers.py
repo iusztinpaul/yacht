@@ -365,6 +365,21 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
             linestyle='-.',
             colors='black'
         )
+        mpf_kwargs = dict(
+            data=dummy_data,
+            addplot=extra_plots,
+            title=title,
+            type='line',
+            ylabel=f'Prices',
+            panel_ratios=(1, 0.75, 0.75, 0.75, 0.75),
+            figratio=(2, 1),
+            figscale=1.5,
+            savefig=save_file_path,
+            volume=False,
+            axisoff=False,
+            returnfig=True,
+            vlines=vlines,
+        )
         if mean_price is not None:
             alines = []
             colours = []
@@ -380,25 +395,9 @@ class AssetEnvironmentRenderer(MplFinanceRenderer):
                 linewidths=1.,
                 linestyle='-.'
             )
-        else:
-            alines = None
-        fig, axes = mpf.plot(
-            data=dummy_data,
-            addplot=extra_plots,
-            title=title,
-            type='line',
-            ylabel=f'Prices',
-            panel_ratios=(1, 0.75, 0.75, 0.75, 0.75),
-            figratio=(2, 1),
-            figscale=1.5,
-            savefig=save_file_path,
-            volume=False,
-            axisoff=False,
-            returnfig=True,
-            vlines=vlines,
-            alines=alines
-        )
+            mpf_kwargs['alines'] = alines
 
+        fig, axes = mpf.plot(**mpf_kwargs)
         # Configure chart legend and title
         fig.legend(handles=legend_patches)
         # Save figure to file

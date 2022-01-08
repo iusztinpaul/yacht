@@ -9,7 +9,7 @@ from torch import nn
 import yacht.agents.modules.multi_frequency
 from yacht import utils, Mode
 from yacht.logger import Logger
-from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
+from yacht.agents.classic import OnceBeginningAgent, DCFAgent, OnceRandomAgent
 from yacht.agents import modules
 from yacht.agents import schedulers
 from yacht.agents.ppo import PPO, StudentPPO, SupervisedPPO
@@ -26,7 +26,8 @@ reinforcement_learning_agents = {
     'SAC': SAC
 }
 classic_agents = {
-    'BuyAndHold': BuyAndHoldAgent,
+    'OnceBeginning': OnceBeginningAgent,
+    'OnceRandom': OnceRandomAgent,
     'DCF': DCFAgent
 }
 agents_registry = {**reinforcement_learning_agents, **classic_agents}

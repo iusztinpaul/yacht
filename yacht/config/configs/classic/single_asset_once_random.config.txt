@@ -50,7 +50,7 @@ environment: {
     action_scaling_factor: 1
 }
 agent: {
-    name: 'DCF'
+    name: 'OnceRandom'
     is_classic_method: true
     verbose: true
 }

@@ -171,16 +171,17 @@ class MetricsVecEnvWrapper(VecEnvWrapper):
         """
         from yacht import evaluation
 
+        metrics = dict()
         glr_ratio = evaluation.compute_glr_ratio(pa_values=[env_metric['PA'] for env_metric in self.metrics])
-        tactics_ratio = evaluation.compute_tactics_ratio(
-            ads_values=[env_metric['ADS'] for env_metric in self.metrics],
-            cash_used_on_last_tick_values=[env_metric['cash_used_on_last_tick'] for env_metric in self.metrics]
-        )
+        metrics['GLR'] = glr_ratio
+        if len(self.metrics) > 0 and 'cash_used_on_last_tick' in self.metrics[0]:
+            tactics_ratio = evaluation.compute_tactics_ratio(
+                ads_values=[env_metric['ADS'] for env_metric in self.metrics],
+                cash_used_on_last_tick_values=[env_metric['cash_used_on_last_tick'] for env_metric in self.metrics]
+            )
+            metrics['T'] = tactics_ratio
 
-        return {
-            'GLR': glr_ratio,
-            'T': tactics_ratio
-        }
+        return metrics
 
     def flatten_dict(self, metrics_to_log: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
         flattened_dict = dict()
