@@ -33,7 +33,7 @@ input: {
     }
 }
 environment: {
-    name: 'MultiAssetEnvironment-v0'
+    name: 'OrderExecutionEnvironment-v0'
     n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
@@ -41,8 +41,12 @@ environment: {
     initial_cash_position: 5000
     reward_schemas: [
     {
-        name: 'AssetsPriceChangeRewardSchema'
-        reward_scaling: 0.0001
+        name: 'SinDecisionMakingRewardSchema',
+        reward_scaling: 1.
+    },
+    {
+        name: 'ActionMagnitudeRewardSchema',
+        reward_scaling: 0.025
     }
     ]
     global_reward_scaling: 1.
@@ -56,7 +60,7 @@ agent: {
 }
 meta: {
     log_frequency_steps: 5000
-    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'num_actions']
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'num_actions', 'cash_used_on_last_tick']
     metrics_to_save_best_on: []
     metrics_to_load_best_on: []
     plateau_max_n_steps: -1

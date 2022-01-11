@@ -1,7 +1,7 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin']
-    dataset: 'DayFrequencyDataset'
+    dataset: 'TeacherDayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'IdentityScaler'
     scale_on_interval: '1d'
@@ -54,8 +54,10 @@ environment: {
     action_scaling_factor: 1
 }
 agent: {
-    name: 'OnceBeginning'
+    name: 'WorstActionAgent'
     is_classic_method: true
+    is_teacher: true
+    is_student: false
     verbose: true
 }
 meta: {

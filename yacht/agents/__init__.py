@@ -7,9 +7,9 @@ from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 
 import yacht.agents.modules.multi_frequency
+import yacht.agents.classic as classic_agents
 from yacht import utils, Mode
 from yacht.logger import Logger
-from yacht.agents.classic import OnceBeginningAgent, DCFAgent, OnceRandomAgent
 from yacht.agents import modules
 from yacht.agents import schedulers
 from yacht.agents.ppo import PPO, StudentPPO, SupervisedPPO
@@ -26,9 +26,13 @@ reinforcement_learning_agents = {
     'SAC': SAC
 }
 classic_agents = {
-    'OnceBeginning': OnceBeginningAgent,
-    'OnceRandom': OnceRandomAgent,
-    'DCF': DCFAgent
+    'OnceBeginning': classic_agents.OnceBeginningAgent,
+    'OnceRandom': classic_agents.OnceRandomAgent,
+    'DCF': classic_agents.DCFAgent,
+    'TWAPAgent': classic_agents.TWAPAgent,
+    'VWAPAgent': classic_agents.VWAPAgent,
+    'BestActionAgent': classic_agents.BestActionAgent,
+    'WorstActionAgent': classic_agents.WorstActionAgent
 }
 agents_registry = {**reinforcement_learning_agents, **classic_agents}
 
@@ -101,7 +105,8 @@ def build_agent(
     agent_class = agents_registry[agent_config.name]
     if agent_config.is_classic_method:
         return agent_class(
-            env=env
+            env=env,
+            window_size=input_config.window_size
         )
 
     if resume:

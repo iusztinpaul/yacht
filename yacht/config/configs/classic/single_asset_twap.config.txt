@@ -34,7 +34,7 @@ input: {
 }
 environment: {
     name: 'OrderExecutionEnvironment-v0'
-    n_envs: 1
+    n_envs: 6
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -54,7 +54,7 @@ environment: {
     action_scaling_factor: 1
 }
 agent: {
-    name: 'OnceBeginning'
+    name: 'TWAPAgent'
     is_classic_method: true
     verbose: true
 }
