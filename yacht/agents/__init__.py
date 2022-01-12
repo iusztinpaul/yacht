@@ -28,7 +28,7 @@ reinforcement_learning_agents = {
 classic_agents = {
     'OnceBeginning': classic_agents.OnceBeginningAgent,
     'OnceRandom': classic_agents.OnceRandomAgent,
-    'DCF': classic_agents.DCFAgent,
+    'EquallyDistributedInTimeAgent': classic_agents.EquallyDistributedInTimeAgent,
     'TWAPAgent': classic_agents.TWAPAgent,
     'VWAPAgent': classic_agents.VWAPAgent,
     'BestActionAgent': classic_agents.BestActionAgent,

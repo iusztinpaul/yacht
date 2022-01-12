@@ -96,7 +96,7 @@ class OnceRandomAgent(OnceKnownTickerAgent):
         self.buy_tick = random.randint(self.start_tick, self.end_tick - 1)
 
 
-class DCFAgent(BaseClassicAgent):
+class EquallyDistributedInTimeAgent(BaseClassicAgent):
     def __init__(self, env: VecEnv, window_size: int):
         super().__init__(env=env, window_size=window_size)
 
