@@ -6,7 +6,7 @@ input: {
     scaler: 'MinMaxScaler'
     window_transforms: []
     scale_on_interval: '1d'
-    tickers: ['AAPL', 'MSFT', 'NVDA']
+    tickers: ['S&P500']
     attached_tickers: ['QQQ', 'SPY']
     fine_tune_tickers: ['AAPL', 'MSFT']
     intervals: ['1d']
@@ -15,7 +15,7 @@ input: {
     take_action_at: 'next'
     technical_indicators: ['macdFracDiff', 'rsi_30']
     start: '1/1/2020'
-    end: '8/12/2021'
+    end: '1/1/2021'
     period_length: '1M'
     window_size: 5
     render_periods: [
@@ -68,13 +68,13 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'ELU',
         feature_extractor: {
-            name: 'OnlyVSNRecurrentFeatureExtractor'
+            name: 'DayVSNRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
             attention_head_size: 4
-            add_attention: True
-            add_normalization: True
+            add_attention: False
+            add_normalization: False
             add_output_vsn: False
             add_residual: True
         }
@@ -87,23 +87,22 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 1000
+    total_timesteps: 3000000
     fine_tune_total_timesteps: -1
-    collecting_n_steps: 128
+    collecting_n_steps: 2048
     learning_rate: 0.0002
-    batch_size: 64
+    batch_size: 2048
     n_epochs: 5
     gamma: 1.
     gae_lambda: 1.
     clip_range: 0.3
     vf_clip_range: 0.3
-    entropy_coefficient: 0.6
+    entropy_coefficient: 0.15
     vf_coefficient: 1.
     max_grad_norm: 100
     use_sde: false
     sde_sample_freq: -1
     learning_rate_scheduler: 'ConstantSchedule'
-    supervised_coef: 0.25
 }
 meta: {
     log_frequency_steps: 5000
@@ -112,6 +111,6 @@ meta: {
     metrics_to_load_best_on: ['PA', 'GLR', 'AD', 'T']
     plateau_max_n_steps: 15
     render_data_split: true
-    device: 'cpu'
+    device: 'gpu'
     experiment_tracker: ''
 }

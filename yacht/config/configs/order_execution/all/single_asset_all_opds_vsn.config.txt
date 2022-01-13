@@ -69,9 +69,9 @@ agent: {
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
-            attention_head_size: 4
-            add_attention: True
-            add_normalization: True
+            attention_head_size: -1
+            add_attention: False
+            add_normalization: False
             add_output_vsn: False
             add_residual: False
         }

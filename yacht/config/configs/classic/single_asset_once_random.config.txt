@@ -54,7 +54,7 @@ environment: {
     action_scaling_factor: 1
 }
 agent: {
-    name: 'OnceRandom'
+    name: 'OnceRandomAgent'
     is_classic_method: true
     verbose: true
 }

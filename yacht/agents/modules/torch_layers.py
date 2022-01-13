@@ -70,7 +70,7 @@ class SimplifiedVariableSelectionNetwork(nn.Module):
                     out_features=self.hidden_features,
                     activation_fn=activation_fn,
                     dropout=self.dropout,
-                    n=1
+                    n=2
                 )
             elif layers_type == 'grn':
                 self.single_variable_layers[name] = SimplifiedGatedResidualNetwork(

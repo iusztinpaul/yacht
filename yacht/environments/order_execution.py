@@ -140,7 +140,7 @@ class OrderExecutionEnvironment(MultiAssetEnvironment):
 
             # Split money equally between the assets.
             action_remaining_month_cash = np.tile(
-                self.cash_used_on_last_tick // self.dataset.num_assets,
+                self.cash_used_on_last_tick / self.dataset.num_assets,
                 self.dataset.num_assets
             )
             actions += action_remaining_month_cash

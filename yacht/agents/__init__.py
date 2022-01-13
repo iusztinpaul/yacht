@@ -26,8 +26,8 @@ reinforcement_learning_agents = {
     'SAC': SAC
 }
 classic_agents = {
-    'OnceBeginning': classic_agents.OnceBeginningAgent,
-    'OnceRandom': classic_agents.OnceRandomAgent,
+    'OnceBeginningAgent': classic_agents.OnceBeginningAgent,
+    'OnceRandomAgent': classic_agents.OnceRandomAgent,
     'EquallyDistributedInTimeAgent': classic_agents.EquallyDistributedInTimeAgent,
     'TWAPAgent': classic_agents.TWAPAgent,
     'VWAPAgent': classic_agents.VWAPAgent,

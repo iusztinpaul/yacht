@@ -334,7 +334,7 @@ class OnlyVSNRecurrentFeatureExtractor(BaseFeaturesExtractor):
             hidden_features=features_dim[0],
             activation_fn=activation_fn,
             dropout=self.dropout,
-            layers_type='grn',
+            layers_type='linear',
             add_normalization=self.add_normalization,
             add_residual=self.add_residual
         )
