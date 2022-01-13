@@ -73,7 +73,7 @@ agent: {
             add_attention: False
             add_normalization: False
             add_output_vsn: False
-            add_residual: False
+            add_residual: true
         }
         net_arch: {
             shared: [64, 64]

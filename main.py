@@ -41,6 +41,8 @@ parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 
 
 
 if __name__ == '__main__':
+    import torch
+    torch.autograd.set_detect_anomaly(True)
     matplotlib.use('Agg')
 
     args = parser.parse_args()

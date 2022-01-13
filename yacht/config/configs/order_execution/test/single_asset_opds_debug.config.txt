@@ -6,7 +6,8 @@ input: {
     scaler: 'MinMaxScaler'
     window_transforms: []
     scale_on_interval: '1d'
-    tickers: ['S&P500']
+    # tickers: ['S&P500']
+    tickers: ['AAPL']
     attached_tickers: ['QQQ', 'SPY']
     fine_tune_tickers: ['AAPL', 'MSFT']
     intervals: ['1d']

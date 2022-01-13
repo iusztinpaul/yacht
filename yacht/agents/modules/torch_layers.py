@@ -311,7 +311,7 @@ class AddNorm(nn.Module):
             
     def forward(self, x: torch.Tensor, residual: Optional[torch.Tensor] = None):
         if self.add_residual:
-            x += residual
+            x = x + residual
         if self.add_normalization:
             x = self.norm_layer(x)
 
