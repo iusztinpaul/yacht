@@ -65,10 +65,15 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'DayRecurrentFeatureExtractor'
-            features_dim: [64,64,128]
+            name: 'OnlyVSNRecurrentFeatureExtractor'
+            features_dim: [64,64,64]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
+            attention_head_size: -1
+            add_attention: False
+            add_normalization: False
+            add_output_vsn: False
+            add_residual: False
         }
         net_arch: {
             shared: [64, 64]
@@ -79,7 +84,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 4000000
+    total_timesteps: 3000000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0002

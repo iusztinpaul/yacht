@@ -163,6 +163,7 @@ def build_dataset(
     if config.agent.is_teacher:
         # In a teacher setup the agent will take the data from the whole period.
         # Make the window_size the maximum period length for observation size consistency.
+        # The actual data will be padded & cleaned to fit the observation size.
         max_period_length = max([
             utils.len_period_range(
                 start=period[0],
@@ -215,7 +216,7 @@ def build_dataset(
                 num_skipped_datasets += len(
                     [_ for _ in itertools.combinations(tickers, config.input.num_assets_per_dataset)]
                 )
-                print('OOOOOPS')
+                logger.info(f'Attached tickers not available for: {period_start} - {period_end}')
                 continue
         else:
             attached_single_asset_datasets = None

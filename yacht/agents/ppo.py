@@ -25,6 +25,7 @@ class PPO(SB3PPO):
         self.logger.dump()
 
 
+# TODO: Merge SupervisedPPO with StudentPPO.
 # TODO: Fork stable_baselines3 and move implementation there.
 class SupervisedPPO(SB3PPO):
     class SupervisedActorCriticPolicy(ActorCriticPolicy):

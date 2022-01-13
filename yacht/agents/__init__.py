@@ -6,9 +6,10 @@ from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 
+import yacht.agents.modules.multi_frequency
+import yacht.agents.classic as classic_agents
 from yacht import utils, Mode
 from yacht.logger import Logger
-from yacht.agents.classic import BuyAndHoldAgent, BaseClassicAgent, DCFAgent
 from yacht.agents import modules
 from yacht.agents import schedulers
 from yacht.agents.ppo import PPO, StudentPPO, SupervisedPPO
@@ -25,8 +26,13 @@ reinforcement_learning_agents = {
     'SAC': SAC
 }
 classic_agents = {
-    'BuyAndHold': BuyAndHoldAgent,
-    'DCF': DCFAgent
+    'OnceBeginningAgent': classic_agents.OnceBeginningAgent,
+    'OnceRandomAgent': classic_agents.OnceRandomAgent,
+    'EquallyDistributedInTimeAgent': classic_agents.EquallyDistributedInTimeAgent,
+    'TWAPAgent': classic_agents.TWAPAgent,
+    'VWAPAgent': classic_agents.VWAPAgent,
+    'BestActionAgent': classic_agents.BestActionAgent,
+    'WorstActionAgent': classic_agents.WorstActionAgent
 }
 agents_registry = {**reinforcement_learning_agents, **classic_agents}
 
@@ -37,18 +43,19 @@ policy_registry = {
 feature_extractor_registry = {
     'MultiFrequencyFeatureExtractor': modules.MultiFrequencyFeatureExtractor,
     'DayRecurrentFeatureExtractor': modules.DayRecurrentFeatureExtractor,
-    'DayBatchNormRecurrentFeatureExtractor': modules.DayBatchNormRecurrentFeatureExtractor,
+    'OnlyVSNRecurrentFeatureExtractor': modules.OnlyVSNRecurrentFeatureExtractor,
+    'DayVSNRecurrentFeatureExtractor': modules.DayVSNRecurrentFeatureExtractor,
     'MultiFrequencyRecurrentFeatureExtractor': modules.MultiFrequencyRecurrentFeatureExtractor,
-    'RecurrentNPeriodsFeatureExtractor': modules.RecurrentNPeriodsFeatureExtractor,
-    'RecurrentAttentionFeatureExtractor': modules.RecurrentAttentionFeatureExtractor,
     'TransformerFeatureExtractor': modules.TransformerFeatureExtractor,
+    'DayTemporalFusionFeatureExtractor': modules.DayTemporalFusionFeatureExtractor,
     '': None,
     None: None
 }
 
 activation_fn_registry = {
     'ReLU': nn.ReLU,
-    'Tanh': nn.Tanh
+    'Tanh': nn.Tanh,
+    'ELU': nn.ELU
 }
 
 
@@ -98,7 +105,8 @@ def build_agent(
     agent_class = agents_registry[agent_config.name]
     if agent_config.is_classic_method:
         return agent_class(
-            env=env
+            env=env,
+            window_size=input_config.window_size
         )
 
     if resume:
@@ -150,8 +158,13 @@ def build_agent(
                 'env_features_len': env.envs[0].observation_env_features_len,
                 'num_assets': input_config.num_assets_per_dataset + len(input_config.attached_tickers),
                 'include_weekends': input_config.include_weekends,
-                'drop_out_p': feature_extractor_config.drop_out_p,
-                'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM
+                'dropout': feature_extractor_config.drop_out_p,
+                'rnn_layer_type': nn.GRU if feature_extractor_config.rnn_layer_type == 'GRU' else nn.LSTM,
+                'attention_head_size': feature_extractor_config.attention_head_size,
+                'add_attention': feature_extractor_config.add_attention,
+                'add_normalization': feature_extractor_config.add_normalization,
+                'add_output_vsn': feature_extractor_config.add_output_vsn,
+                'add_residual': feature_extractor_config.add_residual
             }
             policy_kwargs['features_extractor_kwargs'] = utils.filter_class_kwargs(
                 feature_extractor_class,

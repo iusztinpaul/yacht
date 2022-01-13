@@ -104,7 +104,7 @@ def compute_price_advantage(
         mean_price: np.ndarray,
         buy: bool = True
 ) -> float:
-    average_execution_price = (actions * prices).sum() / actions.sum()
+    average_execution_price = (actions * prices).sum() / (actions.sum() + 1e-8)
     assert np.isfinite(average_execution_price)
 
     # If you buy, you want a lower AEP, else if you sell, you want a higher AEP.
@@ -122,7 +122,8 @@ def compute_glr_ratio(pa_values: Union[List[float], np.ndarray]) -> float:
     if isinstance(pa_values, list):
         pa_values = np.array(pa_values, dtype=np.float32)
 
-    positive_pa_values = pa_values[pa_values >= 0]
+    pa_values = np.round(pa_values, 2)  # Eliminate noise for cases when PA ~= 0.
+    positive_pa_values = pa_values[pa_values > 0]
     negative_pa_values = pa_values[pa_values < 0]
 
     if negative_pa_values.size == 0:

@@ -31,7 +31,8 @@ def build_env(
         if isinstance(env, Monitor):
             assert isinstance(env.env, BaseAssetEnvironment), f'Wrong env type: {type(env.env)}.'
 
-        # Classic methods can handle directly a dict for simplicity.
+        # Classic methods can handle directly a dict.
+        # We did this for simplicity.
         if not config.agent.is_classic_method:
             env = MultiFrequencyDictToBoxWrapper(env)
 
