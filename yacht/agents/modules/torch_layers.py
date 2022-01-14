@@ -42,7 +42,7 @@ class SimplifiedVariableSelectionNetwork(nn.Module):
             hidden_features: int,
             activation_fn: nn.Module,
             dropout: Optional[float] = None,
-            layers_type: str = 'linear',
+            layers_type: str = 'grn',
             add_normalization: bool = False,
             add_residual: bool = False
     ):
@@ -70,7 +70,7 @@ class SimplifiedVariableSelectionNetwork(nn.Module):
                     out_features=self.hidden_features,
                     activation_fn=activation_fn,
                     dropout=self.dropout,
-                    n=2
+                    n=1
                 )
             elif layers_type == 'grn':
                 self.single_variable_layers[name] = SimplifiedGatedResidualNetwork(
@@ -91,7 +91,7 @@ class SimplifiedVariableSelectionNetwork(nn.Module):
                 out_features=self.num_inputs,
                 activation_fn=activation_fn,
                 dropout=self.dropout,
-                n=2
+                n=1
             )
         elif layers_type == 'grn':
             self.flattened_variables_layer = SimplifiedGatedResidualNetwork(

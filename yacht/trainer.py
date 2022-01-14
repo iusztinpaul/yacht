@@ -10,7 +10,7 @@ from yacht.agents import build_agent
 from yacht.config import Config
 from yacht.data.datasets import build_dataset, SampleAssetDataset
 from yacht.environments import build_env, MetricsVecEnvWrapper
-from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback
+from yacht.environments.callbacks import LoggerCallback, MetricsEvalCallback, LastCheckpointCallback
 from yacht.evaluation import run_backtest
 from yacht.logger import Logger
 from yacht.utils.wandb import WandBCallback
@@ -99,6 +99,10 @@ class Trainer(ABC):
                 logger=self.logger,
                 verbose=1
             ),
+            LastCheckpointCallback(
+                save_freq=self.config.train.collecting_n_steps * self.config.environment.n_envs,
+                save_path=utils.build_last_checkpoint_path(self.storage_dir, self.mode),
+            )
             # RewardsRenderCallback(
             #     total_timesteps=self.total_timesteps,
             #     storage_dir=self.storage_dir,
@@ -124,14 +128,13 @@ def run_train(
         config: Config,
         logger: Logger,
         storage_dir: str,
-        resume_training: bool,
         agent_from: Optional[str] = None,
         market_storage_dir: Optional[str] = None
 ):
     trainer = build_trainer(
         config=config,
         storage_dir=storage_dir,
-        resume=resume_training,
+        resume=agent_from is not None,
         mode=Mode.Train,
         logger=logger,
         save=True,

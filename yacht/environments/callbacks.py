@@ -57,6 +57,39 @@ class LoggerCallback(BaseCallback):
         return dict_time_length_info, str_time_length_info
 
 
+class LastCheckpointCallback(BaseCallback):
+    """
+    Callback for saving a model every ``save_freq`` calls
+    to ``env.step()``.
+
+    .. warning::
+
+      When using multiple environments, each call to  ``env.step()``
+      will effectively correspond to ``n_envs`` steps.
+      To account for that, you can use ``save_freq = max(save_freq // n_envs, 1)``
+
+    :param save_freq:
+    :param save_path: Path to the file where the model will be saved.
+    """
+
+    def __init__(self, save_freq: int, save_path: str):
+        super().__init__()
+        self.save_freq = save_freq
+        self.save_path = save_path
+
+    def _init_callback(self) -> None:
+        # Create folder if needed
+        if self.save_path is not None:
+            save_dir = os.path.split(self.save_path)[0]
+            os.makedirs(save_dir, exist_ok=True)
+
+    def _on_step(self) -> bool:
+        if self.n_calls % self.save_freq == 0:
+            self.model.save(self.save_path)
+
+        return True
+
+
 class RewardsRenderCallback(BaseCallback):
     def __init__(self, total_timesteps: int, storage_dir: str, mode: Mode, verbose: int = 0):
         super().__init__(verbose=verbose)

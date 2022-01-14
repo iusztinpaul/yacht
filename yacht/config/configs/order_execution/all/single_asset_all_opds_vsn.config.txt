@@ -16,7 +16,7 @@ input: {
     start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
-    window_size: 5
+    window_size: 21
     render_periods: [
         # For the train period plot a bigger interval, because it is rendered only once.
          {start: '1/1/2018', end: '1/7/2019'},
@@ -73,7 +73,7 @@ agent: {
             add_attention: False
             add_normalization: False
             add_output_vsn: False
-            add_residual: true
+            add_residual: True
         }
         net_arch: {
             shared: [64, 64]

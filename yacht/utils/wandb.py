@@ -14,12 +14,13 @@ from yacht.utils.cache import cache_experiment_tracker_name, CacheContext
 
 
 class WandBContext(CacheContext):
-    def __init__(self, config: Config, storage_dir: str):
+    def __init__(self, config: Config, storage_dir: str, resume: bool = False):
         super().__init__(config=config, storage_dir=storage_dir)
 
         assert config.meta.experiment_tracker in ('', 'wandb'), \
             'If you are using the wandb context you should also set it from the config or at least leave it blank.'
 
+        self.resume = resume
         self.run_name = None
         self.run = None
 
@@ -43,11 +44,19 @@ class WandBContext(CacheContext):
         self.run_name = create_project_name(self.config, self.storage_dir)
         config = MessageToDict(self.config)
 
+        if self.resume is False:
+            run_id = wandb.util.generate_id()
+            self.write_to_cache(self.storage_dir, 'run_id', run_id)
+        else:
+            run_id = self.query_cache(self.storage_dir, 'run_id')
+            assert run_id is not None, 'Cannot resume wandb run.'
         self.run = wandb.init(
+            id=run_id,
             project='yacht',
             entity='yacht',
             name=self.run_name,
-            config=config
+            config=config,
+            resume='allow'
         )
         self._define_custom_step_metrics()
 

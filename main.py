@@ -20,19 +20,19 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 parser = argparse.ArgumentParser()
 parser.add_argument('mode', choices=('train', 'backtest', 'download', 'export_actions'))
 parser.add_argument(
-    '--config_file_name',
+    '--config-file-name',
     required=True,
     help='Name of the *.config file from the configuration dir.'
 )
-parser.add_argument('--resume_training', default=False, action='store_true', help='Resume training or not.')
 parser.add_argument(
-    '--agent_from',
+    '--resume-from',
     default=None,
-    help='File path to the *.zip file that you want to resume from.'
+    help='File path to the *.zip file that you want to resume from. Also, you can choose "best-train"'
+         'to automatically pick the best agent or "latest-train" to choose the latest checkpoint.'
 )
-parser.add_argument('--storage_dir', required=True, help='Directory where your model & logs will be saved.')
+parser.add_argument('--storage-dir', required=True, help='Directory where your model & logs will be saved.')
 parser.add_argument(
-    '--market_storage_dir',
+    '--market-storage-dir',
     default=None,
     help='Optional directory where you want to save your dataset. If not specified it will be saved in "--storage_dir".'
          'If this parameter is specified than the market is read only for parallel trainings.'
@@ -41,8 +41,6 @@ parser.add_argument('--logger_level', default='info', choices=('info', 'debug', 
 
 
 if __name__ == '__main__':
-    import torch
-    torch.autograd.set_detect_anomaly(True)
     matplotlib.use('Agg')
 
     args = parser.parse_args()
@@ -58,7 +56,8 @@ if __name__ == '__main__':
     config = load_config(utils.build_config_path(ROOT_DIR, args.config_file_name))
     export_config(config, storage_dir)
 
-    with WandBContext(config, storage_dir) as e:
+    resume = args.resume_from is not None
+    with WandBContext(config, storage_dir, resume=resume) as e:
         logger = yacht.logger.build_logger(
             level=args.logger_level,
             storage_dir=storage_dir
@@ -71,8 +70,7 @@ if __name__ == '__main__':
                 config=config,
                 logger=logger,
                 storage_dir=storage_dir,
-                resume_training=args.resume_training,
-                agent_from=args.agent_from,
+                agent_from=args.resume_from,
                 market_storage_dir=market_storage_dir
             )
             if config.input.backtest.run:
@@ -80,7 +78,7 @@ if __name__ == '__main__':
                     config=config,
                     logger=logger,
                     storage_dir=storage_dir,
-                    agent_from=args.agent_from,
+                    agent_from=args.resume_from,
                     mode=Mode.BestMetricBacktestTest,
                     market_storage_dir=market_storage_dir
                 )
@@ -90,7 +88,7 @@ if __name__ == '__main__':
                 config=config,
                 logger=logger,
                 storage_dir=storage_dir,
-                agent_from=args.agent_from,
+                agent_from=args.resume_from,
                 mode=Mode.BestMetricBacktestTrain,
                 market_storage_dir=market_storage_dir
             )
@@ -98,7 +96,7 @@ if __name__ == '__main__':
                 config=config,
                 logger=logger,
                 storage_dir=storage_dir,
-                agent_from=args.agent_from,
+                agent_from=args.resume_from,
                 mode=Mode.BestMetricBacktestValidation,
                 market_storage_dir=market_storage_dir
             )
@@ -106,7 +104,7 @@ if __name__ == '__main__':
                 config=config,
                 logger=logger,
                 storage_dir=storage_dir,
-                agent_from=args.agent_from,
+                agent_from=args.resume_from,
                 mode=Mode.BestMetricBacktestTest,
                 market_storage_dir=market_storage_dir
             )
@@ -139,7 +137,7 @@ if __name__ == '__main__':
                 config=config,
                 logger=logger,
                 storage_dir=storage_dir,
-                agent_from=args.agent_from,
+                agent_from=args.resume_from,
                 mode=Mode.BacktestTrain,
                 market_storage_dir=market_storage_dir
             )
