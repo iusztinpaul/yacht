@@ -14,14 +14,20 @@ The nice part is that everything is `configurable` within a config file.
 * wandb
 * mplfinance
 
-Relative to other repositories with the same scope, on this one a lot of focus 
+Relative to other repositories, with the same scope, on this one a lot of focus 
 was on researching better components:
 * Preprocessing methods to make data stationary
 * Training methods: Supervised heads, Teacher Oracles etc.
-* Better models: Recurrent, Transformers etc.
+* Different models: Recurrent, Transformers etc.
 
 # Project Architecture
 ![Project Architecture](/images/project_architecture.jpg)
+
+# Visual Representations
+Visual representations of the actions taken by the agent & the current status of the agent.
+![graph1](/images/graph1.png)
+![graph2](/images/graph2.png)
+![graph3](/images/graph3.png)
 
 # Install
 ### Requirements
@@ -81,6 +87,8 @@ will load two agents: The one which performed the best on the metric `PA` & the 
 meta: {
   experiment_tracker: 'wandb'
 }
+Here is an example of how it looks:
+![Wandb Example](images/wandb.png)
 ```
 * If you don't want to log a specific experiment on the experiment tracker just remove the config
 field or replace it with the empty string `''`.
