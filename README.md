@@ -134,6 +134,7 @@ only one experiment can access a specific file.
 For further reading go to:
 * [Available Components](docs/components.md)
 * [Config Explanation](docs/config.md)
-* [Trading](docs/config.md)
-* [Order Execution](docs/config.md)
+* [Trading](docs/trading.md)
+* [Order Execution](docs/order_execution.md)
 * [Metrics](docs/metrics.md)
+* [Teacher](docs/teacher.md)
