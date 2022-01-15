@@ -18,4 +18,4 @@ They support a lot of metrics.
 * **num_actions** = The number of the actions the agent has taken
 
 **NOTE:** `PA` & `GLR` are used for the `Order Execution Task`. For a more detailed explanation
-of them please refer to the following paper: [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860).
+please refer to the following paper: [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860).
