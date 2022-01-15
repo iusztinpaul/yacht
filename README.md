@@ -75,7 +75,7 @@ For the parameter `--resume-from` we support the following combinations:
 * `latest-train` = resume the agent from the latest checkpoint saved during training
 * `best-train` = resume the agent from the best checkpoint saved during training
 
-*NOTE:* For the `best-train` parameter you can choose a specific metric for which you consider an agent to be the best. You
+**NOTE:** For the `best-train` parameter you can choose a specific metric for which you consider an agent to be the best. You
 can do that with the `meta.metrics_to_load_best_on` config parameter. For example `metrics_to_load_best_on: ['PA', 'GLR']`
 will load two agents: The one which performed the best on the metric `PA` & the one which performed the best on `GLR`.
 
