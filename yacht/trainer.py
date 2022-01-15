@@ -63,6 +63,7 @@ class Trainer(ABC):
         self.agent.policy.train()
 
         self.before_train_log()
+        # TODO: Load trained timesteps when resuming.
         self.agent = self.agent.learn(
             total_timesteps=self.total_timesteps,
             callback=self.build_callbacks(),

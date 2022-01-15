@@ -89,7 +89,7 @@ class SimplifiedVariableSelectionNetwork(nn.Module):
                 in_features=self.input_size_total,
                 hidden_features=self.hidden_features,
                 out_features=self.num_inputs,
-                activation_fn=activation_fn,
+                activation_fn=None,  # It will be followed by Softmax in the VSN logic.
                 dropout=self.dropout,
                 n=1
             )
@@ -205,12 +205,6 @@ class SimplifiedGatedResidualNetwork(nn.Module):
             activation_fn=activation_fn,
             dropout=self.dropout
         )
-        self.lin2 = LinearStack(
-            in_features=self.out_features,
-            out_features=self.out_features,
-            activation_fn=None,
-            dropout=self.dropout
-        )
         self.glu = GatedLinearUnit(
             in_features=self.out_features,
             out_features=self.out_features
@@ -225,7 +219,6 @@ class SimplifiedGatedResidualNetwork(nn.Module):
             residual = x
 
         x = self.lin1(x)
-        x = self.lin2(x)
         x = self.glu(x)
         if self.add_residual is True:
             x = x + residual
@@ -245,7 +238,8 @@ class GatedLinearUnit(nn.Module):
         self.fc = LinearStack(
             in_features=in_features,
             out_features=self.out_features * 2,
-            activation_fn=None
+            activation_fn=None,
+            n=1
         )
 
     def forward(self, x):

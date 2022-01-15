@@ -33,12 +33,15 @@ experiment trackers you should add the secret keys.
 
 ### Train
 ```shell
-python main.py train --config_file day.config.txt --storage_path ./storage/day
+python main.py train --config-file day.config.txt --storage_path ./storage/day
 ```
-
+### Resume
+```shell
+python main.py train --config-file day.config.txt --storage-path ./storage/day --resume-from latest-train
+```
 ### Backtest
 ```shell
-python main.py backtest --config_file day.config.txt --storage_path ./storage/day
+python main.py backtest --config-file day.config.txt --storage-path ./storage/day
 ```
 
 # Experiment Tracking

@@ -150,6 +150,7 @@ class MetricsEvalCallback(EvalCallback):
         self.metrics_to_save_best_on = metrics_to_save_best_on
         self.apply_plateau = plateau_max_n_steps > 0
         self.plateau_max_n_steps = plateau_max_n_steps
+        # TODO: Load current best_metrics when resuming.
         self.best_metrics_results = {key: -sys.maxsize for key in self.metrics_to_save_best_on}
         self.plateau_metrics_counter = Counter()
         self.found_any_new = False
