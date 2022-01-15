@@ -1,9 +1,12 @@
 # Description
-1. Reproduction of [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860). 
-In this codebase the code is more generic. You can choose from different assets to run tests on. Also, you can set up 
-your environment for different frequencies as input (eg. 1m, 1h, 1d), reward schemas & action schemas. I played around with
-the agent feature extractor to extrapolate it to work on a `window` logic & at different time scales. The original implementation
-was working only at the `day level`. My goal was to make a general framework for order execution.
+For now our codebase is inspired by the paper [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860). 
+But we made a few changes to make it more generic & robust:
+* The setup can we used on any kind of asset timeseries.
+* The actions are taken only at one timestep based on some lagged observations.
+* You can use it at any timescale: 1 year, 1 month, 1 day
+* We have improved the preprocessing method so the data is stationary.
+* We have added a supervised head to help learning.
+* We have added as input reference indexes, like S&P500 & Nasdaq100 to help the agent to find the trend.
+* We have improved the model to help the agent to pick features from different variables.
 
-
-## 1. Universal Trading for Order Execution with Oracle Policy Distillation
+A detailed explanation of those improvements can be found at the following [paper]().

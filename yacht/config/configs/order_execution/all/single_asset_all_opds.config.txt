@@ -43,7 +43,7 @@ environment: {
     initial_cash_position: 5000
     reward_schemas: [
     {
-        name: 'SinDecisionMakingRewardSchema',
+        name: 'DecisionMakingRewardSchema',
         reward_scaling: 1.
     },
     {
