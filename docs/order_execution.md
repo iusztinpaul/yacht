@@ -10,3 +10,10 @@ But we made a few changes to make it more generic & robust:
 * We have improved the model to help the agent to pick features from different variables.
 
 A detailed explanation of those improvements can be found at the following [paper]().
+<br>Here are some examples of how the agent is performing:
+![graph2](images/graph1_opds.png)
+![graph3](images/graph2_opds.png)
+![graph4](images/graph3_opds.png)
+
+This is how the agent is taking the actions:
+![actions](images/window_logic.png)
