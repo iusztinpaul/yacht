@@ -11,6 +11,7 @@ The nice part is that everything is `configurable` within a config file.
 * pytorch
 * pandas
 * stable-baselines3
+* gym
 * wandb
 * mplfinance
 
@@ -21,7 +22,15 @@ was on researching better components:
 * Different models: Recurrent, Transformers etc.
 
 # Project Architecture
-![Project Architecture](images/project_architecture.jpg)
+![Project Architecture](images/project_architecture.png)
+<br><br>The architecture is split into 4 main categories:
+* Data
+* Environment
+* Reinforcement Learning Agents
+* Specific Task Layer
+
+The `Specific Task Layer` is a glue code module that is used for training & backtesting.
+It can be further be extended into the `applicaton layer`.
 
 # Visual Representations
 Visual representations of the actions taken by the agent & the current status of the agent.
