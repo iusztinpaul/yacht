@@ -22,7 +22,7 @@ was on researching better components:
 * Different models: Recurrent, Transformers etc.
 
 # Project Architecture
-![Project Architecture](images/project_architecture.png)
+![Project Architecture](images/project_architecture.jpeg)
 <br><br>The architecture is split into 4 main categories:
 * Data
 * Environment
