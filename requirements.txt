@@ -29,7 +29,3 @@ mplfinance==0.12.7a17
 
 # Finance
 pyfolio-reloaded==0.9.3
-
-# Docs
-myst-parser
-sphinx

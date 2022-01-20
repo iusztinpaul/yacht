@@ -11,9 +11,9 @@ But we made a few changes to make it more generic & robust:
 
 A detailed explanation of those improvements can be found at the following [paper]().
 <br>Here are some examples of how the agent is performing:
-![graph2](../../images/graph1_opds.png)
-![graph3](../../images/graph2_opds.png)
-![graph4](../../images/graph3_opds.png)
+![graph2](../images/graph1_opds.png)
+![graph3](../images/graph2_opds.png)
+![graph4](../images/graph3_opds.png)
 
 This is how the agent is taking the actions:
-![actions](../../images/window_logic.jpg)
+![actions](../images/window_logic.jpg)
