@@ -12,7 +12,7 @@ input: {
     features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macdFracDiff', 'rsi_30']
+    technical_indicators: ['macdFracDiff', 'rsi_30FracDiff']
     start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'

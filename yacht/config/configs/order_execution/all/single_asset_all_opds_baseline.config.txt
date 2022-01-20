@@ -6,17 +6,20 @@ input: {
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
-    attached_tickers: []
+    attached_tickers: ['QQQ', 'SPY']
+    # attached_tickers: []
     fine_tune_tickers: ['NASDAQ100']
     intervals: ['1d']
-    features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    # features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macd', 'rsi_30']
+    # technical_indicators: ['macd', 'rsi_30']
+    technical_indicators: ['macdFracDiff', 'rsi_30FracDiff']
     start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
-    window_size: 21
+    window_size: 5
     render_periods: [
         # For the train period plot a bigger interval, because it is rendered only once.
          {start: '1/1/2018', end: '1/7/2019'},
@@ -43,7 +46,8 @@ environment: {
     initial_cash_position: 5000
     reward_schemas: [
     {
-        name: 'DecisionMakingRewardSchema'
+        name: 'SinDecisionMakingRewardSchema'
+        # name: 'DecisionMakingRewardSchema'
         reward_scaling: 1.
     },
     {
@@ -79,7 +83,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 4000000
+    total_timesteps: 3500000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0002
