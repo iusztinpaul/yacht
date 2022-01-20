@@ -1,0 +1,108 @@
+input: {
+    market: 'Yahoo'
+    market_mixins: ['TargetPriceMixin', 'FracDiffMixin']
+    dataset: 'DayFrequencyDataset'
+    num_assets_per_dataset: 1
+    scaler: 'MinMaxScaler'
+    scale_on_interval: '1d'
+    tickers: ['NASDAQ100', 'S&P500', 'DOW30']
+    # attached_tickers: ['QQQ', 'SPY']
+    fine_tune_tickers: ['NASDAQ100']
+    intervals: ['1d']
+    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
+    decision_price_feature: 'TP'
+    take_action_at: 'next'
+    technical_indicators: ['macdFracDiff', 'rsi_30FracDiff']
+    start: '1/8/2016'
+    end: '15/10/2021'
+    period_length: '1M'
+    window_size: 5
+    render_periods: [
+        # For the train period plot a bigger interval, because it is rendered only once.
+         {start: '1/1/2018', end: '1/7/2019'},
+        # For the validation period be more greedy, because it is rendered a lot of times during training.
+         {start: '15/12/2020', end: '15/8/2021'}
+    ]
+    render_tickers: ['AAPL']
+    include_weekends: false
+    validation_split_ratio: 0.3
+    backtest_split_ratio: 0.0
+    embargo_ratio: 0.025
+    backtest: {
+        run: false
+        deterministic: true
+        tickers: ['NASDAQ100']
+    }
+}
+environment: {
+    name: 'OrderExecutionEnvironment-v0'
+    n_envs: 6
+    envs_on_different_processes: false
+    buy_commission: 0.00
+    sell_commission: 0.00
+    initial_cash_position: 5000
+    reward_schemas: [
+    {
+        name: 'SinDecisionMakingRewardSchema',
+        reward_scaling: 1.
+    },
+    {
+        name: 'ActionMagnitudeRewardSchema',
+        reward_scaling: 0.025
+    }
+    ]
+    global_reward_scaling: 1.
+    action_schema: 'DiscreteActionScheme'
+    possibilities: [0, 0.25, 0.5, 0.75, 1]
+}
+agent: {
+    name: 'SupervisedPPO'
+    is_classic_method: false
+    is_teacher: false
+    is_student: false
+    verbose: true
+    policy: {
+        name: 'MlpPolicy'
+        activation_fn: 'Tanh',
+        feature_extractor: {
+            name: 'DayRecurrentFeatureExtractor'
+            features_dim: [64,64,128]
+            drop_out_p: 0.,
+            rnn_layer_type: 'GRU'
+        }
+        net_arch: {
+            shared: [64, 64]
+            vf: [32]
+            pi: [32]
+        }
+    }
+}
+train: {
+    trainer_name: 'Trainer'
+    total_timesteps: 3000000
+    fine_tune_total_timesteps: -1
+    collecting_n_steps: 2048
+    learning_rate: 0.0002
+    batch_size: 2048
+    n_epochs: 5
+    gamma: 1.
+    gae_lambda: 1.
+    clip_range: 0.3
+    vf_clip_range: 0.3
+    entropy_coefficient: 0.15
+    vf_coefficient: 1.
+    max_grad_norm: 100
+    use_sde: false
+    sde_sample_freq: -1
+    learning_rate_scheduler: 'ConstantSchedule'
+    supervised_coef: 25
+}
+meta: {
+    log_frequency_steps: 5000
+    metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
+    metrics_to_save_best_on: ['PA', 'GLR', 'T']
+    metrics_to_load_best_on: ['PA', 'GLR', 'T']
+    plateau_max_n_steps: -1
+    device: 'gpu'
+    experiment_tracker: ''
+}
