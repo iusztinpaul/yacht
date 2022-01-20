@@ -69,15 +69,15 @@ You should only add the config path relative to it.
 
 ### Train
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_opds.config.txt --storage_path ./storage/opds
+python main.py train --config-file order_execution/all/single_asset_all_opds.config.txt --storage-dir ./storage/opds
 ```
 ### Backtest
 ```shell
-python main.py backtest --config-file order_execution/all/single_asset_all_opds.config.txt --storage-path ./storage/opds
+python main.py backtest --config-file order_execution/all/single_asset_all_opds.config.txt --storage-dir ./storage/opds
 ```
 ### Resume
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_opds.config.txt --storage-path ./storage/opds --resume-from latest-train
+python main.py train --config-file order_execution/all/single_asset_all_opds.config.txt --storage-dir ./storage/opds --resume-from latest-train
 ```
 For the parameter `--resume-from` we support the following combinations:
 * Absolute path to the checkpoint.
