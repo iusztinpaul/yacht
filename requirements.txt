@@ -27,6 +27,8 @@ int_date==0.1.8
 matplotlib~=3.4.1
 mplfinance==0.12.7a17
 
-
 # Finance
 pyfolio-reloaded==0.9.3
+
+# Docs
+myst-parser==0.16.1

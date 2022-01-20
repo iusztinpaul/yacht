@@ -41,7 +41,10 @@ Visual representations of the actions taken by the agent & the current status of
 # Install
 ### Requirements
 * Code tested with `Python 3.8`, `pytorch 1.8.1`, `cuda 11.1` & `cudnn 8.0` on `Ubuntu 20.04`
-* Requirements are installed from `requirements.txt` within a `conda` environment
+* Within a `conda` environment run:
+```shell
+pip install -r requirements.txt
+```
 * Install torch separately with:
 ```shell
 pip install torch==1.8.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
