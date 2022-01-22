@@ -1,4 +1,7 @@
-# Yet Another Charming Trader - Yacht
+![Logo-Dark](images/yacht_full_logo_white.png#gh-dark-mode-only)
+![Logo-White](images/yacht_full_logo_black.png#gh-light-mode-only)
+
+# Yet Another Charming Trader - Yacht - Introduction
 A Deep Reinforcement Learning framework for trading & order execution in financial markets. The goal of the project
 is to speed up the development & research of financial agents. The code has components for:
 * Loading & preprocessing data directly from the internet
