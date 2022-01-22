@@ -76,15 +76,15 @@ You should only add the config path relative to it.
 
 ### Train
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds
+python main.py train --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds --market-storage-dir ./storage
 ```
 ### Backtest
 ```shell
-python main.py backtest --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds
+python main.py backtest --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds --market-storage-dir ./storage
 ```
 ### Resume
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds --resume-from latest-train
+python main.py train --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds --resume-from latest-train --market-storage-dir ./storage
 ```
 For the parameter `--resume-from` we support the following combinations:
 * Absolute path to the checkpoint.
@@ -136,7 +136,7 @@ You can also set something like `['NASDQ100', 'RUSSELL2000', 'AAPL']` or any com
 #### Download
 We cache the data in `h5` files.
 ```shell
-python main.py download --config-file-name download_4years.config.txt --storage-dir ./storage/download_4_years --market-storage-dir ./storage/download_4_years
+python main.py download --config-file-name download_4years.config.txt --storage-dir ./storage/download_4_years --market-storage-dir ./storage
 ```
 * The `--market-storage-dir` CLI argument is optional. If you add it the market will be placed
 in a different location than your `storage-dir`. This is helpful because it can be accessed by multiple

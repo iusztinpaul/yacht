@@ -88,7 +88,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 100000
+    total_timesteps: 3000000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 128
     learning_rate: 0.0002
@@ -107,7 +107,7 @@ train: {
     supervised_coef: 25
 }
 meta: {
-    log_frequency_steps: 5000
+    log_frequency_steps: 10
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
     metrics_to_save_best_on: ['PA', 'GLR', 'AD', 'T']
     metrics_to_load_best_on: ['PA', 'GLR', 'AD', 'T']
