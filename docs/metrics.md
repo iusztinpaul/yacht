@@ -19,3 +19,4 @@ They support a lot of metrics.
 
 **NOTE:** `PA` & `GLR` are used for the `Order Execution Task`. For a more detailed explanation
 please refer to the following paper: [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860).
+I also wrote a **summary** of the paper on [Medium](https://medium.com/mlearning-ai/universal-trading-for-order-execution-with-reinforcement-learning-a62d400f2f1a).

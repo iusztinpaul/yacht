@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from .proto import *
 
 import os
@@ -16,8 +18,7 @@ def load_config(config_path: str):
 
 
 def export_config(config: Config, storage_dir: str):
-    if not os.path.exists(storage_dir):
-        os.mkdir(storage_dir)
+    Path(storage_dir).mkdir(parents=True, exist_ok=True)
 
     with open(os.path.join(storage_dir, 'config.txt'), 'w') as f:
         config_txt = MessageToString(config)

@@ -43,7 +43,7 @@ environment: {
     initial_cash_position: 5000
     reward_schemas: [
     {
-        name: 'SinDecisionMakingRewardSchema',
+        name: 'DecisionMakingRewardSchema',
         reward_scaling: 1.
     },
     {
@@ -69,8 +69,8 @@ agent: {
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
-            attention_head_size: -1
-            add_attention: False
+            attention_head_size: 1
+            add_attention: True
             add_normalization: False
             add_output_vsn: False
             add_residual: True

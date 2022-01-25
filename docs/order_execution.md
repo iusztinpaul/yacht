@@ -1,6 +1,7 @@
 # Description
-For now our codebase is inspired by the paper [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860). 
-But we made a few changes to make it more generic & robust:
+For now our codebase is inspired by the paper [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860).
+If you are interested to see the main concepts I wrote a summary on [Medium](https://medium.com/mlearning-ai/universal-trading-for-order-execution-with-reinforcement-learning-a62d400f2f1a).
+We made a few changes to make it more generic & robust:
 * The setup can we used on any kind of asset timeseries.
 * The actions are taken only at one timestep based on some lagged observations.
 * You can use it at any timescale: 1 year, 1 month, 1 day
