@@ -10,5 +10,6 @@ message MetaConfig {
   int32 plateau_max_n_steps = 5;
   int32 log_frequency_steps = 6;
   string experiment_tracker = 7;
-  bool render_data_split = 8;
+  string project_entity = 8;
+  bool render_data_split = 9;
 }

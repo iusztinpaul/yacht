@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='yacht.config.proto',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x1dyacht/config/proto/meta.proto\x12\x12yacht.config.proto\"\xe7\x01\n\nMetaConfig\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x16\n\x0emetrics_to_log\x18\x02 \x03(\t\x12\x1f\n\x17metrics_to_save_best_on\x18\x03 \x03(\t\x12\x1f\n\x17metrics_to_load_best_on\x18\x04 \x03(\t\x12\x1b\n\x13plateau_max_n_steps\x18\x05 \x01(\x05\x12\x1b\n\x13log_frequency_steps\x18\x06 \x01(\x05\x12\x1a\n\x12\x65xperiment_tracker\x18\x07 \x01(\t\x12\x19\n\x11render_data_split\x18\x08 \x01(\x08\x62\x06proto3')
+  serialized_pb=_b('\n\x1dyacht/config/proto/meta.proto\x12\x12yacht.config.proto\"\xff\x01\n\nMetaConfig\x12\x0e\n\x06\x64\x65vice\x18\x01 \x01(\t\x12\x16\n\x0emetrics_to_log\x18\x02 \x03(\t\x12\x1f\n\x17metrics_to_save_best_on\x18\x03 \x03(\t\x12\x1f\n\x17metrics_to_load_best_on\x18\x04 \x03(\t\x12\x1b\n\x13plateau_max_n_steps\x18\x05 \x01(\x05\x12\x1b\n\x13log_frequency_steps\x18\x06 \x01(\x05\x12\x1a\n\x12\x65xperiment_tracker\x18\x07 \x01(\t\x12\x16\n\x0eproject_entity\x18\x08 \x01(\t\x12\x19\n\x11render_data_split\x18\t \x01(\x08\x62\x06proto3')
 )
 
 
@@ -82,8 +82,15 @@ _METACONFIG = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='render_data_split', full_name='yacht.config.proto.MetaConfig.render_data_split', index=7,
-      number=8, type=8, cpp_type=7, label=1,
+      name='project_entity', full_name='yacht.config.proto.MetaConfig.project_entity', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='render_data_split', full_name='yacht.config.proto.MetaConfig.render_data_split', index=8,
+      number=9, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -101,7 +108,7 @@ _METACONFIG = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=54,
-  serialized_end=285,
+  serialized_end=309,
 )
 
 DESCRIPTOR.message_types_by_name['MetaConfig'] = _METACONFIG

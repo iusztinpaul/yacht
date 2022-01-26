@@ -114,5 +114,6 @@ meta: {
     plateau_max_n_steps: 15
     render_data_split: true
     device: 'gpu'
-    experiment_tracker: ''
+    experiment_tracker: 'wandb'
+    project_entity: 'yacht'
 }

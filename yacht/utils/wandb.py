@@ -50,10 +50,11 @@ class WandBContext(CacheContext):
         else:
             run_id = self.query_cache(self.storage_dir, 'run_id')
             assert run_id is not None, 'Cannot resume wandb run.'
+        entity = self.config.meta.project_entity if bool(self.config.meta.project_entity) else None
         self.run = wandb.init(
             id=run_id,
             project='yacht',
-            entity='yacht',
+            entity=entity,
             name=self.run_name,
             config=config,
             resume='allow'

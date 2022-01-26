@@ -69,6 +69,7 @@ sudo apt  install protobuf-compiler
 * Create a file called `.env` at the root directory level. If you want to fully use the market APIs and
 experiment trackers you should add the secret keys.
 * Look at `.env.default` for the supported env vars.
+* Not all `env vars` are mandatory. For example the free version of `Yahoo Finance` does not require any credentials.
 
 # Run
 All the supported configs can be found at `./yacht/config/configs`. 
@@ -104,7 +105,16 @@ meta: {
   experiment_tracker: 'wandb'
 }
 ```
-Here is an example of how it looks:
+If you want to add a specific `project_entity` add:
+```shell
+meta: {
+  project_entity: 'your_project_entity'
+} 
+```
+**NOTE:** Be aware that this name is unique between all the users that use wandb. For
+example, I use `project_entity=yacht`. If you try to use it  will through an unauthorized error
+because you do not have access to my entity.
+<br/>Here is an example of how it looks:
 ![Wandb Example](images/wandb.png)
 * If you don't want to log a specific experiment on the experiment tracker just remove the config
 field or replace it with the empty string `''`.
@@ -120,7 +130,7 @@ wandb agent id-given-by-generated-sweep
 ```
 
 # Data APIs
-* Currently we have support for:
+* Currently, we have support for:
   * `Binance`
   * `Yahoo Finance`.
 * You should set the `api keys` in the `.env` file for full support.
