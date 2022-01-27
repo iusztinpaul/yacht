@@ -3,7 +3,7 @@ For now our codebase is inspired by the paper [Universal Trading for Order Execu
 If you are interested to see the main concepts I wrote a summary on [Medium](https://medium.com/mlearning-ai/universal-trading-for-order-execution-with-reinforcement-learning-a62d400f2f1a).
 We made a few changes to make it more generic & robust:
 * The setup can we used on any kind of asset timeseries.
-* The actions are taken only at one timestep based on some lagged observations.
+* The actions are taken only at one time step based on some lagged observations.
 * You can use it at any timescale: 1 year, 1 month, 1 day
 * We have improved the preprocessing method so the data is stationary.
 * We have added a supervised head to help learning.

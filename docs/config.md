@@ -151,5 +151,6 @@ meta: {
                              # If it is `-1` the logic is stopped. 
     device: 'gpu'  # Either gpu or cpu
     experiment_tracker: 'wandb'  # Experiment tracker to be used. If it is "''" it is stopped.
+    project_entity: 'yacht'  # Experiment tracker unique entity. If it is "''" then it is ignored.
 }
 ```

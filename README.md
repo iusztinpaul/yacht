@@ -42,6 +42,9 @@ Visual representations of the actions taken by the agent & the current status of
 ![graph2](images/graph1_opds.png)
 ![graph3](images/graph2_opds.png)
 
+# Tutorials
+* [Get started](https://medium.com/mlearning-ai/how-to-automate-your-orders-as-a-buy-and-hold-investor-84f6885015aa)
+
 # Install
 ### Requirements
 * Code tested with `Python 3.8`, `pytorch 1.8.1`, `cuda 11.1` & `cudnn 8.0` on `Ubuntu 20.04`
