@@ -16,6 +16,7 @@ from yacht.agents.ppo import PPO, StudentPPO, SupervisedPPO
 from yacht.agents.sac import SAC
 from yacht.config import Config
 from yacht.config.proto.net_architecture_pb2 import NetArchitectureConfig
+from .policies import ActorCriticPolicy
 
 from ..environments import BaseAssetEnvironment
 
@@ -37,17 +38,14 @@ classic_agents = {
 agents_registry = {**reinforcement_learning_agents, **classic_agents}
 
 policy_registry = {
-    'MlpPolicy': 'MlpPolicy'
+    'MlpPolicy': ActorCriticPolicy
 }
 
 feature_extractor_registry = {
     'MultiFrequencyFeatureExtractor': modules.MultiFrequencyFeatureExtractor,
     'DayRecurrentFeatureExtractor': modules.DayRecurrentFeatureExtractor,
-    'OnlyVSNRecurrentFeatureExtractor': modules.OnlyVSNRecurrentFeatureExtractor,
     'DayVSNRecurrentFeatureExtractor': modules.DayVSNRecurrentFeatureExtractor,
     'MultiFrequencyRecurrentFeatureExtractor': modules.MultiFrequencyRecurrentFeatureExtractor,
-    'TransformerFeatureExtractor': modules.TransformerFeatureExtractor,
-    'DayTemporalFusionFeatureExtractor': modules.DayTemporalFusionFeatureExtractor,
     '': None,
     None: None
 }

@@ -62,7 +62,7 @@ environment: {
     possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
 agent: {
-    name: 'SupervisedPPO'
+    name: 'PPO'
     is_classic_method: false
     verbose: true
     policy: {
@@ -114,6 +114,6 @@ meta: {
     plateau_max_n_steps: 15
     render_data_split: true
     device: 'gpu'
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
     project_entity: 'yacht'
 }
