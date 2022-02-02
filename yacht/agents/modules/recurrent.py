@@ -109,9 +109,7 @@ class DayVSNRecurrentFeatureExtractor(BaseFeaturesExtractor):
             rnn_layer_type: nn.Module,
             dropout: Optional[float] = None,
             attention_head_size: int = 1,
-            add_attention: bool = False,
             add_normalization: bool = False,
-            add_output_vsn: bool = False,
             add_residual: bool = False
     ):
         super().__init__(observation_space, features_dim[-1])
@@ -128,9 +126,7 @@ class DayVSNRecurrentFeatureExtractor(BaseFeaturesExtractor):
         self.num_rnn_layers = len(features_dim[1:-1])
         self.dropout = dropout if dropout and dropout > 0 else None
         self.attention_head_size = attention_head_size
-        self.add_attention = add_attention
         self.add_normalization = add_normalization
-        self.add_output_vsn = add_output_vsn
         self.add_residual = add_residual
 
         self.public_vsn = SimplifiedVariableSelectionNetwork(
@@ -192,32 +188,8 @@ class DayVSNRecurrentFeatureExtractor(BaseFeaturesExtractor):
                 add_residual=self.add_residual
             )
 
-        if self.add_output_vsn is True:
-            self.output_vsn = SimplifiedVariableSelectionNetwork(
-                public_features_len=features_dim[1],
-                private_features_len=features_dim[1],
-                num_assets=1,
-                hidden_features=features_dim[1],
-                activation_fn=activation_fn,
-                dropout=self.dropout,
-                layers_type='grn',
-                add_normalization=self.add_normalization,
-                add_residual=self.add_residual
-            )
-        if self.add_attention is True:
-            self.output_attn = nn.MultiheadAttention(
-                embed_dim=features_dim[1] if self.add_output_vsn is True else features_dim[1] * 2,
-                num_heads=self.attention_head_size,
-                dropout=dropout
-            )
-        if self.add_residual is True:
-            self.output_add_norm = AddNorm(
-                out_features=features_dim[1] if self.add_output_vsn is True else features_dim[1] * 2,
-                add_normalization=self.add_normalization,
-                add_residual=self.add_residual
-            )
         self.output_mlp = LinearStack(
-            in_features=features_dim[1] if self.add_output_vsn is True else features_dim[1] * 2,
+            in_features=features_dim[1] * 2,
             out_features=features_dim[2],
             activation_fn=activation_fn,
             n=1,
@@ -242,31 +214,16 @@ class DayVSNRecurrentFeatureExtractor(BaseFeaturesExtractor):
         if self.add_residual is True:
             residual = self.public_resample(public_vsn_output)
             public_rnn_output = self.public_add_norm(public_rnn_output, residual)
+        public_rnn_output = public_rnn_output[:, -1, :]
 
         private_mlp_output = self.private_mlp(private_input)
         private_rnn_output, _ = self.private_recurrent(private_mlp_output)
         if self.add_residual is True:
             residual = self.private_resample(private_mlp_output)
             private_rnn_output = self.private_add_norm(private_rnn_output, residual)
+        private_rnn_output = private_rnn_output[:, -1, :]
 
-        if self.add_output_vsn:
-            variables = {
-                'public_features_0': public_rnn_output,
-                'private_features': private_rnn_output
-            }
-            aggregated_output = self.output_vsn(variables)
-        else:
-            aggregated_output = torch.cat([public_rnn_output, private_rnn_output], dim=-1)
-        if self.add_attention is True:
-            output, _ = self.output_attn(
-                query=aggregated_output[:, -1:],
-                key=aggregated_output,
-                value=aggregated_output
-            )
-            if self.add_residual is True:
-                output = self.output_add_norm(output, aggregated_output[:, -1:])
-        else:
-            output = aggregated_output[:, -1, :]
+        output = torch.cat([public_rnn_output, private_rnn_output], dim=-1)
         output = output.reshape(batch_size, -1)
         output = self.output_mlp(output)
 
