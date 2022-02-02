@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -25,7 +25,8 @@ class StudentMultiAssetDataset(MultiAssetDataset):
             render_tickers: List[str],
             mode: Mode,
             logger: Logger,
-            window_size: int = 1
+            window_size: int = 1,
+            attached_datasets: Optional[List[SingleAssetDataset]] = None
     ):
         super().__init__(
             datasets=datasets,
@@ -40,6 +41,7 @@ class StudentMultiAssetDataset(MultiAssetDataset):
             mode=mode,
             logger=logger,
             window_size=window_size,
+            attached_datasets=attached_datasets
         )
 
         teacher_actions_path = os.path.join(self.market.storage_dir, 'teacher_actions.h5')
