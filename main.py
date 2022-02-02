@@ -138,6 +138,6 @@ if __name__ == '__main__':
                 logger=logger,
                 storage_dir=storage_dir,
                 agent_from=args.resume_from,
-                mode=Mode.BacktestTrain,
+                mode=Mode.BestMetricBacktestTrain,
                 market_storage_dir=market_storage_dir
             )
