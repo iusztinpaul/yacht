@@ -135,7 +135,8 @@ class Market(ABC):
             except (errors.DownloadError, errors.PreProcessError):
                 invalid_tickers.add(ticker)
         warnings.filterwarnings(action='default', category=NaturalNameWarning)
-        self.logger.log(f'Could not download / process: {invalid_tickers}')
+        if len(invalid_tickers) > 0:
+            self.logger.log(f'Could not download / process: {invalid_tickers}')
 
     def _download(self, ticker: str, interval: str, start: datetime, end: datetime, squeeze: bool = False, **kwargs):
         # In some cases, we don't want to make rigid checks, only because there is no available data so far in the past.

@@ -12,7 +12,7 @@ input: {
     features: ['Close', 'Open', 'High', 'Low', 'Volume']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macd', 'macds', 'rsi_30']
+    technical_indicators: ['macd', 'macds', 'rsi_14', 'rsi_22', 'rsi_30']
     start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
