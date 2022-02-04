@@ -24,7 +24,7 @@ meta: {
 ```
 input: {
     market: 'Yahoo'  # Data Source
-    market_mixins: ['TargetPriceMixin', 'FracDiffMixin']  # Mixin that preprocesses the data when is cached.
+    market_mixins: ['TargetPriceMixin', 'FracDiffMixin']  # Mixin that preprocesses the data before is cached.
     dataset: 'DayFrequencyDataset'  # The dataset that models a single asset. 
                                     # There is an aggregator dataset that is used for multiple assets.
     num_assets_per_dataset: 1  # How many assets there will be in a dataset.
@@ -33,7 +33,7 @@ input: {
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']   # On what tickers to train.
     attached_tickers: ['QQQ', 'SPY']  # Extra tickers that will be attached to EVERY dataset.
     fine_tune_tickers: ['NASDAQ100']  # Tickers to fine-tune on.
-    intervals: ['1d']  # What intervals/frequency to use.
+    intervals: ['1d']  # What intervals/frequencies to use.
     features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']  # The features to use while training.
     decision_price_feature: 'TP'  # On what features to compute all the rewards & metrics.
     take_action_at: 'next'  # When to take the action. We support only: current & next.
@@ -42,12 +42,12 @@ input: {
     end: '15/10/2021'  # The end of the whole dataset.
     period_length: '1M'  # The length of an episode.
     window_size: 5  # Number of lagged observations to look on.
-    render_periods: [  # Render subsets. Rendering is an expensive computation. If is it empty no rendering will be done.
+    render_periods: [  # Render subsets. Rendering is an expensive computation. If it is empty no rendering will be done.
          {start: '1/1/2018', end: '1/7/2019'},
          {start: '15/12/2020', end: '15/8/2021'}
     ]
     render_tickers: ['AAPL']  # Render tickers. Rendering is an expensive computation. If is it empty no rendering will be done.
-    include_weekends: false  # If the assets are traded during workdays or not.
+        include_weekends: false  # If the assets are traded during workdays or not.
     validation_split_ratio: 0.2  # How much of the data to add to train.
     backtest_split_ratio: 0.1  # How much of the data to add to testing.
     embargo_ratio: 0.025  # Embargo ratio between splits.
