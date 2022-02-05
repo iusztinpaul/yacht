@@ -92,6 +92,7 @@ def split(
 
     # TODO: Refactor those two if statements.
     if is_backtest_first is True and has_backtest_split is True:
+        # TODO: Add embargo x2 after the test split.
         # Test -> Purge/Embargo -> Train -> Purge/Embargo -> Validation
         start_backtest_timestamp = start_timestamp
         end_backtest_timestamp = start_backtest_timestamp + backtest_interval_length
