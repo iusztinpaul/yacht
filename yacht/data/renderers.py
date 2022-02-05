@@ -149,6 +149,8 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         super().__init__(data)
 
         assert len(train_split) == 2 and len(validation_split) == 2 and len(backtest_split) == 2
+        # TODO: Generalize the renderer to work with splits in any order.
+        #  We have use-cases where the data does not fit in this scenario.
         assert train_split[0] < train_split[1] \
                < validation_split[0] < validation_split[1] \
                <= backtest_split[0] <= backtest_split[1]

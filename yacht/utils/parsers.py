@@ -61,7 +61,8 @@ def split(
         validation_split_ratio: float,
         backtest_split_ratio: float,
         embargo_ratio: float,
-        include_weekends: bool = False
+        include_weekends: bool = False,
+        is_backtest_first: bool = True
 ) -> tuple:
     assert 0 < validation_split_ratio < 1
     assert 0 <= backtest_split_ratio < 1
@@ -89,31 +90,57 @@ def split(
         total_interval_length * \
         (1 - validation_split_ratio - backtest_split_ratio - needed_embargo_ratios * embargo_ratio)
 
-    start_train_timestamp = start_timestamp
-    end_train_timestamp = start_timestamp + train_interval_length
-    start_train = datetime.fromtimestamp(start_train_timestamp)
-    end_train = datetime.fromtimestamp(end_train_timestamp)
-
-    start_validation_timestamp = end_train_timestamp + embargo_offset_length
-    end_validation_timestamp = start_validation_timestamp + validation_split_length
-    start_validation = datetime.fromtimestamp(start_validation_timestamp)
-    end_validation = datetime.fromtimestamp(end_validation_timestamp)
-
-    if has_backtest_split:
-        start_backtest_timestamp = end_validation_timestamp + embargo_offset_length
+    # TODO: Refactor those two if statements.
+    if is_backtest_first is True and has_backtest_split is True:
+        # Test -> Purge/Embargo -> Train -> Purge/Embargo -> Validation
+        start_backtest_timestamp = start_timestamp
         end_backtest_timestamp = start_backtest_timestamp + backtest_interval_length
         start_backtest = datetime.fromtimestamp(start_backtest_timestamp)
         end_backtest = datetime.fromtimestamp(end_backtest_timestamp)
+
+        start_train_timestamp = end_backtest_timestamp + embargo_offset_length
+        end_train_timestamp = start_train_timestamp + train_interval_length
+        start_train = datetime.fromtimestamp(start_train_timestamp)
+        end_train = datetime.fromtimestamp(end_train_timestamp)
+
+        start_validation_timestamp = end_train_timestamp + embargo_offset_length
+        end_validation_timestamp = start_validation_timestamp + validation_split_length
+        start_validation = datetime.fromtimestamp(start_validation_timestamp)
+        end_validation = datetime.fromtimestamp(end_validation_timestamp)
+
+        assert start == start_backtest and end == end_validation
+
+        end_backtest = end_backtest.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_train = start_train.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_train = end_train.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_validation = start_validation.replace(hour=0, minute=0, second=0, microsecond=0)
     else:
-        start_backtest = datetime.fromtimestamp(end_timestamp)
-        end_backtest = datetime.fromtimestamp(end_timestamp)
+        # Train -> Purge/Embargo -> Validation -> Purge/Embargo -> Test
+        start_train_timestamp = start_timestamp
+        end_train_timestamp = start_timestamp + train_interval_length
+        start_train = datetime.fromtimestamp(start_train_timestamp)
+        end_train = datetime.fromtimestamp(end_train_timestamp)
 
-    assert start == start_train and end == end_backtest
+        start_validation_timestamp = end_train_timestamp + embargo_offset_length
+        end_validation_timestamp = start_validation_timestamp + validation_split_length
+        start_validation = datetime.fromtimestamp(start_validation_timestamp)
+        end_validation = datetime.fromtimestamp(end_validation_timestamp)
 
-    end_train = end_train.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_validation = start_validation.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_validation = end_validation.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_backtest = start_backtest.replace(hour=0, minute=0, second=0, microsecond=0)
+        if has_backtest_split:
+            start_backtest_timestamp = end_validation_timestamp + embargo_offset_length
+            end_backtest_timestamp = start_backtest_timestamp + backtest_interval_length
+            start_backtest = datetime.fromtimestamp(start_backtest_timestamp)
+            end_backtest = datetime.fromtimestamp(end_backtest_timestamp)
+        else:
+            start_backtest = datetime.fromtimestamp(end_timestamp)
+            end_backtest = datetime.fromtimestamp(end_timestamp)
+
+        assert start == start_train and end == end_backtest
+
+        end_train = end_train.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_validation = start_validation.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_validation = end_validation.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_backtest = start_backtest.replace(hour=0, minute=0, second=0, microsecond=0)
 
     if not include_weekends:
         start_train = add_business_days(start_train, action='+', offset=1)
