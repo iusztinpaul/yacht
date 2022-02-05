@@ -94,11 +94,8 @@ def build_backtester(
         agent_from: str,
         market_storage_dir: Optional[str]
 ) -> Optional[BackTester]:
-    if mode.is_best_metric():
-        if 'reward' not in config.meta.metrics_to_load_best_on:
-            config.meta.metrics_to_load_best_on.append('reward')
-    else:
-        assert len(config.meta.metrics_to_load_best_on) <= 1, 'Cannot load from multiple metrics in the current setup.'
+    assert mode.is_best_metric() or len(config.meta.metrics_to_load_best_on) <= 1, \
+            'Cannot load from multiple metrics in the current setup.'
 
     backtesters = []
     for metric in config.meta.metrics_to_load_best_on:

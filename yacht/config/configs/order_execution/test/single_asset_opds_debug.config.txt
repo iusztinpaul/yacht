@@ -15,8 +15,8 @@ input: {
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macdFracDiff', 'rsi_30']
-    start: '1/1/2020'
-    end: '1/1/2021'
+    start: '1/1/2014'
+    end: '15/10/2021'
     period_length: '1M'
     window_size: 5
     render_periods: [
@@ -27,11 +27,11 @@ input: {
     ]
     render_tickers: ['AAPL']
     include_weekends: false
-    validation_split_ratio: 0.3
-    backtest_split_ratio: 0.0
+    validation_split_ratio: 0.2005
+    backtest_split_ratio: 0.2005
     embargo_ratio: 0.025
     backtest: {
-        run: false
+        run: true
         deterministic: true
         tickers: ['AAPL', 'MSFT']
     }
@@ -62,7 +62,7 @@ environment: {
     possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
 agent: {
-    name: 'SupervisedPPO'
+    name: 'PPO'
     is_classic_method: false
     verbose: true
     policy: {
@@ -88,11 +88,11 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 3000000
+    total_timesteps: 3000
     fine_tune_total_timesteps: -1
-    collecting_n_steps: 128
+    collecting_n_steps: 1024
     learning_rate: 0.0002
-    batch_size: 128
+    batch_size: 1024
     n_epochs: 5
     gamma: 1.
     gae_lambda: 1.
@@ -112,8 +112,8 @@ meta: {
     metrics_to_save_best_on: ['PA', 'GLR', 'AD', 'T']
     metrics_to_load_best_on: ['PA', 'GLR', 'AD', 'T']
     plateau_max_n_steps: 15
-    render_data_split: true
+    render_data_split: false
     device: 'gpu'
-    experiment_tracker: 'wandb'
+    experiment_tracker: ''
     project_entity: 'yacht'
 }

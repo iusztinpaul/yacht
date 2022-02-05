@@ -18,10 +18,7 @@ input: {
     period_length: '1M'
     window_size: 5
     render_periods: [
-        # For the train period plot a bigger interval, because it is rendered only once.
-         {start: '1/1/2018', end: '1/7/2019'},
-        # For the validation period be more greedy, because it is rendered a lot of times during training.
-         {start: '15/12/2020', end: '15/8/2021'}
+        {start: '1/03/2020', end: '1/11/2021'}
     ]
     render_tickers: ['AAPL']
     include_weekends: false
@@ -56,7 +53,7 @@ environment: {
     possibilities: [0, 0.25, 0.5, 0.75, 1]
 }
 agent: {
-    name: 'SupervisedPPO'
+    name: 'PPO'
     is_classic_method: false
     is_teacher: false
     is_student: false
@@ -65,10 +62,15 @@ agent: {
         name: 'MlpPolicy'
         activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'DayRecurrentFeatureExtractor'
+            name: 'DayVSNRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
+            attention_head_size: -1
+            add_attention: False
+            add_normalization: False
+            add_output_vsn: False
+            add_residual: False
         }
         net_arch: {
             shared: [64, 64]
@@ -95,14 +97,15 @@ train: {
     use_sde: false
     sde_sample_freq: -1
     learning_rate_scheduler: 'ConstantSchedule'
-    supervised_coef: 25
 }
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
     metrics_to_save_best_on: ['PA', 'GLR', 'T']
     metrics_to_load_best_on: ['PA', 'GLR', 'T']
+    render_data_split: false
     plateau_max_n_steps: -1
     device: 'gpu'
     experiment_tracker: ''
+    project_entity: ''
 }

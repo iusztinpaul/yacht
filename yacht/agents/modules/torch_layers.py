@@ -2,12 +2,12 @@ from typing import Tuple, Dict, Optional
 
 import torch
 
-from stable_baselines3.common.torch_layers import MlpExtractor
+from stable_baselines3.common.torch_layers import MlpExtractor as StableB3MlpExtractor
 from torch import nn as nn
 from torch.nn import functional as F
 
 
-class SupervisedMlpExtractor(MlpExtractor):
+class SupervisedMlpExtractor(StableB3MlpExtractor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -160,15 +160,6 @@ class LinearStack(nn.Module):
             if dropout is not None and dropout > 0:
                 modules.append(nn.Dropout(p=dropout))
         self.net = nn.Sequential(*modules)
-
-        self.init_weights()
-
-    def init_weights(self):
-        for n, p in self.named_parameters():
-            if "bias" in n:
-                torch.nn.init.zeros_(p)
-            elif "weight" in n:
-                torch.nn.init.xavier_uniform_(p)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.net(x)
