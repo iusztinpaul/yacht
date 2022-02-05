@@ -13,20 +13,21 @@ input: {
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macdFracDiff', 'rsi_22FracDiff']
-    start: '1/8/2016'
+    start: '1/1/2014'
     end: '15/10/2021'
     period_length: '1M'
     window_size: 5
     render_periods: [
-        {start: '1/03/2020', end: '1/11/2021'}
+         {start: '1/03/2020', end: '1/11/2021'},
+         {start: '1/01/2014', end: '1/08/2015'}
     ]
     render_tickers: ['AAPL']
     include_weekends: false
-    validation_split_ratio: 0.3
-    backtest_split_ratio: 0.0
+    validation_split_ratio: 0.2005
+    backtest_split_ratio: 0.2005
     embargo_ratio: 0.025
     backtest: {
-        run: false
+        run: true
         deterministic: true
         tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     }

@@ -18,10 +18,7 @@ input: {
     period_length: '1M'
     window_size: 5
     render_periods: [
-        # For the train period plot a bigger interval, because it is rendered only once.
-         {start: '1/1/2018', end: '1/7/2019'},
-        # For the validation period be more greedy, because it is rendered a lot of times during training.
-         {start: '15/12/2020', end: '15/8/2021'}
+        {start: '1/03/2020', end: '1/11/2021'}
     ]
     render_tickers: ['AAPL']
     include_weekends: false
@@ -107,7 +104,8 @@ meta: {
     metrics_to_save_best_on: ['PA', 'GLR', 'T']
     metrics_to_load_best_on: ['PA', 'GLR', 'T']
     plateau_max_n_steps: -1
+    render_data_split: false
     device: 'gpu'
     experiment_tracker: 'wandb'
-    project_entity: 'yacht'
+    project_entity: ''
 }
