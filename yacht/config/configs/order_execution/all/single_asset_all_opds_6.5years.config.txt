@@ -19,12 +19,12 @@ input: {
     window_size: 5
     render_periods: [
          {start: '1/03/2020', end: '1/11/2021'},
-         {start: '1/01/2014', end: '1/08/2015'}
+         {start: '1/06/2015', end: '1/08/2016'}
     ]
-    render_tickers: ['AAPL']
+    render_tickers: ['AAPL', 'JPM']
     include_weekends: false
     validation_split_ratio: 0.2005
-    backtest_split_ratio: 0.2005
+    backtest_split_ratio: 0.30675
     embargo_ratio: 0.025
     backtest: {
         run: true
@@ -102,8 +102,8 @@ train: {
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
-    metrics_to_save_best_on: ['PA', 'GLR', 'T']
-    metrics_to_load_best_on: ['PA', 'GLR', 'T']
+    metrics_to_save_best_on: ['PA', 'GLR']
+    metrics_to_load_best_on: ['PA', 'GLR']
     render_data_split: false
     plateau_max_n_steps: -1
     device: 'gpu'
