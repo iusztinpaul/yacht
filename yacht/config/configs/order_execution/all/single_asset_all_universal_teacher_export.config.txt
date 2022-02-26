@@ -1,31 +1,28 @@
 input: {
     market: 'Yahoo'
     market_mixins: ['TargetPriceMixin', 'FracDiffMixin']
-    dataset: 'DayFrequencyDataset'
+    dataset: 'TeacherDayFrequencyDataset'
     num_assets_per_dataset: 1
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     attached_tickers: ['QQQ', 'SPY']
-    fine_tune_tickers: []
+    fine_tune_tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     intervals: ['1d']
     features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macdFracDiff', 'rsi_22FracDiff']
-    start: '1/1/2014'
+    technical_indicators: ['macdFracDiff', 'rsi_30FracDiff']
+    start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
     window_size: 5
-    render_periods: [
-         {start: '1/03/2020', end: '1/11/2021'},
-         {start: '1/06/2015', end: '1/08/2016'}
-    ]
-    render_tickers: ['AAPL', 'JPM']
+    render_periods: []
+    render_tickers: []
     include_weekends: false
-    validation_split_ratio: 0.2005
-    backtest_split_ratio: 0.30675
-    embargo_ratio: 0.025
+    validation_split_ratio: 0.14
+    backtest_split_ratio: 0.145
+    embargo_ratio: 0.015
     backtest: {
         run: true
         deterministic: true
@@ -33,8 +30,8 @@ input: {
     }
 }
 environment: {
-    name: 'OrderExecutionEnvironment-v0'
-    n_envs: 6
+    name: 'ExportTeacherActionsOrderExecutionEnvironment-v0'
+    n_envs: 1
     envs_on_different_processes: false
     buy_commission: 0.00
     sell_commission: 0.00
@@ -56,7 +53,7 @@ environment: {
 agent: {
     name: 'PPO'
     is_classic_method: false
-    is_teacher: false
+    is_teacher: true
     is_student: false
     verbose: true
     policy: {
@@ -82,7 +79,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 10000000
+    total_timesteps: 3000000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0002
@@ -102,11 +99,11 @@ train: {
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
-    metrics_to_save_best_on: ['PA', 'GLR']
-    metrics_to_load_best_on: ['PA', 'GLR']
-    render_data_split: false
+    metrics_to_save_best_on: ['GLR']
+    metrics_to_load_best_on: ['GLR']
     plateau_max_n_steps: -1
     device: 'gpu'
-    experiment_tracker: 'wandb'
+    render_data_split: false
+    experiment_tracker: ''
     project_entity: ''
 }

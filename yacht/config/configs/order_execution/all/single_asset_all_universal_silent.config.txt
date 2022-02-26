@@ -7,28 +7,29 @@ input: {
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     attached_tickers: ['QQQ', 'SPY']
-    fine_tune_tickers: ['NASDAQ100']
+    fine_tune_tickers: []
     intervals: ['1d']
     features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macdFracDiff', 'rsi_30FracDiff']
+    technical_indicators: ['macdFracDiff', 'rsi_22FracDiff']
     start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
     window_size: 5
     render_periods: [
-        {start: '1/03/2020', end: '1/11/2021'}
+         {start: '1/3/2020', end: '1/03/2021'},
+         {start: '1/02/2021', end: '1/11/2021'}
     ]
     render_tickers: ['AAPL']
     include_weekends: false
-    validation_split_ratio: 0.3
-    backtest_split_ratio: 0.0
-    embargo_ratio: 0.025
+    validation_split_ratio: 0.14
+    backtest_split_ratio: 0.145
+    embargo_ratio: 0.015
     backtest: {
-        run: false
+        run: true
         deterministic: true
-        tickers: ['NASDAQ100']
+        tickers: ['NASDAQ100', 'S&P500', 'DOW30']
     }
 }
 environment: {
@@ -81,7 +82,7 @@ agent: {
 }
 train: {
     trainer_name: 'Trainer'
-    total_timesteps: 3000000
+    total_timesteps: 2000000
     fine_tune_total_timesteps: -1
     collecting_n_steps: 2048
     learning_rate: 0.0002
@@ -101,8 +102,8 @@ train: {
 meta: {
     log_frequency_steps: 5000
     metrics_to_log: ['PA', 'GLR', 'AD', 'ADE', 'ADS', 'cash_used_on_last_tick', 'num_actions', 'T']
-    metrics_to_save_best_on: ['PA', 'GLR', 'T']
-    metrics_to_load_best_on: ['PA', 'GLR', 'T']
+    metrics_to_save_best_on: ['GLR']
+    metrics_to_load_best_on: ['GLR']
     render_data_split: false
     plateau_max_n_steps: -1
     device: 'gpu'

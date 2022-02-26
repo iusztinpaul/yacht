@@ -17,4 +17,4 @@ A detailed explanation of those improvements can be found at the following [pape
 ![graph4](../images/graph3_opds.png)
 
 This is how the agent is taking the actions:
-![actions](../images/window_logic.jpg)
+![actions](../images/window_logic.png)

@@ -62,7 +62,7 @@ def split(
         backtest_split_ratio: float,
         embargo_ratio: float,
         include_weekends: bool = False,
-        is_backtest_first: bool = True
+        is_backtest_first: bool = False
 ) -> tuple:
     assert 0 < validation_split_ratio < 1
     assert 0 <= backtest_split_ratio < 1

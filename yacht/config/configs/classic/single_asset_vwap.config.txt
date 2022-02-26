@@ -11,19 +11,19 @@ input: {
     decision_price_feature: 'TP'
     take_action_at: 'next'
     technical_indicators: ['macd', 'rsi_30']
-    start: '1/1/2014'
+    start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
     window_size: 5
     render_periods: [
-         {start: '1/03/2020', end: '1/11/2021'},
-         {start: '1/06/2015', end: '1/08/2016'}
+         {start: '1/3/2020', end: '1/03/2021'},
+         {start: '1/02/2021', end: '1/11/2021'}
     ]
-    render_tickers: ['AAPL', 'JPM']
+    render_tickers: ['AAPL']
     include_weekends: false
-    validation_split_ratio: 0.2005
-    backtest_split_ratio: 0.30675
-    embargo_ratio: 0.025
+    validation_split_ratio: 0.14
+    backtest_split_ratio: 0.145
+    embargo_ratio: 0.015
     backtest: {
         run: true
         deterministic: true

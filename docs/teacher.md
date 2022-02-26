@@ -6,13 +6,13 @@ used as GT for a student agent. This will help & stabilize learning.
 # Usage
 Train teacher:
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_opdt.config.txt --storage_path ./storage/opdt --market-storage-dir ./storage
+python main.py train --config-file order_execution/all/single_asset_all_universal_teacher.config.txt --storage_path ./storage/universal_teacher --market-storage-dir ./storage
 ```
 Export the actions:
 ```shell
-export_actions --config-file-name order_execution/all/single_asset_all_opdt_export.config.txt --storage-dir storage/single_asset_all_opdt --market-storage-dir ./storage
+export_actions --config-file-name order_execution/all/single_asset_all_universal_teacher_export.config.txt --storage-dir ./storage/universal_teacher --market-storage-dir ./storage
 ```
 Train the student with the exported actions:
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_opd.config.txt --storage_path ./storage/opd --market-storage-dir ./storage
+python main.py train --config-file order_execution/all/single_asset_all_universal_distillation.config.txt --storage_path ./storage/universal_distillation --market-storage-dir ./storage
 ```

@@ -6,17 +6,17 @@ input: {
     scaler: 'MinMaxScaler'
     scale_on_interval: '1d'
     tickers: ['NASDAQ100', 'S&P500', 'DOW30']
-    attached_tickers: []
-    fine_tune_tickers: ['NASDAQ100']
+    attached_tickers: ['QQQ', 'SPY']
+    fine_tune_tickers: []
     intervals: ['1d']
-    features: ['Close', 'Open', 'High', 'Low', 'Volume']
+    features: ['CloseFracDiff', 'OpenFracDiff', 'HighFracDiff', 'LowFracDiff', 'VolumeFracDiff']
     decision_price_feature: 'TP'
     take_action_at: 'next'
-    technical_indicators: ['macd', 'rsi_30']
+    technical_indicators: ['macdFracDiff', 'rsi_22FracDiff']
     start: '1/8/2016'
     end: '15/10/2021'
     period_length: '1M'
-    window_size: 21
+    window_size: 5
     render_periods: [
          {start: '1/3/2020', end: '1/03/2021'},
          {start: '1/02/2021', end: '1/11/2021'}
@@ -41,7 +41,7 @@ environment: {
     initial_cash_position: 5000
     reward_schemas: [
     {
-        name: 'DecisionMakingRewardSchema'
+        name: 'DecisionMakingRewardSchema',
         reward_scaling: 1.
     },
     {
@@ -61,12 +61,17 @@ agent: {
     verbose: true
     policy: {
         name: 'MlpPolicy'
-        activation_fn: 'ReLU',
+        activation_fn: 'Tanh',
         feature_extractor: {
-            name: 'DayRecurrentFeatureExtractor'
+            name: 'DayVSNRecurrentFeatureExtractor'
             features_dim: [64,64,128]
             drop_out_p: 0.,
             rnn_layer_type: 'GRU'
+            attention_head_size: -1
+            add_attention: False
+            add_normalization: False
+            add_output_vsn: False
+            add_residual: False
         }
         net_arch: {
             shared: [64, 64]

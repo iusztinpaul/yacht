@@ -80,15 +80,15 @@ You should only add the config path relative to it.
 
 ### Train
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds --market-storage-dir ./storage
+python main.py train --config-file order_execution/all/single_asset_all_universal_silent.config.txt --storage-dir ./storage/universal --market-storage-dir ./storage
 ```
 ### Backtest
 ```shell
-python main.py backtest --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds --market-storage-dir ./storage
+python main.py backtest --config-file order_execution/all/single_asset_all_universal_silent.config.txt --storage-dir ./storage/universal --market-storage-dir ./storage
 ```
 ### Resume
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_opds_silent.config.txt --storage-dir ./storage/opds --resume-from latest-train --market-storage-dir ./storage
+python main.py train --config-file order_execution/all/single_asset_all_universal_silent.config.txt --storage-dir ./storage/universal --resume-from latest-train --market-storage-dir ./storage
 ```
 For the parameter `--resume-from` we support the following combinations:
 * Absolute path to the checkpoint.
@@ -145,7 +145,7 @@ wandb agent id-given-by-generated-sweep
 * Russell 2000
 
 You can set `tickers: ['NASDAQ100']` in the configuration file and all the tickers from the index will be expanded.
-You can also set something like `['NASDQ100', 'RUSSELL2000', 'AAPL']` or any combination you like.
+You can also set something like `['NASDAQ100', 'S&P500', 'AAPL']` or any combination you like.
 #### Download
 We cache the data in `h5` files.
 ```shell
