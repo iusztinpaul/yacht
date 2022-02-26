@@ -98,7 +98,7 @@ For the parameter `--resume-from` we support the following combinations:
 **NOTE:** For the `best-train` parameter you can choose a specific metric for which you consider an agent to be the best. You
 can do that with the `meta.metrics_to_load_best_on` config parameter. For example `metrics_to_load_best_on: ['PA', 'GLR']`
 will load two agents: The one which performed the best on the metric `PA` & the one which performed the best on `GLR`.
-**NOTE:** You can download the weights from [google drive](https://drive.google.com/drive/folders/1ldDB_zcE-9nNvsIsDbn5W1-5-UA_8C-k?usp=sharing).
+<br/>**NOTE:** You can download the weights from [google drive](https://drive.google.com/drive/folders/1ldDB_zcE-9nNvsIsDbn5W1-5-UA_8C-k?usp=sharing).
 
 # Experiment Tracking
 ### Weights & Biases
