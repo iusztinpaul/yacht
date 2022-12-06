@@ -1,4 +1,4 @@
-<a href="https://www.linkedin.com/in/pauliusztin">
+<a href="https://www.linkedin.com/in/pauliusztin" style="text-align:center">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="./images/yacht_full_logo_white.png">
       <source media="(prefers-color-scheme: light)" srcset="./images/yacht_full_logo_black.png">
@@ -130,8 +130,8 @@ You can download the pretrained weights from [here](https://drive.google.com/dri
 
 ```shell
 cd /root/directory
-mkdir storage && cd storage
---> place the downloaded weights here
+mkdir storage
+--> place the downloaded weights in ./storage 
 ```
 
 If you downloaded and placed the pretrained weights correctly as showed above, you can run the following command to resume the agent:
