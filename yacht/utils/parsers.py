@@ -64,12 +64,13 @@ def split(
         include_weekends: bool = False,
         is_backtest_first: bool = False
 ) -> tuple:
-    assert 0 < validation_split_ratio < 1
+    assert 0 <= validation_split_ratio < 1
     assert 0 <= backtest_split_ratio < 1
     assert 0 < embargo_ratio < 1
     assert validation_split_ratio + backtest_split_ratio + 2 * embargo_ratio < 1
 
     has_backtest_split = backtest_split_ratio > 1e-7
+    has_validation_split = validation_split_ratio > 1e-7
 
     if isinstance(start, str):
         start = string_to_datetime(start)
@@ -84,8 +85,8 @@ def split(
     backtest_interval_length = backtest_split_ratio * total_interval_length
     embargo_offset_length = embargo_ratio * total_interval_length
 
-    # If there is no backtest split, we need only one embargo ratio between the train & validation splits.
-    needed_embargo_ratios = 2 if has_backtest_split else 1
+    # For every split we need to separate it through the embargo technique.
+    needed_embargo_ratios = 2 - (int(not has_backtest_split) + int(not has_validation_split))
     train_interval_length = \
         total_interval_length * \
         (1 - validation_split_ratio - backtest_split_ratio - needed_embargo_ratios * embargo_ratio)
@@ -104,8 +105,12 @@ def split(
         start_train = datetime.fromtimestamp(start_train_timestamp)
         end_train = datetime.fromtimestamp(end_train_timestamp)
 
-        start_validation_timestamp = end_train_timestamp + embargo_offset_length
-        end_validation_timestamp = start_validation_timestamp + validation_split_length
+        if has_validation_split:
+            start_validation_timestamp = end_train_timestamp + embargo_offset_length
+            end_validation_timestamp = start_validation_timestamp + validation_split_length
+        else:
+            start_validation_timestamp = end_train_timestamp
+            end_validation_timestamp = end_train_timestamp
         start_validation = datetime.fromtimestamp(start_validation_timestamp)
         end_validation = datetime.fromtimestamp(end_validation_timestamp)
 
@@ -122,19 +127,23 @@ def split(
         start_train = datetime.fromtimestamp(start_train_timestamp)
         end_train = datetime.fromtimestamp(end_train_timestamp)
 
-        start_validation_timestamp = end_train_timestamp + embargo_offset_length
-        end_validation_timestamp = start_validation_timestamp + validation_split_length
+        if has_validation_split:
+            start_validation_timestamp = end_train_timestamp + embargo_offset_length
+            end_validation_timestamp = start_validation_timestamp + validation_split_length
+        else:
+            start_validation_timestamp = end_train_timestamp
+            end_validation_timestamp = end_train_timestamp
         start_validation = datetime.fromtimestamp(start_validation_timestamp)
         end_validation = datetime.fromtimestamp(end_validation_timestamp)
 
         if has_backtest_split:
             start_backtest_timestamp = end_validation_timestamp + embargo_offset_length
             end_backtest_timestamp = start_backtest_timestamp + backtest_interval_length
-            start_backtest = datetime.fromtimestamp(start_backtest_timestamp)
-            end_backtest = datetime.fromtimestamp(end_backtest_timestamp)
         else:
-            start_backtest = datetime.fromtimestamp(end_timestamp)
-            end_backtest = datetime.fromtimestamp(end_timestamp)
+            start_backtest_timestamp = end_timestamp
+            end_backtest_timestamp = end_timestamp
+        start_backtest = datetime.fromtimestamp(start_backtest_timestamp)
+        end_backtest = datetime.fromtimestamp(end_backtest_timestamp)
 
         assert start == start_train and end == end_backtest
 

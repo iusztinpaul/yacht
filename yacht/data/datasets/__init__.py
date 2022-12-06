@@ -92,6 +92,10 @@ def build_dataset(
         input_config.embargo_ratio,
         input_config.include_weekends
     )
+    logger.info(f'Train split: {train_split[0]} - {train_split[1]}')
+    logger.info(f'Validation split: {validation_split[0]} - {validation_split[1]}')
+    logger.info(f'Backtest split: {backtest_split[0]} - {backtest_split[1]}')
+
     # Render split only for backtest tickers.
     if not mode.is_trainable() and config.meta.render_data_split:
         render_split(
@@ -112,6 +116,10 @@ def build_dataset(
         if config.agent.is_teacher:
             # In teacher mode, train over all the data. It is ok because it is used just to generate GT.
             train_split = utils.string_to_datetime(input_config.start), utils.string_to_datetime(input_config.end)
+
+        if input_config.train_on_validation and not config.agent.is_teacher:
+            logger.info("Validation split merged into the train split.")
+            train_split = train_split[0], validation_split[1]
 
         start = train_split[0]
         end = train_split[1]

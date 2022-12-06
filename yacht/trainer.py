@@ -23,9 +23,9 @@ class Trainer(ABC):
             name: str,
             agent: BaseAlgorithm,
             train_dataset: SampleAssetDataset,
-            validation_dataset: SampleAssetDataset,
+            validation_dataset: Optional[SampleAssetDataset],
             train_env: VecEnv,
-            validation_env: MetricsVecEnvWrapper,
+            validation_env: Optional[MetricsVecEnvWrapper],
             logger: Logger,
             mode: Mode,
             save: bool = True
@@ -40,8 +40,10 @@ class Trainer(ABC):
         self.logger = logger
         self.mode = mode
         self.save = save
+        self.perform_validation = bool(self.validation_dataset) and bool(self.validation_env)
 
-        assert self.train_dataset.storage_dir == self.validation_dataset.storage_dir
+        if self.perform_validation:
+            assert self.train_dataset.storage_dir == self.validation_dataset.storage_dir
         self.storage_dir = self.train_dataset.storage_dir
 
         if self.mode.is_fine_tuning():
@@ -55,9 +57,10 @@ class Trainer(ABC):
             self.agent.save(path=save_path)
 
         self.train_env.close()
-        self.validation_env.close()
         self.train_dataset.close()
-        self.validation_dataset.close()
+        if self.perform_validation:
+            self.validation_dataset.close()
+            self.validation_env.close()
 
     def train(self) -> BaseAlgorithm:
         self.agent.policy.train()
@@ -87,29 +90,27 @@ class Trainer(ABC):
                 log_frequency=self.config.meta.log_frequency_steps,
                 total_timesteps=self.total_timesteps
             ),
-            MetricsEvalCallback(
-                eval_env=self.validation_env,
-                metrics_to_save_best_on=list(self.config.meta.metrics_to_save_best_on),
-                plateau_max_n_steps=self.config.meta.plateau_max_n_steps,
-                mode=Mode.BacktestValidation,
-                n_eval_episodes=len(self.validation_dataset.datasets),
-                eval_freq=self.config.train.collecting_n_steps * self.config.environment.n_envs,
-                log_path=utils.build_log_dir(self.storage_dir),
-                best_model_save_path=utils.build_checkpoints_dir(self.storage_dir, self.mode),
-                deterministic=self.config.input.backtest.deterministic,
-                logger=self.logger,
-                verbose=1
-            ),
             LastCheckpointCallback(
                 save_freq=self.config.train.collecting_n_steps * self.config.environment.n_envs,
                 save_path=utils.build_last_checkpoint_path(self.storage_dir, self.mode),
             )
-            # RewardsRenderCallback(
-            #     total_timesteps=self.total_timesteps,
-            #     storage_dir=self.storage_dir,
-            #     mode=self.mode
-            # )
         ]
+        if self.perform_validation:
+            callbacks.append(
+                MetricsEvalCallback(
+                    eval_env=self.validation_env,
+                    metrics_to_save_best_on=list(self.config.meta.metrics_to_save_best_on),
+                    plateau_max_n_steps=self.config.meta.plateau_max_n_steps,
+                    mode=Mode.BacktestValidation,
+                    n_eval_episodes=len(self.validation_dataset.datasets),
+                    eval_freq=self.config.train.collecting_n_steps * self.config.environment.n_envs,
+                    log_path=utils.build_log_dir(self.storage_dir),
+                    best_model_save_path=utils.build_checkpoints_dir(self.storage_dir, self.mode),
+                    deterministic=self.config.input.backtest.deterministic,
+                    logger=self.logger,
+                    verbose=1
+                )
+            )
 
         if utils.get_experiment_tracker_name(self.storage_dir) == 'wandb':
             wandb_callback = WandBCallback(storage_dir=self.storage_dir, mode=self.mode)
@@ -218,9 +219,10 @@ def build_trainer(
         mode=Mode.BacktestValidation,
         market_storage_dir=market_storage_dir
     )
-    if validation_dataset is None:
-        raise RuntimeError('Could not create validation dataset.')
-    validation_env = build_env(config, validation_dataset, logger, mode=Mode.BacktestValidation)
+    if validation_dataset:
+        validation_env = build_env(config, validation_dataset, logger, mode=Mode.BacktestValidation)
+    else:
+        validation_env = None
 
     if agent is None:
         best_metrics_to_load = config.meta.metrics_to_load_best_on

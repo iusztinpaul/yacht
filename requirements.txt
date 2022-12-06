@@ -12,7 +12,7 @@ sklearn==0.0
 statsmodels==0.13.1
 tensorboard==2.5.0
 jupyter==1.0.0
-wandb==0.12.2
+wandb==0.13.5
 
 # General
 tqdm==4.60.0

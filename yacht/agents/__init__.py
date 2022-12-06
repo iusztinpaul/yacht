@@ -74,7 +74,7 @@ def build_agent(
         logger:
         storage_dir:
         resume:
-        agent_from: latest-training, best-training,
+        agent_from: latest-train, best-train,
                     latest-fine-tune, best-fine-tune checkpoint or
                     absolute_path to the checkpoint
         best_metric: The metric you want to resume the agent from. If it is none it will be resumed based on the best

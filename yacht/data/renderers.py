@@ -181,7 +181,7 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
         return prices
 
     def _render(self):
-        self.fig, self.ax = plt.subplots(figsize=(12, 6))
+        self.fig, self.ax = plt.subplots(figsize=(10, 5))
 
         y_min = sys.float_info.max
         y_max = sys.float_info.min
@@ -218,11 +218,20 @@ class TrainTestSplitRenderer(MatPlotLibRenderer):
                 self.validation_split[1]
             ])
         for split, name in splits:
-            self.ax.text(
-                x=(split[1] - split[0]) / 4 + split[0],
-                y=y_max + 10,
-                s=name
-            )
+            if name.lower() == "train":
+                self.ax.text(
+                    x=(split[1] - split[0]) / 2 + split[0],
+                    y=y_max,
+                    s=name,
+                    fontsize=9
+                )
+            else:
+                self.ax.text(
+                    x=(split[1] - split[0]) / 6 + split[0],
+                    y=y_max,
+                    s=name,
+                    fontsize=9
+                )
             self.ax.vlines(
                 split[0],
                 ymin=y_min,

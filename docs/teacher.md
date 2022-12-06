@@ -1,5 +1,5 @@
 # Description
-In our case the teacher is used as in [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860).
+In our case the teacher-student setup is used as in [Universal Trading for Order Execution with Oracle Policy Distillation](https://arxiv.org/abs/2103.10860).
 It is used as an oracle that has access to all the epoch data. In this way we can generate ideal actions that can be further
 used as GT for a student agent. This will help & stabilize learning.
 

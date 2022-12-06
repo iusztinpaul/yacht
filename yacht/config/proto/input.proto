@@ -33,6 +33,7 @@ message InputConfig {
   double validation_split_ratio = 24;
   double backtest_split_ratio = 25;
   double embargo_ratio = 26;
-  BacktestConfig backtest = 27;
-  repeated string attached_tickers = 28;
+  bool train_on_validation = 27;
+  BacktestConfig backtest = 28;
+  repeated string attached_tickers = 29;
 }
