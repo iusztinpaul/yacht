@@ -26,7 +26,7 @@ The nice part is that everything is `configurable` within a config file.
 * mplfinance
 
 # Project Architecture
-![Project Architecture](images/project_architecture.jpeg)
+![Project Architecture](images/project_architecture.png)
 <br><br>The architecture is split into 4 main categories:
 * Data
 * Environment
