@@ -9,11 +9,11 @@
 </div>
 
 # Yacht: Yet Another Comprehensive Trading Framework Using Deep Reinforcement Learning
-A Deep Reinforcement Learning framework for trading & order execution in financial markets. The goal of the project
-is to speed up the development & research of financial agents. The code has components for:
-* Loading & preprocessing data directly from the Yahoo Finance API
+A Deep Reinforcement Learning framework for **trading** & **order execution** in financial markets. The goal of the project
+is to speed up the development & research of financial agents by building a modular and scalable codebase. The framework supports the following main features:
+* Loading & preprocessing data directly from different APIs
 * Training & evaluating deep reinforcement learning agents
-* Use specific financial metrics or easily implement your own
+* Use specific financial metrics or quickly implement your own
 * Visualizing the performance of the agent with some intuitive graphs
 
 The nice part is that everything is `configurable` within a config file.
@@ -24,12 +24,6 @@ The nice part is that everything is `configurable` within a config file.
 * gym
 * wandb
 * mplfinance
-
-Relative to other repositories, with the same scope, on this one a lot of focus 
-was on researching better components:
-* Preprocessing methods to make data stationary
-* Training methods: Supervised heads, Teacher Oracles etc.
-* Different models: Recurrent, Transformers etc.
 
 # Project Architecture
 ![Project Architecture](images/project_architecture.jpeg)
@@ -48,13 +42,17 @@ Visual representations of the actions taken by the agent & the current status of
 ![graph2](images/graph1_opds.png)
 ![graph3](images/graph2_opds.png)
 
-
+----
 
 # Install
 ### Requirements
 * Code tested under `Python 3.8`, `pytorch 1.13.0`, and `cuda 11.6` on `Ubuntu 20.04`
 
-1. Create a conda environment and activate it.
+1. Create a conda environment and activate it:
+```shell
+conda create --name yacht python=3.8
+conda env activate yacht
+```
 
 2. Install torch and cuda separately with `conda`:
 ```shell
@@ -136,7 +134,7 @@ mkdir storage
 --> place the downloaded weights in ./storage 
 ```
 
-If you downloaded and placed the pretrained weights correctly as showed above, you can run the following command to resume the agent:
+Suppose you downloaded and placed the pretrained weights and data correctly as showed above. In that case, you can run the following command to resume the agent:
 ```shell
 python main.py train --config-file order_execution/all/single_asset_all_universal_silent.config.txt --storage-dir ./storage/yacht --resume-from latest-train --market-storage-dir ./storage
 ```
