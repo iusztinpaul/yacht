@@ -1,10 +1,12 @@
-<a href="https://www.linkedin.com/in/pauliusztin" style="text-align:center">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./images/yacht_full_logo_white.png">
-      <source media="(prefers-color-scheme: light)" srcset="./images/yacht_full_logo_black.png">
-      <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="./images/yacht_full_logo_white.png">
-    </picture>
-</a>
+<div style="text-align:center">
+  <a href="https://www.linkedin.com/in/pauliusztin">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="./images/yacht_full_logo_white.png">
+        <source media="(prefers-color-scheme: light)" srcset="./images/yacht_full_logo_black.png">
+        <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="./images/yacht_full_logo_white.png">
+      </picture>
+  </a>
+</div>
 
 # Yacht: Yet Another Comprehensive Trading Framework Using Deep Reinforcement Learning
 A Deep Reinforcement Learning framework for trading & order execution in financial markets. The goal of the project
