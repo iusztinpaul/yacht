@@ -1,6 +1,3 @@
-<p align="center">
-  <img src="images/yacht_full_logo_white.png" />
-</p>
 <a href="https://www.linkedin.com/in/pauliusztin">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="./images/yacht_full_logo_white.png">
