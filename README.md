@@ -136,7 +136,7 @@ mkdir storage
 
 Suppose you downloaded and placed the pretrained weights and data correctly as showed above. In that case, you can run the following command to resume the agent:
 ```shell
-python main.py train --config-file order_execution/all/single_asset_all_universal_silent.config.txt --storage-dir ./storage/yacht --resume-from latest-train --market-storage-dir ./storage
+python main.py train --config-file order_execution/all/single_asset_all_universal_silent.config.txt --storage-dir ./storage/yacht --resume-from best-train --market-storage-dir ./storage
 ```
 For the parameter `--resume-from` we support the following combinations:
 * Absolute path to the checkpoint.
