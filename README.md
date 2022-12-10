@@ -98,7 +98,7 @@ experiment trackers you should add the secret keys.
 You can set `tickers: ['NASDAQ100']` in the configuration file and all the tickers from the index will be expanded.
 You can also set something like `['NASDAQ100', 'S&P500', 'AAPL']` or any combination you like.
 #### Download
-We cache the data in `h5` files.
+The data is stored in `h5` files.
 ```shell
 python main.py download --config-file-name download_4years.config.txt --storage-dir ./storage/download_4_years --market-storage-dir ./storage
 ```
@@ -107,7 +107,7 @@ in a different location than your `storage-dir`. This is helpful because it can 
 experiments in parallel `during training` (the `h5` file will be set in a read only mode). Otherwise, while training,
 only one experiment can access a specific file. 
 * `--market-storage-dir` should be used also during `training` & `backtesting`
-* You can use the `market_mixins: [...]` to preprocess the data before it is cached.
+* You can use the `market_mixins: [...]` from the config file to preprocess the data before it is stored.
 
 -------
 
@@ -126,7 +126,7 @@ python main.py backtest --config-file order_execution/all/single_asset_all_unive
 ```
 
 ### Download Pretrained Weights 👇🏻
-You can download the pretrained weights from [here](https://drive.google.com/drive/folders/1uPGTWPz2U-9LfyCExQ8UXcuyqXB_yosp?usp=share_link).
+You can download the pretrained weights from [here](https://drive.google.com/drive/folders/1ldDB_zcE-9nNvsIsDbn5W1-5-UA_8C-k?usp=sharing).
 
 ```shell
 cd /root/directory
